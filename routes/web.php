@@ -2,58 +2,34 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\StudentDashboardController;
+use App\Http\Controllers\CoordinatorDashboardController;
+use App\Http\Controllers\ChairpersonDashboardController;
+use App\Http\Controllers\RoleController;
 
-Route::get('/', function () {
-    return redirect('/login');
-});
+Route::get('/', fn () => redirect('/login'));
 
-// Authentication Routes
+// Login & Logout
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Public registration
 Route::get('/register', [AuthController::class, 'showRegisterForm']);
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::get('/change-password', [AuthController::class, 'showChangePasswordForm']);
-Route::post('/change-password', [AuthController::class, 'changePassword']);
+// Authenticated routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/student-dashboard', [StudentDashboardController::class, 'index']);
+    Route::get('/coordinator-dashboard', [CoordinatorDashboardController::class, 'index']);
+    Route::get('/chairperson-dashboard', [ChairpersonDashboardController::class, 'index']);
 
-Route::middleware(['auth', 'role:student'])->group(function () {
-    Route::get('/student-dashboard', function () {
-        return view('dashboards.student');
-    });
+    Route::get('/change-password', [AuthController::class, 'showChangePasswordForm']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
+
+    Route::middleware('checkrole:chairperson')->group(function () {
+    Route::get('/manage-roles', [RoleController::class, 'index']);
+    Route::post('/manage-roles/{user}', [RoleController::class, 'update'])->name('roles.update');
 });
 
-Route::middleware(['auth', 'role:coordinator,chairperson'])->group(function () {
-    Route::get('/coordinator-dashboard', function () {
-        return view('dashboards.coordinator');
-    });
 });
-
-Route::middleware(['auth', 'role:adviser,panelist'])->group(function () {
-    Route::get('/adviser-dashboard', function () {
-        return view('dashboards.adviser');
-    });
-});
-
-// Optional: fallback dashboard route, redirecting users based on role if needed
-Route::get('/dashboard', function () {
-    $user = auth()->user();
-
-    if (!$user) {
-        return redirect('/login');
-    }
-
-    switch ($user->role) {
-        case 'coordinator':
-        case 'chairperson':
-            return redirect('/coordinator-dashboard');
-        case 'adviser':
-        case 'panelist':
-            return redirect('/adviser-dashboard');
-        case 'student':
-            return redirect('/student-dashboard');
-        default:
-            return 'Welcome to CapTrack Dashboard!';
-    }
-})->middleware('auth');

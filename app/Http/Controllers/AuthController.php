@@ -60,22 +60,31 @@ class AuthController extends Controller
     }
 
     public function register(Request $request) {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:8',
-        ]);
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|min:8|confirmed',
+        'role' => 'nullable|in:student,coordinator,adviser,panelist'
+    ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'must_change_password' => true,
-        ]);
-
-        Auth::login($user);
-        return redirect('/change-password');
+    $role = 'student'; // default
+    if (Auth::user()->role === 'chairperson' && $request->filled('role')) {
+        $role = $request->role;
     }
+
+    $user = User::create([
+    'name' => $request->name,
+    'email' => $request->email,
+    'password' => Hash::make($request->password),
+    'role' => 'student', // force student role
+    'must_change_password' => true,
+]);
+
+
+    return back()->with('success', 'User registered successfully.');
+}
+
+
 
     public function showChangePasswordForm() {
         return view('auth.change-password');
