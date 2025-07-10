@@ -38,7 +38,7 @@ class AuthController extends Controller
                 case 'student':
                     return redirect('/student-dashboard');
                 default:
-                    return redirect('/dashboard');
+                    return redirect('/student-dashboard');
             }
         }
 
@@ -82,7 +82,9 @@ class AuthController extends Controller
         'must_change_password' => true,
     ]);
 
-    return back()->with('success', 'User registered successfully.');
+    return redirect('/login')->with('success', 'Registration successful. Please log in.');
+
+
 }
 
 
