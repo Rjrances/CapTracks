@@ -1,48 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>CapTrack Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@yield('title', 'CapTrack')</title>
+
+    {{-- Tailwind CSS (or your CSS framework) --}}
+    <link href="{{ asset('css/app.css') }}" rel="stylesheet" />
+
+    {{-- Optional: add your own scripts or styles --}}
+    @stack('styles')
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-    <a class="navbar-brand" href="#">CapTrack</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+<body class="bg-gray-100 font-sans text-gray-900">
 
-    <div class="collapse navbar-collapse justify-content-end" id="navbarContent">
-        <ul class="navbar-nav align-items-center">
-            @if (Auth::check() && Auth::user()->role === 'chairperson')
-                <li class="nav-item">
-                    <a class="nav-link" href="/chairperson/offerings">Offerings</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/chairperson/teachers">Teachers</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/chairperson/schedules">Schedules</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/manage-roles">Manage Roles</a>
-                </li>
-            @endif
-            <li class="nav-item ms-3">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
-                </form>
-            </li>
-        </ul>
-    </div>
-</nav>
+    {{-- Common navigation/header --}}
+    @include('partials.nav')
 
-
-    <main class="py-4 container">
+    <main class="container mx-auto p-6">
+        {{-- Where page content goes --}}
         @yield('content')
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Common footer --}}
+    @include('partials.footer')
+
+    {{-- Scripts --}}
+    <script src="{{ asset('js/app.js') }}"></script>
+    @stack('scripts')
 </body>
 </html>
