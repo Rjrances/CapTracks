@@ -68,21 +68,23 @@ class AuthController extends Controller
     ]);
 
     $role = 'student'; // default
-    if (Auth::user()->role === 'chairperson' && $request->filled('role')) {
+
+    // ✅ Add this check to prevent "trying to read property 'role' on null"
+    if (Auth::check() && Auth::user()->role === 'chairperson' && $request->filled('role')) {
         $role = $request->role;
     }
 
     $user = User::create([
-    'name' => $request->name,
-    'email' => $request->email,
-    'password' => Hash::make($request->password),
-    'role' => 'student', // force student role
-    'must_change_password' => true,
-]);
-
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'role' => $role,
+        'must_change_password' => true,
+    ]);
 
     return back()->with('success', 'User registered successfully.');
 }
+
 
 
 
