@@ -25,7 +25,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware(['auth'])->group(function () {
 
     // Dashboards
- Route::get('/student-dashboard', [StudentDashboardController::class, 'index'])->name('student-dashboard');
+    Route::get('/student-dashboard', [StudentDashboardController::class, 'index'])->name('student-dashboard');
     Route::get('/coordinator-dashboard', [CoordinatorDashboardController::class, 'index'])->name('coordinator-dashboard');
     Route::get('/chairperson-dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson-dashboard');
 
@@ -42,22 +42,23 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 
     // Chairperson-only routes
-    Route::middleware(['checkrole:chairperson'])->group(function () {
-        // Manage Roles (outside the /chairperson prefix)
-        Route::get('/manage-roles', [RoleController::class, 'index'])->name('roles.index');
-        Route::post('/manage-roles/{user}', [RoleController::class, 'update'])->name('roles.update');
+    Route::middleware(['checkrole:chairperson'])->prefix('chairperson')->group(function () {
 
-        // Routes under /chairperson/*
-        Route::prefix('chairperson')->group(function () {
-            Route::get('/dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson.dashboard');
+        // Dashboard
+        Route::get('/dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson.dashboard');
 
-            Route::get('/offerings', [ChairpersonController::class, 'offerings'])->name('chairperson.offerings');
-            Route::post('/offerings', [ChairpersonController::class, 'storeOffering'])->name('chairperson.offerings.store');
-            Route::put('/offerings/{id}', [ChairpersonController::class, 'updateOffering'])->name('chairperson.offerings.update');
-            Route::delete('/offerings/{id}', [ChairpersonController::class, 'deleteOffering'])->name('chairperson.offerings.delete');
+        // Manage Roles
+        Route::get('/manage-roles', [RoleController::class, 'index'])->name('chairperson.manage-roles');
+        Route::post('/manage-roles/{user}', [RoleController::class, 'update'])->name('chairperson.roles.update');
 
-            Route::get('/teachers', [ChairpersonController::class, 'teachers'])->name('chairperson.teachers');
-            Route::get('/schedules', [ChairpersonController::class, 'schedules'])->name('chairperson.schedules');
-        });
+        // Offerings
+        Route::get('/offerings', [ChairpersonController::class, 'offerings'])->name('chairperson.offerings');
+        Route::post('/offerings', [ChairpersonController::class, 'storeOffering'])->name('chairperson.offerings.store');
+        Route::put('/offerings/{id}', [ChairpersonController::class, 'updateOffering'])->name('chairperson.offerings.update');
+        Route::delete('/offerings/{id}', [ChairpersonController::class, 'deleteOffering'])->name('chairperson.offerings.delete');
+
+        // View-only sections
+        Route::get('/teachers', [ChairpersonController::class, 'teachers'])->name('chairperson.teachers');
+        Route::get('/schedules', [ChairpersonController::class, 'schedules'])->name('chairperson.schedules');
     });
 });

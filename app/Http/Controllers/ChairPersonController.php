@@ -9,7 +9,7 @@ use App\Models\Schedule;
 
 class ChairpersonController extends Controller
 {
-    public function index()
+    public function index() 
     {
         return view('chairperson.dashboard');
     }
