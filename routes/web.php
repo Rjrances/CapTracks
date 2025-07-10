@@ -30,6 +30,16 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('checkrole:chairperson')->group(function () {
     Route::get('/manage-roles', [RoleController::class, 'index']);
     Route::post('/manage-roles/{user}', [RoleController::class, 'update'])->name('roles.update');
+
+
+    Route::middleware(['auth', 'checkrole:chairperson'])->prefix('chairperson')->group(function () {
+    Route::get('/dashboard', [ChairpersonDashboardController::class, 'index']);
+    Route::get('/offerings', [ChairpersonController::class, 'offerings']);
+    Route::get('/teachers', [ChairpersonController::class, 'teachers']);
+    Route::get('/schedules', [ChairpersonController::class, 'schedules']);
+    Route::get('/assign', [ChairpersonController::class, 'assign']);
+});
+
 });
 
 });
