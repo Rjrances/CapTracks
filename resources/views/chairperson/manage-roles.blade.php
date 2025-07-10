@@ -26,15 +26,15 @@
                 <td class="p-2">{{ $user->email }}</td>
                 <td class="p-2 capitalize">{{ $user->role }}</td>
                 <td class="p-2">
-                    <form method="POST" action="{{ route('chairperson.roles.update', $user) }}" class="flex items-center gap-2">
+                    <form method="POST" action="{{ route('chairperson.roles.update', $user) }}" class="d-flex align-items-center gap-2">
                         @csrf
-                        <select name="role" class="border p-1 rounded">
+                        <select name="role" class="form-select form-select-sm">
                             <option value="student" @selected($user->role == 'student')>Student</option>
                             <option value="coordinator" @selected($user->role == 'coordinator')>Coordinator</option>
                             <option value="adviser" @selected($user->role == 'adviser')>Adviser</option>
                             <option value="panelist" @selected($user->role == 'panelist')>Panelist</option>
                         </select>
-                        <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                        <button type="submit" class="btn btn-success btn-sm ms-2">
                             Update
                         </button>
                     </form>
