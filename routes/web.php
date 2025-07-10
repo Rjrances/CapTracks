@@ -25,9 +25,9 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware(['auth'])->group(function () {
 
     // Dashboards
-    Route::get('/student-dashboard', [StudentDashboardController::class, 'index']);
-    Route::get('/coordinator-dashboard', [CoordinatorDashboardController::class, 'index']);
-    Route::get('/chairperson-dashboard', [ChairpersonDashboardController::class, 'index']);
+ Route::get('/student-dashboard', [StudentDashboardController::class, 'index'])->name('student-dashboard');
+    Route::get('/coordinator-dashboard', [CoordinatorDashboardController::class, 'index'])->name('coordinator-dashboard');
+    Route::get('/chairperson-dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson-dashboard');
 
     // Class Management
     Route::get('/classes', [ClassController::class, 'index'])->name('classes.index');
