@@ -9,6 +9,7 @@ class ChairpersonDashboardController extends Controller
     public function index()
     {
         // Load chairperson-specific data
-        return view('dashboards.chairperson');
+        return view('chairperson.dashboard');
+
     }
 }

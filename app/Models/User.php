@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -60,5 +61,13 @@ class User extends Authenticatable
             $lastId = self::whereYear('created_at', $year)->count() + 1;
             $user->school_id = 'CAP' . $year . '-' . str_pad($lastId, 4, '0', STR_PAD_LEFT);
         });
+    }
+
+    /**
+     * Relationship: A user (teacher) can have many offerings.
+     */
+    public function offerings(): HasMany
+    {
+        return $this->hasMany(Offering::class, 'teacher_id');
     }
 }

@@ -6,6 +6,8 @@ use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\CoordinatorDashboardController;
 use App\Http\Controllers\ChairpersonDashboardController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ChairpersonController;
+
 
 Route::get('/', fn () => redirect('/login'));
 
@@ -33,11 +35,17 @@ Route::middleware(['auth'])->group(function () {
 
 
     Route::middleware(['auth', 'checkrole:chairperson'])->prefix('chairperson')->group(function () {
-    Route::get('/dashboard', [ChairpersonDashboardController::class, 'index']);
-    Route::get('/offerings', [ChairpersonController::class, 'offerings']);
-    Route::get('/teachers', [ChairpersonController::class, 'teachers']);
-    Route::get('/schedules', [ChairpersonController::class, 'schedules']);
-    Route::get('/assign', [ChairpersonController::class, 'assign']);
+    Route::get('/dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson.dashboard');
+
+    // Offerings (view/add/edit/delete logic should be inside ChairpersonController)
+    Route::get('/offerings', [ChairpersonController::class, 'offerings'])->name('chairperson.offerings');
+    Route::post('/offerings', [ChairpersonController::class, 'storeOffering'])->name('chairperson.offerings.store');
+    Route::put('/offerings/{id}', [ChairpersonController::class, 'updateOffering'])->name('chairperson.offerings.update');
+    Route::delete('/offerings/{id}', [ChairpersonController::class, 'deleteOffering'])->name('chairperson.offerings.delete');
+
+    // View-only sections
+    Route::get('/teachers', [ChairpersonController::class, 'teachers'])->name('chairperson.teachers');
+    Route::get('/schedules', [ChairpersonController::class, 'schedules'])->name('chairperson.schedules');
 });
 
 });
