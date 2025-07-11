@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use App\Models\School;
 use App\Models\User;
 
 class AuthController extends Controller
@@ -16,51 +15,42 @@ class AuthController extends Controller
     }
 
     public function login(Request $request)
-{
-    $credentials = $request->validate([
-        'school_id' => ['required'],
-        // Remove 'email' rule entirely
-        // Password is optional for first-time login
-    ]);
+    {
+        $credentials = $request->validate([
+            'school_id' => ['required'],
+        ]);
 
-    $user = User::where('school_id', $request->school_id)->first();
+        $user = User::where('school_id', $request->school_id)->first();
 
-    if (!$user) {
-        return back()->withErrors(['school_id' => 'Invalid School ID.']);
-    }
+        if (!$user) {
+            return back()->withErrors(['school_id' => 'Invalid School ID.']);
+        }
 
-    // First-time login without password
-    if (!$user->password) {
+        // First-time login: No password yet
+        if (!$user->password) {
+            Auth::login($user);
+            return redirect('/change-password');
+        }
+
+        // If password is set, check if provided password matches
+        if (!Hash::check($request->password, $user->password)) {
+            return back()->withErrors(['password' => 'Incorrect password.']);
+        }
+
         Auth::login($user);
-        return redirect('/change-password');
+        $request->session()->regenerate();
+
+        if ($user->must_change_password) {
+            return redirect('/change-password');
+        }
+
+        return $this->redirectBasedOnRole($user->role);
     }
-
-    // Check password if exists
-    if (!Hash::check($request->password, $user->password)) {
-        return back()->withErrors(['password' => 'Incorrect password.']);
-    }
-
-    Auth::login($user);
-    $request->session()->regenerate();
-
-    if ($user->must_change_password) {
-        return redirect('/change-password');
-    }
-
-    // Redirect based on role
-    return match ($user->role) {
-        'chairperson', 'coordinator' => redirect('/coordinator-dashboard'),
-        'adviser', 'panelist' => redirect('/adviser-dashboard'),
-        'student' => redirect('/student-dashboard'),
-        default => redirect('/student-dashboard'),
-    };
-}
-
 
     private function redirectBasedOnRole($role)
     {
         return match ($role) {
-            'coordinator', 'chairperson' => redirect('/coordinator-dashboard'),
+            'chairperson', 'coordinator' => redirect('/coordinator-dashboard'),
             'adviser', 'panelist' => redirect('/adviser-dashboard'),
             'student' => redirect('/student-dashboard'),
             default => redirect('/student-dashboard'),
@@ -76,40 +66,36 @@ class AuthController extends Controller
         return redirect('/login');
     }
 
-    public function showRegisterForm() {
+    public function showRegisterForm()
+    {
         return view('auth.register');
     }
 
-    public function register(Request $request) {
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users',
-        'password' => 'required|min:8|confirmed',
-        'role' => 'nullable|in:student,coordinator,adviser,panelist'
-    ]);
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8|confirmed',
+            'role' => 'nullable|in:student,coordinator,adviser,panelist,chairperson',
+        ]);
 
-    $role = 'student'; // default
+        $role = 'student';
 
-    // ✅ Add this check to prevent "trying to read property 'role' on null"
-    if (Auth::check() && Auth::user()->role === 'chairperson' && $request->filled('role')) {
-        $role = $request->role;
+        if (Auth::check() && Auth::user()->role === 'chairperson' && $request->filled('role')) {
+            $role = $request->role;
+        }
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $role,
+            'must_change_password' => true,
+        ]);
+
+        return redirect('/login')->with('success', 'Registration successful. Please log in.');
     }
-
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-        'role' => $role,
-        'must_change_password' => true,
-    ]);
-
-    return redirect('/login')->with('success', 'Registration successful. Please log in.');
-
-
-}
-
-
-
 
     public function showChangePasswordForm()
     {
