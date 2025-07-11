@@ -10,10 +10,15 @@ class User extends Authenticatable
     use Notifiable;
 
     protected $fillable = [
+        'school_id',      // ✅ new
         'name',
         'email',
+        'birthday',       // ✅ new
+        'course',         // ✅ new
+        'year',           // ✅ new
         'password',
-        'role', // assuming 'role' is a string column
+        'role',
+        'must_change_password',
     ];
 
     protected $hidden = [
@@ -23,6 +28,8 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'birthday' => 'date',
+        'must_change_password' => 'boolean',
     ];
 
     /**
@@ -30,14 +37,11 @@ class User extends Authenticatable
      *        RELATIONSHIPS
      * ================================
      */
-
-    // If a teacher has many offerings
     public function offerings()
     {
         return $this->hasMany(Offering::class, 'teacher_id');
     }
 
-    // If a student has many schedules
     public function schedules()
     {
         return $this->hasMany(Schedule::class, 'student_id');
@@ -48,7 +52,6 @@ class User extends Authenticatable
      *        ROLE CHECK HELPERS
      * ================================
      */
-
     public function isChairperson(): bool
     {
         return $this->role === 'chairperson';
