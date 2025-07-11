@@ -9,10 +9,10 @@ use App\Models\Notification;
 class CoordinatorDashboardController extends Controller
 {
     public function index()
-    {
-        $events = Event::where('date', '>=', now())->orderBy('date')->get();
-        $notifications = Notification::where('role', 'coordinator')->latest()->take(5)->get();
+{
+    $events = Event::whereDate('date', '>=', now())->orderBy('date')->get();
+    $notifications = Notification::latest()->take(5)->get();
 
-        return view('coordinator.dashboard', compact('events', 'notifications'));
-    }
+    return view('coordinator.dashboard', compact('events', 'notifications'));
+}
 }

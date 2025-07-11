@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Event; // create Event model if needed
 use Illuminate\Http\Request;
 
-class EventController extends Controller
+class EventController extends Controller    
 {
     public function show($id)
     {
