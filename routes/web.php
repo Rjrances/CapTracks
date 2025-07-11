@@ -18,6 +18,9 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Removed public registration routes
+// Route::get('/register', [AuthController::class, 'showRegisterForm']);
+// Route::post('/register', [AuthController::class, 'register']);
 // // Public Registration
 // Route::get('/register', [AuthController::class, 'showRegisterForm']);
 // Route::post('/register', [AuthController::class, 'register']);
@@ -25,7 +28,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
 
     // Dashboards
- Route::get('/student-dashboard', [StudentDashboardController::class, 'index'])->name('student-dashboard');
+    Route::get('/student-dashboard', [StudentDashboardController::class, 'index'])->name('student-dashboard');
     Route::get('/coordinator-dashboard', [CoordinatorDashboardController::class, 'index'])->name('coordinator-dashboard');
     Route::get('/chairperson-dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson-dashboard');
 
@@ -41,15 +44,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/change-password', [AuthController::class, 'showChangePasswordForm']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 
-    // Chairperson-only routes
+    // Chairperson (Admin) Routes
     Route::middleware(['checkrole:chairperson'])->prefix('chairperson')->group(function () {
-
-        // Dashboard
         Route::get('/dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson.dashboard');
 
         // Manage Roles
-        Route::get('/manage-roles', [RoleController::class, 'index']);
-        Route::post('/manage-roles/{user}', [RoleController::class, 'update'])->name('roles.update');
+        Route::get('/manage-roles', [RoleController::class, 'index'])->name('chairperson.manage-roles');
+        Route::post('/manage-roles/{user}', [RoleController::class, 'update'])->name('chairperson.roles.update');
 
         // Offerings
         Route::get('/offerings', [ChairpersonController::class, 'offerings'])->name('chairperson.offerings');
@@ -57,8 +58,15 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/offerings/{id}', [ChairpersonController::class, 'updateOffering'])->name('chairperson.offerings.update');
         Route::delete('/offerings/{id}', [ChairpersonController::class, 'deleteOffering'])->name('chairperson.offerings.delete');
 
-        // View-only sections
+        // Teachers & Schedules
         Route::get('/teachers', [ChairpersonController::class, 'teachers'])->name('chairperson.teachers');
         Route::get('/schedules', [ChairpersonController::class, 'schedules'])->name('chairperson.schedules');
+
+        // Student Excel Upload
+        Route::get('/upload-students', function () {
+            return view('chairperson.students.import');
+        })->name('chairperson.upload-form');
+
+        Route::post('/upload-students', [ChairpersonController::class, 'uploadStudentList'])->name('chairperson.upload-students');
     });
 });

@@ -1,4 +1,3 @@
-<!-- resources/views/auth/login.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,14 +17,17 @@
 
         <form method="POST" action="/login">
             @csrf
+
             <div class="mb-4">
-                <label for="email" class="block text-sm font-semibold mb-1">School Email</label>
-                <input type="email" name="email" id="email" required class="w-full p-2 border rounded" />
+                <label for="school_id" class="block text-sm font-semibold mb-1">School ID</label>
+                <input type="text" name="school_id" id="school_id" required class="w-full p-2 border rounded" />
             </div>
 
             <div class="mb-4">
-                <label for="password" class="block text-sm font-semibold mb-1">Password</label>
-                <input type="password" name="password" id="password" required class="w-full p-2 border rounded" />
+                <label for="password" class="block text-sm font-semibold mb-1">
+                    Password <span class="text-xs text-gray-500">(Leave blank if first-time login)</span>
+                </label>
+                <input type="password" name="password" id="password" class="w-full p-2 border rounded" />
             </div>
 
             <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Login</button>

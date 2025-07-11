@@ -9,7 +9,8 @@ class RoleController extends Controller
 {
     public function index()
     {
-        $users = User::where('role', '!=', 'chairperson')->get(); // Don't show yourself
+        // Exclude users with 'chairperson' role (e.g., yourself)
+        $users = User::where('role', '!=', 'chairperson')->get();
         return view('chairperson.manage-roles', compact('users'));
     }
 

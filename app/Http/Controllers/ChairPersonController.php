@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Offering;
 use App\Models\User;
 use App\Models\Schedule;
+use App\Imports\StudentsImport;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 class ChairpersonController extends Controller
 {
@@ -30,7 +33,7 @@ class ChairpersonController extends Controller
 
         Offering::create($request->only('title', 'description'));
 
-        return back()->with('success', 'Offering added successfully.');
+        return redirect()->back()->with('success', 'Offering added successfully.');
     }
 
     public function updateOffering(Request $request, $id)
@@ -44,7 +47,7 @@ class ChairpersonController extends Controller
 
         $offering->update($request->only('title', 'description'));
 
-        return back()->with('success', 'Offering updated successfully.');
+        return redirect()->back()->with('success', 'Offering updated successfully.');
     }
 
     public function deleteOffering($id)
@@ -52,7 +55,7 @@ class ChairpersonController extends Controller
         $offering = Offering::findOrFail($id);
         $offering->delete();
 
-        return back()->with('success', 'Offering deleted successfully.');
+        return redirect()->back()->with('success', 'Offering deleted successfully.');
     }
 
     // TEACHERS
@@ -65,7 +68,21 @@ class ChairpersonController extends Controller
     // SCHEDULES
     public function schedules()
     {
-        $schedules = Schedule::all();
+        $schedules = Schedule::with('offering')->get(); // eager loading
         return view('chairperson.schedules.index', compact('schedules'));
     }
+
+    public function uploadStudentList(Request $request)
+{
+    $request->validate([
+        'file' => 'required|mimes:xlsx,xls,csv|max:2048',
+    ]);
+
+    try {
+        Excel::import(new StudentsImport, $request->file('file'));
+        return redirect()->back()->with('success', 'Student list imported successfully.');
+    } catch (\Exception $e) {
+        return redirect()->back()->withErrors(['file' => 'Import failed: ' . $e->getMessage()]);
+    }
+}
 }

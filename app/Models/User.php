@@ -2,72 +2,73 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
+        'school_id',      // ✅ new
         'name',
         'email',
+        'birthday',       // ✅ new
+        'course',         // ✅ new
+        'year',           // ✅ new
         'password',
-        'school_id',
         'role',
         'must_change_password',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'must_change_password' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'birthday' => 'date',
+        'must_change_password' => 'boolean',
+    ];
 
     /**
-     * Auto-generate school ID on creation.
+     * ================================
+     *        RELATIONSHIPS
+     * ================================
      */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($user) {
-            $year = now()->year;
-            $lastId = self::whereYear('created_at', $year)->count() + 1;
-            $user->school_id = 'CAP' . $year . '-' . str_pad($lastId, 4, '0', STR_PAD_LEFT);
-        });
-    }
-
-    /**
-     * Relationship: A user (teacher) can have many offerings.
-     */
-    public function offerings(): HasMany
+    public function offerings()
     {
         return $this->hasMany(Offering::class, 'teacher_id');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class, 'student_id');
+    }
+
+    /**
+     * ================================
+     *        ROLE CHECK HELPERS
+     * ================================
+     */
+    public function isChairperson(): bool
+    {
+        return $this->role === 'chairperson';
+    }
+
+    public function isCoordinator(): bool
+    {
+        return $this->role === 'coordinator';
+    }
+
+    public function isTeacher(): bool
+    {
+        return in_array($this->role, ['adviser', 'panelist']);
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->role === 'student';
     }
 }

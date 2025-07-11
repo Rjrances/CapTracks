@@ -13,8 +13,10 @@
 </head>
 <body class="bg-gray-100 font-sans text-gray-900">
 
-    {{-- Common navigation/header --}}
-    @include('partials.nav')
+    {{-- Conditionally include navigation if the partial exists --}}
+    @if (View::exists('partials.nav'))
+        @include('partials.nav')
+    @endif
 
     <main class="container mx-auto p-6">
         {{-- Where page content goes --}}

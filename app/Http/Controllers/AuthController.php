@@ -9,45 +9,56 @@ use App\Models\User;
 
 class AuthController extends Controller
 {
-    public function showLoginForm() {
+    public function showLoginForm()
+    {
         return view('auth.login');
     }
 
-    public function login(Request $request) {
+    public function login(Request $request)
+    {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
+            'school_id' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
+        $user = User::where('school_id', $request->school_id)->first();
 
-            // Redirect based on role or password change requirement
-            if (Auth::user()->must_change_password) {
-                return redirect('/change-password');
-            }
-
-            // Role-based redirect
-            switch (Auth::user()->role) {
-                case 'coordinator':
-                case 'chairperson':
-                    return redirect('/coordinator-dashboard');
-                case 'adviser':
-                case 'panelist':
-                    return redirect('/adviser-dashboard');
-                case 'student':
-                    return redirect('/student-dashboard');
-                default:
-                    return redirect('/student-dashboard');
-            }
+        if (!$user) {
+            return back()->withErrors(['school_id' => 'Invalid School ID.']);
         }
 
-        return back()->withErrors([
-            'email' => 'Invalid credentials.',
-        ]);
+        // First-time login: No password yet
+        if (!$user->password) {
+            Auth::login($user);
+            return redirect('/change-password');
+        }
+
+        // If password is set, check if provided password matches
+        if (!Hash::check($request->password, $user->password)) {
+            return back()->withErrors(['password' => 'Incorrect password.']);
+        }
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        if ($user->must_change_password) {
+            return redirect('/change-password');
+        }
+
+        return $this->redirectBasedOnRole($user->role);
     }
 
-    public function logout(Request $request) {
+    private function redirectBasedOnRole($role)
+    {
+        return match ($role) {
+            'chairperson', 'coordinator' => redirect('/coordinator-dashboard'),
+            'adviser', 'panelist' => redirect('/adviser-dashboard'),
+            'student' => redirect('/student-dashboard'),
+            default => redirect('/student-dashboard'),
+        };
+    }
+
+    public function logout(Request $request)
+    {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -55,46 +66,44 @@ class AuthController extends Controller
         return redirect('/login');
     }
 
-    public function showRegisterForm() {
+    public function showRegisterForm()
+    {
         return view('auth.register');
     }
 
-    public function register(Request $request) {
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users',
-        'password' => 'required|min:8|confirmed',
-        'role' => 'nullable|in:student,coordinator,adviser,panelist'
-    ]);
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8|confirmed',
+            'role' => 'nullable|in:student,coordinator,adviser,panelist,chairperson',
+        ]);
 
-    $role = 'student'; // default
+        $role = 'student';
 
-    // ✅ Add this check to prevent "trying to read property 'role' on null"
-    if (Auth::check() && Auth::user()->role === 'chairperson' && $request->filled('role')) {
-        $role = $request->role;
+        if (Auth::check() && Auth::user()->role === 'chairperson' && $request->filled('role')) {
+            $role = $request->role;
+        }
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $role,
+            'must_change_password' => true,
+        ]);
+
+        return redirect('/login')->with('success', 'Registration successful. Please log in.');
     }
 
-    $user = User::create([
-        'name' => $request->name,
-        'email' => $request->email,
-        'password' => Hash::make($request->password),
-        'role' => $role,
-        'must_change_password' => true,
-    ]);
-
-    return redirect('/login')->with('success', 'Registration successful. Please log in.');
-
-
-}
-
-
-
-
-    public function showChangePasswordForm() {
+    public function showChangePasswordForm()
+    {
         return view('auth.change-password');
     }
 
-    public function changePassword(Request $request) {
+    public function changePassword(Request $request)
+    {
         $request->validate([
             'password' => 'required|min:8|confirmed',
         ]);
@@ -104,6 +113,6 @@ class AuthController extends Controller
         $user->must_change_password = false;
         $user->save();
 
-        return redirect('/dashboard'); // or wherever you want
+        return $this->redirectBasedOnRole($user->role);
     }
 }

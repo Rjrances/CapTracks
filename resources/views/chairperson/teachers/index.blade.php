@@ -1,30 +1,32 @@
 @extends('layouts.chairperson')
 
 @section('content')
-<div class="container mt-5">
-    <h2 class="mb-4">Teachers</h2>
+    <div class="container">
+        <h2 class="mb-4">Teachers List</h2>
 
-    @if($teachers->isEmpty())
-        <div class="alert alert-info">No teachers found.</div>
-    @else
-        <table class="table table-bordered table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($teachers as $teacher)
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
                     <tr>
-                        <td>{{ $teacher->name }}</td>
-                        <td>{{ $teacher->email }}</td>
-                        <td>{{ ucfirst($teacher->role) }}</td>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
-</div>
+                </thead>
+                <tbody>
+                    @forelse ($teachers as $teacher)
+                        <tr>
+                            <td>{{ $teacher->name }}</td>
+                            <td>{{ $teacher->email }}</td>
+                            <td>{{ ucfirst($teacher->role) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="text-center">No teachers found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 @endsection
