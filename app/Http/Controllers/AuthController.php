@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\School;
 use App\Models\User;
 
 class AuthController extends Controller
@@ -75,16 +76,40 @@ class AuthController extends Controller
         return redirect('/login');
     }
 
-    // Registration removed – no more manual registration
-    public function showRegisterForm()
-    {
-        abort(403, 'Registration is disabled.');
+    public function showRegisterForm() {
+        return view('auth.register');
     }
 
-    public function register(Request $request)
-    {
-        abort(403, 'Registration is disabled.');
+    public function register(Request $request) {
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|min:8|confirmed',
+        'role' => 'nullable|in:student,coordinator,adviser,panelist'
+    ]);
+
+    $role = 'student'; // default
+
+    // ✅ Add this check to prevent "trying to read property 'role' on null"
+    if (Auth::check() && Auth::user()->role === 'chairperson' && $request->filled('role')) {
+        $role = $request->role;
     }
+
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'role' => $role,
+        'must_change_password' => true,
+    ]);
+
+    return redirect('/login')->with('success', 'Registration successful. Please log in.');
+
+
+}
+
+
+
 
     public function showChangePasswordForm()
     {
