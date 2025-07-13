@@ -12,7 +12,7 @@
     <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         <ul class="navbar-nav">
             <li class="nav-item"><a class="nav-link" href="{{ route('chairperson.offerings.index') }}">Offerings</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ route('chairperson.teachers') }}">Teachers</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ route('chairperson.teachers.index') }}">Teachers</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route('chairperson.schedules') }}">Schedules</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url('/chairperson/manage-roles') }}">Manage Roles</a></li>
 

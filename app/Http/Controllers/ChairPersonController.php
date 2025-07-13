@@ -29,28 +29,23 @@ class ChairpersonController extends Controller
         return view('chairperson.offerings.create');
     }
 
-    public function editOffering($id)
-    {
-        $offering = Offering::findOrFail($id);
-        return view('chairperson.offerings.edit', compact('offering'));
-    }
-
     public function storeOffering(Request $request)
     {
-         logger($request->all());
         $request->validate([
             'subject_title' => 'required|string|max:255',
             'subject_code' => 'required|string|max:100',
             'teacher_name'  => 'required|string|max:255',
         ]);
 
-        Offering::create([
-            'subject_title' => $request->subject_title,
-            'subject_code'  => $request->subject_code,
-            'teacher_name'  => $request->teacher_name,
-        ]);
+        Offering::create($request->only('subject_title', 'subject_code', 'teacher_name'));
 
         return redirect()->route('chairperson.offerings.index')->with('success', 'Offering added successfully.');
+    }
+
+    public function editOffering($id)
+    {
+        $offering = Offering::findOrFail($id);
+        return view('chairperson.offerings.edit', compact('offering'));
     }
 
     public function updateOffering(Request $request, $id)
@@ -62,14 +57,17 @@ class ChairpersonController extends Controller
         ]);
 
         $offering = Offering::findOrFail($id);
-
-        $offering->update([
-            'subject_title' => $request->subject_title,
-            'subject_code'  => $request->subject_code,
-            'teacher_name'  => $request->teacher_name,
-        ]);
+        $offering->update($request->only('subject_title', 'subject_code', 'teacher_name'));
 
         return redirect()->route('chairperson.offerings.index')->with('success', 'Offering updated successfully.');
+    }
+
+    public function deleteOffering($id)
+    {
+        $offering = Offering::findOrFail($id);
+        $offering->delete();
+
+        return redirect()->route('chairperson.offerings.index')->with('success', 'Offering deleted.');
     }
 
     // ======= TEACHERS =======
@@ -78,6 +76,65 @@ class ChairpersonController extends Controller
     {
         $teachers = User::whereIn('role', ['adviser', 'panelist'])->get();
         return view('chairperson.teachers.index', compact('teachers'));
+    }
+
+    public function createTeacher()
+    {
+        return view('chairperson.teachers.create');
+    }
+
+    public function storeTeacher(Request $request)
+    {
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'role'     => 'required|in:adviser,panelist',
+            'password' => 'required|string|min:8',
+        ]);
+
+        User::create([
+            'name'                 => $request->name,
+            'email'                => $request->email,
+            'role'                 => $request->role,
+            'password'             => bcrypt($request->password),
+            'school_id'            => now()->timestamp, // dummy unique ID
+            'birthday'             => now()->subYears(30),
+            'course'               => 'N/A',
+            'year'                 => 0,
+            'must_change_password' => true,
+        ]);
+
+        return redirect()->route('teachers.index')->with('success', 'Teacher added successfully.');
+    }
+
+    public function editTeacher($id)
+    {
+        $teacher = User::findOrFail($id);
+        return view('chairperson.teachers.edit', compact('teacher'));
+    }
+
+    public function updateTeacher(Request $request, $id)
+    {
+        $teacher = User::findOrFail($id);
+
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email,' . $teacher->id,
+            'role'     => 'required|in:adviser,panelist',
+            'password' => 'nullable|string|min:8',
+        ]);
+
+        $teacher->name = $request->name;
+        $teacher->email = $request->email;
+        $teacher->role = $request->role;
+
+        if ($request->filled('password')) {
+            $teacher->password = bcrypt($request->password);
+        }
+
+        $teacher->save();
+
+        return redirect()->route('teachers.index')->with('success', 'Teacher updated successfully.');
     }
 
     // ======= SCHEDULES =======

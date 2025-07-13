@@ -21,7 +21,7 @@
                 <div class="card shadow">
                     <div class="card-body">
                         <h5 class="card-title">View Teachers</h5>
-                        <a href="{{ route('chairperson.teachers') }}" class="btn btn-primary">Go</a>
+                        <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-primary">Go</a>
                     </div>
                 </div>
             </div>

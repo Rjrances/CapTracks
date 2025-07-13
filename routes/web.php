@@ -39,31 +39,35 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 
     // Chairperson Routes
-    Route::middleware(['checkrole:chairperson'])->prefix('chairperson')->group(function () {
+    Route::middleware(['checkrole:chairperson'])->prefix('chairperson')->name('chairperson.')->group(function () {
 
-        Route::get('/dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson.dashboard');
+        Route::get('/dashboard', [ChairpersonDashboardController::class, 'index'])->name('dashboard');
 
         // Manage Roles
-        Route::get('/manage-roles', [RoleController::class, 'index'])->name('chairperson.manage-roles');
-        Route::post('/manage-roles/{user}', [RoleController::class, 'update'])->name('chairperson.roles.update');
+        Route::get('/manage-roles', [RoleController::class, 'index'])->name('manage-roles');
+        Route::post('/manage-roles/{user}', [RoleController::class, 'update'])->name('roles.update');
 
         // Offerings
-        Route::get('/offerings', [ChairpersonController::class, 'indexOfferings'])->name('chairperson.offerings.index');
-        Route::get('/offerings/create', [ChairpersonController::class, 'createOffering'])->name('chairperson.offerings.create');
-        Route::post('/offerings', [ChairpersonController::class, 'storeOffering'])->name('chairperson.offerings.store');
-        Route::get('/offerings/{id}/edit', [ChairpersonController::class, 'editOffering'])->name('chairperson.offerings.edit'); // ✅ Added
-        Route::put('/offerings/{id}', [ChairpersonController::class, 'updateOffering'])->name('chairperson.offerings.update');
-        Route::delete('/offerings/{id}', [ChairpersonController::class, 'deleteOffering'])->name('chairperson.offerings.delete');
+        Route::get('/offerings', [ChairpersonController::class, 'indexOfferings'])->name('offerings.index');
+        Route::get('/offerings/create', [ChairpersonController::class, 'createOffering'])->name('offerings.create');
+        Route::post('/offerings', [ChairpersonController::class, 'storeOffering'])->name('offerings.store');
+        Route::get('/offerings/{id}/edit', [ChairpersonController::class, 'editOffering'])->name('offerings.edit');
+        Route::put('/offerings/{id}', [ChairpersonController::class, 'updateOffering'])->name('offerings.update');
+        Route::delete('/offerings/{id}', [ChairpersonController::class, 'deleteOffering'])->name('offerings.delete');
 
-        // Teachers & Schedules
-        Route::get('/teachers', [ChairpersonController::class, 'teachers'])->name('chairperson.teachers');
-        Route::get('/schedules', [ChairpersonController::class, 'schedules'])->name('chairperson.schedules');
+        // Teachers
+        Route::get('/teachers', [ChairpersonController::class, 'teachers'])->name('teachers.index');
+        Route::get('/teachers/create', [ChairpersonController::class, 'createTeacher'])->name('teachers.create');
+        Route::post('/teachers', [ChairpersonController::class, 'storeTeacher'])->name('teachers.store');
+        Route::get('/teachers/{id}/edit', [ChairpersonController::class, 'editTeacher'])->name('teachers.edit');
+        Route::put('/teachers/{id}', [ChairpersonController::class, 'updateTeacher'])->name('teachers.update');
+
+
+        // Schedules
+        Route::get('/schedules', [ChairpersonController::class, 'schedules'])->name('schedules');
 
         // Student Import via Excel
-        Route::get('/upload-students', function () {
-            return view('chairperson.students.import');
-        })->name('chairperson.upload-form');
-
-        Route::post('/upload-students', [ChairpersonController::class, 'uploadStudentList'])->name('chairperson.upload-students');
+        Route::get('/upload-students', fn () => view('chairperson.students.import'))->name('upload-form');
+        Route::post('/upload-students', [ChairpersonController::class, 'uploadStudentList'])->name('upload-students');
     });
 });
