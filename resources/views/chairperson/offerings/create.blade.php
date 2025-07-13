@@ -1,14 +1,30 @@
-@extends('layouts.app')
+@extends('layouts.chairperson')
 
 @section('content')
 <div class="container mt-5">
     <h2 class="mb-4">Add Offering</h2>
 
-    <form action="{{ route('offerings.store') }}" method="POST">
+    @if (session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    {{-- Offering Form --}}
+    <form action="{{ route('chairperson.offerings.store') }}" method="POST">
         @csrf
         <div class="mb-3">
-            <label for="name" class="form-label">Offering Name</label>
-            <input type="text" name="name" class="form-control" required>
+            <label for="title" class="form-label">Offering Name</label>
+            <input type="text" name="title" class="form-control" value="{{ old('title') }}" required>
+
         </div>
 
         <div class="mb-3">
