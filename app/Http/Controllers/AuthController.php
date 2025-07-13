@@ -48,14 +48,16 @@ class AuthController extends Controller
     }
 
     private function redirectBasedOnRole($role)
-    {
-        return match ($role) {
-            'chairperson', 'coordinator' => redirect('/coordinator-dashboard'),
-            'adviser', 'panelist' => redirect('/adviser-dashboard'),
-            'student' => redirect('/student-dashboard'),
-            default => redirect('/student-dashboard'),
-        };
-    }
+{
+    return match ($role) {
+        'chairperson' => redirect()->route('chairperson.dashboard'),
+        'coordinator' => redirect()->route('coordinator-dashboard'),
+        'adviser', 'panelist' => redirect()->route('adviser-dashboard'),
+        'student' => redirect()->route('student-dashboard'),
+        default => redirect('/login')->withErrors(['role' => 'Invalid role.']),
+    };
+}
+
 
     public function logout(Request $request)
     {
