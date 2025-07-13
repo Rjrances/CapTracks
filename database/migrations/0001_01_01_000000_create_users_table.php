@@ -19,6 +19,8 @@ return new class extends Migration
 
             $table->string('role')->default('student'); // ✅ role
 
+            $table->boolean('must_change_password')->default(false); // ✅ NEW
+
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable(); // ✅ allow null at first
             $table->rememberToken();
