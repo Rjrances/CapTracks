@@ -8,84 +8,80 @@ use App\Models\User;
 use App\Models\Schedule;
 use App\Imports\StudentsImport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Schema;
 
 class ChairpersonController extends Controller
 {
-    // Chairperson dashboard
     public function index()
     {
         return view('chairperson.dashboard');
     }
 
-    // ========== OFFERINGS ==========
+    // ======= OFFERINGS =======
 
-    // Show list of offerings
-    public function indexOfferings()
-    {
-        $offerings = Offering::all();
-        return view('chairperson.offerings.index', compact('offerings'));
-    }
+    // OFFERINGS
 
-    // Show create offering form
-    public function createOffering()
-    {
-        return view('chairperson.offerings.create');
-    }
+public function indexOfferings()
+{
+    $offerings = Offering::all();
+    return view('chairperson.offerings.index', compact('offerings'));
+}
 
-    // Show edit form for an offering
-    public function editOffering($id)
-    {
-        $offering = Offering::findOrFail($id);
-        return view('chairperson.offerings.edit', compact('offering'));
-    }
+public function createOffering()
+{
+    return view('chairperson.offerings.create');
+}
 
-    // Store a new offering
-    public function storeOffering(Request $request)
-    {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+public function editOffering($id)
+{
+    $offering = Offering::findOrFail($id);
+    return view('chairperson.offerings.edit', compact('offering'));
+}
 
-        Offering::create([
-            'title' => $request->title,
-            'description' => $request->description,
-        ]);
+public function storeOffering(Request $request)
+{
+    $request->validate([
+        'subject_code'   => 'required|string|max:100',
+        'subject_title'  => 'required|string|max:255',
+        'section'        => 'required|string|max:100',
+        'teacher_name'   => 'required|string|max:255',
+    ]);
 
-        return redirect()->route('chairperson.offerings.index')
-                         ->with('success', 'Offering added successfully.');
-    }
+    Offering::create([
+        'subject_code'   => $request->subject_code,
+        'subject_title'  => $request->subject_title,
+        'section'        => $request->section,
+        'teacher_name'   => $request->teacher_name,
+    ]);
 
-    // Update an existing offering
-    public function updateOffering(Request $request, $id)
-    {
-        $offering = Offering::findOrFail($id);
+    return redirect()->route('chairperson.offerings.index')
+                     ->with('success', 'Offering added successfully.');
+}
 
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+public function updateOffering(Request $request, $id)
+{
+    $offering = Offering::findOrFail($id);
 
-        $offering->update([
-            'title' => $request->title,
-            'description' => $request->description,
-        ]);
+    $request->validate([
+        'subject_code'   => 'required|string|max:100',
+        'subject_title'  => 'required|string|max:255',
+        'section'        => 'required|string|max:100',
+        'teacher_name'   => 'required|string|max:255',
+    ]);
 
-        return redirect()->route('chairperson.offerings.index')
-                         ->with('success', 'Offering updated successfully.');
-    }
+    $offering->update([
+        'subject_code'   => $request->subject_code,
+        'subject_title'  => $request->subject_title,
+        'section'        => $request->section,
+        'teacher_name'   => $request->teacher_name,
+    ]);
 
-    // Delete an offering
-    public function deleteOffering($id)
-    {
-        $offering = Offering::findOrFail($id);
-        $offering->delete();
+    return redirect()->route('chairperson.offerings.index')
+                     ->with('success', 'Offering updated successfully.');
+}
 
-        return redirect()->route('chairperson.offerings.index')
-                         ->with('success', 'Offering deleted successfully.');
-    }
 
-    // ========== TEACHERS ==========
+    // ======= TEACHERS =======
 
     public function teachers()
     {
@@ -93,15 +89,15 @@ class ChairpersonController extends Controller
         return view('chairperson.teachers.index', compact('teachers'));
     }
 
-    // ========== SCHEDULES ==========
+    // ======= SCHEDULES =======
 
     public function schedules()
     {
-        $schedules = Schedule::with('offering')->get(); // eager loading offering
+        $schedules = Schedule::with('offering')->get();
         return view('chairperson.schedules.index', compact('schedules'));
     }
 
-    // ========== STUDENT EXCEL IMPORT ==========
+    // ======= STUDENT IMPORT =======
 
     public function uploadStudentList(Request $request)
     {

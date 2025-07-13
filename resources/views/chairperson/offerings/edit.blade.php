@@ -17,15 +17,25 @@
     <form action="{{ route('chairperson.offerings.update', $offering->id) }}" method="POST">
         @csrf
         @method('PUT')
-        <div class="mb-3">
-            <label for="title" class="form-label">Offering Name</label>
-            <input type="text" name="title" class="form-control" value="{{ old('title', $offering->title) }}" required>
 
+        <div class="form-group mb-3">
+            <label for="subject_code">Subject Code</label>
+            <input type="text" name="subject_code" class="form-control" value="{{ old('subject_code', $offering->subject_code) }}" required>
         </div>
 
-        <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <textarea name="description" class="form-control" rows="3">{{ $offering->description }}</textarea>
+        <div class="form-group mb-3">
+            <label for="subject_title">Subject Title</label>
+            <input type="text" name="subject_title" class="form-control" value="{{ old('subject_title', $offering->subject_title) }}" required>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="section">Section</label>
+            <input type="text" name="section" class="form-control" value="{{ old('section', $offering->section) }}" required>
+        </div>
+
+        <div class="form-group mb-4">
+            <label for="teacher_name">Teacher Name</label>
+            <input type="text" name="teacher_name" class="form-control" value="{{ old('teacher_name', $offering->teacher_name) }}" required>
         </div>
 
         <button type="submit" class="btn btn-primary">Update Offering</button>

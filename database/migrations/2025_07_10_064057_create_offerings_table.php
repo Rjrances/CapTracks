@@ -9,18 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
-{
-    Schema::create('offerings', function (Blueprint $table) {
-        $table->id();
-        $table->string('subject_code');
-        $table->string('subject_title');
-        $table->string('section');
-        $table->string('teacher_name'); // optional: use teacher_id if related to users table
-        $table->timestamps();
-    });
-}
-
+    public function up(): void
+    {
+        Schema::create('offerings', function (Blueprint $table) {
+            $table->id();
+            $table->string('subject_code');
+            $table->string('title'); // renamed from subject_title for consistency
+            $table->string('section');
+            $table->string('teacher_name'); // consider foreign key if needed
+            $table->text('description')->nullable(); // optional description
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

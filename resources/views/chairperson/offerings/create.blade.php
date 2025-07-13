@@ -18,21 +18,30 @@
         </div>
     @endif
 
-    {{-- Offering Form --}}
     <form action="{{ route('chairperson.offerings.store') }}" method="POST">
         @csrf
-        <div class="mb-3">
-            <label for="title" class="form-label">Offering Name</label>
-            <input type="text" name="title" class="form-control" value="{{ old('title') }}" required>
 
+        <div class="form-group mb-3">
+            <label for="subject_code">Subject Code</label>
+            <input type="text" name="subject_code" class="form-control" value="{{ old('subject_code') }}" required>
         </div>
 
-        <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <textarea name="description" class="form-control" rows="3"></textarea>
+        <div class="form-group mb-3">
+            <label for="subject_title">Subject Title</label>
+            <input type="text" name="subject_title" class="form-control" value="{{ old('subject_title') }}" required>
         </div>
 
-        <button type="submit" class="btn btn-success">Create Offering</button>
+        <div class="form-group mb-3">
+            <label for="section">Section</label>
+            <input type="text" name="section" class="form-control" value="{{ old('section') }}" required>
+        </div>
+
+        <div class="form-group mb-4">
+            <label for="teacher_name">Teacher Name</label>
+            <input type="text" name="teacher_name" class="form-control" value="{{ old('teacher_name') }}" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
     </form>
 </div>
 @endsection
