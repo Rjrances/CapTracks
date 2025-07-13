@@ -6,10 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Offering extends Model
 {
-    protected $fillable = ['name', 'description', 'teacher_id', 'schedule_time'];
-
-    public function teacher()
-    {
-        return $this->belongsTo(User::class, 'teacher_id');
-    }
+    protected $fillable = ['subject_title', 'subject_code', 'teacher_name'];
 }

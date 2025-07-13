@@ -14,16 +14,18 @@
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Title</th>
-                <th>Description</th>
+                <th>Subject Title</th>
+                <th>Offer Code</th>
+                <th>Teacher Name</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($offerings as $offering)
                 <tr>
-                    <td>{{ $offering->title }}</td>
-                    <td>{{ $offering->description }}</td>
+                    <td>{{ $offering->subject_title }}</td>
+                    <td>{{ $offering->subject_code }}</td>
+                    <td>{{ $offering->teacher_name }}</td>
                     <td>
                         <a href="{{ route('chairperson.offerings.edit', $offering->id) }}" class="btn btn-primary btn-sm">Edit</a>
                         <form action="{{ route('chairperson.offerings.delete', $offering->id) }}" method="POST" class="d-inline">

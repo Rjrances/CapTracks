@@ -19,29 +19,25 @@
     @endif
 
     <form action="{{ route('chairperson.offerings.store') }}" method="POST">
-        @csrf
+    @csrf
 
-        <div class="form-group mb-3">
-            <label for="subject_code">Subject Code</label>
-            <input type="text" name="subject_code" class="form-control" value="{{ old('subject_code') }}" required>
-        </div>
+    <div class="form-group">
+        <label for="subject_title">Subject Title</label>
+        <input type="text" name="subject_title" class="form-control" required>
+    </div>
 
-        <div class="form-group mb-3">
-            <label for="subject_title">Subject Title</label>
-            <input type="text" name="subject_title" class="form-control" value="{{ old('subject_title') }}" required>
-        </div>
+    <div class="form-group">
+        <label for="subject_code">Offer Code</label>
+        <input type="text" name="subject_code" class="form-control" required>
+    </div>
 
-        <div class="form-group mb-3">
-            <label for="section">Section</label>
-            <input type="text" name="section" class="form-control" value="{{ old('section') }}" required>
-        </div>
+    <div class="form-group">
+        <label for="teacher_name">Teacher Name</label>
+        <input type="text" name="teacher_name" class="form-control" required>
+    </div>
 
-        <div class="form-group mb-4">
-            <label for="teacher_name">Teacher Name</label>
-            <input type="text" name="teacher_name" class="form-control" value="{{ old('teacher_name') }}" required>
-        </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
 
-        <button type="submit" class="btn btn-primary">Save</button>
-    </form>
 </div>
 @endsection
