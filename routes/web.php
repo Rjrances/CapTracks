@@ -3,12 +3,15 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentDashboardController;
+use App\Http\Controllers\CoordinatorController;
 use App\Http\Controllers\CoordinatorDashboardController;
 use App\Http\Controllers\ChairpersonDashboardController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ChairpersonController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\MilestoneTemplateController;
+use App\Http\Controllers\MilestoneTaskController;
 
 // Redirect root to login
 Route::get('/', fn () => redirect('/login'));
@@ -23,7 +26,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Dashboards
     Route::get('/student-dashboard', [StudentDashboardController::class, 'index'])->name('student-dashboard');
-    Route::get('/coordinator-dashboard', [CoordinatorDashboardController::class, 'index'])->name('coordinator-dashboard');
+    Route::get('/coordinator-dashboard', [CoordinatorController::class, 'index'])->name('coordinator-dashboard');
     Route::get('/chairperson-dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson-dashboard');
 
     // Class Management
@@ -37,6 +40,38 @@ Route::middleware(['auth'])->group(function () {
     // Password Management
     Route::get('/change-password', [AuthController::class, 'showChangePasswordForm']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
+
+   // coordinator Routes
+Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->name('coordinator.')->group(function () {
+    // Coordinator Dashboard
+    Route::get('/dashboard', [CoordinatorDashboardController::class, 'index'])->name('dashboard');
+
+    // View Class List by Semester
+     Route::get('/classlist', [CoordinatorController::class, 'classlist'])->name('classlist.index');
+    // Milestone Templates
+Route::resource('milestones', MilestoneTemplateController::class);
+
+// ✅ Milestone Tasks (nested under milestone)
+Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () {
+    Route::get('tasks', [MilestoneTaskController::class, 'index'])->name('tasks.index');
+    Route::post('tasks', [MilestoneTaskController::class, 'store'])->name('tasks.store');
+    Route::get('tasks/{task}/edit', [MilestoneTaskController::class, 'edit'])->name('tasks.edit');
+    Route::put('tasks/{task}', [MilestoneTaskController::class, 'update'])->name('tasks.update');
+    Route::delete('tasks/{task}', [MilestoneTaskController::class, 'destroy'])->name('tasks.destroy');
+});
+    // Defense Scheduling
+    Route::get('/defense/scheduling', [CoordinatorController::class, 'defenseScheduling'])->name('defense.scheduling');
+
+    // Groups
+    Route::get('/groups', [CoordinatorController::class, 'groups'])->name('groups.index');
+
+    // Notifications
+    Route::get('/notifications', [CoordinatorController::class, 'notifications'])->name('notifications');
+
+    // Profile (optional)
+    Route::get('/profile', [CoordinatorController::class, 'profile'])->name('profile');
+});
+
 
     // Chairperson Routes
     Route::middleware(['checkrole:chairperson'])->prefix('chairperson')->name('chairperson.')->group(function () {

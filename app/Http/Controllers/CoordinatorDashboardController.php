@@ -3,16 +3,27 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Student;
 use App\Models\Event;
 use App\Models\Notification;
 
 class CoordinatorDashboardController extends Controller
 {
+    // Dashboard page for coordinator
     public function index()
-{
-    $events = Event::whereDate('date', '>=', now())->orderBy('date')->get();
-    $notifications = Notification::latest()->take(5)->get();
+    {
+        $studentCount = Student::count();
+        $recentStudents = Student::latest()->take(5)->get();
 
-    return view('coordinator.dashboard', compact('events', 'notifications'));
-}
+        // Fetch upcoming events (for example)
+        $events = Event::where('date', '>=', now())
+                       ->orderBy('date')
+                       ->take(5)
+                       ->get();
+
+        // Fetch latest notifications
+        $notifications = Notification::latest()->take(5)->get();
+
+        return view('coordinator.dashboard', compact('studentCount', 'recentStudents', 'events', 'notifications'));
+    }
 }

@@ -1,4 +1,8 @@
 @import 'tailwindcss';
+.pagination svg {
+    width: 1em;
+    height: 1em;
+}
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
