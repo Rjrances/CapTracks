@@ -17,7 +17,7 @@
                     <a class="nav-link" href="{{ route('chairperson.offerings.index') }}">Offerings</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('chairperson.schedules') }}">Schedules</a>
+                    <a class="nav-link" href="{{ route('chairperson.schedules.index') }}">Schedules</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('chairperson.teachers.index') }}">Teachers</a>

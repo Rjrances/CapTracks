@@ -14,7 +14,7 @@
             <div class="d-flex gap-2">
                 <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm border">Manage Offerings</a>
                 <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm border">View Teachers</a>
-                <a href="{{ route('chairperson.schedules') }}" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm border">View Schedules</a>
+                <a href="{{ route('chairperson.schedules.index') }}" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm border">View Schedules</a>
                 <a href="{{ route('chairperson.upload-form') }}" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm border">Import Students</a>
                 <a href="{{ url('/chairperson/manage-roles') }}" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm border">Manage Roles</a>
             </div>

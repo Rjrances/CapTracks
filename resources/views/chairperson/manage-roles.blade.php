@@ -1,31 +1,30 @@
-@extends('layouts.chairperson') {{-- This assumes layouts/chairperson.blade.php exists --}}
+@extends('layouts.chairperson')
 
 @section('content')
-<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold mb-4">Manage User Roles</h1>
+<div class="container mt-5">
+    <h2 class="mb-4">Manage User Roles</h2>
 
     @if(session('success'))
-        <div class="bg-green-100 text-green-800 p-3 mb-4 rounded">
-            {{ session('success') }}
-        </div>
+        <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <table class="w-full table-auto border-collapse mb-4">
+    @if($users->count())
+    <table class="table table-bordered">
         <thead>
-            <tr class="bg-gray-200">
-                <th class="p-2 text-left">Name</th>
-                <th class="p-2 text-left">Email</th>
-                <th class="p-2 text-left">Current Role</th>
-                <th class="p-2 text-left">Change Role</th>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Current Role</th>
+                <th>Change Role</th>
             </tr>
         </thead>
         <tbody>
             @foreach($users as $user)
-            <tr class="border-b">
-                <td class="p-2">{{ $user->name }}</td>
-                <td class="p-2">{{ $user->email }}</td>
-                <td class="p-2 capitalize">{{ $user->role }}</td>
-                <td class="p-2">
+            <tr>
+                <td>{{ $user->name }}</td>
+                <td>{{ $user->email }}</td>
+                <td class="text-capitalize">{{ $user->role }}</td>
+                <td>
                     <form method="POST" action="{{ route('chairperson.roles.update', $user) }}" class="d-flex align-items-center gap-2">
                         @csrf
                         <select name="role" class="form-select form-select-sm">
@@ -43,9 +42,8 @@
             @endforeach
         </tbody>
     </table>
-
-    @if($users->isEmpty())
-        <p class="text-gray-500">No users available for role assignment.</p>
+    @else
+        <p>No users available for role assignment.</p>
     @endif
 </div>
 @endsection

@@ -109,7 +109,7 @@ Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () 
 
 
         // Schedules
-        Route::get('/schedules', [ChairpersonController::class, 'schedules'])->name('schedules');
+        Route::resource('schedules', \App\Http\Controllers\ScheduleController::class);
 
         // Student Import via Excel
         Route::get('/upload-students', fn () => view('chairperson.students.import'))->name('upload-form');
