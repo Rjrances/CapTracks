@@ -15,6 +15,7 @@
             <li class="nav-item"><a class="nav-link" href="{{ route('chairperson.teachers.index') }}">Teachers</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route('chairperson.schedules') }}">Schedules</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ url('/chairperson/manage-roles') }}">Manage Roles</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ route('chairperson.upload-form') }}">Import Students</a></li>
 
             <li class="nav-item d-flex align-items-center text-white px-2">
                 Hi, {{ $user->name }}

@@ -45,6 +45,16 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Manage Roles --}}
+            <div class="col-md-3 mt-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">Manage Roles</h5>
+                        <a href="{{ url('/chairperson/manage-roles') }}" class="btn btn-primary">Manage</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 @endsection
