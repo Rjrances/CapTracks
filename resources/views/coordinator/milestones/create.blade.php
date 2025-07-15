@@ -3,44 +3,38 @@
 @section('title', 'Create Milestone Template')
 
 @section('content')
-<div class="max-w-3xl mx-auto p-6 bg-white shadow rounded">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Create Milestone Template</h1>
+<div class="container" style="max-width: 600px;">
+    <div class="card shadow-sm mt-5">
+        <div class="card-body">
+            <h1 class="card-title mb-4 fw-bold fs-3">Create Milestone Template</h1>
 
-    @if ($errors->any())
-        <div class="mb-4 bg-red-100 text-red-700 p-4 rounded">
-            <strong>There were some problems with your input:</strong>
-            <ul class="mt-2 list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <strong>There were some problems with your input:</strong>
+                    <ul class="mb-0 mt-2">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form action="{{ route('coordinator.milestones.store') }}" method="POST">
+                @csrf
+                <div class="mb-3">
+                    <label for="name" class="form-label fw-semibold">Milestone Name</label>
+                    <input type="text" id="name" name="name" value="{{ old('name') }}" class="form-control" required autofocus>
+                </div>
+                <div class="mb-4">
+                    <label for="description" class="form-label fw-semibold">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="4">{{ old('description') }}</textarea>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-link text-secondary">&larr; Back to List</a>
+                    <button type="submit" class="btn btn-primary px-4">Save Milestone</button>
+                </div>
+            </form>
         </div>
-    @endif
-
-    <form action="{{ route('coordinator.milestones.store') }}" method="POST">
-        @csrf
-
-        <div class="mb-4">
-            <label for="name" class="block font-semibold text-gray-700 mb-2">Milestone Name</label>
-            <input type="text" id="name" name="name" 
-                   value="{{ old('name') }}" 
-                   class="w-full px-4 py-2 border border-gray-300 rounded focus:ring focus:ring-blue-200"
-                   required>
-        </div>
-
-        <div class="mb-6">
-            <label for="description" class="block font-semibold text-gray-700 mb-2">Description</label>
-            <textarea id="description" name="description"
-                      class="w-full px-4 py-2 border border-gray-300 rounded focus:ring focus:ring-blue-200"
-                      rows="4">{{ old('description') }}</textarea>
-        </div>
-
-        <div class="flex justify-between items-center">
-            <a href="{{ route('coordinator.milestones.index') }}" class="text-gray-600 hover:underline">← Back to List</a>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-black px-6 py-2 rounded">
-                Save Milestone
-            </button>
-        </div>
-    </form>
+    </div>
 </div>
 @endsection
