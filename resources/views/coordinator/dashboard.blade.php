@@ -1,62 +1,72 @@
 @extends('layouts.coordinator')
 
 @section('content')
-<div class="max-w-7xl mx-auto p-6">
+<div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
+    <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 900px;">
+        <div class="mb-4" style="margin-bottom: 1.2rem !important;">
+            <h1 class="fw-bold mb-1" style="font-size:2.5rem; margin-bottom:0.1rem;">Coordinator Dashboard</h1>
+            <div class="text-muted" style="font-size:1.1rem; margin-bottom:0;">Manage schedules, assignments, and communications</div>
+        </div>
 
-    <h1 class="text-4xl font-extrabold mb-8 text-gray-900">Coordinator Dashboard</h1>
-    <p class="mb-10 text-gray-700 text-lg">Manage schedules, assignments, classes, and communications efficiently</p>
+        <!-- Quick Actions -->
+        <div class="mb-4">
+            <div class="fw-semibold mb-2" style="font-size:1.2rem;">Quick Actions</div>
+            <div class="d-flex gap-2">
+                <a href="#" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm border">Create New Class</a>
+                <a href="#" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm border">View All Classes</a>
+            </div>
+        </div>
 
-    {{-- Quick Actions --}}
-    {{-- Upcoming Events --}}
-    <section class="mb-14">
-        <h2 class="text-3xl font-semibold mb-6 text-gray-900 border-b border-gray-300 pb-2">Upcoming Events</h2>
-        @if($events->isEmpty())
-            <p class="text-center text-gray-500 italic">No upcoming events.</p>
-        @else
-            <div class="overflow-x-auto bg-white rounded-lg shadow-md">
-                <table class="min-w-full text-left border-collapse">
-                    <thead class="bg-gray-100 text-gray-700 uppercase text-sm tracking-wide">
+        <!-- Upcoming Events -->
+        <div class="mb-4">
+            <div class="fw-bold mb-2" style="font-size:1.2rem;">Upcoming Events</div>
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle mb-0 bg-white rounded-3" style="overflow:hidden;">
+                    <thead class="bg-light border-bottom">
                         <tr>
-                            <th class="px-6 py-4 border-b font-medium">Event</th>
-                            <th class="px-6 py-4 border-b font-medium">Date</th>
-                            <th class="px-6 py-4 border-b font-medium">Time</th>
-                            <th class="px-6 py-4 border-b font-medium">Details</th>
+                            <th>Event</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Details</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($events as $event)
-                        <tr class="hover:bg-gray-50 border-b">
-                            <td class="px-6 py-5">{{ $event->title }}</td>
-                            <td class="px-6 py-5">{{ $event->date ? \Carbon\Carbon::parse($event->date)->format('Y-m-d') : 'N/A' }}</td>
-                            <td class="px-6 py-5">{{ $event->time ? \Carbon\Carbon::parse($event->time)->format('h:i A') : 'N/A' }}</td>
-                            <td class="px-6 py-5">
-                                <a href="{{ route('events.show', $event->id) }}" 
-                                   class="text-blue-600 hover:underline font-medium">View Details</a>
-                            </td>
+                        @forelse($events as $event)
+                        <tr style="border-bottom:1px solid #f0f0f0;">
+                            <td>{{ $event->title }}</td>
+                            <td class="text-primary">{{ $event->date ? \Carbon\Carbon::parse($event->date)->format('Y-m-d') : 'N/A' }}</td>
+                            <td>{{ $event->time ? \Carbon\Carbon::parse($event->time)->format('h:i A') : 'N/A' }}</td>
+                            <td><a href="{{ route('events.show', $event->id) }}" class="fw-semibold text-decoration-none text-primary">View Details</a></td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr><td colspan="4" class="text-center text-muted">No upcoming events.</td></tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
-        @endif
-    </section>
+        </div>
 
-    {{-- Notifications --}}
-    <section>
-        <h2 class="text-3xl font-semibold mb-6 text-gray-900 border-b border-gray-300 pb-2">Notifications</h2>
-        @if($notifications->isEmpty())
-            <p class="text-center text-gray-500 italic">No notifications at the moment.</p>
-        @else
-            <ul class="bg-white rounded-lg shadow-md divide-y divide-gray-200">
-                @foreach($notifications as $note)
-                <li class="px-6 py-5 hover:bg-gray-50 transition duration-150">
-                    <p class="font-semibold text-gray-800">{{ $note->title }}</p>
-                    <p class="text-gray-600 mt-1">{{ $note->description }}</p>
-                </li>
-                @endforeach
-            </ul>
-        @endif
-    </section>
-
+        <!-- Notifications -->
+        <div class="mb-2">
+            <div class="fw-bold mb-2" style="font-size:1.2rem;">Notifications</div>
+            <div class="bg-light rounded-3 p-3">
+                @forelse($notifications as $note)
+                <div class="d-flex align-items-start mb-3">
+                    <div class="me-3 flex-shrink-0">
+                        <span class="d-inline-flex align-items-center justify-content-center bg-white border rounded-circle" style="width:36px; height:36px;">
+                            <svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 24 24' stroke='currentColor' style='color:#6c757d;'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z'/></svg>
+                        </span>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">{{ $note->title }}</div>
+                        <div class="text-muted small">{{ $note->description }}</div>
+                    </div>
+                </div>
+                @empty
+                <div class="text-muted text-center">No notifications at the moment.</div>
+                @endforelse
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

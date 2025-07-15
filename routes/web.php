@@ -35,6 +35,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/classes', [ClassController::class, 'store'])->name('classes.store');
 
     // Events
+    Route::get('/events', [CoordinatorController::class, 'events'])->name('events.index');
     Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
 
     // Password Management
@@ -49,7 +50,8 @@ Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->nam
     // View Class List by Semester
      Route::get('/classlist', [CoordinatorController::class, 'classlist'])->name('classlist.index');
     // Milestone Templates
-Route::resource('milestones', MilestoneTemplateController::class);
+    Route::resource('milestones', MilestoneTemplateController::class);
+    Route::patch('milestones/{milestone}/status', [MilestoneTemplateController::class, 'updateStatus'])->name('milestones.updateStatus');
 
 // ✅ Milestone Tasks (nested under milestone)
 Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () {
@@ -64,12 +66,20 @@ Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () 
 
     // Groups
     Route::get('/groups', [CoordinatorController::class, 'groups'])->name('groups.index');
+    Route::get('/groups/create', [CoordinatorController::class, 'create'])->name('groups.create');
+    Route::post('/groups', [CoordinatorController::class, 'store'])->name('groups.store');
+    Route::get('/groups/{group}', [CoordinatorController::class, 'show'])->name('groups.show');
+    Route::get('/groups/{group}/assign-adviser', [CoordinatorController::class, 'assignAdviser'])->name('groups.assignAdviser');
+    Route::get('/groups/{group}/milestones', [CoordinatorController::class, 'groupMilestones'])->name('groups.milestones');
 
     // Notifications
     Route::get('/notifications', [CoordinatorController::class, 'notifications'])->name('notifications');
 
     // Profile (optional)
     Route::get('/profile', [CoordinatorController::class, 'profile'])->name('profile');
+
+    // Events
+    Route::get('/events', [CoordinatorController::class, 'events'])->name('events.index');
 });
 
 

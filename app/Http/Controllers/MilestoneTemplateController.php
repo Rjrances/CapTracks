@@ -4,13 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\MilestoneTemplate;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 
 class MilestoneTemplateController extends Controller
 {
     public function index()
     {
-        $milestones = MilestoneTemplate::with('tasks')->paginate(10);
-        return view('coordinator.milestones.index', compact('milestones'));
+        $statuses = ['todo', 'in_progress', 'done'];
+        $milestonesByStatus = [];
+        foreach ($statuses as $status) {
+            $milestonesByStatus[$status] = MilestoneTemplate::with('tasks')->where('status', $status)->get();
+        }
+        return view('coordinator.milestones.index', compact('milestonesByStatus'));
     }
 
     public function create()
@@ -52,5 +57,15 @@ class MilestoneTemplateController extends Controller
         $milestone->delete();
 
         return redirect()->route('coordinator.milestones.index')->with('success', 'Milestone deleted successfully.');
+    }
+
+    public function updateStatus(Request $request, MilestoneTemplate $milestone)
+    {
+        $request->validate([
+            'status' => 'required|in:todo,in_progress,done',
+        ]);
+        $milestone->status = $request->status;
+        $milestone->save();
+        return Response::json(['success' => true]);
     }
 }

@@ -29,8 +29,8 @@
                         <td>{{ $teacher->email }}</td>
                         <td>{{ ucfirst($teacher->role) }}</td>
                         <td>
-                            <a href="{{ route('teachers.edit', $teacher->id) }}" class="btn btn-primary btn-sm">Edit</a>
-                            <form action="{{ route('teachers.update', $teacher->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to update?');">
+                            <a href="{{ route('chairperson.teachers.edit', $teacher->id) }}" class="btn btn-primary btn-sm">Edit</a>
+                            <form action="{{ route('chairperson.teachers.update', $teacher->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to update?');">
                                 @csrf
                                 @method('PUT')
                                 <button type="submit" class="btn btn-secondary btn-sm">Update</button>

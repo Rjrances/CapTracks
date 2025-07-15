@@ -36,11 +36,75 @@ class CoordinatorController extends Controller
 
         // If a semester is selected, get paginated students for that semester
         if ($selectedSemester) {
-            $students = DB::table('students')
-                ->where('semester', $selectedSemester)
-                ->paginate(10); // 👈 Paginate 10 students per page
+            $studentsQuery = DB::table('students')
+                ->where('semester', $selectedSemester);
+            if ($request->filled('search')) {
+                $search = $request->input('search');
+                $studentsQuery->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                      ->orWhere('student_id', 'like', "%$search%")
+                      ->orWhere('email', 'like', "%$search%" );
+                });
+            }
+            $students = $studentsQuery->paginate(10)->appends($request->only(['semester', 'search']));
         }
 
         return view('coordinator.classlist.index', compact('semesters', 'students', 'selectedSemester'));
+    }
+
+    public function groups(Request $request)
+    {
+        $query = \App\Models\Group::with('adviser');
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('description', 'like', "%$search%" );
+            });
+        }
+        $groups = $query->paginate(10)->appends($request->only('search'));
+        return view('coordinator.groups.index', compact('groups'));
+    }
+
+    public function create()
+    {
+        return view('coordinator.groups.create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        \App\Models\Group::create($validated);
+
+        return redirect()->route('coordinator.groups.index')->with('success', 'Group created successfully!');
+    }
+
+    public function show($id)
+    {
+        $group = \App\Models\Group::with('adviser')->findOrFail($id);
+        return view('coordinator.groups.show', compact('group'));
+    }
+
+    public function assignAdviser($id)
+    {
+        $group = \App\Models\Group::with('adviser')->findOrFail($id);
+        return view('coordinator.groups.assign_adviser', compact('group'));
+    }
+
+    public function groupMilestones($id)
+    {
+        $group = \App\Models\Group::findOrFail($id);
+        // Placeholder: fetch milestones if implemented
+        return view('coordinator.groups.milestones', compact('group'));
+    }
+
+    public function events()
+    {
+        $events = \App\Models\Event::orderBy('date', 'desc')->get();
+        return view('coordinator.events.index', compact('events'));
     }
 }
