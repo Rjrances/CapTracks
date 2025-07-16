@@ -5,7 +5,10 @@
         <div class="collapse navbar-collapse justify-content-end">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="{{ route('logout') }}">Logout</a>
+                    <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="nav-link btn btn-link text-white p-0" style="text-decoration: none;">Logout</button>
+                    </form>
                 </li>
             </ul>
         </div>

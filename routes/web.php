@@ -116,3 +116,29 @@ Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () 
         Route::post('/upload-students', [ChairpersonController::class, 'uploadStudentList'])->name('upload-students');
     });
 });
+
+// Student dashboard and feature pages
+Route::middleware(['auth', 'checkrole:student'])->prefix('student')->name('student.')->group(function () {
+    Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/project', [\App\Http\Controllers\ProjectSubmissionController::class, 'index'])->name('project');
+    Route::get('/project/create', [\App\Http\Controllers\ProjectSubmissionController::class, 'create'])->name('project.create');
+    Route::post('/project', [\App\Http\Controllers\ProjectSubmissionController::class, 'store'])->name('project.store');
+    Route::get('/project/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'show'])->name('project.show');
+    Route::delete('/project/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'destroy'])->name('project.destroy');
+    Route::get('/group', [\App\Http\Controllers\StudentGroupController::class, 'show'])->name('group');
+    Route::get('/groups', [\App\Http\Controllers\StudentGroupController::class, 'index'])->name('group.index');
+    Route::get('/group/create', [\App\Http\Controllers\StudentGroupController::class, 'create'])->name('group.create');
+    Route::post('/group', [\App\Http\Controllers\StudentGroupController::class, 'store'])->name('group.store');
+    Route::get('/group/edit', [\App\Http\Controllers\StudentGroupController::class, 'edit'])->name('group.edit');
+    Route::put('/group', [\App\Http\Controllers\StudentGroupController::class, 'update'])->name('group.update');
+    Route::get('/proposal', fn () => 'Proposal & Endorsement Page (to be implemented)')->name('proposal');
+    Route::get('/milestones', fn () => 'Milestones Page (to be implemented)')->name('milestones');
+});
+
+// Teacher project review routes (for future use)
+Route::middleware(['auth', 'checkrole:adviser,panelist'])->prefix('teacher')->name('teacher.')->group(function () {
+    Route::get('/project', [\App\Http\Controllers\ProjectSubmissionController::class, 'index'])->name('project.index');
+    Route::get('/project/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'show'])->name('project.show');
+    Route::get('/project/{id}/edit', [\App\Http\Controllers\ProjectSubmissionController::class, 'edit'])->name('project.edit');
+    Route::put('/project/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'update'])->name('project.update');
+});
