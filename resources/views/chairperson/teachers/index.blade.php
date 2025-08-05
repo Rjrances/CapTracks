@@ -2,17 +2,32 @@
 
 @section('content')
 <div class="container mt-5">
-    <h2 class="mb-4">Teachers List</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="fas fa-chalkboard-teacher me-2"></i>Faculty Management
+        </h2>
+        <a href="{{ route('chairperson.teachers.create') }}" class="btn btn-success">
+            <i class="fas fa-upload me-1"></i>Import Faculty
+        </a>
+    </div>
 
     {{-- Success Message --}}
     @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     @endif
 
-    {{-- Add New Teacher --}}
-    <a href="{{ route('chairperson.teachers.create') }}" class="btn btn-success mb-3">Add New Teacher</a>
+    {{-- Error Message --}}
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-    @if ($teachers->count())
+    @if ($teachers && $teachers->count())
         <table class="table table-bordered">
             <thead class="table-dark">
                 <tr>
@@ -29,13 +44,18 @@
                         <td>{{ $teacher->email }}</td>
                         <td>{{ ucfirst($teacher->role) }}</td>
                         <td>
-                            <a href="{{ route('chairperson.teachers.edit', $teacher->id) }}" class="btn btn-primary btn-sm">Edit</a>
-                            <form action="{{ route('chairperson.teachers.update', $teacher->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to update?');">
-                                @csrf
-                                @method('PUT')
-                                <button type="submit" class="btn btn-secondary btn-sm">Update</button>
-                            </form>
-                            {{-- You may add a delete button here if you have delete functionality --}}
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ route('chairperson.teachers.edit', $teacher->id) }}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form action="{{ route('chairperson.teachers.delete', $teacher->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this faculty member?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @endforeach

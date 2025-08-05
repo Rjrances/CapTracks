@@ -54,7 +54,7 @@ class CoordinatorController extends Controller
 
     public function groups(Request $request)
     {
-        $query = \App\Models\Group::with('adviser');
+        $query = \App\Models\Group::with(['adviser', 'members']);
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -85,14 +85,48 @@ class CoordinatorController extends Controller
 
     public function show($id)
     {
-        $group = \App\Models\Group::with('adviser')->findOrFail($id);
+        $group = \App\Models\Group::with(['adviser', 'members'])->findOrFail($id);
         return view('coordinator.groups.show', compact('group'));
+    }
+
+    public function edit($id)
+    {
+        $group = \App\Models\Group::findOrFail($id);
+        return view('coordinator.groups.edit', compact('group'));
     }
 
     public function assignAdviser($id)
     {
-        $group = \App\Models\Group::with('adviser')->findOrFail($id);
+        $group = \App\Models\Group::with(['adviser', 'members'])->findOrFail($id);
         return view('coordinator.groups.assign_adviser', compact('group'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $group = \App\Models\Group::findOrFail($id);
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $group->update($validated);
+
+        return redirect()->route('coordinator.groups.show', $group->id)->with('success', 'Group updated successfully!');
+    }
+
+    public function destroy($id)
+    {
+        $group = \App\Models\Group::findOrFail($id);
+        
+        // Delete related records first (due to foreign key constraints)
+        $group->members()->detach(); // Remove all group members
+        $group->adviserInvitations()->delete(); // Delete adviser invitations
+        
+        // Delete the group
+        $group->delete();
+
+        return redirect()->route('coordinator.groups.index')->with('success', 'Group deleted successfully!');
     }
 
     public function groupMilestones($id)

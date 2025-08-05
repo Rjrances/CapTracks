@@ -14,6 +14,19 @@ class Student extends Model
         'name',
         'email',
         'semester',
-        'course',  // add this line
+        'course',
     ];
+
+    // Relationships
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'group_members', 'student_id', 'group_id')
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'email', 'email');
+    }
 }

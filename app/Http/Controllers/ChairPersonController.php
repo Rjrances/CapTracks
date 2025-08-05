@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Schedule;
 use App\Imports\StudentsImport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\FacultyImport;
 
 class ChairpersonController extends Controller
 {
@@ -150,14 +151,92 @@ class ChairpersonController extends Controller
     public function uploadStudentList(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:2048',
+            'file' => 'required|file|mimes:xlsx,xls',
         ]);
 
         try {
             Excel::import(new StudentsImport, $request->file('file'));
-            return redirect()->back()->with('success', 'Student list imported successfully.');
+            return back()->with('success', 'Students imported successfully!');
         } catch (\Exception $e) {
-            return redirect()->back()->withErrors(['file' => 'Import failed: ' . $e->getMessage()]);
+            return back()->with('error', 'Error importing students: ' . $e->getMessage());
         }
+    }
+
+    // ======= FACULTY MANAGEMENT =======
+
+    public function facultyManagement()
+    {
+        $faculty = User::whereIn('role', ['adviser', 'panelist'])->get();
+        return view('chairperson.teachers.index', compact('faculty'));
+    }
+
+    public function uploadFacultyList(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        try {
+            Excel::import(new FacultyImport, $request->file('file'));
+            return back()->with('success', 'Faculty imported successfully!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error importing faculty: ' . $e->getMessage());
+        }
+    }
+
+    public function createFaculty()
+    {
+        return view('chairperson.teachers.create');
+    }
+
+    public function storeFaculty(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        try {
+            Excel::import(new FacultyImport, $request->file('file'));
+            return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty members imported successfully!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error importing faculty: ' . $e->getMessage());
+        }
+    }
+
+    public function editFaculty($id)
+    {
+        $faculty = User::findOrFail($id);
+        return view('chairperson.teachers.edit', compact('faculty'));
+    }
+
+    public function updateFaculty(Request $request, $id)
+    {
+        $faculty = User::findOrFail($id);
+        
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'school_id' => 'required|string|unique:users,school_id,' . $id,
+            'role' => 'required|in:adviser,panelist',
+            'course' => 'nullable|string|max:255',
+        ]);
+
+        $faculty->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'school_id' => $request->school_id,
+            'role' => $request->role,
+            'course' => $request->course,
+        ]);
+
+        return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member updated successfully.');
+    }
+
+    public function deleteFaculty($id)
+    {
+        $faculty = User::findOrFail($id);
+        $faculty->delete();
+
+        return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member deleted successfully.');
     }
 }

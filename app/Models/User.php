@@ -47,6 +47,16 @@ class User extends Authenticatable
         return $this->hasMany(Schedule::class, 'student_id');
     }
 
+    public function adviserInvitations()
+    {
+        return $this->hasMany(\App\Models\AdviserInvitation::class, 'faculty_id');
+    }
+
+    public function student()
+    {
+        return $this->hasOne(Student::class, 'email', 'email');
+    }
+
     /**
      * ================================
      *        ROLE CHECK HELPERS

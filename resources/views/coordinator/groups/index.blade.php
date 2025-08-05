@@ -22,6 +22,7 @@
                     <tr>
                         <th>Name</th>
                         <th>Description</th>
+                        <th>Members</th>
                         <th>Adviser</th>
                         <th>Actions</th>
                     </tr>
@@ -31,15 +32,32 @@
                     <tr style="border-bottom:1px solid #f0f0f0;">
                         <td class="fw-semibold">{{ $group->name }}</td>
                         <td class="text-muted">{{ $group->description ?? '-' }}</td>
-                        <td>{{ $group->adviser ? $group->adviser->name : '—' }}</td>
+                        <td>
+                            <span class="badge bg-primary">{{ $group->members->count() }} members</span>
+                        </td>
+                        <td>
+                            @if($group->adviser)
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-success me-2">Assigned</span>
+                                    {{ $group->adviser->name }}
+                                </div>
+                            @else
+                                <span class="badge bg-warning">No Adviser</span>
+                            @endif
+                        </td>
                         <td>
                             <a href="{{ route('coordinator.groups.show', $group->id) }}" class="btn btn-outline-primary btn-sm rounded-pill me-1">View</a>
                             <a href="{{ route('coordinator.groups.assignAdviser', $group->id) }}" class="btn btn-outline-secondary btn-sm rounded-pill me-1">Assign Adviser</a>
-                            <a href="{{ route('coordinator.groups.milestones', $group->id) }}" class="btn btn-outline-success btn-sm rounded-pill">Milestones</a>
+                            <a href="{{ route('coordinator.groups.milestones', $group->id) }}" class="btn btn-outline-success btn-sm rounded-pill me-1">Milestones</a>
+                            <form action="{{ route('coordinator.groups.destroy', $group->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this group? This action cannot be undone.')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill">Delete</button>
+                            </form>
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="4" class="text-center text-muted">No groups found.</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted">No groups found.</td></tr>
                     @endforelse
                 </tbody>
             </table>
