@@ -1,0 +1,52 @@
+CAPTRACK PROJECT SOURCE CODE
+
+This ZIP file contains the complete source code for the CapTrack system.
+
+Contents:
+/app
+  /Http/Controllers/
+    - AdviserController.php
+    - AuthController.php
+    - CoordinatorController.php
+    - ProjectSubmissionController.php
+    - StudentGroupController.php
+  /Models/
+    - User.php
+    - Student.php
+    - Group.php
+    - MilestoneTemplate.php
+    - MilestoneTask.php
+    - ProjectSubmission.php
+  /views/
+    - student/
+    - adviser/
+    - coordinator/
+    - chairperson/
+
+/database
+  /migrations/
+    - create_users_table.php
+    - create_students_table.php
+    - create_groups_table.php
+    - create_milestone_templates_table.php
+    - create_milestone_tasks_table.php
+    - create_project_submissions_table.php
+
+/public
+  /css/
+  /js/
+  /images/
+
+/config
+  - app.php
+  - database.php
+  - auth.php
+
+/routes
+  - web.php
+
+README.md
+composer.json
+package.json
+
+This is a test ZIP file for demonstration purposes. 

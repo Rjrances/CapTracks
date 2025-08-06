@@ -1,0 +1,50 @@
+CHAPTER 3: METHODOLOGY
+
+3.1 Research Design
+This study employs a developmental research design, focusing on the creation and implementation of a web-based capstone project management system.
+
+3.2 System Development Methodology
+The project follows the Agile development methodology with the following phases:
+- Planning and Requirements Analysis
+- System Design and Architecture
+- Development and Implementation
+- Testing and Quality Assurance
+- Deployment and Maintenance
+
+3.3 Technology Stack
+The system will be developed using:
+- Backend: Laravel PHP Framework
+- Database: MySQL
+- Frontend: HTML, CSS, JavaScript, Bootstrap
+- Version Control: Git
+- Development Environment: XAMPP/Laravel Homestead
+
+3.4 System Architecture
+The system follows the Model-View-Controller (MVC) architecture:
+- Model: Database interactions and business logic
+- View: User interface and presentation layer
+- Controller: Request handling and application flow
+
+3.5 Database Design
+The database design includes the following main entities:
+- Users (Students, Faculty, Administrators)
+- Groups and Team Management
+- Milestones and Tasks
+- Project Submissions
+- Notifications and Communications
+
+3.6 User Interface Design
+The user interface focuses on:
+- Responsive design for multiple devices
+- Intuitive navigation and user experience
+- Accessibility and usability standards
+- Modern and professional appearance
+
+3.7 Testing Strategy
+The testing approach includes:
+- Unit testing for individual components
+- Integration testing for system modules
+- User acceptance testing with stakeholders
+- Performance and security testing
+
+This is a test PDF document for demonstration purposes. 

@@ -1,0 +1,31 @@
+CAPSTONE PROJECT PROPOSAL
+
+Project Title: [CapTrack] A Web-Based System to Monitor and Manage Capstone Project Milestones and Team Progress
+
+Proponents:
+• Rances, Rainer Josh
+• Antigua, Gilford  
+• Ortiz, Sean Michael
+
+Project Description:
+This project aims to develop a comprehensive web-based system for monitoring and managing capstone project milestones and team progress. The system will provide real-time tracking of project deliverables, task assignments, and progress visualization.
+
+Objectives:
+1. To develop a milestone tracking system
+2. To implement team management features
+3. To create progress visualization tools
+4. To establish notification systems
+
+Methodology:
+The project will use Laravel framework with MySQL database, implementing MVC architecture and responsive design principles.
+
+Timeline:
+- Phase 1: System Design (2 weeks)
+- Phase 2: Core Development (4 weeks)  
+- Phase 3: Testing & Integration (2 weeks)
+- Phase 4: Deployment (1 week)
+
+Expected Outcomes:
+A fully functional web-based system that streamlines capstone project management and improves team collaboration.
+
+This is a test document for demonstration purposes. 

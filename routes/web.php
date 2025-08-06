@@ -13,8 +13,8 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\MilestoneTemplateController;
 use App\Http\Controllers\MilestoneTaskController;
 
-// Redirect root to login
-Route::get('/', fn () => redirect('/login'));
+// Landing page
+Route::get('/', fn () => view('welcome'))->name('welcome');
 
 // Login & Logout
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -152,6 +152,11 @@ Route::middleware(['auth', 'checkrole:adviser,panelist'])->prefix('adviser')->na
     Route::post('/invitations/{invitation}/respond', [\App\Http\Controllers\AdviserController::class, 'respondToInvitation'])->name('invitations.respond');
     Route::get('/groups', [\App\Http\Controllers\AdviserController::class, 'myGroups'])->name('groups');
     Route::get('/groups/{group}', [\App\Http\Controllers\AdviserController::class, 'groupDetails'])->name('groups.details');
+    
+    // ✅ NEW: Task management routes
+    Route::get('/tasks', [\App\Http\Controllers\AdviserController::class, 'tasksIndex'])->name('tasks.index');
+    Route::get('/groups/{group}/tasks', [\App\Http\Controllers\AdviserController::class, 'groupTasks'])->name('groups.tasks');
+    Route::patch('/tasks/{task}', [\App\Http\Controllers\AdviserController::class, 'updateTask'])->name('tasks.update');
     
     // Project review routes
     Route::get('/project', [\App\Http\Controllers\ProjectSubmissionController::class, 'index'])->name('project.index');

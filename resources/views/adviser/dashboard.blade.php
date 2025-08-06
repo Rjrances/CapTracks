@@ -37,6 +37,10 @@
                 <a href="{{ route('adviser.project.index') }}" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm border">
                     <i class="fas fa-file-alt me-2"></i>Project Reviews
                 </a>
+                <!-- ✅ NEW: Quick Task Management -->
+                <a href="{{ route('adviser.tasks.index') }}" class="btn btn-light rounded-pill px-4 fw-semibold shadow-sm border">
+                    <i class="fas fa-tasks me-2"></i>Task Management
+                </a>
             </div>
         </div>
 
@@ -106,7 +110,7 @@
             </div>
         </div>
 
-        <!-- My Groups -->
+        <!-- My Groups with Progress -->
         <div class="mb-4">
             <div class="fw-bold mb-2" style="font-size:1.2rem;">
                 <i class="fas fa-users me-2"></i>My Groups
@@ -134,9 +138,43 @@
                                         {{ Str::limit($group->description, 100) }}
                                     </div>
                                 @endif
-                                <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-eye"></i> View Details
-                                </a>
+                                
+                                <!-- ✅ NEW: Simple Progress Bar -->
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-muted">Project Progress</small>
+                                        <small class="text-muted">{{ $group->progress_percentage ?? 0 }}%</small>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-success" role="progressbar" 
+                                             style="width: {{ $group->progress_percentage ?? 0 }}%" 
+                                             aria-valuenow="{{ $group->progress_percentage ?? 0 }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- ✅ NEW: Quick Stats -->
+                                <div class="d-flex gap-3 mb-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-tasks me-1"></i>
+                                        {{ $group->completed_tasks ?? 0 }}/{{ $group->total_tasks ?? 0 }} tasks
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-file-alt me-1"></i>
+                                        {{ $group->submissions_count ?? 0 }} submissions
+                                    </small>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </a>
+                                    <!-- ✅ NEW: Quick Task Management -->
+                                    <a href="{{ route('adviser.groups.tasks', $group) }}" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-tasks"></i> Tasks
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     @endforeach
@@ -149,6 +187,39 @@
                     <div class="text-muted text-center">
                         <i class="fas fa-users fa-2x mb-2"></i><br>
                         No groups assigned yet
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- ✅ NEW: Recent Activities -->
+        <div class="mb-4">
+            <div class="fw-bold mb-2" style="font-size:1.2rem;">
+                <i class="fas fa-clock me-2"></i>Recent Activities
+            </div>
+            <div class="bg-light rounded-3 p-3">
+                @if(isset($recentActivities) && $recentActivities->count() > 0)
+                    @foreach($recentActivities as $activity)
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="me-3 flex-shrink-0">
+                                <span class="d-inline-flex align-items-center justify-content-center bg-info border rounded-circle" style="width:36px; height:36px;">
+                                    <i class="fas fa-{{ $activity->icon ?? 'circle' }} text-white"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">{{ $activity->title }}</div>
+                                <div class="text-muted small">{{ $activity->description }}</div>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ $activity->created_at->diffForHumans() }}
+                                </small>
+                            </div>
+                        </div>
+                    @endforeach
+                @else
+                    <div class="text-muted text-center">
+                        <i class="fas fa-clock fa-2x mb-2"></i><br>
+                        No recent activities
                     </div>
                 @endif
             </div>

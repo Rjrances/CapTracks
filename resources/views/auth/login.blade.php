@@ -8,16 +8,21 @@
 <body class="bg-gray-100 min-h-screen flex">
     <!-- Left Panel: Branding -->
     <div class="hidden md:flex flex-col justify-center items-start flex-1 bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-12">
-        <div class="text-5xl font-bold mb-6">*</div>
-        <h1 class="text-4xl font-extrabold leading-tight mb-4">Hello<br>CapTrack! <span class="inline-block">👋</span></h1>
+        <!-- Logo Section -->
+        <div class="mb-8 text-center">
+            <img src="{{ asset('images/Logo.png') }}" alt="CapTrack Logo" class="w-24 h-24 mb-1 mx-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div class="text-6xl font-bold mb-1" style="display: none;">📊</div>
+            <h1 class="text-4xl font-extrabold leading-tight mb-4 text-white">CapTrack</h1>
+        </div>
         <p class="text-lg mb-auto">Skip repetitive and manual capstone tasks. Get highly productive through automation and save tons of time!</p>
         <footer class="mt-12 text-sm opacity-70">© 2024 CapTrack. All rights reserved.</footer>
     </div>
     <!-- Right Panel: Login Form -->
     <div class="flex flex-col justify-center items-center flex-1 bg-white p-8 shadow-lg min-h-screen">
         <div class="w-full max-w-md">
-            <div class="flex items-center justify-center mb-4">
-                <span class="text-2xl font-extrabold text-blue-700 tracking-wide">CapTrack</span>
+            <div class="flex items-center justify-center mb-6">
+                <img src="{{ asset('images/Logo.png') }}" alt="CapTrack Logo" class="w-12 h-12 mr-3" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                <span class="text-2xl font-extrabold text-blue-700 tracking-wide" style="display: inline-block;">CapTrack</span>
             </div>
             <h2 class="text-2xl font-bold mb-6 text-gray-900">Welcome Back!</h2>
             @if ($errors->any())
@@ -28,7 +33,7 @@
             <form method="POST" action="/login" class="space-y-5">
                 @csrf
                 <div>
-                    <label for="school_id" class="block text-sm font-semibold mb-1">School ID</label>
+                    <label for="school_id" class="block text-sm font-semibold mb-1">Faculty ID / School ID</label>
                     <input type="text" name="school_id" id="school_id" required class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
