@@ -12,6 +12,7 @@
     <table class="table table-bordered">
         <thead>
             <tr>
+                <th>ID Number</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Current Role</th>
@@ -21,6 +22,7 @@
         <tbody>
             @foreach($users as $user)
             <tr>
+                <td>{{ $user->school_id ?? 'N/A' }}</td>
                 <td>{{ $user->name }}</td>
                 <td>{{ $user->email }}</td>
                 <td class="text-capitalize">{{ $user->role }}</td>
