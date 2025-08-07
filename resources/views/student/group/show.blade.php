@@ -4,6 +4,12 @@
 
 @section('content')
 <div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">My Group</h2>
+        <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Return to Dashboard
+        </a>
+    </div>
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}

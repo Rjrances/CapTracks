@@ -15,15 +15,26 @@ class ProjectSubmissionController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        
-        // Check if user is an adviser or student
-        if ($user->isTeacher()) {
-            // Adviser view - show all submissions from their groups
-            return $this->adviserIndex($user);
+        // Check if user is authenticated via Laravel Auth (faculty/staff)
+        if (Auth::check()) {
+            $user = Auth::user();
+            
+            // Check if user is an adviser or student
+            if ($user->isTeacher()) {
+                // Adviser view - show all submissions from their groups
+                return $this->adviserIndex($user);
+            } else {
+                // Student view - show only their submissions
+                return $this->studentIndex($user);
+            }
         } else {
-            // Student view - show only their submissions
-            return $this->studentIndex($user);
+            // Student authenticated via session
+            if (session('is_student') && session('student_id')) {
+                $student = Student::find(session('student_id'));
+                return $this->studentIndexFromSession($student);
+            } else {
+                return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+            }
         }
     }
 
@@ -76,6 +87,15 @@ class ProjectSubmissionController extends Controller
     }
 
     /**
+     * Student view - show only their submissions (session-based auth)
+     */
+    private function studentIndexFromSession($student)
+    {
+        $submissions = $student ? ProjectSubmission::where('student_id', $student->id)->orderBy('submitted_at', 'desc')->get() : [];
+        return view('student.project.index', compact('submissions'));
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
@@ -92,7 +112,18 @@ class ProjectSubmissionController extends Controller
             'file' => 'required|file|mimes:pdf,doc,docx,zip',
             'type' => 'required|in:proposal,final,other',
         ]);
-        $student = Auth::user()->student;
+        
+        // Get student from either Auth or session
+        if (Auth::check()) {
+            $student = Auth::user()->student;
+        } else {
+            $student = Student::find(session('student_id'));
+        }
+        
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+        
         $path = $request->file('file')->store('submissions', 'public');
         ProjectSubmission::create([
             'student_id' => $student->id,
@@ -112,20 +143,32 @@ class ProjectSubmissionController extends Controller
         $submission = ProjectSubmission::with('student')->findOrFail($id);
         
         // Check if user is adviser and has access to this submission
-        $user = Auth::user();
-        if ($user->isTeacher()) {
-            $hasAccess = Group::where('adviser_id', $user->id)
-                ->whereHas('members', function($query) use ($submission) {
-                    $query->where('students.id', $submission->student_id);
-                })->exists();
-            
-            if (!$hasAccess) {
-                abort(403, 'Unauthorized access to this submission.');
+        if (Auth::check()) {
+            $user = Auth::user();
+            if ($user->isTeacher()) {
+                $hasAccess = Group::where('adviser_id', $user->id)
+                    ->whereHas('members', function($query) use ($submission) {
+                        $query->where('students.id', $submission->student_id);
+                    })->exists();
+                
+                if (!$hasAccess) {
+                    abort(403, 'Unauthorized access to this submission.');
+                }
+            } else {
+                // Student can only view their own submissions
+                if ($submission->student_id !== $user->student->id) {
+                    abort(403, 'Unauthorized access to this submission.');
+                }
             }
         } else {
-            // Student can only view their own submissions
-            if ($submission->student_id !== $user->student->id) {
-                abort(403, 'Unauthorized access to this submission.');
+            // Student authenticated via session
+            if (session('is_student') && session('student_id')) {
+                $student = Student::find(session('student_id'));
+                if ($submission->student_id !== $student->id) {
+                    abort(403, 'Unauthorized access to this submission.');
+                }
+            } else {
+                return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
             }
         }
         

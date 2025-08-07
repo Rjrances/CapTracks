@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class CheckStudentAuth
+class StudentAuthMiddleware
 {
     /**
      * Handle an incoming request.
@@ -21,11 +21,11 @@ class CheckStudentAuth
         }
 
         // Check if student is authenticated via session
-        if ($request->session()->has('is_student') && $request->session()->get('is_student')) {
+        if (session('is_student') && session('student_id')) {
             return $next($request);
         }
 
-        // Not authenticated
+        // Not authenticated, redirect to login
         return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
     }
 }

@@ -4,7 +4,12 @@
 
 @section('content')
 <div class="container mt-5">
-    <h2 class="mb-4">Upload Project Submission</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Upload Project Submission</h2>
+        <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Return to Dashboard
+        </a>
+    </div>
     <form action="{{ route('student.project.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <div class="mb-3">

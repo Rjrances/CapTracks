@@ -19,6 +19,7 @@ class AuthController extends Controller
     {
         $credentials = $request->validate([
             'school_id' => ['required'],
+            'password' => ['nullable'],
         ]);
 
         // First, try to find user in users table (faculty/staff)
@@ -59,7 +60,10 @@ class AuthController extends Controller
                 $request->session()->put('student_email', $student->email);
                 $request->session()->put('student_role', 'student');
                 $request->session()->put('is_student', true);
-                $request->session()->put('must_change_password', true);
+                $request->session()->put('must_change_password', $student->must_change_password);
+
+                // Regenerate session to ensure it's saved
+                $request->session()->regenerate();
 
                 return redirect('/change-password');
             }
@@ -75,13 +79,17 @@ class AuthController extends Controller
             $request->session()->put('student_email', $student->email);
             $request->session()->put('student_role', 'student');
             $request->session()->put('is_student', true);
+            $request->session()->put('must_change_password', $student->must_change_password);
+
+            // Regenerate session to ensure it's saved
+            $request->session()->regenerate();
 
             // Check if student must change password
             if ($student->must_change_password) {
                 return redirect('/change-password');
             }
 
-            return redirect()->route('student-dashboard');
+            return redirect()->route('student.dashboard');
         }
 
         // If not found in either table
@@ -169,11 +177,21 @@ class AuthController extends Controller
                 $student->must_change_password = false;
                 $student->save();
                 
-                return redirect()->route('student-dashboard');
+                // Clear the must_change_password flag from session
+                $request->session()->forget('must_change_password');
+                
+                return redirect()->route('student.dashboard');
             }
+            
+            // If student not found, redirect to login
+            return redirect('/login')->withErrors(['auth' => 'Student session expired. Please log in again.']);
         }
 
         // Faculty/staff changing password
+        if (!Auth::check()) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+        
         $user = Auth::user();
         $user->password = Hash::make($request->password);
         $user->must_change_password = false;

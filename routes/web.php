@@ -21,8 +21,11 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Student Dashboard (session-based authentication)
-Route::get('/student-dashboard', [StudentDashboardController::class, 'index'])->name('student-dashboard');
+
+
+// Password Management (accessible by both authenticated users and students)
+Route::get('/change-password', [AuthController::class, 'showChangePasswordForm']);
+Route::post('/change-password', [AuthController::class, 'changePassword']);
 
 // Authenticated Routes (faculty/staff only)
 Route::middleware(['auth'])->group(function () {
@@ -39,10 +42,6 @@ Route::middleware(['auth'])->group(function () {
     // Events
     Route::get('/events', [CoordinatorController::class, 'events'])->name('events.index');
     Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
-
-    // Password Management
-    Route::get('/change-password', [AuthController::class, 'showChangePasswordForm']);
-    Route::post('/change-password', [AuthController::class, 'changePassword']);
 
    // coordinator Routes
 Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->name('coordinator.')->group(function () {
@@ -124,7 +123,7 @@ Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () 
 });
 
 // Student dashboard and feature pages
-Route::middleware(['auth', 'checkrole:student'])->prefix('student')->name('student.')->group(function () {
+Route::prefix('student')->name('student.')->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
     Route::get('/project', [\App\Http\Controllers\ProjectSubmissionController::class, 'index'])->name('project');
     Route::get('/project/create', [\App\Http\Controllers\ProjectSubmissionController::class, 'create'])->name('project.create');

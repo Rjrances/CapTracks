@@ -11,7 +11,13 @@ class StudentGroupController extends Controller
 {
     public function show()
     {
-        $student = Auth::user()->student ?? null;
+        // Get student from either Auth or session
+        if (Auth::check()) {
+            $student = Auth::user()->student ?? null;
+        } else {
+            $student = \App\Models\Student::find(session('student_id'));
+        }
+        
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->id);
         })->with(['adviser', 'members', 'adviserInvitations.faculty'])->first() : null;
@@ -47,18 +53,30 @@ class StudentGroupController extends Controller
             'members.*' => 'exists:students,id',
         ]);
         
-        $student = Auth::user()->student;
+        // Get student from either Auth or session
+        if (Auth::check()) {
+            $student = Auth::user()->student;
+            $userInfo = [
+                'user_id' => Auth::id(),
+                'user_email' => Auth::user()->email,
+                'student_exists' => $student ? 'yes' : 'no',
+                'student_id' => $student ? $student->id : null
+            ];
+        } else {
+            $student = \App\Models\Student::find(session('student_id'));
+            $userInfo = [
+                'user_id' => session('student_id'),
+                'user_email' => session('student_email'),
+                'student_exists' => $student ? 'yes' : 'no',
+                'student_id' => $student ? $student->id : null
+            ];
+        }
         
         // Debug: Log user and student information
-        \Log::info('User info', [
-            'user_id' => Auth::id(),
-            'user_email' => Auth::user()->email,
-            'student_exists' => $student ? 'yes' : 'no',
-            'student_id' => $student ? $student->id : null
-        ]);
+        \Log::info('User info', $userInfo);
         
         if (!$student) {
-            \Log::error('Student record not found for user', ['user_id' => Auth::id()]);
+            \Log::error('Student record not found for user', $userInfo);
             return back()->with('error', 'Student record not found. Please contact administrator.');
         }
         
@@ -137,7 +155,13 @@ class StudentGroupController extends Controller
 
     public function edit()
     {
-        $student = Auth::user()->student;
+        // Get student from either Auth or session
+        if (Auth::check()) {
+            $student = Auth::user()->student;
+        } else {
+            $student = \App\Models\Student::find(session('student_id'));
+        }
+        
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->id);
         })->first() : null;
@@ -150,7 +174,14 @@ class StudentGroupController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
-        $student = Auth::user()->student;
+        
+        // Get student from either Auth or session
+        if (Auth::check()) {
+            $student = Auth::user()->student;
+        } else {
+            $student = \App\Models\Student::find(session('student_id'));
+        }
+        
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->id);
         })->first() : null;
@@ -176,7 +207,13 @@ class StudentGroupController extends Controller
             'message' => 'nullable|string|max:500',
         ]);
 
-        $student = Auth::user()->student;
+        // Get student from either Auth or session
+        if (Auth::check()) {
+            $student = Auth::user()->student;
+        } else {
+            $student = \App\Models\Student::find(session('student_id'));
+        }
+        
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->id);
         })->first() : null;
@@ -219,7 +256,13 @@ class StudentGroupController extends Controller
             'student_id' => 'required|exists:students,id',
         ]);
 
-        $student = Auth::user()->student;
+        // Get student from either Auth or session
+        if (Auth::check()) {
+            $student = Auth::user()->student;
+        } else {
+            $student = \App\Models\Student::find(session('student_id'));
+        }
+        
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->id);
         })->first() : null;
@@ -246,7 +289,13 @@ class StudentGroupController extends Controller
 
     public function removeMember(Request $request, $memberId)
     {
-        $student = Auth::user()->student;
+        // Get student from either Auth or session
+        if (Auth::check()) {
+            $student = Auth::user()->student;
+        } else {
+            $student = \App\Models\Student::find(session('student_id'));
+        }
+        
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->id);
         })->first() : null;

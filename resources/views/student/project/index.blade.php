@@ -4,7 +4,12 @@
 
 @section('content')
 <div class="container mt-5">
-    <h2 class="mb-4">My Project Submissions</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">My Project Submissions</h2>
+        <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Return to Dashboard
+        </a>
+    </div>
     <a href="{{ route('student.project.create') }}" class="btn btn-success mb-3">Upload New Submission</a>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>

@@ -18,6 +18,8 @@
     {{-- Conditionally include navigation if the partial exists --}}
     @if (auth()->check() && auth()->user()->role === 'student')
         @include('partials.nav.student')
+    @elseif (session('is_student'))
+        @include('partials.nav.student')
     @elseif (View::exists('partials.nav'))
         @include('partials.nav')
     @endif

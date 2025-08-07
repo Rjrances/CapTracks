@@ -4,6 +4,12 @@
 
 @section('content')
 <div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Create New Group</h2>
+        <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Return to Dashboard
+        </a>
+    </div>
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow-sm">
@@ -110,7 +116,7 @@
                                 @endphp
                                 
                                 @foreach($availableStudents as $student)
-                                    @if($student->email !== Auth::user()->email)
+                                    @if($student->email !== (Auth::check() ? Auth::user()->email : session('student_email')))
                                         <div class="col-md-6 mb-2">
                                             <div class="form-check">
                                                 <input class="form-check-input member-checkbox" type="checkbox" 
