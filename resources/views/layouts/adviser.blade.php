@@ -28,7 +28,7 @@
                     <li class="nav-item"><a class="nav-link" href="{{ route('adviser.groups') }}">My Groups</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('adviser.project.index') }}">Projects</a></li>
                 </ul>
-                <span class="navbar-text me-3">Hi, {{ auth()->user()->name }}</span>
+
                 <form method="POST" action="{{ route('logout') }}" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>

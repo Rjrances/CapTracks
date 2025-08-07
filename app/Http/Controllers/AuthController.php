@@ -100,9 +100,9 @@ class AuthController extends Controller
 {
     return match ($role) {
         'chairperson' => redirect()->route('chairperson.dashboard'),
-        'coordinator' => redirect()->route('coordinator-dashboard'),
+        'coordinator' => redirect()->route('coordinator.dashboard'),
         'adviser', 'panelist' => redirect()->route('adviser.dashboard'),
-        'student' => redirect()->route('student-dashboard'),
+        'student' => redirect()->route('student.dashboard'),
         default => redirect('/login')->withErrors(['role' => 'Invalid role.']),
     };
 }

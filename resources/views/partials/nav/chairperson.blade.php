@@ -18,7 +18,7 @@
             <li class="nav-item"><a class="nav-link text-white" href="{{ route('chairperson.schedules.index') }}">Schedules</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="{{ url('/chairperson/manage-roles') }}">Manage Roles</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="{{ route('chairperson.upload-form') }}">Import Students</a></li>
-            <li class="nav-item d-flex align-items-center text-white px-2">Hi, {{ $user->name }}</li>
+
             <li class="nav-item">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

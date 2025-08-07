@@ -50,8 +50,8 @@
                     <!-- Login/Register Buttons -->
                     <div class="flex items-center space-x-4">
                         @auth
-                            <a href="{{ url('/dashboard') }}" class="bg-captrack-blue text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors">
-                                Dashboard
+                            <a href="{{ route('login') }}" class="bg-captrack-blue text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors">
+                                Login
                             </a>
                         @else
                             <a href="{{ route('login') }}" class="text-captrack-dark hover:text-captrack-blue transition-colors">

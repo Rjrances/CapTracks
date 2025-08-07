@@ -164,7 +164,8 @@ class StudentGroupController extends Controller
         
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->id);
-        })->first() : null;
+        })->with(['adviser', 'members', 'adviserInvitations.faculty'])->first() : null;
+        
         return view('student.group.edit', compact('group'));
     }
 
@@ -172,7 +173,7 @@ class StudentGroupController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
+            'description' => 'nullable|string|max:1000',
         ]);
         
         // Get student from either Auth or session
@@ -185,13 +186,21 @@ class StudentGroupController extends Controller
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->id);
         })->first() : null;
-        if ($group) {
-            $group->update([
-                'name' => $request->name,
-                'description' => $request->description,
-            ]);
+        
+        if (!$group) {
+            return back()->with('error', 'Group not found or you do not have permission to edit it.');
         }
-        return redirect()->route('student.group')->with('success', 'Group updated successfully!');
+        
+        try {
+            $group->update([
+                'name' => trim($request->name),
+                'description' => trim($request->description),
+            ]);
+            
+            return redirect()->route('student.group.edit')->with('success', 'Group information updated successfully!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'An error occurred while updating the group. Please try again.');
+        }
     }
 
     public function index()
