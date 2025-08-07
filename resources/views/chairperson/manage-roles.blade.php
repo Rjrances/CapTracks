@@ -30,7 +30,6 @@
                     <form method="POST" action="{{ route('chairperson.roles.update', $user) }}" class="d-flex align-items-center gap-2">
                         @csrf
                         <select name="role" class="form-select form-select-sm">
-                            <option value="student" @selected($user->role == 'student')>Student</option>
                             <option value="coordinator" @selected($user->role == 'coordinator')>Coordinator</option>
                             <option value="adviser" @selected($user->role == 'adviser')>Adviser</option>
                             <option value="panelist" @selected($user->role == 'panelist')>Panelist</option>

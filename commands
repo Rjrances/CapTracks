@@ -1,1 +1,9 @@
 composer require maatwebsite/excel
+
+INSERT INTO users (
+    school_id, name, email, birthday, department, position, password, role, must_change_password
+) VALUES (
+    '2017003197', 'Sean Michael', 'sean@university.edu', '2000-12-05', 'SCS', 'Chairperson', 
+    '$2y$12$TDpcxR2fenXir2ZtgpX58eE6qIwLv7g/E173o7KfTo0fzN00lhJBa', -- hashed "00000000"
+    'chairperson', 0
+);

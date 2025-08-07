@@ -10,12 +10,12 @@ class User extends Authenticatable
     use Notifiable;
 
     protected $fillable = [
-        'school_id',      // ✅ new
+        'school_id',      // Faculty/Staff ID
         'name',
         'email',
-        'birthday',       // ✅ new
-        'course',         // ✅ new
-        'year',           // ✅ new
+        'birthday',
+        'department',     // Department instead of course
+        'position',       // Position instead of year
         'password',
         'role',
         'must_change_password',
@@ -79,6 +79,6 @@ class User extends Authenticatable
 
     public function isStudent(): bool
     {
-        return $this->role === 'student';
+        return false; // Students are in separate table
     }
 }

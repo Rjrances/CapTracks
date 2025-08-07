@@ -151,7 +151,7 @@ class ChairpersonController extends Controller
     public function uploadStudentList(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
+            'file' => 'required|file|mimes:xlsx,xls,csv',
         ]);
 
         try {
@@ -173,7 +173,7 @@ class ChairpersonController extends Controller
     public function uploadFacultyList(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
+            'file' => 'required|file|mimes:xlsx,xls,csv',
         ]);
 
         try {
@@ -192,7 +192,7 @@ class ChairpersonController extends Controller
     public function storeFaculty(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
+            'file' => 'required|file|mimes:xlsx,xls,csv',
         ]);
 
         try {

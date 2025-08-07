@@ -13,6 +13,8 @@ class Student extends Model
         'course',
         'year',
         'semester',
+        'password',
+        'must_change_password',
     ];
 
     public function user()
@@ -32,4 +34,8 @@ class Student extends Model
     {
         return $this->hasMany(ProjectSubmission::class);
     }
+
+    protected $casts = [
+        'must_change_password' => 'boolean',
+    ];
 }

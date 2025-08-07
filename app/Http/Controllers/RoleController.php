@@ -9,7 +9,7 @@ class RoleController extends Controller
 {
     public function index()
     {
-        // Exclude users with 'chairperson' role (e.g., yourself)
+        // Get all faculty/staff users (excluding chairperson)
         $users = User::where('role', '!=', 'chairperson')->get();
         return view('chairperson.manage-roles', compact('users'));
     }
@@ -17,7 +17,7 @@ class RoleController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'role' => 'required|in:student,coordinator,adviser,panelist',
+            'role' => 'required|in:coordinator,adviser,panelist',
         ]);
 
         $user->role = $request->role;

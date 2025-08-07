@@ -33,12 +33,12 @@
             <form method="POST" action="/login" class="space-y-5">
                 @csrf
                 <div>
-                    <label for="school_id" class="block text-sm font-semibold mb-1">Faculty ID / School ID</label>
-                    <input type="text" name="school_id" id="school_id" required class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <label for="school_id" class="block text-sm font-semibold mb-1">ID Number (Faculty/Staff ID or Student ID)</label>
+                    <input type="text" name="school_id" id="school_id" required class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your ID number" />
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-semibold mb-1">
-                        Password <span class="text-xs text-gray-500">(Leave blank if first-time login)</span>
+                        Password <span class="text-xs text-gray-500">(Leave blank for first-time login or students)</span>
                     </label>
                     <input type="password" name="password" id="password" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>

@@ -21,11 +21,13 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Authenticated Routes
+// Student Dashboard (session-based authentication)
+Route::get('/student-dashboard', [StudentDashboardController::class, 'index'])->name('student-dashboard');
+
+// Authenticated Routes (faculty/staff only)
 Route::middleware(['auth'])->group(function () {
 
     // Dashboards
-    Route::get('/student-dashboard', [StudentDashboardController::class, 'index'])->name('student-dashboard');
     Route::get('/coordinator-dashboard', [CoordinatorController::class, 'index'])->name('coordinator-dashboard');
     Route::get('/chairperson-dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson-dashboard');
 

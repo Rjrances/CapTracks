@@ -6,13 +6,25 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\ProjectSubmission;
 use App\Models\MilestoneTask;
+use App\Models\Student;
 
 class StudentDashboardController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-        $student = $user->student;
+        // Check if user is authenticated via Laravel Auth (faculty/staff)
+        if (Auth::check()) {
+            $user = Auth::user();
+            $student = $user->student;
+        } else {
+            // Check if student is authenticated via session
+            if (session('is_student') && session('student_id')) {
+                $student = Student::find(session('student_id'));
+            } else {
+                // Not authenticated
+                return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+            }
+        }
 
         // ✅ NEW: Calculate overall progress
         $overallProgress = $this->calculateOverallProgress($student);

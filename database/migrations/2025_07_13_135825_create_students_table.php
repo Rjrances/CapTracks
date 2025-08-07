@@ -18,6 +18,8 @@ return new class extends Migration
         $table->string('email', 100)->unique();
         $table->string('semester', 10);
         $table->string('course', 50);
+        $table->string('password')->nullable(); // For student authentication
+        $table->boolean('must_change_password')->default(true); // Force password change on first login
         $table->timestamps();
     });
 }

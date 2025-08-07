@@ -8,7 +8,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h1 class="h3 mb-1">Welcome, {{ auth()->user()->name }}!</h1>
+                    <h1 class="h3 mb-1">Welcome, {{ auth()->check() ? auth()->user()->name : session('student_name') }}!</h1>
                     <p class="text-muted mb-0">Track your capstone project progress</p>
                 </div>
                 <div class="d-flex gap-2">
@@ -47,8 +47,8 @@
             <div class="card bg-success text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Completed Tasks</h5>
-                    <h3 class="mb-0">{{ $completedTasks ?? 3 }}</h3>
-                    <small>of {{ $totalTasks ?? 12 }} total</small>
+                    <h3 class="mb-0">{{ $taskStats['completed'] ?? 3 }}</h3>
+                    <small>of {{ $taskStats['total'] ?? 12 }} total</small>
                 </div>
             </div>
         </div>
@@ -56,7 +56,7 @@
             <div class="card bg-warning text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Pending Tasks</h5>
-                    <h3 class="mb-0">{{ $pendingTasks ?? 9 }}</h3>
+                    <h3 class="mb-0">{{ $taskStats['pending'] ?? 9 }}</h3>
                     <small>needs attention</small>
                 </div>
             </div>
@@ -84,14 +84,14 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="mb-1">{{ $currentMilestone ?? 'Proposal Development' }}</h6>
-                            <p class="text-muted mb-0">{{ $milestoneDescription ?? 'Working on initial project proposal' }}</p>
+                            <h6 class="mb-1">{{ $milestoneInfo['name'] ?? 'Proposal Development' }}</h6>
+                            <p class="text-muted mb-0">{{ $milestoneInfo['description'] ?? 'Working on initial project proposal' }}</p>
                         </div>
                         <div class="text-end">
                             <div class="progress mb-2" style="width: 150px; height: 8px;">
-                                <div class="progress-bar bg-success" style="width: {{ $milestoneProgress ?? 60 }}%"></div>
+                                <div class="progress-bar bg-success" style="width: {{ $milestoneInfo['progress'] ?? 60 }}%"></div>
                             </div>
-                            <small class="text-muted">{{ $milestoneProgress ?? 60 }}% complete</small>
+                            <small class="text-muted">{{ $milestoneInfo['progress'] ?? 60 }}% complete</small>
                         </div>
                     </div>
                 </div>
