@@ -35,7 +35,7 @@
             <div class="card bg-primary text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Active Projects</h5>
-                    <h3 class="mb-0">{{ $activeProjects ?? 45 }}</h3>
+                    <h3 class="mb-0">{{ $activeProjects ?? 0 }}</h3>
                     <small>capstone projects</small>
                 </div>
             </div>
@@ -44,7 +44,7 @@
             <div class="card bg-success text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Faculty Members</h5>
-                    <h3 class="mb-0">{{ $facultyCount ?? 12 }}</h3>
+                    <h3 class="mb-0">{{ $facultyCount ?? 0 }}</h3>
                     <small>active advisers</small>
                 </div>
             </div>
@@ -53,7 +53,7 @@
             <div class="card bg-warning text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Pending Reviews</h5>
-                    <h3 class="mb-0">{{ $pendingReviews ?? 8 }}</h3>
+                    <h3 class="mb-0">{{ $pendingReviews ?? 0 }}</h3>
                     <small>awaiting approval</small>
                 </div>
             </div>
@@ -62,7 +62,7 @@
             <div class="card bg-info text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Course Offerings</h5>
-                    <h3 class="mb-0">{{ $offeringsCount ?? 6 }}</h3>
+                    <h3 class="mb-0">{{ $offeringsCount ?? 0 }}</h3>
                     <small>active sections</small>
                 </div>
             </div>
@@ -81,14 +81,14 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="mb-1">{{ $academicPeriod['name'] ?? 'Second Semester AY 2024-2025' }}</h6>
-                            <p class="text-muted mb-0">{{ $academicPeriod['description'] ?? 'Capstone Project Development Phase' }}</p>
+                            <h6 class="mb-1">{{ $academicPeriod['name'] ?? 'Current Academic Period' }}</h6>
+                            <p class="text-muted mb-0">{{ $academicPeriod['description'] ?? 'No description available' }}</p>
                         </div>
                         <div class="text-end">
                             <div class="progress mb-2" style="width: 150px; height: 8px;">
-                                <div class="progress-bar bg-success" style="width: {{ $academicPeriod['progress'] ?? 75 }}%"></div>
+                                <div class="progress-bar bg-success" style="width: {{ $academicPeriod['progress'] ?? 0 }}%"></div>
                             </div>
-                            <small class="text-muted">{{ $academicPeriod['progress'] ?? 75 }}% complete</small>
+                            <small class="text-muted">{{ $academicPeriod['progress'] ?? 0 }}% complete</small>
                         </div>
                     </div>
                 </div>

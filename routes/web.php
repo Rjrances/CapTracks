@@ -12,6 +12,7 @@ use App\Http\Controllers\ClassController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MilestoneTemplateController;
 use App\Http\Controllers\MilestoneTaskController;
+use App\Http\Controllers\ProgressValidationController;
 
 // Landing page
 Route::get('/', fn () => view('welcome'))->name('welcome');
@@ -65,6 +66,13 @@ Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () 
     // Defense Scheduling
     Route::get('/defense/scheduling', [CoordinatorController::class, 'defenseScheduling'])->name('defense.scheduling');
 
+    // ✅ NEW: Progress Validation for 60% Defense
+    Route::get('/progress-validation', [ProgressValidationController::class, 'dashboard'])->name('progress-validation.dashboard');
+    Route::get('/progress-validation/all-groups', [ProgressValidationController::class, 'allGroupsStatus'])->name('progress-validation.all-groups');
+    Route::get('/progress-validation/groups/{group}/report', [ProgressValidationController::class, 'groupReadinessReport'])->name('progress-validation.group-report');
+    Route::get('/progress-validation/groups/{group}/status', [ProgressValidationController::class, 'getReadinessStatus'])->name('progress-validation.group-status');
+    Route::get('/progress-validation/export', [ProgressValidationController::class, 'exportReadinessReport'])->name('progress-validation.export');
+
     // Groups
     Route::get('/groups', [CoordinatorController::class, 'groups'])->name('groups.index');
     Route::get('/groups/create', [CoordinatorController::class, 'create'])->name('groups.create');
@@ -75,6 +83,8 @@ Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () 
     Route::delete('/groups/{group}', [CoordinatorController::class, 'destroy'])->name('groups.destroy');
     Route::get('/groups/{group}/assign-adviser', [CoordinatorController::class, 'assignAdviser'])->name('groups.assignAdviser');
     Route::get('/groups/{group}/milestones', [CoordinatorController::class, 'groupMilestones'])->name('groups.milestones');
+    Route::post('/groups/{group}/milestones', [CoordinatorController::class, 'assignMilestone'])->name('groups.assign-milestone');
+    Route::delete('/groups/{group}/milestones/{milestone}', [CoordinatorController::class, 'removeMilestone'])->name('groups.remove-milestone');
 
     // Notifications
     Route::get('/notifications', [CoordinatorController::class, 'notifications'])->name('notifications');
@@ -143,7 +153,12 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::delete('/group/remove-member/{memberId}', [\App\Http\Controllers\StudentGroupController::class, 'removeMember'])->name('group.remove-member');
     
     Route::get('/proposal', fn () => 'Proposal & Endorsement Page (to be implemented)')->name('proposal');
-    Route::get('/milestones', fn () => 'Milestones Page (to be implemented)')->name('milestones');
+    Route::get('/milestones', [\App\Http\Controllers\StudentMilestoneController::class, 'index'])->name('milestones');
+    Route::get('/milestones/{milestone}', [\App\Http\Controllers\StudentMilestoneController::class, 'show'])->name('milestones.show');
+    Route::patch('/milestones/{milestone}/update-tasks', [\App\Http\Controllers\StudentMilestoneController::class, 'updateMultipleTasks'])->name('milestones.update-tasks');
+    Route::patch('/task/{groupMilestoneTask}/assign', [\App\Http\Controllers\StudentMilestoneController::class, 'assignTask'])->name('milestones.assign-task');
+    Route::delete('/task/{groupMilestoneTask}/unassign', [\App\Http\Controllers\StudentMilestoneController::class, 'unassignTask'])->name('milestones.unassign-task');
+    Route::patch('/task/{groupMilestoneTask}', [\App\Http\Controllers\StudentMilestoneController::class, 'updateTask'])->name('milestones.update-task');
 });
 
 // Adviser/Faculty Routes

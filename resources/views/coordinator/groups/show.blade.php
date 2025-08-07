@@ -54,7 +54,6 @@
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('coordinator.groups.index') }}" class="btn btn-secondary">Back to Groups</a>
-        <a href="{{ route('coordinator.groups.edit', $group->id) }}" class="btn btn-outline-primary">Edit Group</a>
         <form action="{{ route('coordinator.groups.destroy', $group->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this group? This action cannot be undone.')">
             @csrf
             @method('DELETE')

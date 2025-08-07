@@ -55,12 +55,12 @@
                             </ul>
                         </div>
 
-                        <!-- Sample Data -->
-                        <div class="alert alert-warning">
+                        <!-- Excel Format Guide -->
+                        <div class="alert alert-info">
                             <h6 class="alert-heading">
-                                <i class="fas fa-lightbulb me-1"></i>Sample Data
+                                <i class="fas fa-info-circle me-1"></i>Excel Format Guide
                             </h6>
-                            <p class="mb-2">Example of how your Excel should look:</p>
+                            <p class="mb-2">Your Excel file should have these columns:</p>
                             <div class="table-responsive">
                                 <table class="table table-sm table-bordered">
                                     <thead class="table-light">
@@ -74,25 +74,11 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td>Dr. John Smith</td>
-                                            <td>john.smith@university.edu</td>
+                                            <td>Faculty Name</td>
+                                            <td>email@university.edu</td>
                                             <td>FAC001</td>
                                             <td>adviser</td>
-                                            <td>Computer Science</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Prof. Sarah Johnson</td>
-                                            <td>sarah.johnson@university.edu</td>
-                                            <td>FAC002</td>
-                                            <td>adviser</td>
-                                            <td>Information Technology</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Dr. Michael Brown</td>
-                                            <td>michael.brown@university.edu</td>
-                                            <td>FAC003</td>
-                                            <td>panelist</td>
-                                            <td>Software Engineering</td>
+                                            <td>Department</td>
                                         </tr>
                                     </tbody>
                                 </table>

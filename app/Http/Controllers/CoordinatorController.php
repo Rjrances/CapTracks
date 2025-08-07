@@ -131,9 +131,67 @@ class CoordinatorController extends Controller
 
     public function groupMilestones($id)
     {
-        $group = \App\Models\Group::findOrFail($id);
-        // Placeholder: fetch milestones if implemented
-        return view('coordinator.groups.milestones', compact('group'));
+        $group = \App\Models\Group::with(['adviser', 'members', 'groupMilestones.milestoneTemplate'])->findOrFail($id);
+        $availableMilestones = \App\Models\MilestoneTemplate::where('status', 'todo')->get();
+        
+        return view('coordinator.groups.milestones', compact('group', 'availableMilestones'));
+    }
+
+    public function assignMilestone(Request $request, $groupId)
+    {
+        $request->validate([
+            'milestone_template_id' => 'required|exists:milestone_templates,id',
+            'start_date' => 'nullable|date',
+            'target_date' => 'nullable|date|after_or_equal:start_date',
+            'notes' => 'nullable|string'
+        ]);
+
+        $group = \App\Models\Group::findOrFail($groupId);
+        
+        // Check if milestone is already assigned to this group
+        $existingMilestone = \App\Models\GroupMilestone::where('group_id', $groupId)
+            ->where('milestone_template_id', $request->milestone_template_id)
+            ->first();
+            
+        if ($existingMilestone) {
+            return redirect()->back()->with('error', 'This milestone is already assigned to this group.');
+        }
+
+        // Create the group milestone
+        $groupMilestone = \App\Models\GroupMilestone::create([
+            'group_id' => $groupId,
+            'milestone_template_id' => $request->milestone_template_id,
+            'start_date' => $request->start_date,
+            'target_date' => $request->target_date,
+            'notes' => $request->notes,
+            'status' => 'not_started',
+            'progress_percentage' => 0
+        ]);
+
+        // Create group milestone tasks based on the template
+        $milestoneTemplate = \App\Models\MilestoneTemplate::with('tasks')->find($request->milestone_template_id);
+        foreach ($milestoneTemplate->tasks as $task) {
+            \App\Models\GroupMilestoneTask::create([
+                'group_milestone_id' => $groupMilestone->id,
+                'milestone_task_id' => $task->id,
+                'is_completed' => false
+            ]);
+        }
+
+        return redirect()->route('coordinator.groups.milestones', $groupId)
+            ->with('success', 'Milestone assigned successfully!');
+    }
+
+    public function removeMilestone($groupId, $milestoneId)
+    {
+        $groupMilestone = \App\Models\GroupMilestone::where('group_id', $groupId)
+            ->where('id', $milestoneId)
+            ->firstOrFail();
+            
+        $groupMilestone->delete();
+
+        return redirect()->route('coordinator.groups.milestones', $groupId)
+            ->with('success', 'Milestone removed successfully!');
     }
 
     public function events()

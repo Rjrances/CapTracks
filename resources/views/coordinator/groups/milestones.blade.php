@@ -1,54 +1,291 @@
 @extends('layouts.coordinator')
 
-@section('title', 'Group Milestones')
+@section('title', 'Group Milestones - ' . $group->name)
 
 @section('content')
 <div class="container mt-5">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('coordinator.groups.index') }}">Groups</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('coordinator.groups.show', $group->id) }}">{{ $group->name }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Milestones</li>
-        </ol>
-    </nav>
-    <div class="card shadow-sm mb-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Milestones for: {{ $group->name }}</h1>
+            <p class="text-muted mb-0">Track progress and manage milestone completion</p>
+        </div>
+        <a href="{{ route('coordinator.groups.show', $group->id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Group
+        </a>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <!-- Group Information -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-users me-2"></i>Group Information
+            </h5>
+        </div>
         <div class="card-body">
-            <h2 class="card-title mb-3">Milestones for: {{ $group->name }}</h2>
-            <table class="table table-bordered">
-                <thead class="table-light">
-                    <tr>
-                        <th>Milestone</th>
-                        <th>Status</th>
-                        <th>Due Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Proposal Submission</td>
-                        <td><span class="badge bg-warning">Pending</span></td>
-                        <td>2025-08-01</td>
-                        <td><a href="#" class="btn btn-sm btn-outline-info">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>Defense</td>
-                        <td><span class="badge bg-secondary">Not Started</span></td>
-                        <td>2025-09-15</td>
-                        <td><a href="#" class="btn btn-sm btn-outline-info">View</a></td>
-                    </tr>
-                    <tr>
-                        <td>Final Submission</td>
-                        <td><span class="badge bg-success">Completed</span></td>
-                        <td>2025-10-30</td>
-                        <td><a href="#" class="btn btn-sm btn-outline-info">View</a></td>
-                    </tr>
-                    <tr>
-                        <td colspan="4" class="text-center text-muted">(Milestone data coming soon)</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="fw-semibold">Group Details</h6>
+                    <p><strong>Name:</strong> {{ $group->name }}</p>
+                    <p><strong>Description:</strong> {{ $group->description ?? 'No description provided' }}</p>
+                    <p><strong>Adviser:</strong> 
+                        @if($group->adviser)
+                            <span class="badge bg-success">{{ $group->adviser->name }}</span>
+                        @else
+                            <span class="badge bg-danger">No adviser assigned</span>
+                        @endif
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="fw-semibold">Members ({{ $group->members->count() }})</h6>
+                    @foreach($group->members as $member)
+                        <span class="badge bg-secondary me-1 mb-1">{{ $member->name }}</span>
+                    @endforeach
+                </div>
+            </div>
         </div>
     </div>
-    <a href="{{ route('coordinator.groups.show', $group->id) }}" class="btn btn-secondary">Back to Group</a>
+
+    <!-- Assign New Milestone -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-plus me-2"></i>Assign New Milestone
+            </h5>
+        </div>
+        <div class="card-body">
+            <form action="{{ route('coordinator.groups.assign-milestone', $group->id) }}" method="POST">
+                @csrf
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="milestone_template_id" class="form-label fw-semibold">Milestone Template</label>
+                        <select name="milestone_template_id" id="milestone_template_id" class="form-select" required>
+                            <option value="">Select a milestone...</option>
+                            @foreach($availableMilestones as $milestone)
+                                <option value="{{ $milestone->id }}">{{ $milestone->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('milestone_template_id')
+                            <div class="text-danger small">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label for="start_date" class="form-label fw-semibold">Start Date</label>
+                        <input type="date" name="start_date" id="start_date" class="form-control">
+                        @error('start_date')
+                            <div class="text-danger small">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label for="target_date" class="form-label fw-semibold">Target Date</label>
+                        <input type="date" name="target_date" id="target_date" class="form-control">
+                        @error('target_date')
+                            <div class="text-danger small">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">&nbsp;</label>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-plus me-2"></i>Assign
+                        </button>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label for="notes" class="form-label fw-semibold">Notes (Optional)</label>
+                        <textarea name="notes" id="notes" class="form-control" rows="2" placeholder="Add any specific notes or instructions for this milestone..."></textarea>
+                        @error('notes')
+                            <div class="text-danger small">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Overall Progress -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-chart-line me-2"></i>Overall Progress
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <h6>Project Completion</h6>
+                        @php
+                            $overallProgress = $group->groupMilestones->count() > 0 
+                                ? round($group->groupMilestones->avg('progress_percentage'))
+                                : 0;
+                        @endphp
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar {{ $overallProgress >= 60 ? 'bg-success' : ($overallProgress >= 40 ? 'bg-warning' : 'bg-danger') }}" 
+                                 role="progressbar" 
+                                 style="width: {{ $overallProgress }}%" 
+                                 aria-valuenow="{{ $overallProgress }}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ $overallProgress }}%
+                            </div>
+                        </div>
+                        <small class="text-muted">Overall project completion percentage</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <h4 class="mb-0 {{ $overallProgress >= 60 ? 'text-success' : ($overallProgress >= 40 ? 'text-warning' : 'text-danger') }}">
+                            {{ $overallProgress }}%
+                        </h4>
+                        <small class="text-muted">Complete</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Milestones List -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-flag me-2"></i>Assigned Milestones
+                </h5>
+                <span class="badge bg-primary">{{ $group->groupMilestones->count() }} assigned</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            @if($group->groupMilestones->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Milestone</th>
+                                <th>Progress</th>
+                                <th>Status</th>
+                                <th>Target Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($group->groupMilestones as $groupMilestone)
+                            <tr>
+                                <td>
+                                    <strong>{{ $groupMilestone->milestoneTemplate->name }}</strong>
+                                    @if($groupMilestone->notes)
+                                        <br><small class="text-muted">{{ Str::limit($groupMilestone->notes, 50) }}</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar {{ $groupMilestone->progress_percentage >= 80 ? 'bg-success' : ($groupMilestone->progress_percentage >= 50 ? 'bg-warning' : 'bg-danger') }}" 
+                                             role="progressbar" 
+                                             style="width: {{ $groupMilestone->progress_percentage }}%" 
+                                             aria-valuenow="{{ $groupMilestone->progress_percentage }}" 
+                                             aria-valuemin="0" aria-valuemax="100">
+                                            {{ $groupMilestone->progress_percentage }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @php
+                                        $statusClass = match($groupMilestone->status) {
+                                            'completed' => 'success',
+                                            'almost_done' => 'warning',
+                                            'in_progress' => 'info',
+                                            default => 'secondary'
+                                        };
+                                        $statusText = ucfirst(str_replace('_', ' ', $groupMilestone->status));
+                                    @endphp
+                                    <span class="badge bg-{{ $statusClass }}">{{ $statusText }}</span>
+                                </td>
+                                <td>
+                                    @if($groupMilestone->target_date)
+                                        <span class="text-{{ $groupMilestone->is_overdue ? 'danger' : 'primary' }}">
+                                            {{ \Carbon\Carbon::parse($groupMilestone->target_date)->format('M d, Y') }}
+                                        </span>
+                                        @if($groupMilestone->is_overdue)
+                                            <br><small class="text-danger">Overdue</small>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">Not set</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="#" class="btn btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-outline-secondary" title="Edit Progress">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('coordinator.groups.remove-milestone', [$group->id, $groupMilestone->id]) }}" 
+                                              method="POST" class="d-inline" 
+                                              onsubmit="return confirm('Are you sure you want to remove this milestone? This action cannot be undone.')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-outline-danger" title="Remove Milestone">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="text-center py-5">
+                    <i class="fas fa-flag fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">No milestones assigned yet</h6>
+                    <p class="text-muted small">Use the form above to assign milestones to this group.</p>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card mt-4 border-warning">
+        <div class="card-header bg-warning text-dark">
+            <h6 class="mb-0">
+                <i class="fas fa-bolt me-2"></i>Quick Actions
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <a href="{{ route('coordinator.progress-validation.group-report', $group) }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-chart-bar me-2"></i>Detailed Progress Report
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ route('coordinator.groups.assignAdviser', $group->id) }}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-user-tie me-2"></i>Manage Adviser
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ route('coordinator.groups.show', $group->id) }}" class="btn btn-outline-info w-100">
+                        <i class="fas fa-users me-2"></i>View Group Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection 

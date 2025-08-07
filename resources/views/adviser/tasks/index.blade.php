@@ -77,19 +77,11 @@
                             @foreach($tasks as $task)
                                 <tr>
                                     <td>
-                                        <div class="fw-semibold">{{ $task->name }}</div>
-                                        <small class="text-muted">{{ $task->description }}</small>
+                                        <div class="fw-semibold">{{ $task->milestoneTask->name ?? 'N/A' }}</div>
+                                        <small class="text-muted">{{ $task->milestoneTask->description ?? 'No description' }}</small>
                                     </td>
-                                    <td>{{ $task->milestoneTemplate->name ?? 'N/A' }}</td>
-                                    <td>
-                                        @foreach($groups as $group)
-                                            @if($group->id == ($task->assigned_to ?? 0))
-                                                {{ $group->name }}
-                                                @break
-                                            @endif
-                                        @endforeach
-                                        <span class="text-muted">Not assigned</span>
-                                    </td>
+                                    <td>{{ $task->groupMilestone->milestoneTemplate->name ?? 'N/A' }}</td>
+                                    <td>{{ $task->groupMilestone->group->name ?? 'N/A' }}</td>
                                     <td>
                                         @if($task->is_completed)
                                             <span class="badge bg-success">Completed</span>

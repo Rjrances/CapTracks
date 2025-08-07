@@ -3,45 +3,136 @@
 @section('title', 'Edit Milestone Template')
 
 @section('content')
-<div class="max-w-3xl mx-auto p-6 bg-white shadow rounded">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Edit Milestone Template</h1>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">Edit Milestone Template</h1>
+                    <p class="text-muted mb-0">Update milestone details and requirements</p>
+                </div>
+                <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Milestones
+                </a>
+            </div>
 
-    @if ($errors->any())
-        <div class="mb-4 bg-red-100 text-red-700 p-4 rounded">
-            <strong>There were some problems with your input:</strong>
-            <ul class="mt-2 list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+            <!-- Form Card -->
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <div>
+                                    <strong>Please fix the following errors:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('coordinator.milestones.update', $milestone->id) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="mb-4">
+                            <label for="name" class="form-label fw-semibold">
+                                <i class="fas fa-flag me-2"></i>Milestone Name
+                            </label>
+                            <input type="text" 
+                                   id="name" 
+                                   name="name" 
+                                   value="{{ old('name', $milestone->name) }}" 
+                                   class="form-control form-control-lg" 
+                                   placeholder="e.g., Project Proposal, Implementation Phase, Final Defense"
+                                   required>
+                            <div class="form-text">
+                                Choose a clear, descriptive name for this milestone.
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-semibold">
+                                <i class="fas fa-align-left me-2"></i>Description
+                            </label>
+                            <textarea id="description" 
+                                      name="description"
+                                      class="form-control" 
+                                      rows="4" 
+                                      placeholder="Describe what this milestone involves, its objectives, and expected deliverables...">{{ old('description', $milestone->description) }}</textarea>
+                            <div class="form-text">
+                                Provide a detailed description to help students understand what's expected.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update Milestone
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="card mt-4 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('coordinator.milestones.tasks.index', $milestone->id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-2"></i>Manage Tasks ({{ $milestone->tasks->count() }})
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" onclick="deleteMilestone({{ $milestone->id }}, '{{ $milestone->name }}')">
+                            <i class="fas fa-trash me-2"></i>Delete Milestone
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-    @endif
-
-    <form action="{{ route('coordinator.milestones.update', $milestone->id) }}" method="POST">
-        @csrf
-        @method('PUT')
-
-        <div class="mb-4">
-            <label for="name" class="block font-semibold text-gray-700 mb-2">Milestone Name</label>
-            <input type="text" id="name" name="name" 
-                   value="{{ old('name', $milestone->name) }}" 
-                   class="w-full px-4 py-2 border border-gray-300 rounded focus:ring focus:ring-blue-200"
-                   required>
-        </div>
-
-        <div class="mb-6">
-            <label for="description" class="block font-semibold text-gray-700 mb-2">Description</label>
-            <textarea id="description" name="description"
-                      class="w-full px-4 py-2 border border-gray-300 rounded focus:ring focus:ring-blue-200"
-                      rows="4">{{ old('description', $milestone->description) }}</textarea>
-        </div>
-
-        <div class="flex justify-between items-center">
-            <a href="{{ route('coordinator.milestones.index') }}" class="text-gray-600 hover:underline">Back to List</a>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-black px-6 py-2 rounded">
-                Update Milestone
-            </button>
-        </div>
-    </form>
+    </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Milestone</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete "<span id="milestoneName"></span>"?</p>
+                <p class="text-danger small">This action cannot be undone and will also delete all associated tasks.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteMilestone(id, name) {
+    document.getElementById('milestoneName').textContent = name;
+    document.getElementById('deleteForm').action = `/coordinator/milestones/${id}`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
 @endsection

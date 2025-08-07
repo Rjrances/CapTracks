@@ -75,11 +75,11 @@
                             @foreach($tasks as $task)
                                 <tr>
                                     <td>
-                                        <div class="fw-semibold">{{ $task->name }}</div>
-                                        <small class="text-muted">{{ $task->description }}</small>
+                                        <div class="fw-semibold">{{ $task->milestoneTask->name ?? 'N/A' }}</div>
+                                        <small class="text-muted">{{ $task->milestoneTask->description ?? 'No description' }}</small>
                                     </td>
                                     <td>
-                                        <span class="badge bg-secondary">{{ $task->milestoneTemplate->name ?? 'N/A' }}</span>
+                                        <span class="badge bg-secondary">{{ $task->groupMilestone->milestoneTemplate->name ?? 'N/A' }}</span>
                                     </td>
                                     <td>
                                         @if($task->is_completed)

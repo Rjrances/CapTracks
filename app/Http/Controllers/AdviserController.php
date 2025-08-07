@@ -7,6 +7,7 @@ use App\Models\AdviserInvitation;
 use App\Models\Group;
 use App\Models\User;
 use App\Models\MilestoneTask;
+use App\Models\GroupMilestoneTask;
 use App\Models\ProjectSubmission;
 use Illuminate\Support\Facades\Auth;
 
@@ -50,45 +51,33 @@ class AdviserController extends Controller
     // ✅ NEW: Calculate group progress percentage
     private function calculateGroupProgress($group)
     {
-        // Simple calculation based on submissions from group members
-        $totalMilestones = 3; // Proposal, Progress, Final
-        $completedMilestones = 0;
+        // Calculate progress based on group milestones
+        $groupMilestones = $group->groupMilestones;
         
-        // Get submissions from group members
-        $memberIds = $group->members->pluck('id');
-        $submissions = ProjectSubmission::whereIn('student_id', $memberIds)->get();
-        
-        // Check if group has different types of submissions
-        if ($submissions->where('type', 'proposal')->count() > 0) {
-            $completedMilestones++;
+        if ($groupMilestones->isEmpty()) {
+            return 0;
         }
-        if ($submissions->where('type', 'final')->count() > 0) {
-            $completedMilestones++;
-        }
-        if ($submissions->count() >= 2) { // Assume progress if multiple submissions
-            $completedMilestones++;
-        }
-        
-        return round(($completedMilestones / $totalMilestones) * 100);
+
+        $totalProgress = $groupMilestones->sum('progress_percentage');
+        return round($totalProgress / $groupMilestones->count());
     }
 
     // ✅ NEW: Get completed tasks count
     private function getCompletedTasksCount($group)
     {
-        // Get tasks from milestone templates and count completed ones
-        $memberIds = $group->members->pluck('id');
-        
-        // For now, return a simple count based on submissions
-        $submissions = ProjectSubmission::whereIn('student_id', $memberIds)->count();
-        return min($submissions * 2, 8); // Simple calculation
+        // Get completed tasks from group milestone tasks
+        return GroupMilestoneTask::whereHas('groupMilestone', function($query) use ($group) {
+            $query->where('group_id', $group->id);
+        })->where('is_completed', true)->count();
     }
 
     // ✅ NEW: Get total tasks count
     private function getTotalTasksCount($group)
     {
-        // Get total tasks from milestone templates
-        $totalTasks = MilestoneTask::count();
-        return $totalTasks > 0 ? $totalTasks : 10; // Default to 10 if no tasks exist
+        // Get total tasks from group milestone tasks
+        return GroupMilestoneTask::whereHas('groupMilestone', function($query) use ($group) {
+            $query->where('group_id', $group->id);
+        })->count();
     }
 
     // ✅ NEW: Get submissions count

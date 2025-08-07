@@ -10,6 +10,7 @@
                 <li class="nav-item"><a class="nav-link" href="{{ route('coordinator.dashboard') }}">Dashboard</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('coordinator.classlist.index') }}">Class List</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('coordinator.milestones.index') }}">Milestones</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('coordinator.progress-validation.dashboard') }}">60% Defense Validation</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('coordinator.defense.scheduling') }}">Defense Scheduling</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('coordinator.groups.index') }}">Groups</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('coordinator.events.index') }}">Events</a></li>

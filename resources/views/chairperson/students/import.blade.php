@@ -35,11 +35,21 @@
                 <button type="submit" class="btn btn-primary w-100">Upload & Import</button>
             </form>
 
-            {{-- Download Sample --}}
-            <div class="mt-3 text-center">
-                <a href="{{ asset('samples/student_template.xlsx') }}" class="btn btn-outline-secondary">
-                    ⬇ Download Sample Template
-                </a>
+            {{-- Format Information --}}
+            <div class="mt-3">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle me-1"></i>Excel Format Required
+                    </h6>
+                    <p class="mb-2">Your Excel file should have these columns:</p>
+                    <ul class="mb-0">
+                        <li><strong>student_id</strong> - Student ID number</li>
+                        <li><strong>name</strong> - Full name</li>
+                        <li><strong>email</strong> - Email address</li>
+                        <li><strong>semester</strong> - Current semester</li>
+                        <li><strong>course</strong> - Course/Program</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
