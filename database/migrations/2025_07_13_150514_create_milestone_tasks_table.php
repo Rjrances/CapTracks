@@ -17,6 +17,9 @@ return new class extends Migration
         $table->string('name');
         $table->text('description')->nullable();
         $table->integer('order')->default(0);
+        $table->boolean('is_completed')->default(false);
+        $table->timestamp('completed_at')->nullable();
+        $table->string('assigned_to')->nullable();
         $table->timestamps();
     });
 }
