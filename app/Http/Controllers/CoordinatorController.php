@@ -141,4 +141,16 @@ class CoordinatorController extends Controller
         $events = \App\Models\Event::orderBy('date', 'desc')->get();
         return view('coordinator.events.index', compact('events'));
     }
+
+    public function defenseScheduling()
+    {
+        // Placeholder: implement defense scheduling logic
+        return view('coordinator.defense.scheduling');
+    }
+
+    public function notifications()
+    {
+        $notifications = \App\Models\Notification::orderBy('created_at', 'desc')->get();
+        return view('coordinator.notifications', compact('notifications'));
+    }
 }
