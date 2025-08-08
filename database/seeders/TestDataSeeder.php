@@ -33,6 +33,15 @@ class TestDataSeeder extends Seeder
             'role' => 'coordinator'
         ]);
 
+        // Create Chairperson
+        $chairperson = User::create([
+            'school_id' => 'CHAIR-001',
+            'name' => 'Test Chairperson',
+            'email' => 'chairperson@test.com',
+            'password' => Hash::make('password'),
+            'role' => 'chairperson'
+        ]);
+
         // Create Adviser
         $adviser = User::create([
             'school_id' => 'ADVISER-001',
@@ -61,7 +70,7 @@ class TestDataSeeder extends Seeder
             ]);
         }
 
-        echo "✅ Created test users (coordinator, adviser, 4 students)\n";
+        echo "✅ Created test users (chairperson, coordinator, adviser, 4 students)\n";
     }
 
     private function createMilestoneTemplates()
