@@ -1,45 +1,110 @@
 @extends('layouts.chairperson')
 
 @section('content')
-<div class="container mt-5">
-    <h2 class="mb-4">Current Offerings</h2>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Current Offerings</h2>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('chairperson.upload-form') }}" class="btn btn-success">
+                        <i class="fas fa-upload"></i> Import Students
+                    </a>
+                    <a href="{{ route('chairperson.offerings.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Offering
+                    </a>
+                </div>
+            </div>
 
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
 
-    <a href="{{ route('chairperson.offerings.create') }}" class="btn btn-success mb-3">Add New Offering</a>
-
-    @if($offerings->count())
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Subject Title</th>
-                <th>Offer Code</th>
-                <th>Teacher Name</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($offerings as $offering)
-                <tr>
-                    <td>{{ $offering->subject_title }}</td>
-                    <td>{{ $offering->subject_code }}</td>
-                    <td>{{ $offering->teacher_name }}</td>
-                    <td>
-                        <a href="{{ route('chairperson.offerings.edit', $offering->id) }}" class="btn btn-primary btn-sm">Edit</a>
-                        <form action="{{ route('chairperson.offerings.delete', $offering->id) }}" method="POST" class="d-inline">
-                            @csrf
-                            @method('DELETE')
-                            <button onclick="return confirm('Are you sure?')" class="btn btn-danger btn-sm">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-    @else
-        <p>No offerings available yet.</p>
-    @endif
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Subject Title</th>
+                                    <th>Subject Code</th>
+                                    <th>Teacher</th>
+                                    <th>Academic Term</th>
+                                    <th>Enrolled Students</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($offerings as $offering)
+                                    <tr>
+                                        <td>{{ $offering->subject_title }}</td>
+                                        <td>{{ $offering->subject_code }}</td>
+                                        <td>
+                                            @if($offering->teacher)
+                                                <span class="badge bg-info">{{ $offering->teacher->name }}</span>
+                                            @else
+                                                <span class="text-muted">No teacher assigned</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($offering->academicTerm)
+                                                <span class="badge bg-secondary">{{ $offering->academicTerm->full_name }}</span>
+                                            @else
+                                                <span class="text-muted">No term assigned</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">{{ $offering->enrolled_students_count }} students</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ route('chairperson.offerings.show', $offering->id) }}" 
+                                                   class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                                <a href="{{ route('chairperson.offerings.edit', $offering->id) }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                                <a href="{{ route('chairperson.upload-form') }}" 
+                                                   class="btn btn-sm btn-outline-success">
+                                                    <i class="fas fa-upload"></i> Import
+                                                </a>
+                                                <form action="{{ route('chairperson.offerings.delete', $offering->id) }}" 
+                                                      method="POST" class="d-inline"
+                                                      onsubmit="return confirm('Are you sure you want to delete this offering?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-trash"></i> Delete
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center">No offerings available yet.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+.btn-group .btn {
+    margin-right: 2px;
+}
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+</style>
 @endsection

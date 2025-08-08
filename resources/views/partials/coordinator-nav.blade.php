@@ -23,9 +23,9 @@
                     <a class="nav-link" href="{{ route('coordinator.milestones.templates') }}">Milestone Templates</a>
                 </li>
 
-                {{-- Defense Scheduling --}}
+                {{-- Scheduling --}}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('coordinator.defense.scheduling') }}">Defense Scheduling</a>
+                    <a class="nav-link" href="{{ route('coordinator.defense.scheduling') }}">Scheduling</a>
                 </li>
 
                 {{-- Group Management --}}

@@ -21,13 +21,17 @@ class ChairpersonController extends Controller
 
     public function indexOfferings()
     {
-        $offerings = Offering::all();
+        $offerings = Offering::with(['teacher', 'academicTerm', 'students'])
+            ->orderBy('created_at', 'desc')
+            ->get();
         return view('chairperson.offerings.index', compact('offerings'));
     }
 
     public function createOffering()
     {
-        return view('chairperson.offerings.create');
+        $teachers = User::whereIn('role', ['adviser', 'panelist'])->get();
+        $academicTerms = \App\Models\AcademicTerm::notArchived()->get();
+        return view('chairperson.offerings.create', compact('teachers', 'academicTerms'));
     }
 
     public function storeOffering(Request $request)
@@ -35,18 +39,22 @@ class ChairpersonController extends Controller
         $request->validate([
             'subject_title' => 'required|string|max:255',
             'subject_code' => 'required|string|max:100',
-            'teacher_name'  => 'required|string|max:255',
+            'teacher_id' => 'required|exists:users,id',
+            'academic_term_id' => 'required|exists:academic_terms,id',
         ]);
 
-        Offering::create($request->only('subject_title', 'subject_code', 'teacher_name'));
+        Offering::create($request->only('subject_title', 'subject_code', 'teacher_id', 'academic_term_id'));
 
         return redirect()->route('chairperson.offerings.index')->with('success', 'Offering added successfully.');
     }
 
     public function editOffering($id)
     {
-        $offering = Offering::findOrFail($id);
-        return view('chairperson.offerings.edit', compact('offering'));
+        $offering = Offering::with(['teacher', 'academicTerm', 'students'])->findOrFail($id);
+        $teachers = User::whereIn('role', ['adviser', 'panelist'])->get();
+        $academicTerms = \App\Models\AcademicTerm::notArchived()->get();
+        $students = \App\Models\Student::all();
+        return view('chairperson.offerings.edit', compact('offering', 'teachers', 'academicTerms', 'students'));
     }
 
     public function updateOffering(Request $request, $id)
@@ -54,11 +62,12 @@ class ChairpersonController extends Controller
         $request->validate([
             'subject_title' => 'required|string|max:255',
             'subject_code'  => 'required|string|max:100',
-            'teacher_name'  => 'required|string|max:255',
+            'teacher_id' => 'required|exists:users,id',
+            'academic_term_id' => 'required|exists:academic_terms,id',
         ]);
 
         $offering = Offering::findOrFail($id);
-        $offering->update($request->only('subject_title', 'subject_code', 'teacher_name'));
+        $offering->update($request->only('subject_title', 'subject_code', 'teacher_id', 'academic_term_id'));
 
         return redirect()->route('chairperson.offerings.index')->with('success', 'Offering updated successfully.');
     }
@@ -69,6 +78,41 @@ class ChairpersonController extends Controller
         $offering->delete();
 
         return redirect()->route('chairperson.offerings.index')->with('success', 'Offering deleted.');
+    }
+
+    // ======= OFFERING STUDENT MANAGEMENT =======
+
+    public function showOffering($id)
+    {
+        $offering = Offering::with(['teacher', 'academicTerm', 'students'])->findOrFail($id);
+        $availableStudents = \App\Models\Student::whereDoesntHave('offerings', function($query) use ($id) {
+            $query->where('offering_id', $id);
+        })->get();
+        
+        return view('chairperson.offerings.show', compact('offering', 'availableStudents'));
+    }
+
+    public function addStudentsToOffering(Request $request, $id)
+    {
+        $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id'
+        ]);
+
+        $offering = Offering::findOrFail($id);
+        $offering->students()->attach($request->student_ids);
+
+        return redirect()->route('chairperson.offerings.show', $id)
+            ->with('success', count($request->student_ids) . ' student(s) added to offering successfully.');
+    }
+
+    public function removeStudentFromOffering(Request $request, $offeringId, $studentId)
+    {
+        $offering = Offering::findOrFail($offeringId);
+        $offering->students()->detach($studentId);
+
+        return redirect()->route('chairperson.offerings.show', $offeringId)
+            ->with('success', 'Student removed from offering successfully.');
     }
 
     // ======= TEACHERS =======
@@ -138,13 +182,7 @@ class ChairpersonController extends Controller
         return redirect()->route('teachers.index')->with('success', 'Teacher updated successfully.');
     }
 
-    // ======= SCHEDULES =======
 
-    public function schedules()
-    {
-        $schedules = Schedule::with('offering')->get();
-        return view('chairperson.schedules.index', compact('schedules'));
-    }
 
     // ======= STUDENT IMPORT =======
 
@@ -189,6 +227,11 @@ class ChairpersonController extends Controller
         return view('chairperson.teachers.create');
     }
 
+    public function createFacultyManual()
+    {
+        return view('chairperson.teachers.create-manual');
+    }
+
     public function storeFaculty(Request $request)
     {
         $request->validate([
@@ -203,10 +246,35 @@ class ChairpersonController extends Controller
         }
     }
 
+    public function storeFacultyManual(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'school_id' => 'required|string|unique:users,school_id',
+            'role' => 'required|in:adviser,panelist',
+            'department' => 'nullable|string|max:255',
+            'position' => 'nullable|string|max:255',
+        ]);
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'school_id' => $request->school_id,
+            'role' => $request->role,
+            'department' => $request->department,
+            'position' => $request->position,
+            'password' => bcrypt('password123'),
+            'must_change_password' => true,
+        ]);
+
+        return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member added successfully!');
+    }
+
     public function editFaculty($id)
     {
-        $faculty = User::findOrFail($id);
-        return view('chairperson.teachers.edit', compact('faculty'));
+        $teacher = User::findOrFail($id);
+        return view('chairperson.teachers.edit', compact('teacher'));
     }
 
     public function updateFaculty(Request $request, $id)
@@ -216,18 +284,27 @@ class ChairpersonController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
-            'school_id' => 'required|string|unique:users,school_id,' . $id,
             'role' => 'required|in:adviser,panelist',
-            'course' => 'nullable|string|max:255',
+            'department' => 'nullable|string|max:255',
+            'position' => 'nullable|string|max:255',
+            'password' => 'nullable|string|min:8',
         ]);
 
-        $faculty->update([
+        $updateData = [
             'name' => $request->name,
             'email' => $request->email,
-            'school_id' => $request->school_id,
             'role' => $request->role,
-            'course' => $request->course,
-        ]);
+            'department' => $request->department,
+            'position' => $request->position,
+        ];
+
+        // Only update password if provided
+        if ($request->filled('password')) {
+            $updateData['password'] = bcrypt($request->password);
+            $updateData['must_change_password'] = false;
+        }
+
+        $faculty->update($updateData);
 
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member updated successfully.');
     }

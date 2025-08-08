@@ -13,7 +13,6 @@
             <form method="GET" action="{{ route('coordinator.classlist.index') }}" class="d-flex align-items-center gap-2">
                 <label for="semester" class="fw-semibold me-2 mb-0">Semester:</label>
                 <select name="semester" id="semester" class="form-select rounded-pill" style="max-width: 200px;" onchange="this.form.submit()">
-                    <option value="">-- Choose Semester --</option>
                     @foreach ($semesters as $semester)
                         <option value="{{ $semester }}" {{ $selectedSemester == $semester ? 'selected' : '' }}>
                             {{ $semester }}

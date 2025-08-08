@@ -6,9 +6,14 @@
         <h2 class="mb-0">
             <i class="fas fa-chalkboard-teacher me-2"></i>Faculty Management
         </h2>
-        <a href="{{ route('chairperson.teachers.create') }}" class="btn btn-success">
-            <i class="fas fa-upload me-1"></i>Import Faculty
-        </a>
+        <div class="d-flex gap-2">
+            <a href="{{ route('chairperson.teachers.create-manual') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Add Teacher
+            </a>
+            <a href="{{ route('chairperson.teachers.create') }}" class="btn btn-success">
+                <i class="fas fa-upload me-1"></i>Import Faculty
+            </a>
+        </div>
     </div>
 
     {{-- Success Message --}}
@@ -31,18 +36,22 @@
         <table class="table table-bordered">
             <thead class="table-dark">
                 <tr>
+                    <th>ID Number</th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
+                    <th>Department</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($teachers as $teacher)
                     <tr>
+                        <td><strong>{{ $teacher->school_id }}</strong></td>
                         <td>{{ $teacher->name }}</td>
                         <td>{{ $teacher->email }}</td>
-                        <td>{{ ucfirst($teacher->role) }}</td>
+                        <td><span class="badge bg-{{ $teacher->role == 'adviser' ? 'primary' : 'info' }}">{{ ucfirst($teacher->role) }}</span></td>
+                        <td>{{ $teacher->department ?? 'N/A' }}</td>
                         <td>
                             <div class="btn-group btn-group-sm">
                                 <a href="{{ route('chairperson.teachers.edit', $teacher->id) }}" class="btn btn-primary">

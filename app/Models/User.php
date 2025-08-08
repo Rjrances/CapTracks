@@ -57,6 +57,18 @@ class User extends Authenticatable
         return $this->hasOne(Student::class, 'email', 'email');
     }
 
+    public function defensePanels()
+    {
+        return $this->hasMany(DefensePanel::class, 'faculty_id');
+    }
+
+    public function defenseSchedules()
+    {
+        return $this->belongsToMany(DefenseSchedule::class, 'defense_panels', 'faculty_id', 'defense_schedule_id')
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
     /**
      * ================================
      *        ROLE CHECK HELPERS

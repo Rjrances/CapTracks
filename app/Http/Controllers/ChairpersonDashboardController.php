@@ -5,16 +5,27 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\Notification;
+use App\Models\DefenseSchedule;
+use App\Models\Group;
+use App\Models\User;
+use App\Models\Offering;
+use App\Models\AcademicTerm;
 
 class ChairpersonDashboardController extends Controller
 {
     public function index()
     {
-        // Fetch upcoming events (for example)
-        $events = Event::where('date', '>=', now())
-                       ->orderBy('date')
-                       ->take(5)
-                       ->get();
+        // Get current active term
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+
+        // Fetch upcoming defense schedules (next 30 days)
+        $upcomingDefenses = DefenseSchedule::with(['group.adviser', 'group.members', 'academicTerm'])
+            ->where('start_at', '>=', now())
+            ->where('start_at', '<=', now()->addDays(30))
+            ->where('status', 'scheduled')
+            ->orderBy('start_at')
+            ->take(5)
+            ->get();
 
         // Fetch latest notifications for chairperson
         $notifications = Notification::where('role', 'chairperson')
@@ -22,6 +33,35 @@ class ChairpersonDashboardController extends Controller
                                      ->take(5)
                                      ->get();
 
-        return view('chairperson.dashboard', compact('events', 'notifications'));
+        // Fetch upcoming events
+        $events = Event::where('date', '>=', now())
+                       ->orderBy('date')
+                       ->take(5)
+                       ->get();
+
+        // Dashboard statistics
+        $stats = [
+            'activeProjects' => Group::whereHas('adviser')->count(),
+            'facultyCount' => User::whereIn('role', ['adviser', 'panelist'])->count(),
+            'pendingReviews' => DefenseSchedule::where('status', 'scheduled')->count(),
+            'offeringsCount' => Offering::when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })->count(),
+            'totalDefenses' => DefenseSchedule::when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })->count(),
+            'completedDefenses' => DefenseSchedule::where('status', 'completed')
+                ->when($activeTerm, function($query) use ($activeTerm) {
+                    return $query->where('academic_term_id', $activeTerm->id);
+                })->count(),
+        ];
+
+        return view('chairperson.dashboard', compact(
+            'activeTerm',
+            'upcomingDefenses',
+            'notifications',
+            'events',
+            'stats'
+        ));
     }
 }

@@ -1,6 +1,6 @@
 @extends('layouts.chairperson')
 
-@section('title', 'Edit Teacher')
+@section('title', 'Add Teacher')
 
 @section('content')
 <div class="container mt-5">
@@ -9,7 +9,7 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <h4 class="card-title mb-0">
-                        <i class="fas fa-user-edit me-2"></i>Edit Teacher
+                        <i class="fas fa-user-plus me-2"></i>Add New Teacher
                     </h4>
                 </div>
                 <div class="card-body">
@@ -31,22 +31,9 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('chairperson.teachers.update', $teacher->id) }}" method="POST">
+                    <form action="{{ route('chairperson.teachers.store-manual') }}" method="POST">
                         @csrf
-                        @method('PUT')
-
-                        <!-- Teacher ID (Read-only) -->
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">
-                                <i class="fas fa-id-card me-1"></i>School ID
-                            </label>
-                            <input type="text" 
-                                   class="form-control bg-light" 
-                                   value="{{ $teacher->school_id }}" 
-                                   readonly>
-                            <small class="text-muted">School ID cannot be changed</small>
-                        </div>
-
+                        
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -57,7 +44,8 @@
                                            name="name" 
                                            id="name" 
                                            class="form-control @error('name') is-invalid @enderror" 
-                                           value="{{ old('name', $teacher->name) }}" 
+                                           value="{{ old('name') }}" 
+                                           placeholder="Enter full name"
                                            required>
                                     @error('name')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -73,7 +61,8 @@
                                            name="email" 
                                            id="email" 
                                            class="form-control @error('email') is-invalid @enderror" 
-                                           value="{{ old('email', $teacher->email) }}" 
+                                           value="{{ old('email') }}" 
+                                           placeholder="email@university.edu"
                                            required>
                                     @error('email')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -85,6 +74,23 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
+                                    <label for="school_id" class="form-label fw-bold">
+                                        <i class="fas fa-id-card me-1"></i>School ID *
+                                    </label>
+                                    <input type="text" 
+                                           name="school_id" 
+                                           id="school_id" 
+                                           class="form-control @error('school_id') is-invalid @enderror" 
+                                           value="{{ old('school_id') }}" 
+                                           placeholder="e.g., FAC001"
+                                           required>
+                                    @error('school_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
                                     <label for="role" class="form-label fw-bold">
                                         <i class="fas fa-user-tag me-1"></i>Role *
                                     </label>
@@ -92,26 +98,11 @@
                                             id="role" 
                                             class="form-select @error('role') is-invalid @enderror" 
                                             required>
-                                        <option value="adviser" {{ old('role', $teacher->role) == 'adviser' ? 'selected' : '' }}>Adviser</option>
-                                        <option value="panelist" {{ old('role', $teacher->role) == 'panelist' ? 'selected' : '' }}>Panelist</option>
+                                        <option value="">Select Role</option>
+                                        <option value="adviser" {{ old('role') == 'adviser' ? 'selected' : '' }}>Adviser</option>
+                                        <option value="panelist" {{ old('role') == 'panelist' ? 'selected' : '' }}>Panelist</option>
                                     </select>
                                     @error('role')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="department" class="form-label fw-bold">
-                                        <i class="fas fa-building me-1"></i>Department
-                                    </label>
-                                    <input type="text" 
-                                           name="department" 
-                                           id="department" 
-                                           class="form-control @error('department') is-invalid @enderror" 
-                                           value="{{ old('department', $teacher->department) }}" 
-                                           placeholder="e.g., Computer Science">
-                                    @error('department')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -121,6 +112,22 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
+                                    <label for="department" class="form-label fw-bold">
+                                        <i class="fas fa-building me-1"></i>Department
+                                    </label>
+                                    <input type="text" 
+                                           name="department" 
+                                           id="department" 
+                                           class="form-control @error('department') is-invalid @enderror" 
+                                           value="{{ old('department') }}" 
+                                           placeholder="e.g., Computer Science">
+                                    @error('department')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
                                     <label for="position" class="form-label fw-bold">
                                         <i class="fas fa-briefcase me-1"></i>Position
                                     </label>
@@ -128,34 +135,31 @@
                                            name="position" 
                                            id="position" 
                                            class="form-control @error('position') is-invalid @enderror" 
-                                           value="{{ old('position', $teacher->position) }}" 
+                                           value="{{ old('position') }}" 
                                            placeholder="e.g., Assistant Professor">
                                     @error('position')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="password" class="form-label fw-bold">
-                                        <i class="fas fa-key me-1"></i>New Password
-                                    </label>
-                                    <input type="password" 
-                                           name="password" 
-                                           id="password" 
-                                           class="form-control @error('password') is-invalid @enderror" 
-                                           placeholder="Leave blank to keep current password">
-                                    @error('password')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                    <small class="text-muted">Leave blank to keep current password</small>
-                                </div>
-                            </div>
+                        </div>
+
+                        <!-- Important Notes -->
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-1"></i>Important Notes
+                            </h6>
+                            <ul class="mb-0">
+                                <li>Default password will be: <strong>password123</strong></li>
+                                <li>Teacher will be required to change password on first login</li>
+                                <li>Email and School ID must be unique</li>
+                                <li>All fields marked with * are required</li>
+                            </ul>
                         </div>
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-1"></i>Update Teacher
+                                <i class="fas fa-save me-1"></i>Add Teacher
                             </button>
                             <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-1"></i>Back to Teachers

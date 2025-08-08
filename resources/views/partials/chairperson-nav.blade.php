@@ -11,13 +11,13 @@
                     <a class="nav-link" href="{{ route('chairperson.dashboard') }}">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('chairperson.manage-roles') }}">Manage Roles</a>
+                    <a class="nav-link" href="{{ route('chairperson.roles.index') }}">Roles</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('chairperson.offerings.index') }}">Offerings</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('chairperson.schedules.index') }}">Schedules</a>
+                    <a class="nav-link" href="{{ route('chairperson.scheduling.index') }}">Scheduling</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('chairperson.teachers.index') }}">Teachers</a>

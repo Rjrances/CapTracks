@@ -102,33 +102,49 @@ Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () 
 
         Route::get('/dashboard', [ChairpersonDashboardController::class, 'index'])->name('dashboard');
 
-        // Manage Roles
-        Route::get('/manage-roles', [RoleController::class, 'index'])->name('manage-roles');
-        Route::post('/manage-roles/{user}', [RoleController::class, 'update'])->name('roles.update');
+        // Roles
+        Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+        Route::post('/roles/{user}', [RoleController::class, 'update'])->name('roles.update');
 
         // Offerings
         Route::get('/offerings', [ChairpersonController::class, 'indexOfferings'])->name('offerings.index');
         Route::get('/offerings/create', [ChairpersonController::class, 'createOffering'])->name('offerings.create');
         Route::post('/offerings', [ChairpersonController::class, 'storeOffering'])->name('offerings.store');
+        Route::get('/offerings/{id}', [ChairpersonController::class, 'showOffering'])->name('offerings.show');
         Route::get('/offerings/{id}/edit', [ChairpersonController::class, 'editOffering'])->name('offerings.edit');
         Route::put('/offerings/{id}', [ChairpersonController::class, 'updateOffering'])->name('offerings.update');
         Route::delete('/offerings/{id}', [ChairpersonController::class, 'deleteOffering'])->name('offerings.delete');
+        
+        // Offering Student Management
+        Route::post('/offerings/{id}/add-students', [ChairpersonController::class, 'addStudentsToOffering'])->name('offerings.add-students');
+        Route::delete('/offerings/{offeringId}/students/{studentId}', [ChairpersonController::class, 'removeStudentFromOffering'])->name('offerings.remove-student');
 
         // Teachers/Faculty Management
         Route::get('/teachers', [ChairpersonController::class, 'teachers'])->name('teachers.index');
         Route::get('/teachers/create', [ChairpersonController::class, 'createFaculty'])->name('teachers.create');
         Route::post('/teachers', [ChairpersonController::class, 'storeFaculty'])->name('teachers.store');
+        Route::get('/teachers/create-manual', [ChairpersonController::class, 'createFacultyManual'])->name('teachers.create-manual');
+        Route::post('/teachers/manual', [ChairpersonController::class, 'storeFacultyManual'])->name('teachers.store-manual');
         Route::get('/teachers/{id}/edit', [ChairpersonController::class, 'editFaculty'])->name('teachers.edit');
         Route::put('/teachers/{id}', [ChairpersonController::class, 'updateFaculty'])->name('teachers.update');
         Route::delete('/teachers/{id}', [ChairpersonController::class, 'deleteFaculty'])->name('teachers.delete');
 
 
-        // Schedules
-        Route::resource('schedules', \App\Http\Controllers\ScheduleController::class);
+
 
         // Student Import via Excel
         Route::get('/upload-students', fn () => view('chairperson.students.import'))->name('upload-form');
         Route::post('/upload-students', [ChairpersonController::class, 'uploadStudentList'])->name('upload-students');
+
+        // Academic Terms
+        Route::resource('academic-terms', \App\Http\Controllers\AcademicTermController::class);
+        Route::post('/academic-terms/{academicTerm}/toggle-active', [\App\Http\Controllers\AcademicTermController::class, 'toggleActive'])->name('academic-terms.toggle-active');
+        Route::post('/academic-terms/{academicTerm}/toggle-archived', [\App\Http\Controllers\AcademicTermController::class, 'toggleArchived'])->name('academic-terms.toggle-archived');
+
+        // Scheduling (Defense Schedules)
+        Route::resource('scheduling', \App\Http\Controllers\Chairperson\DefenseScheduleController::class)->parameters(['scheduling' => 'defenseSchedule']);
+        Route::patch('/scheduling/{defenseSchedule}/status', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'updateStatus'])->name('scheduling.update-status');
+        Route::get('/scheduling/available-faculty', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'getAvailableFaculty'])->name('scheduling.available-faculty');
     });
 });
 

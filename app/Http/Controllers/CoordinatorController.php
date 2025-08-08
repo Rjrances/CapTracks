@@ -30,7 +30,10 @@ class CoordinatorController extends Controller
             ->pluck('semester');
 
         // Get selected semester from query string, default to first semester if not provided
-        $selectedSemester = $request->input('semester') ?? $semesters->first();
+        $selectedSemester = $request->input('semester');
+        if (!$selectedSemester && $semesters->count() > 0) {
+            $selectedSemester = $semesters->first();
+        }
 
         $students = collect(); // default to empty collection
 

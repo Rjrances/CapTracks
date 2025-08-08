@@ -35,6 +35,13 @@ class Student extends Model
         return $this->hasMany(ProjectSubmission::class);
     }
 
+    // Offerings relationship (many-to-many)
+    public function offerings()
+    {
+        return $this->belongsToMany(Offering::class, 'offering_student')
+                    ->withTimestamps();
+    }
+
     protected $casts = [
         'must_change_password' => 'boolean',
     ];
