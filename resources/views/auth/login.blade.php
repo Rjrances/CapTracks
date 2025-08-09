@@ -33,7 +33,7 @@
             <form method="POST" action="/login" class="space-y-5">
                 @csrf
                 <div>
-                    <label for="school_id" class="block text-sm font-semibold mb-1">ID Number (Faculty/Staff ID or Student ID)</label>
+                    <label for="school_id" class="block text-sm font-semibold mb-1">ID Number</label>
                     <input type="text" name="school_id" id="school_id" required class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your ID number" />
                 </div>
                 <div>
