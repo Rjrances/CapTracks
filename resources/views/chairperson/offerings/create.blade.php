@@ -7,6 +7,12 @@
             <div class="card">
                 <div class="card-header">
                     <h4 class="mb-0">Add New Offering</h4>
+                    @if($activeTerm)
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            New offerings will be assigned to the current active term: <strong>{{ $activeTerm->full_name }}</strong>
+                        </small>
+                    @endif
                 </div>
                 <div class="card-body">
                     @if ($errors->any())
@@ -64,7 +70,8 @@
                                     class="form-select @error('academic_term_id') is-invalid @enderror" required>
                                 <option value="">Select Academic Term</option>
                                 @foreach($academicTerms as $term)
-                                    <option value="{{ $term->id }}" {{ old('academic_term_id') == $term->id ? 'selected' : '' }}>
+                                    <option value="{{ $term->id }}" 
+                                        {{ old('academic_term_id', $activeTerm ? $activeTerm->id : '') == $term->id ? 'selected' : '' }}>
                                         {{ $term->full_name }}
                                         @if($term->is_active)
                                             <span class="text-success">(Active)</span>

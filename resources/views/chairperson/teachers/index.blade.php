@@ -3,10 +3,40 @@
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">
-            <i class="fas fa-chalkboard-teacher me-2"></i>Faculty Management
-        </h2>
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-chalkboard-teacher me-2"></i>Faculty Management
+            </h2>
+            @if($activeTerm)
+                <p class="text-muted mb-0">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    @if($showAllTerms)
+                        Showing faculty assigned to offerings in: <strong>All Terms</strong>
+                        <span class="badge bg-info ms-2">All Terms</span>
+                    @else
+                        Showing faculty assigned to offerings in: <strong>{{ $activeTerm->full_name }}</strong>
+                        <span class="badge bg-success ms-2">Active Term</span>
+                    @endif
+                </p>
+            @else
+                <p class="text-warning mb-0">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    No active academic term set. Please set an active term to view faculty assignments.
+                </p>
+            @endif
+        </div>
         <div class="d-flex gap-2">
+            @if($activeTerm)
+                @if($showAllTerms)
+                    <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-success">
+                        <i class="fas fa-calendar-check"></i> Show Active Term Only
+                    </a>
+                @else
+                    <a href="{{ route('chairperson.teachers.index', ['show_all' => true]) }}" class="btn btn-outline-info">
+                        <i class="fas fa-calendar-alt"></i> Show All Terms
+                    </a>
+                @endif
+            @endif
             <a href="{{ route('chairperson.teachers.create-manual') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>Add Teacher
             </a>

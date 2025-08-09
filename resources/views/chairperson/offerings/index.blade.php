@@ -5,8 +5,38 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">Current Offerings</h2>
+                <div>
+                    <h2 class="mb-0">Current Offerings</h2>
+                    @if($activeTerm)
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            @if($showAllTerms)
+                                Showing offerings for: <strong>All Terms</strong>
+                                <span class="badge bg-info ms-2">All Terms</span>
+                            @else
+                                Showing offerings for: <strong>{{ $activeTerm->full_name }}</strong>
+                                <span class="badge bg-success ms-2">Active Term</span>
+                            @endif
+                        </p>
+                    @else
+                        <p class="text-warning mb-0">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            No active academic term set. Please set an active term to view offerings.
+                        </p>
+                    @endif
+                </div>
                 <div class="d-flex gap-2">
+                    @if($activeTerm)
+                        @if($showAllTerms)
+                            <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-outline-success">
+                                <i class="fas fa-calendar-check"></i> Show Active Term Only
+                            </a>
+                        @else
+                            <a href="{{ route('chairperson.offerings.index', ['show_all' => true]) }}" class="btn btn-outline-info">
+                                <i class="fas fa-calendar-alt"></i> Show All Terms
+                            </a>
+                        @endif
+                    @endif
                     <a href="{{ route('chairperson.upload-form') }}" class="btn btn-success">
                         <i class="fas fa-upload"></i> Import Students
                     </a>

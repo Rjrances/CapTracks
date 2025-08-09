@@ -5,10 +5,42 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">Scheduling</h2>
-                <a href="{{ route('chairperson.scheduling.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Schedule Defense
-                </a>
+                <div>
+                    <h2 class="mb-0">Scheduling</h2>
+                    @if($activeTerm)
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            @if($showAllTerms)
+                                Showing defense schedules for: <strong>All Terms</strong>
+                                <span class="badge bg-info ms-2">All Terms</span>
+                            @else
+                                Showing defense schedules for: <strong>{{ $activeTerm->full_name }}</strong>
+                                <span class="badge bg-success ms-2">Active Term</span>
+                            @endif
+                        </p>
+                    @else
+                        <p class="text-warning mb-0">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            No active academic term set. Please set an active term to view defense schedules.
+                        </p>
+                    @endif
+                </div>
+                <div class="d-flex gap-2">
+                    @if($activeTerm)
+                        @if($showAllTerms)
+                            <a href="{{ route('chairperson.scheduling.index') }}" class="btn btn-outline-success">
+                                <i class="fas fa-calendar-check"></i> Show Active Term Only
+                            </a>
+                        @else
+                            <a href="{{ route('chairperson.scheduling.index', ['show_all' => true]) }}" class="btn btn-outline-info">
+                                <i class="fas fa-calendar-alt"></i> Show All Terms
+                            </a>
+                        @endif
+                    @endif
+                    <a href="{{ route('chairperson.scheduling.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Schedule Defense
+                    </a>
+                </div>
             </div>
 
             @if(session('success'))

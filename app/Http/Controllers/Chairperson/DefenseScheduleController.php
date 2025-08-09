@@ -14,15 +14,29 @@ use Illuminate\Support\Facades\DB;
 class DefenseScheduleController extends Controller
 {
     /**
+     * Get the current active academic term
+     */
+    private function getActiveTerm()
+    {
+        return AcademicTerm::where('is_active', true)->first();
+    }
+
+    /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $activeTerm = $this->getActiveTerm();
+        $showAllTerms = $request->get('show_all', false);
+        
         $defenseSchedules = DefenseSchedule::with(['group.adviser', 'group.members', 'academicTerm', 'panelists'])
+            ->when($activeTerm && !$showAllTerms, function($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
             ->orderBy('start_at', 'desc')
             ->get();
         
-        return view('chairperson.scheduling.index', compact('defenseSchedules'));
+        return view('chairperson.scheduling.index', compact('defenseSchedules', 'activeTerm', 'showAllTerms'));
     }
 
     /**
@@ -30,14 +44,19 @@ class DefenseScheduleController extends Controller
      */
     public function create()
     {
+        $activeTerm = $this->getActiveTerm();
+        
         $groups = Group::with(['adviser', 'members'])
             ->whereHas('adviser')
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
             ->get();
         
         $academicTerms = AcademicTerm::notArchived()->get();
         $faculty = User::whereIn('role', ['adviser', 'panelist'])->get();
         
-        return view('chairperson.scheduling.create', compact('groups', 'academicTerms', 'faculty'));
+        return view('chairperson.scheduling.create', compact('groups', 'academicTerms', 'faculty', 'activeTerm'));
     }
 
     /**
@@ -109,10 +128,20 @@ class DefenseScheduleController extends Controller
         }
 
         DB::transaction(function () use ($request) {
+            $academicTermId = $request->academic_term_id;
+            
+            // If no academic term is selected, use the active term
+            if (empty($academicTermId)) {
+                $activeTerm = $this->getActiveTerm();
+                if ($activeTerm) {
+                    $academicTermId = $activeTerm->id;
+                }
+            }
+            
             $defenseSchedule = DefenseSchedule::create([
                 'group_id' => $request->group_id,
                 'stage' => $request->stage,
-                'academic_term_id' => $request->academic_term_id,
+                'academic_term_id' => $academicTermId,
                 'start_at' => $request->start_at,
                 'end_at' => $request->end_at,
                 'room' => $request->room,

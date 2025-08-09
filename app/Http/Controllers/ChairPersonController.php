@@ -19,19 +19,35 @@ class ChairpersonController extends Controller
 
     // ======= OFFERINGS =======
 
-    public function indexOfferings()
+    /**
+     * Get the current active academic term
+     */
+    private function getActiveTerm()
     {
+        return \App\Models\AcademicTerm::where('is_active', true)->first();
+    }
+
+    public function indexOfferings(Request $request)
+    {
+        $activeTerm = $this->getActiveTerm();
+        $showAllTerms = $request->get('show_all', false);
+        
         $offerings = Offering::with(['teacher', 'academicTerm', 'students'])
+            ->when($activeTerm && !$showAllTerms, function($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
             ->orderBy('created_at', 'desc')
             ->get();
-        return view('chairperson.offerings.index', compact('offerings'));
+            
+        return view('chairperson.offerings.index', compact('offerings', 'activeTerm', 'showAllTerms'));
     }
 
     public function createOffering()
     {
+        $activeTerm = $this->getActiveTerm();
         $teachers = User::whereIn('role', ['adviser', 'panelist'])->get();
         $academicTerms = \App\Models\AcademicTerm::notArchived()->get();
-        return view('chairperson.offerings.create', compact('teachers', 'academicTerms'));
+        return view('chairperson.offerings.create', compact('teachers', 'academicTerms', 'activeTerm'));
     }
 
     public function storeOffering(Request $request)
@@ -43,7 +59,17 @@ class ChairpersonController extends Controller
             'academic_term_id' => 'required|exists:academic_terms,id',
         ]);
 
-        Offering::create($request->only('subject_title', 'subject_code', 'teacher_id', 'academic_term_id'));
+        $data = $request->only('subject_title', 'subject_code', 'teacher_id', 'academic_term_id');
+        
+        // If no academic term is selected, use the active term
+        if (empty($data['academic_term_id'])) {
+            $activeTerm = $this->getActiveTerm();
+            if ($activeTerm) {
+                $data['academic_term_id'] = $activeTerm->id;
+            }
+        }
+
+        Offering::create($data);
 
         return redirect()->route('chairperson.offerings.index')->with('success', 'Offering added successfully.');
     }
@@ -117,10 +143,20 @@ class ChairpersonController extends Controller
 
     // ======= TEACHERS =======
 
-    public function teachers()
+    public function teachers(Request $request)
     {
-        $teachers = User::whereIn('role', ['adviser', 'panelist'])->get();
-        return view('chairperson.teachers.index', compact('teachers'));
+        $activeTerm = $this->getActiveTerm();
+        $showAllTerms = $request->get('show_all', false);
+        
+        $teachers = User::whereIn('role', ['adviser', 'panelist'])
+            ->when($activeTerm && !$showAllTerms, function($query) use ($activeTerm) {
+                return $query->whereHas('offerings', function($q) use ($activeTerm) {
+                    $q->where('academic_term_id', $activeTerm->id);
+                });
+            })
+            ->get();
+            
+        return view('chairperson.teachers.index', compact('teachers', 'activeTerm', 'showAllTerms'));
     }
 
     public function createTeacher()
