@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\MilestoneTemplate;
 use App\Models\MilestoneTask;
 use App\Models\AdviserInvitation;
+use App\Models\AcademicTerm;
 use Carbon\Carbon;
 
 class CoordinatorDashboardController extends Controller
@@ -19,10 +20,15 @@ class CoordinatorDashboardController extends Controller
     // Dashboard page for coordinator
     public function index()
     {
+        // Get current active academic term
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+        
         // Basic statistics
         $studentCount = Student::count();
         $groupCount = Group::count();
-        $facultyCount = User::whereIn('role', ['adviser', 'panelist'])->count();
+        $facultyCount = User::whereHas('roles', function($query) {
+            $query->whereIn('name', ['adviser', 'panelist']);
+        })->count();
         $submissionCount = ProjectSubmission::count();
 
         // Group statistics
@@ -69,6 +75,7 @@ class CoordinatorDashboardController extends Controller
         $upcomingDeadlines = $this->getUpcomingDeadlines();
 
         return view('coordinator.dashboard', compact(
+            'activeTerm',
             'studentCount',
             'groupCount',
             'facultyCount',

@@ -270,10 +270,12 @@
                         <label for="faculty_id" class="form-label fw-bold">Select Faculty Member</label>
                         <select name="faculty_id" id="faculty_id" class="form-select @error('faculty_id') is-invalid @enderror" required>
                             <option value="">Choose a faculty member...</option>
-                            @foreach(\App\Models\User::whereIn('role', ['adviser', 'panelist'])->get() as $faculty)
+                            @foreach(\App\Models\User::whereHas('roles', function($query) {
+                                $query->whereIn('name', ['adviser', 'panelist']);
+                            })->get() as $faculty)
                                 <option value="{{ $faculty->id }}" {{ old('faculty_id') == $faculty->id ? 'selected' : '' }}>
                                     {{ $faculty->name }} 
-                                    <span class="text-muted">({{ ucfirst($faculty->role) }})</span>
+                                    <span class="text-muted">({{ ucfirst($faculty->roles->first()->name ?? 'N/A') }})</span>
                                 </option>
                             @endforeach
                         </select>

@@ -15,29 +15,29 @@ class AcademicTermSeeder extends Seeder
     {
         $terms = [
             [
-                'school_year' => '2023-2024',
-                'semester' => 'First Semester',
-                'is_active' => false,
-                'is_archived' => true,
-            ],
-            [
-                'school_year' => '2023-2024',
-                'semester' => 'Second Semester',
-                'is_active' => false,
-                'is_archived' => true,
-            ],
-            [
-                'school_year' => '2024-2025',
-                'semester' => 'First Semester',
+                'name' => 'First Semester',
+                'academic_year' => '2024-2025',
+                'start_date' => '2024-08-01',
+                'end_date' => '2024-12-15',
                 'is_active' => true,
-                'is_archived' => false,
+                'is_archived' => false
             ],
             [
-                'school_year' => '2024-2025',
-                'semester' => 'Second Semester',
+                'name' => 'Second Semester',
+                'academic_year' => '2024-2025',
+                'start_date' => '2025-01-15',
+                'end_date' => '2025-05-30',
                 'is_active' => false,
-                'is_archived' => false,
+                'is_archived' => false
             ],
+            [
+                'name' => 'Summer Term',
+                'academic_year' => '2024-2025',
+                'start_date' => '2025-06-01',
+                'end_date' => '2025-07-31',
+                'is_active' => false,
+                'is_archived' => false
+            ]
         ];
 
         foreach ($terms as $term) {

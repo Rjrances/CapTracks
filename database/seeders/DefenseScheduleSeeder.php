@@ -25,7 +25,9 @@ class DefenseScheduleSeeder extends Seeder
         $groups = Group::whereHas('adviser')->get();
         
         // Get faculty members
-        $faculty = User::whereIn('role', ['adviser', 'panelist'])->get();
+        $faculty = User::whereHas('roles', function($query) {
+            $query->whereIn('name', ['adviser', 'panelist']);
+        })->get();
         
         if ($groups->isEmpty() || $faculty->isEmpty() || !$activeTerm) {
             return;

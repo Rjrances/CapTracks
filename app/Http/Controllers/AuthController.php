@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Student;
+use App\Models\Role;
 
 class AuthController extends Controller
 {
@@ -45,7 +46,7 @@ class AuthController extends Controller
                 return redirect('/change-password');
             }
 
-            return $this->redirectBasedOnRole($user->role);
+            return $this->redirectBasedOnRole($user->getPrimaryRoleAttribute());
         }
 
         // If not found in users table, try students table
@@ -97,15 +98,20 @@ class AuthController extends Controller
     }
 
     private function redirectBasedOnRole($role)
-{
-    return match ($role) {
-        'chairperson' => redirect()->route('chairperson.dashboard'),
-        'coordinator' => redirect()->route('coordinator.dashboard'),
-        'adviser', 'panelist' => redirect()->route('adviser.dashboard'),
-        'student' => redirect()->route('student.dashboard'),
-        default => redirect('/login')->withErrors(['role' => 'Invalid role.']),
-    };
-}
+    {
+        // If role is an array (multiple roles), use the first one for redirection
+        if (is_array($role)) {
+            $role = $role[0];
+        }
+        
+        return match ($role) {
+            'chairperson' => redirect()->route('chairperson.dashboard'),
+            'coordinator' => redirect()->route('coordinator.dashboard'),
+            'adviser', 'panelist' => redirect()->route('adviser.dashboard'),
+            'student' => redirect()->route('student.dashboard'),
+            default => redirect('/login')->withErrors(['role' => 'Invalid role.']),
+        };
+    }
 
 
     public function logout(Request $request)
@@ -138,17 +144,28 @@ class AuthController extends Controller
 
         $role = 'student';
 
-        if (Auth::check() && Auth::user()->role === 'chairperson' && $request->filled('role')) {
+        if (Auth::check() && Auth::user()->hasRole('chairperson') && $request->filled('role')) {
             $role = $request->role;
         }
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $role,
+            'school_id' => now()->timestamp, // dummy unique ID
+            'birthday' => now()->subYears(25),
+            'department' => 'N/A',
+            'position' => 'N/A',
             'must_change_password' => true,
         ]);
+        
+        // Assign role if specified
+        if ($role !== 'student') {
+            $roleModel = Role::where('name', $role)->first();
+            if ($roleModel) {
+                $user->roles()->attach($roleModel->id);
+            }
+        }
 
         return redirect('/login')->with('success', 'Registration successful. Please log in.');
     }
@@ -197,6 +214,6 @@ class AuthController extends Controller
         $user->must_change_password = false;
         $user->save();
 
-        return $this->redirectBasedOnRole($user->role);
+        return $this->redirectBasedOnRole($user->getPrimaryRoleAttribute());
     }
 }

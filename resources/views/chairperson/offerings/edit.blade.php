@@ -52,7 +52,7 @@
                                 @foreach($teachers as $teacher)
                                     <option value="{{ $teacher->id }}" 
                                         {{ old('teacher_id', $offering->teacher_id) == $teacher->id ? 'selected' : '' }}>
-                                        {{ $teacher->name }} ({{ ucfirst($teacher->role) }})
+                                        {{ $teacher->name }} ({{ ucfirst($teacher->roles->first()->name ?? 'N/A') }})
                                     </option>
                                 @endforeach
                             </select>

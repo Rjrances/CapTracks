@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Models\MilestoneTask;
 use App\Models\GroupMilestoneTask;
 use App\Models\ProjectSubmission;
+use App\Models\AcademicTerm;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 
 class AdviserController extends Controller
@@ -17,35 +19,72 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
         
+        // Get current active term
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+        
         // Get pending adviser invitations
         $pendingInvitations = AdviserInvitation::with(['group', 'group.members'])
             ->where('faculty_id', $user->id)
             ->pending()
             ->get();
 
-        // Get groups where user is the adviser with progress data
-        $adviserGroups = Group::with(['members', 'adviserInvitations'])
-            ->where('adviser_id', $user->id)
-            ->get()
-            ->map(function ($group) {
-                // ✅ NEW: Calculate progress for each group
-                $group->progress_percentage = $this->calculateGroupProgress($group);
-                $group->completed_tasks = $this->getCompletedTasksCount($group);
-                $group->total_tasks = $this->getTotalTasksCount($group);
-                $group->submissions_count = $this->getSubmissionsCount($group);
-                return $group;
-            });
+        // Get groups where user is the adviser with comprehensive progress data
+        $adviserGroups = Group::with([
+            'members', 
+            'adviserInvitations', 
+            'groupMilestones.milestoneTemplate',
+            'groupMilestoneTasks.milestoneTask',
+            'academicTerm'
+        ])
+        ->where('adviser_id', $user->id)
+        ->get()
+        ->map(function ($group) {
+            // Calculate comprehensive progress for each group
+            $group->progress_percentage = $this->calculateGroupProgress($group);
+            $group->completed_tasks = $this->getCompletedTasksCount($group);
+            $group->total_tasks = $this->getTotalTasksCount($group);
+            $group->submissions_count = $this->getSubmissionsCount($group);
+            $group->milestone_progress = $this->getMilestoneProgress($group);
+            $group->next_milestone = $this->getNextMilestone($group);
+            $group->overdue_tasks = $this->getOverdueTasksCount($group);
+            return $group;
+        });
+
+        // Calculate summary statistics
+        $summaryStats = [
+            'total_groups' => $adviserGroups->count(),
+            'total_advisees' => $adviserGroups->sum(function($group) { return $group->members->count(); }),
+            'groups_ready_for_defense' => $adviserGroups->filter(function($group) { return $group->progress_percentage >= 60; })->count(),
+            'groups_needing_attention' => $adviserGroups->filter(function($group) { return $group->progress_percentage < 40; })->count(),
+            'overdue_tasks_total' => $adviserGroups->sum('overdue_tasks'),
+            'pending_invitations' => $pendingInvitations->count()
+        ];
 
         // Get recent notifications
-        $notifications = \App\Models\Notification::where('role', 'adviser')
+        $notifications = Notification::where('role', 'adviser')
             ->latest()
             ->take(5)
             ->get();
 
-        // ✅ NEW: Get recent activities
+        // Get recent activities
         $recentActivities = $this->getRecentActivities($user);
 
-        return view('adviser.dashboard', compact('pendingInvitations', 'adviserGroups', 'notifications', 'recentActivities'));
+        // Get groups by progress category for quick overview
+        $groupsByProgress = [
+            'excellent' => $adviserGroups->filter(function($group) { return $group->progress_percentage >= 80; }),
+            'good' => $adviserGroups->filter(function($group) { return $group->progress_percentage >= 60 && $group->progress_percentage < 80; }),
+            'needs_attention' => $adviserGroups->filter(function($group) { return $group->progress_percentage < 60; })
+        ];
+
+        return view('adviser.dashboard', compact(
+            'activeTerm', 
+            'pendingInvitations', 
+            'adviserGroups', 
+            'notifications', 
+            'recentActivities',
+            'summaryStats',
+            'groupsByProgress'
+        ));
     }
 
     // ✅ NEW: Calculate group progress percentage
@@ -86,6 +125,68 @@ class AdviserController extends Controller
         return ProjectSubmission::whereHas('student', function($query) use ($group) {
             $query->whereIn('id', $group->members->pluck('id'));
         })->count();
+    }
+
+    // ✅ NEW: Get milestone progress breakdown
+    private function getMilestoneProgress($group)
+    {
+        $milestones = $group->groupMilestones;
+        $progress = [];
+        
+        foreach ($milestones as $milestone) {
+            $progress[] = [
+                'name' => $milestone->milestoneTemplate->name,
+                'progress' => $milestone->progress_percentage,
+                'status' => $milestone->status,
+                'target_date' => $milestone->target_date,
+                'is_overdue' => $milestone->target_date && now()->isAfter($milestone->target_date)
+            ];
+        }
+        
+        return $progress;
+    }
+
+    // ✅ NEW: Get next milestone to focus on
+    private function getNextMilestone($group)
+    {
+        $milestones = $group->groupMilestones->sortBy('order');
+        
+        foreach ($milestones as $milestone) {
+            if ($milestone->progress_percentage < 100) {
+                return [
+                    'name' => $milestone->milestoneTemplate->name,
+                    'progress' => $milestone->progress_percentage,
+                    'target_date' => $milestone->target_date,
+                    'remaining_tasks' => $this->getRemainingTasksCount($milestone)
+                ];
+            }
+        }
+        
+        return null;
+    }
+
+    // ✅ NEW: Get overdue tasks count
+    private function getOverdueTasksCount($group)
+    {
+        $overdueCount = 0;
+        
+        foreach ($group->groupMilestones as $milestone) {
+            if ($milestone->target_date && now()->isAfter($milestone->target_date)) {
+                $overdueCount += $milestone->groupMilestoneTasks
+                    ->where('is_completed', false)
+                    ->count();
+            }
+        }
+        
+        return $overdueCount;
+    }
+
+    // ✅ NEW: Get remaining tasks count for a milestone
+    private function getRemainingTasksCount($milestone)
+    {
+        return $milestone->groupMilestoneTasks
+            ->where('is_completed', false)
+            ->count();
     }
 
     // ✅ NEW: Get recent activities
@@ -152,14 +253,14 @@ class AdviserController extends Controller
             $invitation->group->update(['adviser_id' => Auth::id()]);
             
             // Create notification for the group
-            \App\Models\Notification::create([
+            Notification::create([
                 'title' => 'Adviser Invitation Accepted',
                 'description' => 'Your adviser invitation has been accepted by ' . Auth::user()->name,
                 'role' => 'student',
             ]);
         } else {
             // Create notification for the group
-            \App\Models\Notification::create([
+            Notification::create([
                 'title' => 'Adviser Invitation Declined',
                 'description' => 'Your adviser invitation has been declined by ' . Auth::user()->name,
                 'role' => 'student',

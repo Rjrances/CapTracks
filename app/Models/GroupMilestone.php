@@ -38,6 +38,12 @@ class GroupMilestone extends Model
         return $this->belongsTo(MilestoneTemplate::class);
     }
 
+    // Alias for template relationship
+    public function template()
+    {
+        return $this->belongsTo(MilestoneTemplate::class, 'milestone_template_id');
+    }
+
     public function groupTasks()
     {
         return $this->hasMany(GroupMilestoneTask::class);

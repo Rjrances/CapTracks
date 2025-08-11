@@ -80,7 +80,7 @@
                         <td><strong>{{ $teacher->school_id }}</strong></td>
                         <td>{{ $teacher->name }}</td>
                         <td>{{ $teacher->email }}</td>
-                        <td><span class="badge bg-{{ $teacher->role == 'adviser' ? 'primary' : 'info' }}">{{ ucfirst($teacher->role) }}</span></td>
+                        <td><span class="badge bg-{{ $teacher->roles->first()->name == 'adviser' ? 'primary' : 'info' }}">{{ ucfirst($teacher->roles->first()->name ?? 'N/A') }}</span></td>
                         <td>{{ $teacher->department ?? 'N/A' }}</td>
                         <td>
                             <div class="btn-group btn-group-sm">

@@ -17,7 +17,6 @@ class User extends Authenticatable
         'department',     // Department instead of course
         'position',       // Position instead of year
         'password',
-        'role',
         'must_change_password',
     ];
 
@@ -37,6 +36,12 @@ class User extends Authenticatable
      *        RELATIONSHIPS
      * ================================
      */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_roles', 'user_id', 'role', 'id', 'name')
+                    ->withTimestamps();
+    }
+
     public function offerings()
     {
         return $this->hasMany(Offering::class, 'teacher_id');
@@ -74,23 +79,42 @@ class User extends Authenticatable
      *        ROLE CHECK HELPERS
      * ================================
      */
+    public function hasRole($role): bool
+    {
+        return $this->roles()->where('name', $role)->exists();
+    }
+
+    public function hasAnyRole($roles): bool
+    {
+        if (is_string($roles)) {
+            $roles = explode(',', $roles);
+        }
+        
+        return $this->roles()->whereIn('name', $roles)->exists();
+    }
+
     public function isChairperson(): bool
     {
-        return $this->role === 'chairperson';
+        return $this->hasRole('chairperson');
     }
 
     public function isCoordinator(): bool
     {
-        return $this->role === 'coordinator';
+        return $this->hasRole('coordinator');
     }
 
     public function isTeacher(): bool
     {
-        return in_array($this->role, ['adviser', 'panelist']);
+        return $this->hasAnyRole(['adviser', 'panelist']);
     }
 
     public function isStudent(): bool
     {
         return false; // Students are in separate table
+    }
+
+    public function getPrimaryRoleAttribute()
+    {
+        return $this->roles()->first()?->name;
     }
 }

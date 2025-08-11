@@ -12,14 +12,11 @@
     </nav>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">60% Defense Readiness Report</h2>
+        <h2 class="mb-0">Group Progress Readiness Report</h2>
         <div>
-            <a href="{{ route('coordinator.progress-validation.dashboard') }}" class="btn btn-outline-secondary me-2">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
             @if($report['is_ready'])
                 <a href="{{ route('coordinator.defense.scheduling') }}" class="btn btn-success">
-                    <i class="fas fa-calendar-plus me-2"></i>Schedule 60% Defense
+                    <i class="fas fa-calendar-plus me-2"></i>Schedule Progress Review
                 </a>
             @endif
         </div>
@@ -72,7 +69,7 @@
                                 {{ $report['overall_progress'] }}%
                             </div>
                         </div>
-                        <small class="text-muted">Target: 60% for 60% defense readiness</small>
+                        <small class="text-muted">Target: 60% for group progress readiness</small>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -80,7 +77,7 @@
                         <h4 class="mb-0 {{ $report['is_ready'] ? 'text-success' : 'text-warning' }}">
                             {{ $report['is_ready'] ? 'READY' : 'NOT READY' }}
                         </h4>
-                        <small class="text-muted">for 60% Defense</small>
+                        <small class="text-muted">for Progress Review</small>
                     </div>
                 </div>
             </div>
@@ -198,7 +195,7 @@
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
-                <i class="fas fa-file-alt me-2"></i>Required Documents for 60% Defense
+                <i class="fas fa-file-alt me-2"></i>Required Documents for Progress Review
             </h5>
         </div>
         <div class="card-body">
@@ -275,7 +272,7 @@
                     <p class="mb-0">You can now proceed to schedule their defense.</p>
                 </div>
                 <a href="{{ route('coordinator.defense.scheduling') }}" class="btn btn-success btn-lg">
-                    <i class="fas fa-calendar-plus me-2"></i>Schedule 60% Defense
+                    <i class="fas fa-calendar-plus me-2"></i>Schedule Progress Review
                 </a>
             @else
                 <div class="alert alert-warning">

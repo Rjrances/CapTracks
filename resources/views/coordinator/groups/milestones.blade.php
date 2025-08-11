@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h2 mb-1">Milestones for: {{ $group->name }}</h1>
-            <p class="text-muted mb-0">Track progress and manage milestone completion</p>
+            <p class="text-muted mb-0">View and monitor milestone progress (Read-only access)</p>
         </div>
         <a href="{{ route('coordinator.groups.show', $group->id) }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Back to Group
@@ -61,62 +61,7 @@
         </div>
     </div>
 
-    <!-- Assign New Milestone -->
-    <div class="card mb-4">
-        <div class="card-header bg-success text-white">
-            <h5 class="mb-0">
-                <i class="fas fa-plus me-2"></i>Assign New Milestone
-            </h5>
-        </div>
-        <div class="card-body">
-            <form action="{{ route('coordinator.groups.assign-milestone', $group->id) }}" method="POST">
-                @csrf
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="milestone_template_id" class="form-label fw-semibold">Milestone Template</label>
-                        <select name="milestone_template_id" id="milestone_template_id" class="form-select" required>
-                            <option value="">Select a milestone...</option>
-                            @foreach($availableMilestones as $milestone)
-                                <option value="{{ $milestone->id }}">{{ $milestone->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('milestone_template_id')
-                            <div class="text-danger small">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-3">
-                        <label for="start_date" class="form-label fw-semibold">Start Date</label>
-                        <input type="date" name="start_date" id="start_date" class="form-control">
-                        @error('start_date')
-                            <div class="text-danger small">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-3">
-                        <label for="target_date" class="form-label fw-semibold">Target Date</label>
-                        <input type="date" name="target_date" id="target_date" class="form-control">
-                        @error('target_date')
-                            <div class="text-danger small">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold">&nbsp;</label>
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="fas fa-plus me-2"></i>Assign
-                        </button>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <label for="notes" class="form-label fw-semibold">Notes (Optional)</label>
-                        <textarea name="notes" id="notes" class="form-control" rows="2" placeholder="Add any specific notes or instructions for this milestone..."></textarea>
-                        @error('notes')
-                            <div class="text-danger small">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
+
 
     <!-- Overall Progress -->
     <div class="card mb-4">
@@ -164,7 +109,7 @@
         <div class="card-header bg-light">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
-                    <i class="fas fa-flag me-2"></i>Assigned Milestones
+                    <i class="fas fa-flag me-2"></i>Assigned Milestones (View Only)
                 </h5>
                 <span class="badge bg-primary">{{ $group->groupMilestones->count() }} assigned</span>
             </div>
@@ -231,18 +176,9 @@
                                         <a href="#" class="btn btn-outline-primary" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="#" class="btn btn-outline-secondary" title="Edit Progress">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form action="{{ route('coordinator.groups.remove-milestone', [$group->id, $groupMilestone->id]) }}" 
-                                              method="POST" class="d-inline" 
-                                              onsubmit="return confirm('Are you sure you want to remove this milestone? This action cannot be undone.')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-outline-danger" title="Remove Milestone">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        <span class="btn btn-outline-secondary disabled" title="Coordinator can only view milestones">
+                                            <i class="fas fa-eye"></i> View Only
+                                        </span>
                                     </div>
                                 </td>
                             </tr>
@@ -254,7 +190,7 @@
                 <div class="text-center py-5">
                     <i class="fas fa-flag fa-3x text-muted mb-3"></i>
                     <h6 class="text-muted">No milestones assigned yet</h6>
-                    <p class="text-muted small">Use the form above to assign milestones to this group.</p>
+                    <p class="text-muted small">This group has no milestones assigned. Contact the group's adviser to assign milestones.</p>
                 </div>
             @endif
         </div>

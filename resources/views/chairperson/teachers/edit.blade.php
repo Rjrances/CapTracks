@@ -92,8 +92,8 @@
                                             id="role" 
                                             class="form-select @error('role') is-invalid @enderror" 
                                             required>
-                                        <option value="adviser" {{ old('role', $teacher->role) == 'adviser' ? 'selected' : '' }}>Adviser</option>
-                                        <option value="panelist" {{ old('role', $teacher->role) == 'panelist' ? 'selected' : '' }}>Panelist</option>
+                                        <option value="adviser" {{ old('role', $teacher->roles->first()->name ?? '') == 'adviser' ? 'selected' : '' }}>Adviser</option>
+                                        <option value="panelist" {{ old('role', $teacher->roles->first()->name ?? '') == 'panelist' ? 'selected' : '' }}>Panelist</option>
                                     </select>
                                     @error('role')
                                         <div class="invalid-feedback">{{ $message }}</div>

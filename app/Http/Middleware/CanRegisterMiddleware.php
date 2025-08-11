@@ -10,7 +10,7 @@ class CanRegisterMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::check() && Auth::user()->role === 'chairperson') {
+        if (Auth::check() && Auth::user()->hasRole('chairperson')) {
             return $next($request);
         }
 

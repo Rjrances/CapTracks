@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Offering;
 use App\Models\User;
 use App\Models\Schedule;
+use App\Models\AcademicTerm;
+use App\Models\Student;
+use App\Models\Role;
 use App\Imports\StudentsImport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\FacultyImport;
@@ -24,7 +27,7 @@ class ChairpersonController extends Controller
      */
     private function getActiveTerm()
     {
-        return \App\Models\AcademicTerm::where('is_active', true)->first();
+        return AcademicTerm::where('is_active', true)->first();
     }
 
     public function indexOfferings(Request $request)
@@ -45,8 +48,10 @@ class ChairpersonController extends Controller
     public function createOffering()
     {
         $activeTerm = $this->getActiveTerm();
-        $teachers = User::whereIn('role', ['adviser', 'panelist'])->get();
-        $academicTerms = \App\Models\AcademicTerm::notArchived()->get();
+        $teachers = User::whereHas('roles', function($query) {
+            $query->whereIn('name', ['adviser', 'panelist']);
+        })->get();
+        $academicTerms = AcademicTerm::notArchived()->get();
         return view('chairperson.offerings.create', compact('teachers', 'academicTerms', 'activeTerm'));
     }
 
@@ -77,9 +82,11 @@ class ChairpersonController extends Controller
     public function editOffering($id)
     {
         $offering = Offering::with(['teacher', 'academicTerm', 'students'])->findOrFail($id);
-        $teachers = User::whereIn('role', ['adviser', 'panelist'])->get();
-        $academicTerms = \App\Models\AcademicTerm::notArchived()->get();
-        $students = \App\Models\Student::all();
+        $teachers = User::whereHas('roles', function($query) {
+            $query->whereIn('name', ['adviser', 'panelist']);
+        })->get();
+        $academicTerms = AcademicTerm::notArchived()->get();
+        $students = Student::all();
         return view('chairperson.offerings.edit', compact('offering', 'teachers', 'academicTerms', 'students'));
     }
 
@@ -148,7 +155,9 @@ class ChairpersonController extends Controller
         $activeTerm = $this->getActiveTerm();
         $showAllTerms = $request->get('show_all', false);
         
-        $teachers = User::whereIn('role', ['adviser', 'panelist'])
+        $teachers = User::whereHas('roles', function($query) {
+                $query->whereIn('name', ['adviser', 'panelist']);
+            })
             ->when($activeTerm && !$showAllTerms, function($query) use ($activeTerm) {
                 return $query->whereHas('offerings', function($q) use ($activeTerm) {
                     $q->where('academic_term_id', $activeTerm->id);
@@ -173,17 +182,22 @@ class ChairpersonController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        User::create([
+        $user = User::create([
             'name'                 => $request->name,
             'email'                => $request->email,
-            'role'                 => $request->role,
             'password'             => bcrypt($request->password),
             'school_id'            => now()->timestamp, // dummy unique ID
             'birthday'             => now()->subYears(30),
-            'course'               => 'N/A',
-            'year'                 => 0,
+            'department'           => 'N/A',
+            'position'             => 'N/A',
             'must_change_password' => true,
         ]);
+        
+        // Assign role
+        $role = Role::where('name', $request->role)->first();
+        if ($role) {
+            $user->roles()->attach($role->id);
+        }
 
         return redirect()->route('teachers.index')->with('success', 'Teacher added successfully.');
     }
@@ -207,13 +221,19 @@ class ChairpersonController extends Controller
 
         $teacher->name = $request->name;
         $teacher->email = $request->email;
-        $teacher->role = $request->role;
 
         if ($request->filled('password')) {
             $teacher->password = bcrypt($request->password);
         }
 
         $teacher->save();
+        
+        // Update role
+        $role = Role::where('name', $request->role)->first();
+        if ($role) {
+            $teacher->roles()->detach();
+            $teacher->roles()->attach($role->id);
+        }
 
         return redirect()->route('teachers.index')->with('success', 'Teacher updated successfully.');
     }
@@ -240,7 +260,9 @@ class ChairpersonController extends Controller
 
     public function facultyManagement()
     {
-        $faculty = User::whereIn('role', ['adviser', 'panelist'])->get();
+        $faculty = User::whereHas('roles', function($query) {
+            $query->whereIn('name', ['adviser', 'panelist']);
+        })->with('roles')->get();
         return view('chairperson.teachers.index', compact('faculty'));
     }
 
@@ -287,22 +309,33 @@ class ChairpersonController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'school_id' => 'required|string|unique:users,school_id',
-            'role' => 'required|in:adviser,panelist',
+            'school_id' => [
+                'required',
+                'string',
+                'unique:users,school_id',
+                'regex:/^\d{5}$/', // Must be exactly 5 digits
+            ],
             'department' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:255',
+        ], [
+            'school_id.regex' => 'Faculty/Staff ID must be exactly 5 digits (e.g., 12345)',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'school_id' => $request->school_id,
-            'role' => $request->role,
             'department' => $request->department,
             'position' => $request->position,
             'password' => bcrypt('password123'),
             'must_change_password' => true,
         ]);
+
+        // Assign default role (adviser)
+        $adviserRole = \App\Models\Role::where('name', 'adviser')->first();
+        if ($adviserRole) {
+            $user->roles()->attach($adviserRole->id);
+        }
 
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member added successfully!');
     }
@@ -320,7 +353,6 @@ class ChairpersonController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
-            'role' => 'required|in:adviser,panelist',
             'department' => 'nullable|string|max:255',
             'position' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8',
@@ -329,7 +361,6 @@ class ChairpersonController extends Controller
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
-            'role' => $request->role,
             'department' => $request->department,
             'position' => $request->position,
         ];

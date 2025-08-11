@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\ProjectSubmission;
 use App\Models\MilestoneTask;
 use App\Models\Student;
+use App\Models\AcademicTerm;
 
 class StudentDashboardController extends Controller
 {
@@ -46,8 +47,12 @@ class StudentDashboardController extends Controller
         
         // ✅ NEW: Get upcoming deadlines
         $upcomingDeadlines = $this->getUpcomingDeadlines($student);
+        
+        // Get current active term
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
 
         return view('student.dashboard', compact(
+            'activeTerm',
             'overallProgress',
             'taskStats',
             'submissionsCount',

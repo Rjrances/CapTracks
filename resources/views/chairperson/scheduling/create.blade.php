@@ -170,8 +170,8 @@
                         <select id="faculty_select" class="form-select">
                             <option value="">Select Faculty Member</option>
                             @foreach($faculty as $member)
-                                <option value="{{ $member->id }}" data-name="{{ $member->name }}" data-role="{{ $member->role }}">
-                                    {{ $member->name }} ({{ ucfirst($member->role) }})
+                                <option value="{{ $member->id }}" data-name="{{ $member->name }}" data-role="{{ $member->roles->first()->name ?? 'N/A' }}">
+                                    {{ $member->name }} ({{ ucfirst($member->roles->first()->name ?? 'N/A') }})
                                 </option>
                             @endforeach
                         </select>

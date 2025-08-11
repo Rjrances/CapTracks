@@ -12,7 +12,7 @@ use App\Http\Controllers\ClassController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\MilestoneTemplateController;
 use App\Http\Controllers\MilestoneTaskController;
-use App\Http\Controllers\ProgressValidationController;
+
 
 // Landing page
 Route::get('/', fn () => view('welcome'))->name('welcome');
@@ -45,33 +45,31 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
 
    // coordinator Routes
-Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->name('coordinator.')->group(function () {
+Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinator')->name('coordinator.')->group(function () {
     // Coordinator Dashboard
     Route::get('/dashboard', [CoordinatorDashboardController::class, 'index'])->name('dashboard');
 
     // View Class List by Semester
      Route::get('/classlist', [CoordinatorController::class, 'classlist'])->name('classlist.index');
-    // Milestone Templates
-    Route::resource('milestones', MilestoneTemplateController::class);
-    Route::patch('milestones/{milestone}/status', [MilestoneTemplateController::class, 'updateStatus'])->name('milestones.updateStatus');
+    // Milestone Templates - REMOVED for Coordinator (only Chairperson can manage)
+    // Route::resource('milestones', MilestoneTemplateController::class);
+    // Route::patch('milestones/{milestone}/status', [MilestoneTemplateController::class, 'updateStatus'])->name('milestones.updateStatus');
 
-// ✅ Milestone Tasks (nested under milestone)
-Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () {
-    Route::get('tasks', [MilestoneTaskController::class, 'index'])->name('tasks.index');
-    Route::post('tasks', [MilestoneTaskController::class, 'store'])->name('tasks.store');
-    Route::get('tasks/{task}/edit', [MilestoneTaskController::class, 'edit'])->name('tasks.edit');
-    Route::put('tasks/{task}', [MilestoneTaskController::class, 'update'])->name('tasks.update');
-    Route::delete('tasks/{task}', [MilestoneTaskController::class, 'destroy'])->name('tasks.destroy');
-});
+// ✅ Milestone Tasks - REMOVED for Coordinator (only Chairperson can manage)
+// Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () {
+//     Route::get('tasks', [MilestoneTaskController::class, 'index'])->name('tasks.index');
+//     Route::post('tasks', [MilestoneTaskController::class, 'store'])->name('tasks.store');
+//     Route::get('tasks/{task}/edit', [MilestoneTaskController::class, 'edit'])->name('tasks.edit');
+//     Route::put('tasks/{task}', [MilestoneTaskController::class, 'update'])->name('tasks.update');
+//     Route::delete('tasks/{task}', [MilestoneTaskController::class, 'destroy'])->name('tasks.destroy');
+// });
     // Defense Scheduling
     Route::get('/defense/scheduling', [CoordinatorController::class, 'defenseScheduling'])->name('defense.scheduling');
 
-    // ✅ NEW: Progress Validation for 60% Defense
-    Route::get('/progress-validation', [ProgressValidationController::class, 'dashboard'])->name('progress-validation.dashboard');
-    Route::get('/progress-validation/all-groups', [ProgressValidationController::class, 'allGroupsStatus'])->name('progress-validation.all-groups');
-    Route::get('/progress-validation/groups/{group}/report', [ProgressValidationController::class, 'groupReadinessReport'])->name('progress-validation.group-report');
-    Route::get('/progress-validation/groups/{group}/status', [ProgressValidationController::class, 'getReadinessStatus'])->name('progress-validation.group-status');
-    Route::get('/progress-validation/export', [ProgressValidationController::class, 'exportReadinessReport'])->name('progress-validation.export');
+    // Milestones - View only (no management) - REMOVED for coordinators
+    // Route::get('/milestones', [CoordinatorController::class, 'milestones'])->name('milestones.index');
+
+
 
     // Groups
     Route::get('/groups', [CoordinatorController::class, 'groups'])->name('groups.index');
@@ -83,8 +81,6 @@ Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () 
     Route::delete('/groups/{group}', [CoordinatorController::class, 'destroy'])->name('groups.destroy');
     Route::get('/groups/{group}/assign-adviser', [CoordinatorController::class, 'assignAdviser'])->name('groups.assignAdviser');
     Route::get('/groups/{group}/milestones', [CoordinatorController::class, 'groupMilestones'])->name('groups.milestones');
-    Route::post('/groups/{group}/milestones', [CoordinatorController::class, 'assignMilestone'])->name('groups.assign-milestone');
-    Route::delete('/groups/{group}/milestones/{milestone}', [CoordinatorController::class, 'removeMilestone'])->name('groups.remove-milestone');
 
     // Notifications
     Route::get('/notifications', [CoordinatorController::class, 'notifications'])->name('notifications');
@@ -178,7 +174,7 @@ Route::prefix('student')->name('student.')->group(function () {
 });
 
 // Adviser/Faculty Routes
-Route::middleware(['auth', 'checkrole:adviser,panelist'])->prefix('adviser')->name('adviser.')->group(function () {
+Route::middleware(['auth', 'checkrole:adviser,coordinator'])->prefix('adviser')->name('adviser.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\AdviserController::class, 'dashboard'])->name('dashboard');
     Route::get('/invitations', [\App\Http\Controllers\AdviserController::class, 'invitations'])->name('invitations');
     Route::post('/invitations/{invitation}/respond', [\App\Http\Controllers\AdviserController::class, 'respondToInvitation'])->name('invitations.respond');

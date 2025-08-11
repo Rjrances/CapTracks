@@ -7,6 +7,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Offering;
 use App\Models\User;
 use App\Models\AcademicTerm;
+use App\Models\Role;
 
 class OfferingSeeder extends Seeder
 {
@@ -19,7 +20,9 @@ class OfferingSeeder extends Seeder
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         
         // Get teachers
-        $teachers = User::whereIn('role', ['adviser', 'panelist'])->get();
+        $teachers = User::whereHas('roles', function($query) {
+            $query->whereIn('name', ['adviser', 'panelist']);
+        })->get();
         
         if ($teachers->isEmpty()) {
             // Create some sample teachers if none exist
@@ -28,24 +31,38 @@ class OfferingSeeder extends Seeder
                     'school_id' => 'FAC001',
                     'name' => 'Dr. John Smith',
                     'email' => 'john.smith@university.edu',
-                    'role' => 'adviser',
                     'password' => bcrypt('password'),
+                    'birthday' => now()->subYears(30),
+                    'department' => 'Computer Science',
+                    'position' => 'Associate Professor',
+                    'must_change_password' => true,
                 ]),
                 User::create([
                     'school_id' => 'FAC002',
                     'name' => 'Prof. Jane Doe',
                     'email' => 'jane.doe@university.edu',
-                    'role' => 'adviser',
                     'password' => bcrypt('password'),
+                    'birthday' => now()->subYears(35),
+                    'department' => 'Computer Science',
+                    'position' => 'Professor',
+                    'must_change_password' => true,
                 ]),
                 User::create([
                     'school_id' => 'FAC003',
                     'name' => 'Dr. Mike Johnson',
                     'email' => 'mike.johnson@university.edu',
-                    'role' => 'panelist',
                     'password' => bcrypt('password'),
+                    'birthday' => now()->subYears(28),
+                    'department' => 'Computer Science',
+                    'position' => 'Assistant Professor',
+                    'must_change_password' => true,
                 ]),
             ]);
+            
+            // Assign roles to the created users
+            $teachers[0]->roles()->attach(Role::where('name', 'adviser')->first());
+            $teachers[1]->roles()->attach(Role::where('name', 'adviser')->first());
+            $teachers[2]->roles()->attach(Role::where('name', 'panelist')->first());
         }
         
         if ($activeTerm) {

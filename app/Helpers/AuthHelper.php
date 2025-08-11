@@ -26,12 +26,12 @@ class AuthHelper
     }
 
     /**
-     * Get the current user's role
+     * Get the current user's primary role
      */
     public static function getCurrentUserRole()
     {
         if (Auth::check()) {
-            return Auth::user()->role;
+            return Auth::user()->primary_role;
         }
 
         if (session('is_student')) {
@@ -39,6 +39,57 @@ class AuthHelper
         }
 
         return null;
+    }
+
+    /**
+     * Get all roles for the current user
+     */
+    public static function getCurrentUserRoles()
+    {
+        if (Auth::check()) {
+            return Auth::user()->roles->pluck('name')->toArray();
+        }
+
+        if (session('is_student')) {
+            return ['student'];
+        }
+
+        return [];
+    }
+
+    /**
+     * Check if current user has a specific role
+     */
+    public static function hasRole($role)
+    {
+        if (Auth::check()) {
+            return Auth::user()->hasRole($role);
+        }
+
+        if (session('is_student')) {
+            return $role === 'student';
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if current user has any of the specified roles
+     */
+    public static function hasAnyRole($roles)
+    {
+        if (Auth::check()) {
+            return Auth::user()->hasAnyRole($roles);
+        }
+
+        if (session('is_student')) {
+            if (is_string($roles)) {
+                $roles = explode(',', $roles);
+            }
+            return in_array('student', $roles);
+        }
+
+        return false;
     }
 
     /**

@@ -18,10 +18,11 @@
                 <a class="nav-link" href="{{ route('coordinator.classlist.index') }}">Class List</a>
                 </li>
 
-                {{-- Milestone Templates --}}
+                {{-- Milestones -- REMOVED for coordinators
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('coordinator.milestones.templates') }}">Milestone Templates</a>
+                    <a class="nav-link" href="{{ route('coordinator.milestones.index') }}">Milestones</a>
                 </li>
+                --}}
 
                 {{-- Scheduling --}}
                 <li class="nav-item">
@@ -32,6 +33,8 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('coordinator.groups.index') }}">Groups</a>
                 </li>
+
+
 
                 {{-- Notifications --}}
                 <li class="nav-item">

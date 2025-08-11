@@ -54,7 +54,9 @@ class DefenseScheduleController extends Controller
             ->get();
         
         $academicTerms = AcademicTerm::notArchived()->get();
-        $faculty = User::whereIn('role', ['adviser', 'panelist'])->get();
+        $faculty = User::whereHas('roles', function($query) {
+            $query->whereIn('name', ['adviser', 'panelist']);
+        })->get();
         
         return view('chairperson.scheduling.create', compact('groups', 'academicTerms', 'faculty', 'activeTerm'));
     }
@@ -184,7 +186,9 @@ class DefenseScheduleController extends Controller
             ->get();
         
         $academicTerms = AcademicTerm::notArchived()->get();
-        $faculty = User::whereIn('role', ['adviser', 'panelist'])->get();
+        $faculty = User::whereHas('roles', function($query) {
+            $query->whereIn('name', ['adviser', 'panelist']);
+        })->get();
         
         return view('chairperson.scheduling.edit', compact('defenseSchedule', 'groups', 'academicTerms', 'faculty'));
     }
@@ -339,7 +343,9 @@ class DefenseScheduleController extends Controller
             ->flatten()
             ->unique();
 
-        $availableFaculty = User::whereIn('role', ['adviser', 'panelist'])
+        $availableFaculty = User::whereHas('roles', function($query) {
+            $query->whereIn('name', ['adviser', 'panelist']);
+        })
             ->whereNotIn('id', $conflictingFaculty)
             ->get();
 

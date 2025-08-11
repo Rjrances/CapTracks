@@ -52,6 +52,18 @@ class Group extends Model
         return $this->hasMany(GroupMilestone::class);
     }
 
+    // ✅ NEW: Group milestone tasks relationship
+    public function groupMilestoneTasks()
+    {
+        return $this->hasManyThrough(GroupMilestoneTask::class, GroupMilestone::class);
+    }
+
+    // Alias for milestones relationship
+    public function milestones()
+    {
+        return $this->hasMany(GroupMilestone::class);
+    }
+
     // ✅ NEW: Calculate overall group progress percentage
     public function getOverallProgressPercentageAttribute()
     {

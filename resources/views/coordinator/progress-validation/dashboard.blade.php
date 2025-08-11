@@ -1,15 +1,66 @@
 @extends('layouts.coordinator')
 
-@section('title', '60% Defense Progress Validation')
+@section('title', 'Group Progress Validation')
 
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">60% Defense Progress Validation</h2>
+        <h2 class="mb-0">Group Progress Validation</h2>
         <div>
             <a href="{{ route('coordinator.progress-validation.all-groups') }}" class="btn btn-outline-primary me-2">
                 <i class="fas fa-list me-2"></i>All Groups Status
             </a>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="fas fa-filter me-2"></i>Filters
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ route('coordinator.progress-validation.dashboard') }}" id="filterForm">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="academic_term_id" class="form-label">Academic Term</label>
+                        <select name="academic_term_id" id="academic_term_id" class="form-select">
+                            <option value="">All Terms</option>
+                            @foreach($filterOptions['academic_terms'] as $value => $label)
+                                <option value="{{ $value }}" {{ ($filters['academic_term_id'] ?? '') == $value ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="adviser_id" class="form-label">Adviser</label>
+                        <select name="adviser_id" id="adviser_id" class="form-select">
+                            <option value="">All Advisers</option>
+                            @foreach($filterOptions['advisers'] as $value => $label)
+                                <option value="{{ $value }}" {{ ($filters['adviser_id'] ?? '') == $value ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search Groups</label>
+                        <input type="text" name="search" id="search" class="form-control" 
+                               placeholder="Search by group name..." 
+                               value="{{ $filters['search'] ?? '' }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search me-1"></i>Apply
+                        </button>
+                        <a href="{{ route('coordinator.progress-validation.dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -36,7 +87,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4 class="mb-0">{{ $stats['ready_for_60_percent'] }}</h4>
-                            <p class="mb-0">Ready for 60% Defense</p>
+                            <p class="mb-0">Ready for Progress Review</p>
                         </div>
                         <div class="align-self-center">
                             <i class="fas fa-check-circle fa-2x"></i>
@@ -83,7 +134,7 @@
         <div class="card-header bg-success text-white">
             <h5 class="mb-0">
                 <i class="fas fa-check-circle me-2"></i>
-                Groups Ready for 60% Defense ({{ $readyGroups->count() }})
+                Groups Ready for Progress Review ({{ $readyGroups->count() }})
             </h5>
         </div>
         <div class="card-body">
@@ -221,7 +272,7 @@
         <div class="card-body text-center">
             <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
             <h5>No Groups Available</h5>
-            <p class="text-muted">There are no groups with sufficient progress for 60% defense evaluation.</p>
+                            <p class="text-muted">There are no groups with sufficient progress for evaluation.</p>
         </div>
     </div>
     @endif

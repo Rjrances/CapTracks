@@ -213,7 +213,7 @@
                             @foreach($availableFaculty as $faculty)
                                 <option value="{{ $faculty->id }}">
                                     {{ $faculty->name }} 
-                                    <span class="text-muted">({{ ucfirst($faculty->role) }}{{ $faculty->course ? ' - ' . $faculty->course : '' }})</span>
+                                    <span class="text-muted">({{ ucfirst($faculty->roles->first()->name ?? 'N/A') }}{{ $faculty->department ? ' - ' . $faculty->department : '' }})</span>
                                 </option>
                             @endforeach
                         </select>

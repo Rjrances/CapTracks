@@ -1,6 +1,6 @@
 @extends('layouts.coordinator')
 
-@section('title', 'All Groups - 60% Defense Status')
+@section('title', 'All Groups - Group Progress Status')
 
 @section('content')
 <div class="container mt-5">
@@ -12,12 +12,7 @@
     </nav>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">All Groups - 60% Defense Status</h2>
-        <div>
-            <a href="{{ route('coordinator.progress-validation.dashboard') }}" class="btn btn-outline-secondary me-2">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
-        </div>
+        <h2 class="mb-0">All Groups - Group Progress Status</h2>
     </div>
 
     <!-- Filter Options -->
@@ -29,27 +24,16 @@
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label for="status-filter" class="form-label">Status</label>
                     <select id="status-filter" class="form-select">
                         <option value="">All Status</option>
-                        <option value="ready">Ready for 60% Defense</option>
+                        <option value="ready">Ready for Group Progress Review</option>
                         <option value="needs-attention">Needs Attention</option>
                         <option value="not-ready">Not Ready</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label for="progress-filter" class="form-label">Progress Range</label>
-                    <select id="progress-filter" class="form-select">
-                        <option value="">All Progress</option>
-                        <option value="0-20">0-20%</option>
-                        <option value="21-40">21-40%</option>
-                        <option value="41-60">41-60%</option>
-                        <option value="61-80">61-80%</option>
-                        <option value="81-100">81-100%</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label for="adviser-filter" class="form-label">Adviser</label>
                     <select id="adviser-filter" class="form-select">
                         <option value="">All Advisers</option>
@@ -57,9 +41,9 @@
                         <option value="unassigned">No Adviser</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label for="search" class="form-label">Search</label>
-                    <input type="text" id="search" class="form-control" placeholder="Search groups...">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search Groups</label>
+                    <input type="text" id="search" class="form-control" placeholder="Search by group name...">
                 </div>
             </div>
         </div>
@@ -95,7 +79,6 @@
                             @endphp
                             <tr class="group-row" 
                                 data-status="{{ $report['is_ready'] ? 'ready' : ($group->overall_progress_percentage >= 40 ? 'needs-attention' : 'not-ready') }}"
-                                data-progress="{{ $group->overall_progress_percentage }}"
                                 data-adviser="{{ $group->adviser_id ? 'assigned' : 'unassigned' }}"
                                 data-name="{{ strtolower($group->name) }}">
                                 <td>
@@ -182,7 +165,7 @@
                 <div class="text-center text-muted">
                     <i class="fas fa-users fa-3x mb-3"></i>
                     <h5>No Groups Found</h5>
-                    <p>There are no groups available for 60% defense evaluation.</p>
+                    <p>There are no groups available for group progress evaluation.</p>
                 </div>
             @endif
         </div>
@@ -193,14 +176,12 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const statusFilter = document.getElementById('status-filter');
-    const progressFilter = document.getElementById('progress-filter');
     const adviserFilter = document.getElementById('adviser-filter');
     const searchInput = document.getElementById('search');
     const groupRows = document.querySelectorAll('.group-row');
 
     function filterGroups() {
         const statusValue = statusFilter.value;
-        const progressValue = progressFilter.value;
         const adviserValue = adviserFilter.value;
         const searchValue = searchInput.value.toLowerCase();
 
@@ -210,15 +191,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Status filter
             if (statusValue && row.dataset.status !== statusValue) {
                 show = false;
-            }
-
-            // Progress filter
-            if (progressValue) {
-                const progress = parseInt(row.dataset.progress);
-                const [min, max] = progressValue.split('-').map(Number);
-                if (progress < min || progress > max) {
-                    show = false;
-                }
             }
 
             // Adviser filter
@@ -237,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listeners
     statusFilter.addEventListener('change', filterGroups);
-    progressFilter.addEventListener('change', filterGroups);
     adviserFilter.addEventListener('change', filterGroups);
     searchInput.addEventListener('input', filterGroups);
 });

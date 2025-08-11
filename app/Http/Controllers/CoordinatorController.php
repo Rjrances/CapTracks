@@ -5,16 +5,80 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\Notification;
+use App\Models\AcademicTerm;
+use App\Models\Student;
+use App\Models\Group;
+use App\Models\User;
+use App\Models\ProjectSubmission;
+use App\Models\AdviserInvitation;
+
+use App\Models\GroupMilestone;
+use App\Models\GroupMilestoneTask;
 use Illuminate\Support\Facades\DB;
 
 class CoordinatorController extends Controller
 {
     public function index()
     {
+        // Get current active term
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+        
+        // Get events
         $events = Event::whereDate('date', '>=', now())->orderBy('date')->get();
+        
+        // Get notifications
         $notifications = Notification::latest()->take(5)->get();
+        
+        // Get dashboard statistics
+        $stats = [
+            'studentCount' => Student::count(),
+            'groupCount' => Group::count(),
+            'facultyCount' => User::whereHas('roles', function($query) {
+                $query->whereIn('name', ['adviser', 'panelist']);
+            })->count(),
+            'submissionCount' => ProjectSubmission::count(),
+            'pendingSubmissions' => ProjectSubmission::where('status', 'pending')->count(),
+            'totalGroupMembers' => Group::withCount('members')->get()->sum('members_count'),
+            'groupsWithAdviser' => Group::whereNotNull('adviser_id')->count(),
+            'groupsWithoutAdviser' => Group::whereNull('adviser_id')->count(),
+        ];
+        
+        // Get recent activities (placeholder - can be enhanced later)
+        $recentActivities = collect();
+        
+        // Get recent groups
+        $recentGroups = Group::with(['adviser', 'members'])
+            ->latest()
+            ->take(5)
+            ->get();
+            
+        // Get recent submissions
+        $recentSubmissions = ProjectSubmission::with('student')
+            ->latest()
+            ->take(5)
+            ->get();
+            
+        // Get pending invitations
+        $pendingInvitations = AdviserInvitation::with(['faculty', 'group'])
+            ->where('status', 'pending')
+            ->latest()
+            ->take(5)
+            ->get();
+            
+        // Get upcoming deadlines (placeholder - can be enhanced later)
+        $upcomingDeadlines = collect();
 
-        return view('coordinator.dashboard', compact('events', 'notifications'));
+        return view('coordinator.dashboard', compact(
+            'activeTerm',
+            'events',
+            'notifications',
+            'stats',
+            'recentActivities',
+            'recentGroups',
+            'recentSubmissions',
+            'pendingInvitations',
+            'upcomingDeadlines'
+        ));
     }
 
     /**
@@ -57,7 +121,7 @@ class CoordinatorController extends Controller
 
     public function groups(Request $request)
     {
-        $query = \App\Models\Group::with(['adviser', 'members']);
+        $query = Group::with(['adviser', 'members']);
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -81,32 +145,32 @@ class CoordinatorController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        \App\Models\Group::create($validated);
+        Group::create($validated);
 
         return redirect()->route('coordinator.groups.index')->with('success', 'Group created successfully!');
     }
 
     public function show($id)
     {
-        $group = \App\Models\Group::with(['adviser', 'members'])->findOrFail($id);
+        $group = Group::with(['adviser', 'members'])->findOrFail($id);
         return view('coordinator.groups.show', compact('group'));
     }
 
     public function edit($id)
     {
-        $group = \App\Models\Group::findOrFail($id);
+        $group = Group::findOrFail($id);
         return view('coordinator.groups.edit', compact('group'));
     }
 
     public function assignAdviser($id)
     {
-        $group = \App\Models\Group::with(['adviser', 'members'])->findOrFail($id);
+        $group = Group::with(['adviser', 'members'])->findOrFail($id);
         return view('coordinator.groups.assign_adviser', compact('group'));
     }
 
     public function update(Request $request, $id)
     {
-        $group = \App\Models\Group::findOrFail($id);
+        $group = Group::findOrFail($id);
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -120,7 +184,7 @@ class CoordinatorController extends Controller
 
     public function destroy($id)
     {
-        $group = \App\Models\Group::findOrFail($id);
+        $group = Group::findOrFail($id);
         
         // Delete related records first (due to foreign key constraints)
         $group->members()->detach(); // Remove all group members
@@ -134,84 +198,59 @@ class CoordinatorController extends Controller
 
     public function groupMilestones($id)
     {
-        $group = \App\Models\Group::with(['adviser', 'members', 'groupMilestones.milestoneTemplate'])->findOrFail($id);
-        $availableMilestones = \App\Models\MilestoneTemplate::where('status', 'todo')->get();
+        $group = Group::with(['adviser', 'members', 'groupMilestones.milestoneTemplate'])->findOrFail($id);
         
-        return view('coordinator.groups.milestones', compact('group', 'availableMilestones'));
+        return view('coordinator.groups.milestones', compact('group'));
     }
 
-    public function assignMilestone(Request $request, $groupId)
-    {
-        $request->validate([
-            'milestone_template_id' => 'required|exists:milestone_templates,id',
-            'start_date' => 'nullable|date',
-            'target_date' => 'nullable|date|after_or_equal:start_date',
-            'notes' => 'nullable|string'
-        ]);
 
-        $group = \App\Models\Group::findOrFail($groupId);
-        
-        // Check if milestone is already assigned to this group
-        $existingMilestone = \App\Models\GroupMilestone::where('group_id', $groupId)
-            ->where('milestone_template_id', $request->milestone_template_id)
-            ->first();
-            
-        if ($existingMilestone) {
-            return redirect()->back()->with('error', 'This milestone is already assigned to this group.');
-        }
-
-        // Create the group milestone
-        $groupMilestone = \App\Models\GroupMilestone::create([
-            'group_id' => $groupId,
-            'milestone_template_id' => $request->milestone_template_id,
-            'start_date' => $request->start_date,
-            'target_date' => $request->target_date,
-            'notes' => $request->notes,
-            'status' => 'not_started',
-            'progress_percentage' => 0
-        ]);
-
-        // Create group milestone tasks based on the template
-        $milestoneTemplate = \App\Models\MilestoneTemplate::with('tasks')->find($request->milestone_template_id);
-        foreach ($milestoneTemplate->tasks as $task) {
-            \App\Models\GroupMilestoneTask::create([
-                'group_milestone_id' => $groupMilestone->id,
-                'milestone_task_id' => $task->id,
-                'is_completed' => false
-            ]);
-        }
-
-        return redirect()->route('coordinator.groups.milestones', $groupId)
-            ->with('success', 'Milestone assigned successfully!');
-    }
-
-    public function removeMilestone($groupId, $milestoneId)
-    {
-        $groupMilestone = \App\Models\GroupMilestone::where('group_id', $groupId)
-            ->where('id', $milestoneId)
-            ->firstOrFail();
-            
-        $groupMilestone->delete();
-
-        return redirect()->route('coordinator.groups.milestones', $groupId)
-            ->with('success', 'Milestone removed successfully!');
-    }
 
     public function events()
     {
-        $events = \App\Models\Event::orderBy('date', 'desc')->get();
+        $events = Event::orderBy('date', 'desc')->get();
         return view('coordinator.events.index', compact('events'));
     }
 
-    public function defenseScheduling()
+    public function defenseScheduling(Request $request)
     {
-        // Placeholder: implement defense scheduling logic
-        return view('coordinator.defense.scheduling');
+        // Get filter parameters
+        $filters = $request->only(['term']);
+        $filters = array_merge(['term' => null], $filters);
+        
+        // Build query for defense schedules
+        $query = \App\Models\DefenseSchedule::with([
+            'group.members', 
+            'group.adviser', 
+            'defensePanels.faculty',
+            'academicTerm'
+        ]);
+        
+        // Apply filters
+        if (isset($filters['term']) && $filters['term']) {
+            $query->where('academic_term_id', $filters['term']);
+        }
+        
+        // Note: Progress-based filtering removed as overall_progress_percentage is a computed attribute
+        // Stage and phase filtering can be implemented later if needed
+        
+        $defenseSchedules = $query->orderBy('start_at')->get();
+        
+        // Get filter options
+        $filterOptions = [
+            'terms' => \App\Models\AcademicTerm::orderBy('school_year', 'desc')->get(),
+        ];
+        
+        return view('coordinator.defense.scheduling', compact('defenseSchedules', 'filters', 'filterOptions'));
     }
+
+
 
     public function notifications()
     {
-        $notifications = \App\Models\Notification::orderBy('created_at', 'desc')->get();
+        $notifications = Notification::orderBy('created_at', 'desc')->get();
         return view('coordinator.notifications', compact('notifications'));
     }
+
+    // Milestones method removed - coordinators no longer have access to milestone management
+    // They can only view group-specific milestones through groupMilestones method
 }

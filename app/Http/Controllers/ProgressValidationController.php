@@ -18,12 +18,17 @@ class ProgressValidationController extends Controller
     /**
      * Show progress validation dashboard for coordinators
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
+        $filters = $request->only([
+            'academic_term_id', 'adviser_id', 'search'
+        ]);
+
         $readyGroups = $this->progressValidationService->getGroupsReadyFor60PercentDefense();
         $needingAttentionGroups = $this->progressValidationService->getGroupsNeedingAttentionFor60PercentDefense();
         
-        $allGroups = Group::with(['adviser', 'members', 'groupMilestones.milestoneTemplate'])->get();
+        // Apply filters to all groups
+        $allGroups = $this->progressValidationService->getFilteredGroupsForProgressValidation($filters);
         
         $stats = [
             'total_groups' => $allGroups->count(),
@@ -33,11 +38,16 @@ class ProgressValidationController extends Controller
             'below_40_percent' => $allGroups->filter(fn($g) => $g->overall_progress_percentage < 40)->count()
         ];
 
+        // Get filter options
+        $filterOptions = $this->progressValidationService->getFilterOptions();
+
         return view('coordinator.progress-validation.dashboard', compact(
             'readyGroups', 
             'needingAttentionGroups', 
             'allGroups', 
-            'stats'
+            'stats',
+            'filters',
+            'filterOptions'
         ));
     }
 
@@ -54,11 +64,13 @@ class ProgressValidationController extends Controller
     /**
      * Show all groups with their readiness status
      */
-    public function allGroupsStatus()
+    public function allGroupsStatus(Request $request)
     {
-        $groups = Group::with(['adviser', 'members', 'groupMilestones.milestoneTemplate'])
-            ->orderBy('name')
-            ->get()
+        $filters = $request->only([
+            'academic_term_id', 'adviser_id', 'search'
+        ]);
+
+        $groups = $this->progressValidationService->getFilteredGroupsForProgressValidation($filters)
             ->map(function ($group) {
                 $report = $this->progressValidationService->get60PercentDefenseReadinessReport($group);
                 return [
@@ -67,7 +79,10 @@ class ProgressValidationController extends Controller
                 ];
             });
 
-        return view('coordinator.progress-validation.all-groups', compact('groups'));
+        // Get filter options
+        $filterOptions = $this->progressValidationService->getFilterOptions();
+
+        return view('coordinator.progress-validation.all-groups', compact('groups', 'filters', 'filterOptions'));
     }
 
     /**

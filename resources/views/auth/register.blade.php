@@ -48,7 +48,7 @@
 
             {{-- Show role dropdown only if chairperson is logged in --}}
             @auth
-                @if (Auth::check() && Auth::user()->role === 'chairperson')
+                @if (Auth::check() && Auth::user()->hasRole('chairperson'))
     <div class="mb-4">
         <label class="block text-sm font-semibold mb-1">School</label>
         <select name="school_id" class="w-full p-2 border rounded" required>

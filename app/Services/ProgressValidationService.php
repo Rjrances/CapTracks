@@ -220,4 +220,51 @@ class ProgressValidationService
                 return !$report['is_ready'] && $group->overall_progress_percentage >= 40; // At least 40% progress
             });
     }
+
+    /**
+     * Get filtered groups for progress validation
+     */
+    public function getFilteredGroupsForProgressValidation(array $filters = []): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = Group::with(['adviser', 'members', 'groupMilestoneTasks.milestoneTask.milestoneTemplate', 'academicTerm']);
+
+        // Filter by academic term
+        if (isset($filters['academic_term_id']) && $filters['academic_term_id']) {
+            $query->where('academic_term_id', $filters['academic_term_id']);
+        }
+
+        // Filter by adviser
+        if (isset($filters['adviser_id']) && $filters['adviser_id']) {
+            $query->where('adviser_id', $filters['adviser_id']);
+        }
+
+        // Filter by group name search
+        if (isset($filters['search']) && $filters['search']) {
+            $query->where('name', 'like', '%' . $filters['search'] . '%');
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Get filter options for progress validation
+     */
+    public function getFilterOptions(): array
+    {
+        return [
+            'academic_terms' => \App\Models\AcademicTerm::orderBy('school_year', 'desc')
+                ->get()
+                ->mapWithKeys(function($term) {
+                    return [$term->id => $term->full_name];
+                })
+                ->toArray(),
+            'advisers' => \App\Models\User::whereHas('roles', function($query) {
+                $query->where('name', 'adviser');
+            })->get()
+            ->mapWithKeys(function($adviser) {
+                return [$adviser->id => $adviser->name];
+            })
+            ->toArray()
+        ];
+    }
 }
