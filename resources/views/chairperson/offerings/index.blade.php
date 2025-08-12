@@ -37,9 +37,8 @@
                             </a>
                         @endif
                     @endif
-                    <a href="{{ route('chairperson.upload-form') }}" class="btn btn-success">
-                        <i class="fas fa-upload"></i> Import Students
-                    </a>
+
+
                     <a href="{{ route('chairperson.offerings.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Add New Offering
                     </a>
@@ -99,7 +98,7 @@
                                                    class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
-                                                <a href="{{ route('chairperson.upload-form') }}" 
+                                                <a href="{{ route('chairperson.upload-form') }}?offering_id={{ $offering->id }}" 
                                                    class="btn btn-sm btn-outline-success">
                                                     <i class="fas fa-upload"></i> Import
                                                 </a>

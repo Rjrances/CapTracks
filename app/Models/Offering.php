@@ -33,6 +33,18 @@ class Offering extends Model
         return $this->teacher ? $this->teacher->name : 'No Teacher Assigned';
     }
 
+    // Get coordinator name attribute (same as teacher for this system)
+    public function getCoordinatorNameAttribute()
+    {
+        return $this->teacher ? $this->teacher->name : 'No Coordinator Assigned';
+    }
+
+    // Check if a user is the coordinator of this offering
+    public function isCoordinatedBy($user)
+    {
+        return $user && $this->teacher_id === $user->id;
+    }
+
     // Get enrolled students count
     public function getEnrolledStudentsCountAttribute()
     {

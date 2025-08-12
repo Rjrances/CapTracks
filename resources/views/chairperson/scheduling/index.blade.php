@@ -57,7 +57,7 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th>Group</th>
-                                    <th>Stage</th>
+                                    <th>Defense Type</th>
                                     <th>Date & Time</th>
                                     <th>Room</th>
                                     <th>Panelists</th>
@@ -81,17 +81,16 @@
                                             </small>
                                         </td>
                                         <td>
-                                            <span class="badge bg-{{ $schedule->stage == '60' ? 'warning' : 'danger' }}">
-                                                {{ $schedule->stage }}% Defense
+                                            <span class="badge bg-{{ $schedule->defense_type == '60_percent' ? 'warning' : ($schedule->defense_type == '100_percent' ? 'danger' : 'info') }}">
+                                                {{ $schedule->defense_type_label }}
                                             </span>
                                         </td>
                                         <td>
                                             <div>
-                                                <strong>{{ $schedule->formatted_date }}</strong>
+                                                <strong>{{ $schedule->scheduled_date->format('M d, Y') }}</strong>
                                                 <br>
                                                 <small class="text-muted">
-                                                    {{ $schedule->formatted_start_time }} - {{ $schedule->formatted_end_time }}
-                                                    ({{ $schedule->duration }} min)
+                                                    {{ \Carbon\Carbon::parse($schedule->scheduled_time)->format('h:i A') }}
                                                 </small>
                                             </div>
                                         </td>

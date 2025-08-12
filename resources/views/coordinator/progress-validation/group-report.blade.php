@@ -15,7 +15,7 @@
         <h2 class="mb-0">Group Progress Readiness Report</h2>
         <div>
             @if($report['is_ready'])
-                <a href="{{ route('coordinator.defense.scheduling') }}" class="btn btn-success">
+                <a href="{{ route('coordinator.defense.index') }}" class="btn btn-success">
                     <i class="fas fa-calendar-plus me-2"></i>Schedule Progress Review
                 </a>
             @endif
@@ -271,7 +271,7 @@
                     <h5><i class="fas fa-check-circle me-2"></i>This group is ready for 60% defense!</h5>
                     <p class="mb-0">You can now proceed to schedule their defense.</p>
                 </div>
-                <a href="{{ route('coordinator.defense.scheduling') }}" class="btn btn-success btn-lg">
+                <a href="{{ route('coordinator.defense.index') }}" class="btn btn-success btn-lg">
                     <i class="fas fa-calendar-plus me-2"></i>Schedule Progress Review
                 </a>
             @else

@@ -67,6 +67,11 @@
                                             <label class="form-check-label">Coordinator</label>
                                         </div>
                                         <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="teacher" 
+                                                {{ in_array('teacher', $user->currentRoles) ? 'checked' : '' }}>
+                                            <label class="form-check-label">Teacher</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="adviser" 
                                                 {{ in_array('adviser', $user->currentRoles) ? 'checked' : '' }}>
                                             <label class="form-check-label">Adviser</label>

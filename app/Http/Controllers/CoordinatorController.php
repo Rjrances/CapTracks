@@ -14,6 +14,7 @@ use App\Models\AdviserInvitation;
 
 use App\Models\GroupMilestone;
 use App\Models\GroupMilestoneTask;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 
 class CoordinatorController extends Controller
@@ -28,6 +29,20 @@ class CoordinatorController extends Controller
         
         // Get notifications
         $notifications = Notification::latest()->take(5)->get();
+        
+        // Check if current user is a teacher-coordinator (has offerings)
+        $user = auth()->user();
+        $coordinatedOfferings = collect();
+        $isTeacherCoordinator = false;
+        
+        if ($user && $user->hasRole('coordinator') && $user->offerings()->exists()) {
+            $isTeacherCoordinator = true;
+            $coordinatedOfferings = $user->getCoordinatedOfferings();
+        }
+        
+        // Ensure variables are always defined to prevent undefined variable errors
+        $coordinatedOfferings = $coordinatedOfferings ?? collect();
+        $isTeacherCoordinator = $isTeacherCoordinator ?? false;
         
         // Get dashboard statistics
         $stats = [
@@ -77,7 +92,9 @@ class CoordinatorController extends Controller
             'recentGroups',
             'recentSubmissions',
             'pendingInvitations',
-            'upcomingDeadlines'
+            'upcomingDeadlines',
+            'coordinatedOfferings',
+            'isTeacherCoordinator'
         ));
     }
 
@@ -164,22 +181,52 @@ class CoordinatorController extends Controller
 
     public function assignAdviser($id)
     {
-        $group = Group::with(['adviser', 'members'])->findOrFail($id);
-        return view('coordinator.groups.assign_adviser', compact('group'));
+        $group = Group::with(['adviser', 'members', 'offering'])->findOrFail($id);
+        
+        // Get available faculty for adviser assignment (exclude coordinators of this offering)
+        $availableFaculty = User::whereHas('roles', function($query) {
+            $query->whereIn('name', ['teacher', 'adviser', 'panelist']);
+        })->where(function($query) use ($group) {
+            // Exclude faculty who coordinate this offering
+            $query->whereDoesntHave('offerings', function($q) use ($group) {
+                $q->where('id', $group->offering_id);
+            });
+        })->get();
+        
+        return view('coordinator.groups.assign_adviser', compact('group', 'availableFaculty'));
     }
 
     public function update(Request $request, $id)
     {
-        $group = Group::findOrFail($id);
+        $group = Group::with('offering')->findOrFail($id);
         
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'adviser_id' => 'nullable|exists:users,id',
         ]);
+
+        // Check if trying to assign an adviser who coordinates this offering
+        if (isset($validated['adviser_id']) && $validated['adviser_id']) {
+            $adviser = User::find($validated['adviser_id']);
+            if ($adviser && $group->offering && $adviser->offerings()->where('id', $group->offering_id)->exists()) {
+                return back()->withErrors(['adviser_id' => 'This faculty member coordinates this offering and cannot be assigned as an adviser due to conflict of interest.']);
+            }
+        }
 
         $group->update($validated);
 
-        return redirect()->route('coordinator.groups.show', $group->id)->with('success', 'Group updated successfully!');
+        $message = 'Group updated successfully!';
+        if (isset($validated['adviser_id'])) {
+            if ($validated['adviser_id']) {
+                $adviser = User::find($validated['adviser_id']);
+                $message = "Adviser assigned successfully to {$adviser->name}!";
+            } else {
+                $message = "Adviser removed successfully!";
+            }
+        }
+
+        return redirect()->route('coordinator.groups.show', $group->id)->with('success', $message);
     }
 
     public function destroy($id)
@@ -221,13 +268,12 @@ class CoordinatorController extends Controller
         $query = \App\Models\DefenseSchedule::with([
             'group.members', 
             'group.adviser', 
-            'defensePanels.faculty',
-            'academicTerm'
+            'defensePanels.faculty'
         ]);
         
         // Apply filters
         if (isset($filters['term']) && $filters['term']) {
-            $query->where('academic_term_id', $filters['term']);
+            $query->where('group.academic_term_id', $filters['term']);
         }
         
         // Note: Progress-based filtering removed as overall_progress_percentage is a computed attribute
@@ -245,9 +291,40 @@ class CoordinatorController extends Controller
 
 
 
-    public function notifications()
+    public function notifications(Request $request)
     {
-        $notifications = Notification::orderBy('created_at', 'desc')->get();
+        $query = Notification::where('role', 'coordinator');
+
+        // Apply filters
+        if ($request->filled('role') && $request->role !== 'coordinator') {
+            $query->where('role', $request->role);
+        }
+
+        if ($request->filled('status')) {
+            if ($request->status === 'unread') {
+                $query->where('is_read', false);
+            } elseif ($request->status === 'read') {
+                $query->where('is_read', true);
+            }
+        }
+
+        if ($request->filled('date')) {
+            $now = now();
+            switch ($request->date) {
+                case 'today':
+                    $query->whereDate('created_at', $now->toDateString());
+                    break;
+                case 'week':
+                    $query->whereBetween('created_at', [$now->startOfWeek(), $now->endOfWeek()]);
+                    break;
+                case 'month':
+                    $query->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year);
+                    break;
+            }
+        }
+
+        $notifications = $query->orderBy('created_at', 'desc')->get();
+        
         return view('coordinator.notifications', compact('notifications'));
     }
 

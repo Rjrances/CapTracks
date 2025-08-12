@@ -20,13 +20,10 @@ class DefenseSchedule extends Model
         'status'
     ];
 
-    protected $attributes = [
-        'status' => 'scheduled'
-    ];
-
     protected $casts = [
         'start_at' => 'datetime',
         'end_at' => 'datetime',
+        'is_active' => 'boolean'
     ];
 
     // Relationships
@@ -37,79 +34,71 @@ class DefenseSchedule extends Model
 
     public function academicTerm()
     {
-        return $this->belongsTo(AcademicTerm::class);
+        return $this->belongsTo(AcademicTerm::class, 'academic_term_id');
     }
 
-    public function panels()
+    public function defensePanels()
     {
         return $this->hasMany(DefensePanel::class);
     }
 
     public function panelists()
     {
-        return $this->belongsToMany(User::class, 'defense_panels', 'defense_schedule_id', 'faculty_id')
-                    ->withPivot('role')
-                    ->withTimestamps();
+        return $this->hasMany(DefensePanel::class);
     }
 
     // Helper methods
+    public function getFormattedDateTimeAttribute()
+    {
+        return $this->start_at->format('M d, Y') . ' at ' . $this->start_at->format('h:i A');
+    }
+
+    public function getStageLabelAttribute()
+    {
+        return match($this->stage) {
+            'proposal' => 'Proposal',
+            '60' => '60% Defense',
+            '100' => '100% Defense',
+            default => 'Unknown Stage'
+        };
+    }
+
     public function getDurationAttribute()
     {
-        return $this->start_at->diffInMinutes($this->end_at);
-    }
-
-    public function getFormattedTimeAttribute()
-    {
-        return $this->start_at->format('M j, Y g:i A') . ' - ' . $this->end_at->format('g:i A');
-    }
-
-    public function getFormattedDateAttribute()
-    {
-        return $this->start_at->format('M j, Y');
-    }
-
-    public function getFormattedStartTimeAttribute()
-    {
-        return $this->start_at->format('g:i A');
-    }
-
-    public function getFormattedEndTimeAttribute()
-    {
-        return $this->end_at->format('g:i A');
-    }
-
-    public function isConflicting($startAt, $endAt, $room, $excludeId = null)
-    {
-        $query = static::where('room', $room)
-            ->where('status', 'scheduled')
-            ->where(function ($q) use ($startAt, $endAt) {
-                $q->whereBetween('start_at', [$startAt, $endAt])
-                  ->orWhereBetween('end_at', [$startAt, $endAt])
-                  ->orWhere(function ($q2) use ($startAt, $endAt) {
-                      $q2->where('start_at', '<=', $startAt)
-                         ->where('end_at', '>=', $endAt);
-                  });
-            });
-
-        if ($excludeId) {
-            $query->where('id', '!=', $excludeId);
+        if ($this->start_at && $this->end_at) {
+            return $this->start_at->diffInMinutes($this->end_at);
         }
-
-        return $query->exists();
+        return 0;
     }
 
-    public function scopeScheduled($query)
+    public function getFormattedDurationAttribute()
     {
-        return $query->where('status', 'scheduled');
+        $duration = $this->duration;
+        if ($duration < 60) {
+            return $duration . ' minutes';
+        }
+        $hours = floor($duration / 60);
+        $minutes = $duration % 60;
+        return $hours . 'h ' . $minutes . 'm';
     }
 
-    public function scopeCompleted($query)
+    public function isScheduled()
     {
-        return $query->where('status', 'completed');
+        return $this->status === 'scheduled';
     }
 
-    public function scopeCancelled($query)
+    public function isInProgress()
     {
-        return $query->where('status', 'cancelled');
+        return $this->status === 'in_progress';
+    }
+
+    public function isCompleted()
+    {
+        return $this->status === 'completed';
+    }
+
+    public function isCancelled()
+    {
+        return $this->status === 'cancelled';
     }
 }

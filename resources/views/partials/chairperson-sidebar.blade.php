@@ -59,12 +59,14 @@
             </li>
             
             <li class="nav-item mb-2">
-                                <a class="nav-link text-white {{ request()->routeIs('chairperson.scheduling.*') ? 'active bg-primary' : '' }}"
-                   href="{{ route('chairperson.scheduling.index') }}">
-                    <i class="fas fa-calendar-alt me-2"></i>
-                    Scheduling
+                <a class="nav-link text-white {{ request()->routeIs('chairperson.students.*') ? 'active bg-primary' : '' }}" 
+                   href="{{ route('chairperson.students.index') }}">
+                    <i class="fas fa-users me-2"></i>
+                    Students
                 </a>
             </li>
+            
+
             
             
             

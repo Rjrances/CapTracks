@@ -1,6 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.student')
 
-@section('title', 'My Project Submissions')
+@section('title', 'Project Submissions')
 
 @section('content')
 <div class="container mt-5">

@@ -63,8 +63,9 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 //     Route::put('tasks/{task}', [MilestoneTaskController::class, 'update'])->name('tasks.update');
 //     Route::delete('tasks/{task}', [MilestoneTaskController::class, 'destroy'])->name('tasks.destroy');
 // });
-    // Defense Scheduling
-    Route::get('/defense/scheduling', [CoordinatorController::class, 'defenseScheduling'])->name('defense.scheduling');
+    // Defense Scheduling (Manual)
+    Route::resource('defense', \App\Http\Controllers\Coordinator\DefenseScheduleController::class);
+    Route::get('/defense/available-faculty', [\App\Http\Controllers\Coordinator\DefenseScheduleController::class, 'getAvailableFaculty'])->name('defense.available-faculty');
 
     // Milestones - View only (no management) - REMOVED for coordinators
     // Route::get('/milestones', [CoordinatorController::class, 'milestones'])->name('milestones.index');
@@ -128,6 +129,10 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 
 
 
+        // Student Management
+        Route::get('/students', [ChairpersonController::class, 'indexStudents'])->name('students.index');
+        Route::get('/students/export', [ChairpersonController::class, 'exportStudents'])->name('students.export');
+        
         // Student Import via Excel
         Route::get('/upload-students', fn () => view('chairperson.students.import'))->name('upload-form');
         Route::post('/upload-students', [ChairpersonController::class, 'uploadStudentList'])->name('upload-students');
@@ -137,10 +142,10 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
         Route::post('/academic-terms/{academicTerm}/toggle-active', [\App\Http\Controllers\AcademicTermController::class, 'toggleActive'])->name('academic-terms.toggle-active');
         Route::post('/academic-terms/{academicTerm}/toggle-archived', [\App\Http\Controllers\AcademicTermController::class, 'toggleArchived'])->name('academic-terms.toggle-archived');
 
-        // Scheduling (Defense Schedules)
-        Route::resource('scheduling', \App\Http\Controllers\Chairperson\DefenseScheduleController::class)->parameters(['scheduling' => 'defenseSchedule']);
-        Route::patch('/scheduling/{defenseSchedule}/status', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'updateStatus'])->name('scheduling.update-status');
-        Route::get('/scheduling/available-faculty', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'getAvailableFaculty'])->name('scheduling.available-faculty');
+        // Scheduling (Defense Schedules) - Moved to Coordinator
+        // Route::resource('scheduling', \App\Http\Controllers\Chairperson\DefenseScheduleController::class)->parameters(['scheduling' => 'defenseSchedule']);
+        // Route::patch('/scheduling/{defenseSchedule}/status', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'updateStatus'])->name('scheduling.update-status');
+        // Route::get('/scheduling/available-faculty', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'getAvailableFaculty'])->name('scheduling.available-faculty');
     });
 });
 
@@ -171,6 +176,9 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::patch('/task/{groupMilestoneTask}/assign', [\App\Http\Controllers\StudentMilestoneController::class, 'assignTask'])->name('milestones.assign-task');
     Route::delete('/task/{groupMilestoneTask}/unassign', [\App\Http\Controllers\StudentMilestoneController::class, 'unassignTask'])->name('milestones.unassign-task');
     Route::patch('/task/{groupMilestoneTask}', [\App\Http\Controllers\StudentMilestoneController::class, 'updateTask'])->name('milestones.update-task');
+    
+    // Defense Request Routes
+    Route::post('/group/request-defense', [\App\Http\Controllers\StudentGroupController::class, 'requestDefense'])->name('group.request-defense');
 });
 
 // Adviser/Faculty Routes
@@ -191,4 +199,30 @@ Route::middleware(['auth', 'checkrole:adviser,coordinator'])->prefix('adviser')-
     Route::get('/project/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'show'])->name('project.show');
     Route::get('/project/{id}/edit', [\App\Http\Controllers\ProjectSubmissionController::class, 'edit'])->name('project.edit');
     Route::put('/project/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'update'])->name('project.update');
+});
+
+// Coordinator Defense Request Routes
+Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->name('coordinator.')->group(function () {
+    Route::get('/defense-requests', [\App\Http\Controllers\DefenseRequestController::class, 'index'])->name('defense-requests.index');
+    Route::get('/defense-requests/{defenseRequest}/create-schedule', [\App\Http\Controllers\DefenseRequestController::class, 'createSchedule'])->name('defense-requests.create-schedule');
+    Route::post('/defense-requests/{defenseRequest}/store-schedule', [\App\Http\Controllers\DefenseRequestController::class, 'storeSchedule'])->name('defense-requests.store-schedule');
+    Route::get('/defense-requests/{defenseSchedule}/edit-schedule', [\App\Http\Controllers\DefenseRequestController::class, 'editSchedule'])->name('defense-requests.edit-schedule');
+    Route::put('/defense-requests/{defenseSchedule}/update-schedule', [\App\Http\Controllers\DefenseRequestController::class, 'updateSchedule'])->name('defense-requests.update-schedule');
+    Route::post('/defense-requests/{defenseRequest}/approve', [\App\Http\Controllers\DefenseRequestController::class, 'approve'])->name('defense-requests.approve');
+    Route::post('/defense-requests/{defenseRequest}/reject', [\App\Http\Controllers\DefenseRequestController::class, 'reject'])->name('defense-requests.reject');
+    
+    // Enhanced Scheduling (Defense Schedules) - Moved from Chairperson
+    Route::resource('scheduling', \App\Http\Controllers\Chairperson\DefenseScheduleController::class)->parameters(['scheduling' => 'defenseSchedule']);
+    Route::patch('/scheduling/{defenseSchedule}/status', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'updateStatus'])->name('scheduling.update-status');
+    Route::get('/scheduling/available-faculty', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'getAvailableFaculty'])->name('scheduling.available-faculty');
+});
+
+// Notification routes
+Route::middleware(['auth'])->group(function () {
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-multiple-read', [\App\Http\Controllers\NotificationController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::delete('/notifications/{notification}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::delete('/notifications/delete-multiple', [\App\Http\Controllers\NotificationController::class, 'deleteMultiple'])->name('notifications.delete-multiple');
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'getNotifications'])->name('notifications.get');
 });

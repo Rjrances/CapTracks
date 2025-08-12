@@ -181,7 +181,7 @@
                                    class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-eye me-1"></i>View Report
                                 </a>
-                                <a href="{{ route('coordinator.defense.scheduling') }}" 
+                                <a href="{{ route('coordinator.defense.index') }}" 
                                    class="btn btn-sm btn-success">
                                     <i class="fas fa-calendar-plus me-1"></i>Schedule Defense
                                 </a>

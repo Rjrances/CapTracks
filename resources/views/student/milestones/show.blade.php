@@ -1,6 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.student')
 
-@section('title', 'Milestone Details - ' . $groupMilestone->milestoneTemplate->name)
+@section('title', 'Milestone Details')
 
 @section('content')
 <div class="container mt-5">

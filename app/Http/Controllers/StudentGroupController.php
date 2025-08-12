@@ -136,12 +136,11 @@ class StudentGroupController extends Controller
                 'status' => 'pending',
             ]);
             
-            // Create notification for faculty
-            \App\Models\Notification::create([
-                'title' => 'New Adviser Invitation',
-                'description' => 'You have received an adviser invitation from group: ' . $group->name,
-                'role' => 'adviser',
-            ]);
+            // Create notification for faculty using the proper notification system
+            $faculty = User::find($request->adviser_id);
+            if ($faculty) {
+                \App\Services\NotificationService::newAdviserInvitation($faculty, $group->name);
+            }
             
             \Log::info('Group creation completed successfully', ['group_id' => $group->id]);
             
@@ -253,12 +252,11 @@ class StudentGroupController extends Controller
             'status' => 'pending',
         ]);
 
-        // Create notification for faculty
-        \App\Models\Notification::create([
-            'title' => 'New Adviser Invitation',
-            'description' => 'You have received an adviser invitation from group: ' . $group->name,
-            'role' => 'adviser',
-        ]);
+        // Create notification for faculty using the proper notification system
+        $faculty = User::find($request->faculty_id);
+        if ($faculty) {
+            \App\Services\NotificationService::newAdviserInvitation($faculty, $group->name);
+        }
 
         return back()->with('success', 'Adviser invitation sent successfully!');
     }
@@ -321,5 +319,76 @@ class StudentGroupController extends Controller
         $group->members()->detach($memberId);
 
         return back()->with('success', 'Member removed successfully!');
+    }
+
+    // Defense Request Methods
+    public function requestDefense(Request $request)
+    {
+        $request->validate([
+            'defense_type' => 'required|in:proposal,60_percent,100_percent',
+            'message' => 'nullable|string|max:500',
+        ]);
+
+        // Get student from either Auth or session
+        if (Auth::check()) {
+            $student = Auth::user()->student;
+        } else {
+            $student = \App\Models\Student::find(session('student_id'));
+        }
+        
+        $group = $student ? Group::whereHas('members', function($q) use ($student) {
+            $q->where('group_members.student_id', $student->id);
+        })->first() : null;
+
+        if (!$group) {
+            return back()->with('error', 'Group not found.');
+        }
+
+        // Check if group has adviser (required for all defenses)
+        if (!$group->adviser_id) {
+            return back()->with('error', 'Your group must have an assigned adviser before requesting a defense.');
+        }
+
+        // Check defense type requirements
+        if ($request->defense_type === '60_percent' && $group->overall_progress_percentage < 60) {
+            return back()->with('error', 'Your group must reach 60% progress before requesting a 60% defense.');
+        }
+
+        if ($request->defense_type === '100_percent' && $group->overall_progress_percentage < 100) {
+            return back()->with('error', 'Your group must reach 100% progress before requesting a final defense.');
+        }
+
+        // Check if there's already a pending request for this defense type
+        $existingRequest = \App\Models\DefenseRequest::where('group_id', $group->id)
+            ->where('defense_type', $request->defense_type)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingRequest) {
+            return back()->with('error', 'You already have a pending request for this defense type.');
+        }
+
+        try {
+            // Create defense request
+            \App\Models\DefenseRequest::create([
+                'group_id' => $group->id,
+                'defense_type' => $request->defense_type,
+                'status' => 'pending',
+                'student_message' => $request->message,
+                'requested_at' => now(),
+            ]);
+
+            // Create notification for coordinator using the proper notification system
+            \App\Services\NotificationService::notifyCoordinators(
+                'New Defense Request',
+                'Group ' . $group->name . ' has requested a ' . $request->defense_type . ' defense',
+                route('coordinator.defense-requests.index')
+            );
+
+            return back()->with('success', 'Defense request submitted successfully! Coordinator will review and schedule your defense.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'An error occurred while submitting your defense request.');
+        }
     }
 }

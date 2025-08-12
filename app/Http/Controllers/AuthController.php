@@ -99,15 +99,20 @@ class AuthController extends Controller
 
     private function redirectBasedOnRole($role)
     {
-        // If role is an array (multiple roles), use the first one for redirection
+        // If role is an array (multiple roles), prioritize coordinator access
         if (is_array($role)) {
+            // If user has coordinator role, send them to coordinator dashboard
+            if (in_array('coordinator', $role)) {
+                return redirect()->route('coordinator.dashboard');
+            }
+            // Otherwise use the first role for redirection
             $role = $role[0];
         }
         
         return match ($role) {
             'chairperson' => redirect()->route('chairperson.dashboard'),
             'coordinator' => redirect()->route('coordinator.dashboard'),
-            'adviser', 'panelist' => redirect()->route('adviser.dashboard'),
+            'adviser', 'panelist', 'teacher' => redirect()->route('adviser.dashboard'),
             'student' => redirect()->route('student.dashboard'),
             default => redirect('/login')->withErrors(['role' => 'Invalid role.']),
         };
@@ -139,7 +144,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8|confirmed',
-            'role' => 'nullable|in:student,coordinator,adviser,panelist,chairperson',
+            'role' => 'nullable|in:student,coordinator,adviser,panelist,chairperson,teacher',
         ]);
 
         $role = 'student';

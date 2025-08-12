@@ -74,6 +74,20 @@ class CoordinatorDashboardController extends Controller
         // Upcoming deadlines (based on milestone templates)
         $upcomingDeadlines = $this->getUpcomingDeadlines();
 
+        // Check if current user is a teacher-coordinator (has offerings)
+        $user = auth()->user();
+        $coordinatedOfferings = collect();
+        $isTeacherCoordinator = false;
+        
+        if ($user && $user->hasRole('coordinator') && $user->offerings()->exists()) {
+            $isTeacherCoordinator = true;
+            $coordinatedOfferings = $user->getCoordinatedOfferings();
+        }
+        
+        // Ensure variables are always defined to prevent undefined variable errors
+        $coordinatedOfferings = $coordinatedOfferings ?? collect();
+        $isTeacherCoordinator = $isTeacherCoordinator ?? false;
+
         return view('coordinator.dashboard', compact(
             'activeTerm',
             'studentCount',
@@ -97,7 +111,9 @@ class CoordinatorDashboardController extends Controller
             'notifications',
             'pendingInvitations',
             'recentActivities',
-            'upcomingDeadlines'
+            'upcomingDeadlines',
+            'coordinatedOfferings',
+            'isTeacherCoordinator'
         ));
     }
 

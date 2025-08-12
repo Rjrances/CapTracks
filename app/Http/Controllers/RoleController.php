@@ -22,6 +22,11 @@ class RoleController extends Controller
                 'description' => 'Course coordinator with group and milestone management',
                 'permissions' => ['Manage groups', 'Create milestones', 'Track progress', 'Validate 60% defense readiness']
             ],
+            'teacher' => [
+                'name' => 'Teacher',
+                'description' => 'General faculty member available for assignments',
+                'permissions' => ['View courses', 'Be assigned as adviser', 'Be assigned to defense panels']
+            ],
             'adviser' => [
                 'name' => 'Adviser',
                 'description' => 'Faculty adviser for student groups',
@@ -73,19 +78,21 @@ class RoleController extends Controller
     {
         $request->validate([
             'roles' => 'required|array',
-            'roles.*' => 'in:chairperson,coordinator,adviser,panelist',
+            'roles.*' => 'in:chairperson,coordinator,teacher,adviser,panelist',
         ]);
 
         try {
-            // Remove all existing roles
-            $user->roles()->detach();
+            // Remove all existing roles from user_roles table
+            \DB::table('user_roles')->where('user_id', $user->id)->delete();
             
-            // Add new roles
+            // Add new roles directly to user_roles table
             foreach ($request->roles as $role) {
-                $roleModel = Role::where('name', $role)->first();
-                if ($roleModel) {
-                    $user->roles()->attach($roleModel->id);
-                }
+                \DB::table('user_roles')->insert([
+                    'user_id' => $user->id,
+                    'role' => $role,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
 
             if ($request->ajax()) {

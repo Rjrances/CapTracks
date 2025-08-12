@@ -31,21 +31,16 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="group_id" class="form-label">Group</label>
-                                    <select name="group_id" id="group_id" class="form-select @error('group_id') is-invalid @enderror" required>
-                                        <option value="">Select Group</option>
-                                        @foreach($groups as $group)
-                                            <option value="{{ $group->id }}" {{ old('group_id') == $group->id ? 'selected' : '' }}>
-                                                {{ $group->name ?? 'N/A' }}
-                                                @if($group->adviser)
-                                                    (Adviser: {{ $group->adviser->name }})
-                                                @else
-                                                    (No adviser)
-                                                @endif
+                                    <label for="defense_request_id" class="form-label">Defense Request</label>
+                                    <select name="defense_request_id" id="defense_request_id" class="form-select @error('defense_request_id') is-invalid @enderror" required>
+                                        <option value="">Select Defense Request</option>
+                                        @foreach($defenseRequests as $request)
+                                            <option value="{{ $request->id }}" {{ old('defense_request_id') == $request->id ? 'selected' : '' }}>
+                                                {{ $request->group->name ?? 'N/A' }} - {{ $request->defense_type ?? 'N/A' }}
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('group_id')
+                                    @error('defense_request_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -53,13 +48,14 @@
 
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="stage" class="form-label">Defense Stage</label>
-                                    <select name="stage" id="stage" class="form-select @error('stage') is-invalid @enderror" required>
-                                        <option value="">Select Stage</option>
-                                        <option value="60" {{ old('stage') == '60' ? 'selected' : '' }}>60% Defense</option>
-                                        <option value="100" {{ old('stage') == '100' ? 'selected' : '' }}>100% Defense</option>
+                                    <label for="defense_type" class="form-label">Defense Type</label>
+                                    <select name="defense_type" id="defense_type" class="form-select @error('defense_type') is-invalid @enderror" required>
+                                        <option value="">Select Type</option>
+                                        <option value="proposal" {{ old('defense_type') == 'proposal' ? 'selected' : '' }}>Proposal Defense</option>
+                                        <option value="60_percent" {{ old('defense_type') == '60_percent' ? 'selected' : '' }}>60% Progress Defense</option>
+                                        <option value="100_percent" {{ old('defense_type') == '100_percent' ? 'selected' : '' }}>100% Final Defense</option>
                                     </select>
-                                    @error('stage')
+                                    @error('defense_type')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -67,27 +63,6 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="academic_term_id" class="form-label">Academic Term</label>
-                                    <select name="academic_term_id" id="academic_term_id" class="form-select @error('academic_term_id') is-invalid @enderror" required>
-                                        <option value="">Select Academic Term</option>
-                                        @foreach($academicTerms as $term)
-                                            <option value="{{ $term->id }}" 
-                                                {{ old('academic_term_id', $activeTerm ? $activeTerm->id : '') == $term->id ? 'selected' : '' }}>
-                                                {{ $term->full_name }}
-                                                @if($term->is_active)
-                                                    <span class="text-success">(Active)</span>
-                                                @endif
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('academic_term_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="room" class="form-label">Room</label>
@@ -104,11 +79,11 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="start_at" class="form-label">Start Date & Time</label>
-                                    <input type="datetime-local" name="start_at" id="start_at" 
-                                           class="form-control @error('start_at') is-invalid @enderror" 
-                                           value="{{ old('start_at') }}" required>
-                                    @error('start_at')
+                                    <label for="scheduled_date" class="form-label">Scheduled Date</label>
+                                    <input type="date" name="scheduled_date" id="scheduled_date" 
+                                           class="form-control @error('scheduled_date') is-invalid @enderror" 
+                                           value="{{ old('scheduled_date') }}" required>
+                                    @error('scheduled_date')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -116,11 +91,11 @@
 
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="end_at" class="form-label">End Date & Time</label>
-                                    <input type="datetime-local" name="end_at" id="end_at" 
-                                           class="form-control @error('end_at') is-invalid @enderror" 
-                                           value="{{ old('end_at') }}" required>
-                                    @error('end_at')
+                                    <label for="scheduled_time" class="form-label">Scheduled Time</label>
+                                    <input type="time" name="scheduled_time" id="scheduled_time" 
+                                           class="form-control @error('scheduled_time') is-invalid @enderror" 
+                                           value="{{ old('scheduled_time') }}" required>
+                                    @error('scheduled_time')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -128,10 +103,10 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="remarks" class="form-label">Remarks</label>
-                            <textarea name="remarks" id="remarks" rows="3" 
-                                      class="form-control @error('remarks') is-invalid @enderror">{{ old('remarks') }}</textarea>
-                            @error('remarks')
+                            <label for="coordinator_notes" class="form-label">Coordinator Notes</label>
+                            <textarea name="coordinator_notes" id="coordinator_notes" rows="3" 
+                                      class="form-control @error('coordinator_notes') is-invalid @enderror">{{ old('coordinator_notes') }}</textarea>
+                            @error('coordinator_notes')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

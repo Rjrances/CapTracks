@@ -12,6 +12,7 @@ class RoleSeeder extends Seeder
         $roles = [
             'chairperson',
             'coordinator', 
+            'teacher',
             'adviser',
             'panelist'
         ];

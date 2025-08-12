@@ -24,7 +24,7 @@
                         <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell fa-lg text-muted"></i>
                             @php
-                                $notificationCount = \App\Models\Notification::where('role', 'coordinator')->count();
+                                $notificationCount = \App\Models\Notification::where('role', 'coordinator')->where('is_read', false)->count();
                             @endphp
                             @if($notificationCount > 0)
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -48,7 +48,9 @@
                             
                             @if($recentNotifications->count() > 0)
                                 @foreach($recentNotifications as $notification)
-                                    <a class="dropdown-item py-2" href="#">
+                                    <a class="dropdown-item py-2 {{ $notification->is_read ? '' : 'bg-light' }}" 
+                                       href="{{ $notification->redirect_url ?? '#' }}" 
+                                       onclick="markNotificationAsRead({{ $notification->id }})">
                                         <div class="d-flex align-items-start">
                                             <div class="me-2">
                                                 <i class="fas fa-{{ $notification->icon ?? 'bell' }} text-primary"></i>
@@ -62,7 +64,7 @@
                                     </a>
                                 @endforeach
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-center text-primary" href="#">
+                                <a class="dropdown-item text-center text-primary" href="{{ route('coordinator.notifications') }}">
                                     <i class="fas fa-eye me-2"></i>View All Notifications
                                 </a>
                             @else
@@ -105,5 +107,34 @@
     @include('partials.footer')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    function markNotificationAsRead(notificationId) {
+        // Mark notification as read via AJAX
+        fetch(`/notifications/${notificationId}/mark-read`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update notification count
+                const badge = document.querySelector('.badge');
+                if (badge) {
+                    const currentCount = parseInt(badge.textContent);
+                    if (currentCount > 1) {
+                        badge.textContent = currentCount - 1;
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+    </script>
 </body>
 </html>

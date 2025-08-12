@@ -227,7 +227,7 @@
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <a href="{{ route('coordinator.defense.scheduling') }}" class="btn btn-outline-info">
+                            <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-info">
                                 <i class="fas fa-calendar me-2"></i>Defense Scheduling
                             </a>
                             <a href="{{ route('coordinator.events.index') }}" class="btn btn-outline-secondary">

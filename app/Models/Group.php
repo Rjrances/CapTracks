@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Group extends Model
 {
-    protected $fillable = ['name', 'description', 'adviser_id', 'academic_term_id'];
+    protected $fillable = ['name', 'description', 'adviser_id', 'academic_term_id', 'offering_id'];
 
     // Adviser relationship
     public function adviser()
@@ -34,10 +34,22 @@ class Group extends Model
         return $this->belongsTo(AcademicTerm::class);
     }
 
+    // Offering relationship
+    public function offering()
+    {
+        return $this->belongsTo(Offering::class);
+    }
+
     // Defense schedules relationship
     public function defenseSchedules()
     {
         return $this->hasMany(DefenseSchedule::class);
+    }
+
+    // Defense requests relationship
+    public function defenseRequests()
+    {
+        return $this->hasMany(DefenseRequest::class);
     }
 
     // Active adviser invitation (pending)

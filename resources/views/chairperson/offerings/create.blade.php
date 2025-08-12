@@ -32,7 +32,8 @@
                             <label for="subject_title" class="form-label">Subject Title</label>
                             <input type="text" name="subject_title" id="subject_title" 
                                    class="form-control @error('subject_title') is-invalid @enderror" 
-                                   value="{{ old('subject_title') }}" required>
+                                   value="{{ old('subject_title', 'Capstone') }}" 
+                                   placeholder="Capstone" required>
                             @error('subject_title')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

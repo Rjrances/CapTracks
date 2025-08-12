@@ -39,11 +39,9 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Defense Stage:</strong></td>
+                                    <td><strong>Defense Type:</strong></td>
                                     <td>
-                                        <span class="badge bg-{{ $defenseSchedule->stage == '60' ? 'warning' : 'danger' }}">
-                                            {{ $defenseSchedule->stage }}% Defense
-                                        </span>
+                                        <span class="badge bg-info">{{ $defenseSchedule->defense_type_label }}</span>
                                     </td>
                                 </tr>
                             </table>
@@ -53,28 +51,20 @@
                             <table class="table table-borderless">
                                 <tr>
                                     <td><strong>Date:</strong></td>
-                                    <td>{{ $defenseSchedule->formatted_date }}</td>
+                                    <td>{{ $defenseSchedule->scheduled_date->format('M d, Y') }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Time:</strong></td>
-                                    <td>{{ $defenseSchedule->formatted_start_time }} - {{ $defenseSchedule->formatted_end_time }}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Duration:</strong></td>
-                                    <td>{{ $defenseSchedule->duration }} minutes</td>
+                                    <td>{{ \Carbon\Carbon::parse($defenseSchedule->scheduled_time)->format('h:i A') }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Room:</strong></td>
                                     <td><span class="badge bg-info">{{ $defenseSchedule->room }}</span></td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Academic Term:</strong></td>
+                                    <td><strong>Defense Type:</strong></td>
                                     <td>
-                                        @if($defenseSchedule->academicTerm)
-                                            <span class="badge bg-secondary">{{ $defenseSchedule->academicTerm->full_name }}</span>
-                                        @else
-                                            <span class="text-muted">No term assigned</span>
-                                        @endif
+                                        <span class="badge bg-info">{{ $defenseSchedule->defense_type_label }}</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -93,12 +83,12 @@
                         </div>
                     </div>
 
-                    @if($defenseSchedule->remarks)
+                    @if($defenseSchedule->coordinator_notes)
                         <div class="row mt-3">
                             <div class="col-12">
-                                <h5>Remarks</h5>
+                                <h5>Coordinator Notes</h5>
                                 <div class="alert alert-light">
-                                    {{ $defenseSchedule->remarks }}
+                                    {{ $defenseSchedule->coordinator_notes }}
                                 </div>
                             </div>
                         </div>

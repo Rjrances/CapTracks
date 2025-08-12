@@ -29,10 +29,7 @@ class DefenseScheduleController extends Controller
         $activeTerm = $this->getActiveTerm();
         $showAllTerms = $request->get('show_all', false);
         
-        $defenseSchedules = DefenseSchedule::with(['group.adviser', 'group.members', 'academicTerm', 'panelists'])
-            ->when($activeTerm && !$showAllTerms, function($query) use ($activeTerm) {
-                return $query->where('academic_term_id', $activeTerm->id);
-            })
+        $defenseSchedules = DefenseSchedule::with(['group.members', 'group.adviser', 'defensePanels.faculty'])
             ->orderBy('start_at', 'desc')
             ->get();
         
@@ -48,17 +45,14 @@ class DefenseScheduleController extends Controller
         
         $groups = Group::with(['adviser', 'members'])
             ->whereHas('adviser')
-            ->when($activeTerm, function($query) use ($activeTerm) {
-                return $query->where('academic_term_id', $activeTerm->id);
-            })
             ->get();
         
-        $academicTerms = AcademicTerm::notArchived()->get();
+        $defenseRequests = \App\Models\DefenseRequest::where('status', 'approved')->get();
         $faculty = User::whereHas('roles', function($query) {
             $query->whereIn('name', ['adviser', 'panelist']);
         })->get();
         
-        return view('chairperson.scheduling.create', compact('groups', 'academicTerms', 'faculty', 'activeTerm'));
+        return view('chairperson.scheduling.create', compact('groups', 'defenseRequests', 'faculty', 'activeTerm'));
     }
 
     /**
@@ -68,12 +62,12 @@ class DefenseScheduleController extends Controller
     {
         $request->validate([
             'group_id' => 'required|exists:groups,id',
-            'stage' => 'required|in:60,100',
-            'academic_term_id' => 'required|exists:academic_terms,id',
-            'start_at' => 'required|date|after:now',
-            'end_at' => 'required|date|after:start_at',
+            'defense_request_id' => 'required|exists:defense_requests,id',
+            'defense_type' => 'required|in:proposal,60_percent,100_percent',
+            'scheduled_date' => 'required|date|after_or_equal:today',
+            'scheduled_time' => 'required|date_format:H:i',
             'room' => 'required|string|max:255',
-            'remarks' => 'nullable|string',
+            'coordinator_notes' => 'nullable|string',
             'panelists' => 'required|array|min:1',
             'panelists.*.faculty_id' => 'required|exists:users,id',
             'panelists.*.role' => 'required|in:chair,member,adviser',
@@ -82,14 +76,8 @@ class DefenseScheduleController extends Controller
         // Check for conflicts
         $conflicts = DefenseSchedule::where('room', $request->room)
             ->where('status', 'scheduled')
-            ->where(function ($q) use ($request) {
-                $q->whereBetween('start_at', [$request->start_at, $request->end_at])
-                  ->orWhereBetween('end_at', [$request->start_at, $request->end_at])
-                  ->orWhere(function ($q2) use ($request) {
-                      $q2->where('start_at', '<=', $request->start_at)
-                         ->where('end_at', '>=', $request->end_at);
-                  });
-            })
+            ->where('scheduled_date', $request->scheduled_date)
+            ->where('scheduled_time', $request->scheduled_time)
             ->get();
 
         if ($conflicts->count() > 0) {
@@ -106,14 +94,8 @@ class DefenseScheduleController extends Controller
                 $q->where('faculty_id', $panelist['faculty_id']);
             })
             ->where('status', 'scheduled')
-            ->where(function ($q) use ($request) {
-                $q->whereBetween('start_at', [$request->start_at, $request->end_at])
-                  ->orWhereBetween('end_at', [$request->start_at, $request->end_at])
-                  ->orWhere(function ($q2) use ($request) {
-                      $q2->where('start_at', '<=', $request->start_at)
-                         ->where('end_at', '>=', $request->end_at);
-                  });
-            })
+            ->where('scheduled_date', $request->scheduled_date)
+            ->where('scheduled_time', $request->scheduled_time)
             ->get();
 
             if ($conflicts->count() > 0) {
@@ -130,24 +112,14 @@ class DefenseScheduleController extends Controller
         }
 
         DB::transaction(function () use ($request) {
-            $academicTermId = $request->academic_term_id;
-            
-            // If no academic term is selected, use the active term
-            if (empty($academicTermId)) {
-                $activeTerm = $this->getActiveTerm();
-                if ($activeTerm) {
-                    $academicTermId = $activeTerm->id;
-                }
-            }
-            
             $defenseSchedule = DefenseSchedule::create([
                 'group_id' => $request->group_id,
-                'stage' => $request->stage,
-                'academic_term_id' => $academicTermId,
-                'start_at' => $request->start_at,
-                'end_at' => $request->end_at,
+                'defense_request_id' => $request->defense_request_id,
+                'defense_type' => $request->defense_type,
+                'scheduled_date' => $request->scheduled_date,
+                'scheduled_time' => $request->scheduled_time,
                 'room' => $request->room,
-                'remarks' => $request->remarks,
+                'coordinator_notes' => $request->coordinator_notes,
             ]);
 
             // Create panel assignments
@@ -169,7 +141,7 @@ class DefenseScheduleController extends Controller
      */
     public function show(DefenseSchedule $defenseSchedule)
     {
-        $defenseSchedule->load(['group.adviser', 'group.members', 'academicTerm', 'panelists']);
+        $defenseSchedule->load(['group.adviser', 'group.members', 'defenseRequest', 'panelists']);
         
         return view('chairperson.scheduling.show', compact('defenseSchedule'));
     }
@@ -179,18 +151,18 @@ class DefenseScheduleController extends Controller
      */
     public function edit(DefenseSchedule $defenseSchedule)
     {
-        $defenseSchedule->load(['group.adviser', 'group.members', 'academicTerm', 'panelists']);
+        $defenseSchedule->load(['group.adviser', 'group.members', 'defenseRequest', 'panelists']);
         
         $groups = Group::with(['adviser', 'members'])
             ->whereHas('adviser')
             ->get();
         
-        $academicTerms = AcademicTerm::notArchived()->get();
+        $defenseRequests = \App\Models\DefenseRequest::where('status', 'approved')->get();
         $faculty = User::whereHas('roles', function($query) {
             $query->whereIn('name', ['adviser', 'panelist']);
         })->get();
         
-        return view('chairperson.scheduling.edit', compact('defenseSchedule', 'groups', 'academicTerms', 'faculty'));
+        return view('chairperson.scheduling.edit', compact('defenseSchedule', 'groups', 'defenseRequests', 'faculty'));
     }
 
     /**
@@ -200,12 +172,12 @@ class DefenseScheduleController extends Controller
     {
         $request->validate([
             'group_id' => 'required|exists:groups,id',
-            'stage' => 'required|in:60,100',
-            'academic_term_id' => 'required|exists:academic_terms,id',
-            'start_at' => 'required|date',
-            'end_at' => 'required|date|after:start_at',
+            'defense_request_id' => 'required|exists:defense_requests,id',
+            'defense_type' => 'required|in:proposal,60_percent,100_percent',
+            'scheduled_date' => 'required|date',
+            'scheduled_time' => 'required|date_format:H:i',
             'room' => 'required|string|max:255',
-            'remarks' => 'nullable|string',
+            'coordinator_notes' => 'nullable|string',
             'panelists' => 'required|array|min:1',
             'panelists.*.faculty_id' => 'required|exists:users,id',
             'panelists.*.role' => 'required|in:chair,member,adviser',
@@ -215,14 +187,8 @@ class DefenseScheduleController extends Controller
         $conflicts = DefenseSchedule::where('room', $request->room)
             ->where('status', 'scheduled')
             ->where('id', '!=', $defenseSchedule->id)
-            ->where(function ($q) use ($request) {
-                $q->whereBetween('start_at', [$request->start_at, $request->end_at])
-                  ->orWhereBetween('end_at', [$request->start_at, $request->end_at])
-                  ->orWhere(function ($q2) use ($request) {
-                      $q2->where('start_at', '<=', $request->start_at)
-                         ->where('end_at', '>=', $request->end_at);
-                  });
-            })
+            ->where('scheduled_date', $request->scheduled_date)
+            ->where('scheduled_time', $request->scheduled_time)
             ->get();
 
         if ($conflicts->count() > 0) {
@@ -240,14 +206,8 @@ class DefenseScheduleController extends Controller
             })
             ->where('status', 'scheduled')
             ->where('id', '!=', $defenseSchedule->id)
-            ->where(function ($q) use ($request) {
-                $q->whereBetween('start_at', [$request->start_at, $request->end_at])
-                  ->orWhereBetween('end_at', [$request->start_at, $request->end_at])
-                  ->orWhere(function ($q2) use ($request) {
-                      $q2->where('start_at', '<=', $request->start_at)
-                         ->where('end_at', '>=', $request->end_at);
-                  });
-            })
+            ->where('scheduled_date', $request->scheduled_date)
+            ->where('scheduled_time', $request->scheduled_time)
             ->get();
 
             if ($conflicts->count() > 0) {
@@ -266,12 +226,12 @@ class DefenseScheduleController extends Controller
         DB::transaction(function () use ($request, $defenseSchedule) {
             $defenseSchedule->update([
                 'group_id' => $request->group_id,
-                'stage' => $request->stage,
-                'academic_term_id' => $request->academic_term_id,
-                'start_at' => $request->start_at,
-                'end_at' => $request->end_at,
+                'defense_request_id' => $request->defense_request_id,
+                'defense_type' => $request->defense_type,
+                'scheduled_date' => $request->scheduled_date,
+                'scheduled_time' => $request->scheduled_time,
                 'room' => $request->room,
-                'remarks' => $request->remarks,
+                'coordinator_notes' => $request->coordinator_notes,
             ]);
 
             // Remove existing panel assignments
@@ -323,22 +283,16 @@ class DefenseScheduleController extends Controller
     public function getAvailableFaculty(Request $request)
     {
         $request->validate([
-            'start_at' => 'required|date',
-            'end_at' => 'required|date|after:start_at',
+            'scheduled_date' => 'required|date',
+            'scheduled_time' => 'required|date_format:H:i',
             'exclude_schedule_id' => 'nullable|exists:defense_schedules,id'
         ]);
 
         $conflictingFaculty = DefenseSchedule::whereHas('panelists')
             ->where('status', 'scheduled')
             ->where('id', '!=', $request->exclude_schedule_id)
-            ->where(function ($q) use ($request) {
-                $q->whereBetween('start_at', [$request->start_at, $request->end_at])
-                  ->orWhereBetween('end_at', [$request->start_at, $request->end_at])
-                  ->orWhere(function ($q2) use ($request) {
-                      $q2->where('start_at', '<=', $request->start_at)
-                         ->where('end_at', '>=', $request->end_at);
-                  });
-            })
+            ->where('scheduled_date', $request->scheduled_date)
+            ->where('scheduled_time', $request->scheduled_time)
             ->pluck('panelists.faculty_id')
             ->flatten()
             ->unique();

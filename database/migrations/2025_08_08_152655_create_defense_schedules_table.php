@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('defense_schedules', function (Blueprint $table) {
             $table->id();
             $table->foreignId('group_id')->constrained()->onDelete('cascade');
-            $table->enum('stage', ['60', '100'])->default('60');
+            $table->enum('stage', ['proposal', '60', '100'])->default('proposal');
             $table->foreignId('academic_term_id')->constrained('academic_terms')->onDelete('cascade');
             $table->dateTime('start_at');
             $table->dateTime('end_at');

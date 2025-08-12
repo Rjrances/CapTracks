@@ -1,6 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.student')
 
-@section('title', 'My Group')
+@section('title', 'Group Details')
 
 @section('content')
 <div class="container mt-5">
@@ -171,6 +171,167 @@
             </div>
         </div>
 
+        <!-- Defense Readiness Section -->
+        @if($group->adviser_id)
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-graduation-cap me-2"></i>Defense Readiness
+                </h5>
+            </div>
+            <div class="card-body">
+                
+                <!-- Proposal Defense -->
+                <div class="row align-items-center mb-3">
+                    <div class="col-md-8">
+                        <h6 class="mb-1">📋 Proposal Defense</h6>
+                        <small class="text-muted">
+                            @if($group->defenseRequests->where('defense_type', 'proposal')->where('status', 'scheduled')->first())
+                                ✅ Scheduled • Ready to proceed
+                            @elseif($group->defenseRequests->where('defense_type', 'proposal')->where('status', 'pending')->first())
+                                ⏳ Request pending • Waiting for coordinator response
+                            @else
+                                🟢 Ready to request • All requirements met
+                            @endif
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        @if($group->defenseRequests->where('defense_type', 'proposal')->where('status', 'scheduled')->first())
+                            <button class="btn btn-success btn-sm" disabled>
+                                <i class="fas fa-check"></i> Scheduled
+                            </button>
+                        @elseif($group->defenseRequests->where('defense_type', 'proposal')->where('status', 'pending')->first())
+                            <button class="btn btn-warning btn-sm" disabled>
+                                <i class="fas fa-clock"></i> Pending
+                            </button>
+                        @else
+                            <button class="btn btn-primary btn-sm" onclick="requestDefense('proposal')">
+                                <i class="fas fa-rocket"></i> Request Defense
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- 60% Progress Defense -->
+                <div class="row align-items-center mb-3">
+                    <div class="col-md-8">
+                        <h6 class="mb-1">📈 60% Progress Defense</h6>
+                        <small class="text-muted">
+                            @if($group->defenseRequests->where('defense_type', '60_percent')->where('status', 'scheduled')->first())
+                                ✅ Scheduled • Ready to proceed
+                            @elseif($group->defenseRequests->where('defense_type', '60_percent')->where('status', 'pending')->first())
+                                ⏳ Request pending • Waiting for coordinator response
+                            @elseif($group->overall_progress_percentage < 60)
+                                🔴 Not ready • Progress: {{ $group->overall_progress_percentage }}%
+                            @else
+                                🟢 Ready to request • Progress: {{ $group->overall_progress_percentage }}%
+                            @endif
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        @if($group->defenseRequests->where('defense_type', '60_percent')->where('status', 'scheduled')->first())
+                            <button class="btn btn-success btn-sm" disabled>
+                                <i class="fas fa-check"></i> Scheduled
+                            </button>
+                        @elseif($group->defenseRequests->where('defense_type', '60_percent')->where('status', 'pending')->first())
+                            <button class="btn btn-warning btn-sm" disabled>
+                                <i class="fas fa-clock"></i> Pending
+                            </button>
+                        @elseif($group->overall_progress_percentage < 60)
+                            <button class="btn btn-secondary btn-sm" disabled>
+                                <i class="fas fa-clock"></i> Not Ready
+                            </button>
+                        @else
+                            <button class="btn btn-primary btn-sm" onclick="requestDefense('60_percent')">
+                                <i class="fas fa-rocket"></i> Request Defense
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- 100% Final Defense -->
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-1">🏆 100% Final Defense</h6>
+                        <small class="text-muted">
+                            @if($group->defenseRequests->where('defense_type', '100_percent')->where('status', 'scheduled')->first())
+                                ✅ Scheduled • Ready to proceed
+                            @elseif($group->defenseRequests->where('defense_type', '100_percent')->where('status', 'pending')->first())
+                                ⏳ Request pending • Waiting for coordinator response
+                            @elseif($group->overall_progress_percentage < 100)
+                                🔴 Not ready • Progress: {{ $group->overall_progress_percentage }}%
+                            @else
+                                🟢 Ready to request • Progress: {{ $group->overall_progress_percentage }}%
+                            @endif
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        @if($group->defenseRequests->where('defense_type', '100_percent')->where('status', 'scheduled')->first())
+                            <button class="btn btn-success btn-sm" disabled>
+                                <i class="fas fa-check"></i> Scheduled
+                            </button>
+                        @elseif($group->defenseRequests->where('defense_type', '100_percent')->where('status', 'pending')->first())
+                            <button class="btn btn-warning btn-sm" disabled>
+                                <i class="fas fa-clock"></i> Pending
+                            </button>
+                        @elseif($group->overall_progress_percentage < 100)
+                            <button class="btn btn-secondary btn-sm" disabled>
+                                <i class="fas fa-clock"></i> Not Ready
+                            </button>
+                        @else
+                            <button class="btn btn-primary btn-sm" onclick="requestDefense('100_percent')">
+                                <i class="fas fa-rocket"></i> Request Defense
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Defense Requests Status -->
+        @if($group->defenseRequests->count() > 0)
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Defense Request Status
+                </h5>
+            </div>
+            <div class="card-body">
+                @foreach($group->defenseRequests as $request)
+                <div class="border-bottom pb-2 mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ $request->defense_type_label }}</h6>
+                            <small class="text-muted">
+                                Requested: {{ $request->requested_at->format('M d, Y') }}
+                                @if($request->student_message)
+                                    • Message: "{{ Str::limit($request->student_message, 50) }}"
+                                @endif
+                            </small>
+                        </div>
+                        <div>
+                            @if($request->status === 'pending')
+                                <span class="badge bg-warning">Pending</span>
+                            @elseif($request->status === 'approved')
+                                <span class="badge bg-success">Approved</span>
+                            @elseif($request->status === 'rejected')
+                                <span class="badge bg-danger">Rejected</span>
+                                @if($request->coordinator_notes)
+                                    <small class="text-muted d-block">Reason: {{ Str::limit($request->coordinator_notes, 50) }}</small>
+                                @endif
+                            @elseif($request->status === 'scheduled')
+                                <span class="badge bg-primary">Scheduled</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+        @endif
+
         <!-- Group Actions -->
         <div class="d-flex gap-2">
             <a href="{{ route('student.group.edit') }}" class="btn btn-outline-primary">
@@ -234,4 +395,57 @@
     </div>
 </div>
 @endif
+
+<!-- Defense Request Modal -->
+<div class="modal fade" id="defenseRequestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-graduation-cap me-2"></i>Request Defense
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ route('student.group.request-defense') }}" method="POST">
+                @csrf
+                <input type="hidden" name="defense_type" id="defense_type_input">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Defense Type</label>
+                        <div class="form-control-plaintext" id="defense_type_display"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="defense_message" class="form-label">Message (Optional)</label>
+                        <textarea name="message" id="defense_message" class="form-control" rows="3" placeholder="Add any special requirements or notes for your defense..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function requestDefense(defenseType) {
+    // Set the defense type in the form
+    document.getElementById('defense_type_input').value = defenseType;
+    
+    // Display the defense type
+    const defenseTypeLabels = {
+        'proposal': '📋 Proposal Defense',
+        '60_percent': '📈 60% Progress Defense',
+        '100_percent': '🏆 100% Final Defense'
+    };
+    document.getElementById('defense_type_display').textContent = defenseTypeLabels[defenseType];
+    
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('defenseRequestModal'));
+    modal.show();
+}
+</script>
 @endsection 

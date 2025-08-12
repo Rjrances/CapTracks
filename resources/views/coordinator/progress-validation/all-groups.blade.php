@@ -149,7 +149,7 @@
                                             <i class="fas fa-eye me-1"></i>View Report
                                         </a>
                                         @if($report['is_ready'])
-                                            <a href="{{ route('coordinator.defense.scheduling') }}" 
+                                            <a href="{{ route('coordinator.defense.index') }}" 
                                                class="btn btn-sm btn-success">
                                                 <i class="fas fa-calendar-plus me-1"></i>Schedule
                                             </a>

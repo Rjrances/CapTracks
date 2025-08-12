@@ -76,13 +76,18 @@
                                         <tr>
                                             <td>Faculty Name</td>
                                             <td>email@university.edu</td>
-                                            <td>FAC001</td>
-                                            <td>adviser</td>
+                                            <td>12345</td>
+                                            <td>teacher</td>
                                             <td>Department</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
+                            <p class="mb-0 mt-2">
+                                <strong>Notes:</strong><br>
+                                • The school_id must be exactly 5 digits (e.g., 12345, 67890)<br>
+                                • The role column is optional - if not specified, it will default to "teacher"<br>
+                            </p>
                         </div>
 
                         <!-- Important Notes -->
@@ -94,7 +99,6 @@
                                 <li>All faculty members will have a default password: <strong>password123</strong></li>
                                 <li>They will be required to change their password on first login</li>
                                 <li>Email addresses and School IDs must be unique</li>
-                                <li>Role must be either "adviser" or "panelist"</li>
                             </ul>
                         </div>
 

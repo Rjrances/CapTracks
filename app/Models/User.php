@@ -105,7 +105,30 @@ class User extends Authenticatable
 
     public function isTeacher(): bool
     {
-        return $this->hasAnyRole(['adviser', 'panelist']);
+        return $this->hasAnyRole(['teacher', 'adviser', 'panelist']);
+    }
+
+    public function isOfferingCoordinator(): bool
+    {
+        return $this->hasRole('coordinator') && $this->offerings()->exists();
+    }
+
+    public function getCoordinatedOfferings()
+    {
+        return $this->offerings()->with('academicTerm')->get();
+    }
+
+    public function canBeAdviserForGroup($groupId): bool
+    {
+        // Get the group's offering
+        $group = \App\Models\Group::find($groupId);
+        if (!$group) return false;
+
+        // Check if this user coordinates the group's offering
+        $coordinatedOfferingIds = $this->offerings()->pluck('id')->toArray();
+        
+        // Cannot be adviser for groups in offerings they coordinate
+        return !in_array($group->offering_id, $coordinatedOfferingIds);
     }
 
     public function isStudent(): bool

@@ -26,7 +26,7 @@
 
                 {{-- Scheduling --}}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('coordinator.defense.scheduling') }}">Scheduling</a>
+                    <a class="nav-link" href="{{ route('coordinator.defense.index') }}">Defense Schedules</a>
                 </li>
 
                 {{-- Group Management --}}

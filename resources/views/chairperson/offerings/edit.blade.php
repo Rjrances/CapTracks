@@ -24,11 +24,16 @@
                         @csrf
                         @method('PUT')
 
-                        <div class="mb-3">
+                                                <div class="mb-3">
                             <label for="subject_title" class="form-label">Subject Title</label>
-                            <input type="text" name="subject_title" id="subject_title" 
+                            <input type="text" name="subject_title" id="subject_title"
                                    class="form-control @error('subject_title') is-invalid @enderror" 
-                                   value="{{ old('subject_title', $offering->subject_title) }}" required>
+                                   value="{{ old('subject_title', $offering->subject_title) }}" 
+                                   placeholder="Capstone" required>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                This system is designed for Capstone project management
+                            </div>
                             @error('subject_title')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

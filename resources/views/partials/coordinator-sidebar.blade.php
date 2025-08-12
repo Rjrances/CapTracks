@@ -64,8 +64,8 @@
             
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('coordinator.defense.*') ? 'active bg-primary' : '' }}" 
-                   href="{{ route('coordinator.defense.scheduling') }}">
-                    <i class="fas fa-calendar-check me-2"></i>
+                   href="{{ route('coordinator.defense.index') }}">
+                    <i class="fas fa-gavel me-2"></i>
                     Defense Schedules
                 </a>
             </li>

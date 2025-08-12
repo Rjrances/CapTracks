@@ -29,6 +29,54 @@
             </div>
         @endif
 
+        @if($isTeacherCoordinator && $coordinatedOfferings->count() > 0)
+        <!-- My Coordinated Offerings -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chalkboard-teacher me-2"></i>My Coordinated Offerings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach($coordinatedOfferings as $offering)
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="card-title mb-0 text-primary">{{ $offering->subject_code }}</h6>
+                                            <span class="badge bg-info">{{ $offering->academicTerm->full_name ?? 'N/A' }}</span>
+                                        </div>
+                                        <p class="card-text text-muted mb-3">{{ $offering->subject_title }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <i class="fas fa-users me-1"></i>
+                                                {{ $offering->enrolled_students_count ?? 0 }} students
+                                            </small>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ route('coordinator.groups.index') }}?offering={{ $offering->id }}" 
+                                                   class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-users me-1"></i>Groups
+                                                </a>
+                                                <a href="{{ route('coordinator.defense.index') }}?offering={{ $offering->id }}" 
+                                                   class="btn btn-outline-success btn-sm">
+                                                    <i class="fas fa-calendar me-1"></i>Scheduling
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Current Academic Term Context -->
         <div class="row mb-4">
             <div class="col-12">

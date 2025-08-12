@@ -11,11 +11,11 @@
                 <p class="text-muted mb-0">
                     <i class="fas fa-calendar-alt me-1"></i>
                     @if($showAllTerms)
-                        Showing faculty assigned to offerings in: <strong>All Terms</strong>
-                        <span class="badge bg-info ms-2">All Terms</span>
+                        Showing faculty assigned to offerings in: <strong>Active Term Only</strong>
+                        <span class="badge bg-info ms-2">Active Term Only</span>
                     @else
-                        Showing faculty assigned to offerings in: <strong>{{ $activeTerm->full_name }}</strong>
-                        <span class="badge bg-success ms-2">Active Term</span>
+                        Showing <strong>All Faculty</strong> (use "Show Active Term Only" to filter by offerings)
+                        <span class="badge bg-success ms-2">All Faculty</span>
                     @endif
                 </p>
             @else
@@ -29,11 +29,11 @@
             @if($activeTerm)
                 @if($showAllTerms)
                     <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-success">
-                        <i class="fas fa-calendar-check"></i> Show Active Term Only
+                        <i class="fas fa-calendar-check"></i> Show All Faculty
                     </a>
                 @else
                     <a href="{{ route('chairperson.teachers.index', ['show_all' => true]) }}" class="btn btn-outline-info">
-                        <i class="fas fa-calendar-alt"></i> Show All Terms
+                        <i class="fas fa-calendar-alt"></i> Show Active Term Only
                     </a>
                 @endif
             @endif

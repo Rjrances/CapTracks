@@ -1,5 +1,7 @@
 @extends('layouts.student')
 
+@section('title', 'Student Dashboard')
+
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">

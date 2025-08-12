@@ -18,13 +18,13 @@ class ChairpersonDashboardController extends Controller
         // Get current active term
         $activeTerm = AcademicTerm::where('is_active', true)->first();
 
-        // Fetch upcoming defense schedules (next 30 days)
-        $upcomingDefenses = DefenseSchedule::with(['group.adviser', 'group.members', 'academicTerm'])
-            ->where('start_at', '>=', now())
-            ->where('start_at', '<=', now()->addDays(30))
+        // Get upcoming defense schedules
+        $upcomingDefenses = DefenseSchedule::with(['group', 'defensePanels.faculty'])
+            ->where('start_at', '>=', now()->toDateString())
+            ->where('start_at', '<=', now()->addDays(30)->toDateString())
             ->where('status', 'scheduled')
             ->orderBy('start_at')
-            ->take(5)
+            ->limit(5)
             ->get();
 
         // Fetch latest notifications for chairperson
@@ -49,13 +49,8 @@ class ChairpersonDashboardController extends Controller
             'offeringsCount' => Offering::when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);
             })->count(),
-            'totalDefenses' => DefenseSchedule::when($activeTerm, function($query) use ($activeTerm) {
-                return $query->where('academic_term_id', $activeTerm->id);
-            })->count(),
-            'completedDefenses' => DefenseSchedule::where('status', 'completed')
-                ->when($activeTerm, function($query) use ($activeTerm) {
-                    return $query->where('academic_term_id', $activeTerm->id);
-                })->count(),
+            'totalDefenses' => DefenseSchedule::count(),
+            'completedDefenses' => DefenseSchedule::where('status', 'completed')->count(),
         ];
 
         return view('chairperson.dashboard', compact(

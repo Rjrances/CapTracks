@@ -11,9 +11,7 @@
                     <p class="text-muted mb-0">Oversee capstone projects and academic operations</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{{ route('chairperson.scheduling.index') }}" class="btn btn-primary">
-                        <i class="fas fa-calendar me-2"></i>View Scheduling
-                    </a>
+
                     <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-outline-primary">
                         <i class="fas fa-book me-2"></i>Manage Offerings
                     </a>
@@ -131,9 +129,7 @@
                         <h5 class="mb-0">
                             <i class="fas fa-gavel me-2"></i>Upcoming Defense Schedules
                         </h5>
-                        <a href="{{ route('chairperson.scheduling.index') }}" class="btn btn-sm btn-outline-primary">
-                            View All
-                        </a>
+
                     </div>
                 </div>
                 <div class="card-body">
@@ -163,14 +159,14 @@
                                                 </small>
                                             </td>
                                             <td>
-                                                <span class="badge bg-{{ $defense->stage == '60' ? 'warning' : 'danger' }}">
-                                                    {{ $defense->stage }}% Defense
+                                                <span class="badge bg-{{ $defense->defense_type == '60_percent' ? 'warning' : ($defense->defense_type == '100_percent' ? 'danger' : 'info') }}">
+                                                    {{ $defense->defense_type_label }}
                                                 </span>
                                             </td>
                                             <td>
-                                                <div class="fw-semibold">{{ $defense->formatted_date }}</div>
+                                                <div class="fw-semibold">{{ $defense->scheduled_date->format('M d, Y') }}</div>
                                                 <small class="text-muted">
-                                                    {{ $defense->formatted_start_time }} - {{ $defense->formatted_end_time }}
+                                                    {{ \Carbon\Carbon::parse($defense->scheduled_time)->format('h:i A') }}
                                                 </small>
                                             </td>
                                             <td>
@@ -186,10 +182,7 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <a href="{{ route('chairperson.scheduling.show', $defense) }}" 
-                                                   class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-eye"></i> View
-                                                </a>
+
                                             </td>
                                         </tr>
                                     @endforeach
@@ -201,9 +194,7 @@
                             <i class="fas fa-gavel fa-3x text-muted mb-3"></i>
                             <h6 class="text-muted">No upcoming defense schedules</h6>
                             <p class="text-muted small">Defense schedules for the next 30 days will appear here.</p>
-                            <a href="{{ route('chairperson.scheduling.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i> Schedule Defense
-                            </a>
+
                         </div>
                     @endif
                 </div>
@@ -258,9 +249,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{{ route('chairperson.scheduling.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Schedule Defense
-                        </a>
+
                         <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-outline-primary">
                             <i class="fas fa-book me-2"></i>Manage Offerings
                         </a>

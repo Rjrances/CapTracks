@@ -15,7 +15,7 @@
         <ul class="navbar-nav">
             <li class="nav-item"><a class="nav-link text-white" href="{{ route('chairperson.offerings.index') }}">Offerings</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="{{ route('chairperson.teachers.index') }}">Teachers</a></li>
-                            <li class="nav-item"><a class="nav-link text-white" href="{{ route('chairperson.scheduling.index') }}">Scheduling</a></li>
+            
                             <li class="nav-item"><a class="nav-link text-white" href="{{ route('chairperson.roles.index') }}">Roles</a></li>
 
 
