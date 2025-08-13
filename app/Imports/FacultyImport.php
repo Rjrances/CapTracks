@@ -12,20 +12,7 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
 {
     public function model(array $row)
     {
-        $user = new User([
-            'name' => $row['name'],
-            'email' => $row['email'],
-            'school_id' => $row['school_id'],
-            'department' => $row['department'] ?? null,
-            'position' => $row['position'] ?? null,
-            'password' => Hash::make('password123'), // Default password
-            'must_change_password' => true,
-        ]);
-
-        // Save the user first to get an ID
-        $user->save();
-
-        // Assign role from Excel file or default to "teacher"
+        // Get role from Excel file or default to "teacher"
         $roleName = $row['role'] ?? 'teacher';
         
         // Validate that the role exists, if not, default to "teacher"
@@ -33,19 +20,16 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
         if (!in_array(strtolower($roleName), $validRoles)) {
             $roleName = 'teacher';
         }
-        
-        $role = \App\Models\Role::where('name', strtolower($roleName))->first();
-        if ($role) {
-            $user->roles()->attach($role->id);
-        } else {
-            // Fallback to teacher role if the specified role doesn't exist
-            $teacherRole = \App\Models\Role::where('name', 'teacher')->first();
-            if ($teacherRole) {
-                $user->roles()->attach($teacherRole->id);
-            }
-        }
 
-        return $user;
+        return new User([
+            'name' => $row['name'],
+            'email' => $row['email'],
+            'school_id' => $row['school_id'],
+            'department' => $row['department'] ?? null,
+            'role' => strtolower($roleName),
+            'password' => Hash::make('password123'), // Default password
+            'must_change_password' => true,
+        ]);
     }
 
     public function rules(): array
@@ -60,7 +44,6 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
             ],
             '*.role' => 'nullable|string|in:teacher,adviser,panelist',
             '*.department' => 'nullable|string|max:255',
-            '*.position' => 'nullable|string|max:255',
         ];
     }
 

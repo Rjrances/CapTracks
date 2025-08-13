@@ -126,22 +126,7 @@
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="position" class="form-label fw-bold">
-                                        <i class="fas fa-briefcase me-1"></i>Position
-                                    </label>
-                                    <input type="text" 
-                                           name="position" 
-                                           id="position" 
-                                           class="form-control @error('position') is-invalid @enderror" 
-                                           value="{{ old('position') }}" 
-                                           placeholder="e.g., Assistant Professor">
-                                    @error('position')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
+
                         </div>
 
                         <!-- Important Notes -->

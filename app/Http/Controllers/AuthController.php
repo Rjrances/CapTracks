@@ -160,17 +160,9 @@ class AuthController extends Controller
             'school_id' => now()->timestamp, // dummy unique ID
             'birthday' => now()->subYears(25),
             'department' => 'N/A',
-            'position' => 'N/A',
+            'role' => $role,
             'must_change_password' => true,
         ]);
-        
-        // Assign role if specified
-        if ($role !== 'student') {
-            $roleModel = Role::where('name', $role)->first();
-            if ($roleModel) {
-                $user->roles()->attach($roleModel->id);
-            }
-        }
 
         return redirect('/login')->with('success', 'Registration successful. Please log in.');
     }

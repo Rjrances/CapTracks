@@ -15,7 +15,7 @@ class User extends Authenticatable
         'email',
         'birthday',
         'department',     // Department instead of course
-        'position',       // Position instead of year
+        'role',           // Role instead of position
         'password',
         'must_change_password',
     ];
@@ -81,7 +81,7 @@ class User extends Authenticatable
      */
     public function hasRole($role): bool
     {
-        return $this->roles()->where('name', $role)->exists();
+        return $this->role === $role;
     }
 
     public function hasAnyRole($roles): bool
@@ -90,7 +90,7 @@ class User extends Authenticatable
             $roles = explode(',', $roles);
         }
         
-        return $this->roles()->whereIn('name', $roles)->exists();
+        return in_array($this->role, $roles);
     }
 
     public function isChairperson(): bool
@@ -138,6 +138,6 @@ class User extends Authenticatable
 
     public function getPrimaryRoleAttribute()
     {
-        return $this->roles()->first()?->name;
+        return $this->role;
     }
 }

@@ -244,15 +244,9 @@ class ChairpersonController extends Controller
             'school_id'            => now()->timestamp, // dummy unique ID
             'birthday'             => now()->subYears(30),
             'department'           => 'N/A',
-            'position'             => 'N/A',
+            'role'                 => $request->role,
             'must_change_password' => true,
         ]);
-        
-        // Assign role
-        $role = Role::where('name', $request->role)->first();
-        if ($role) {
-            $user->roles()->attach($role->id);
-        }
 
         return redirect()->route('teachers.index')->with('success', 'Teacher added successfully.');
     }
@@ -276,19 +270,13 @@ class ChairpersonController extends Controller
 
         $teacher->name = $request->name;
         $teacher->email = $request->email;
+        $teacher->role = $request->role;
 
         if ($request->filled('password')) {
             $teacher->password = bcrypt($request->password);
         }
 
         $teacher->save();
-        
-        // Update role
-        $role = Role::where('name', $request->role)->first();
-        if ($role) {
-            $teacher->roles()->detach();
-            $teacher->roles()->attach($role->id);
-        }
 
         return redirect()->route('teachers.index')->with('success', 'Teacher updated successfully.');
     }
@@ -539,7 +527,6 @@ class ChairpersonController extends Controller
                 'regex:/^\d{5}$/', // Must be exactly 5 digits
             ],
             'department' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
         ], [
             'school_id.regex' => 'Faculty/Staff ID must be exactly 5 digits (e.g., 12345)',
         ]);
@@ -549,16 +536,10 @@ class ChairpersonController extends Controller
             'email' => $request->email,
             'school_id' => $request->school_id,
             'department' => $request->department,
-            'position' => $request->position,
+            'role' => 'teacher',
             'password' => bcrypt('password123'),
             'must_change_password' => true,
         ]);
-
-        // Assign default role (teacher)
-        $teacherRole = \App\Models\Role::where('name', 'teacher')->first();
-        if ($teacherRole) {
-            $user->roles()->attach($teacherRole->id);
-        }
 
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member added successfully!');
     }
@@ -577,7 +558,6 @@ class ChairpersonController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
             'department' => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8',
         ]);
 
@@ -585,7 +565,6 @@ class ChairpersonController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'department' => $request->department,
-            'position' => $request->position,
         ];
 
         // Only update password if provided

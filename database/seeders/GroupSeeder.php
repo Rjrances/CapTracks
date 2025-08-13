@@ -25,9 +25,7 @@ class GroupSeeder extends Seeder
     {
         // Get students and advisers
         $students = Student::all();
-        $adviser = User::whereHas('roles', function($query) {
-            $query->where('name', 'adviser');
-        })->first();
+        $adviser = User::where('role', 'adviser')->first();
         
         $activeTerm = AcademicTerm::where('is_active', true)->first();
 
@@ -46,9 +44,7 @@ class GroupSeeder extends Seeder
             'name' => 'Web Development Team',
             'description' => 'Building a modern web application for student management',
             'adviser_id' => $adviser->id,
-            'academic_term_id' => $activeTerm->id,
-            'capstone_phase' => 1,
-            'overall_progress_percentage' => 75
+            'academic_term_id' => $activeTerm->id
         ]);
 
         // Add students to group 1
@@ -62,9 +58,7 @@ class GroupSeeder extends Seeder
             'name' => 'Mobile App Team',
             'description' => 'Developing a mobile application for campus navigation',
             'adviser_id' => $adviser->id,
-            'academic_term_id' => $activeTerm->id,
-            'capstone_phase' => 2,
-            'overall_progress_percentage' => 45
+            'academic_term_id' => $activeTerm->id
         ]);
 
         // Add students to group 2
@@ -78,9 +72,7 @@ class GroupSeeder extends Seeder
             'name' => 'AI Research Team',
             'description' => 'Research project on machine learning applications',
             'adviser_id' => $adviser->id,
-            'academic_term_id' => $activeTerm->id,
-            'capstone_phase' => 1,
-            'overall_progress_percentage' => 90
+            'academic_term_id' => $activeTerm->id
         ]);
 
         // Add students to group 3
@@ -90,8 +82,8 @@ class GroupSeeder extends Seeder
         ]);
 
         echo "✅ Created 3 test groups with student assignments\n";
-        echo "   - Web Development Team (75% progress)\n";
-        echo "   - Mobile App Team (45% progress)\n";
-        echo "   - AI Research Team (90% progress)\n";
+        echo "   - Web Development Team\n";
+        echo "   - Mobile App Team\n";
+        echo "   - AI Research Team\n";
     }
 }

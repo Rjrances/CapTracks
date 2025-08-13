@@ -7,7 +7,6 @@ use Illuminate\Database\Seeder;
 use App\Models\Offering;
 use App\Models\User;
 use App\Models\AcademicTerm;
-use App\Models\Role;
 
 class OfferingSeeder extends Seeder
 {
@@ -19,10 +18,8 @@ class OfferingSeeder extends Seeder
         // Get active academic term
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         
-        // Get teachers
-        $teachers = User::whereHas('roles', function($query) {
-            $query->whereIn('name', ['adviser', 'panelist']);
-        })->get();
+        // Get teachers (users with adviser or panelist roles)
+        $teachers = User::whereIn('role', ['adviser', 'panelist'])->get();
         
         if ($teachers->isEmpty()) {
             // Create some sample teachers if none exist
@@ -34,7 +31,7 @@ class OfferingSeeder extends Seeder
                     'password' => bcrypt('password'),
                     'birthday' => now()->subYears(30),
                     'department' => 'Computer Science',
-                    'position' => 'Associate Professor',
+                    'role' => 'adviser',
                     'must_change_password' => true,
                 ]),
                 User::create([
@@ -44,7 +41,7 @@ class OfferingSeeder extends Seeder
                     'password' => bcrypt('password'),
                     'birthday' => now()->subYears(35),
                     'department' => 'Computer Science',
-                    'position' => 'Professor',
+                    'role' => 'adviser',
                     'must_change_password' => true,
                 ]),
                 User::create([
@@ -54,15 +51,10 @@ class OfferingSeeder extends Seeder
                     'password' => bcrypt('password'),
                     'birthday' => now()->subYears(28),
                     'department' => 'Computer Science',
-                    'position' => 'Assistant Professor',
+                    'role' => 'panelist',
                     'must_change_password' => true,
                 ]),
             ]);
-            
-            // Assign roles to the created users
-            $teachers[0]->roles()->attach(Role::where('name', 'adviser')->first());
-            $teachers[1]->roles()->attach(Role::where('name', 'adviser')->first());
-            $teachers[2]->roles()->attach(Role::where('name', 'panelist')->first());
         }
         
         if ($activeTerm) {

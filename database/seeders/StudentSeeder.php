@@ -27,48 +27,42 @@ class StudentSeeder extends Seeder
                 'email' => 'john@test.com',
                 'student_id' => '2024000001', // 10 digits
                 'semester' => '2024-1',
-                'course' => 'BS Computer Science',
-                'year_level' => '4th Year'
+                'course' => 'BS Computer Science'
             ],
             [
                 'name' => 'Jane Student',
                 'email' => 'jane@test.com',
                 'student_id' => '2024000002', // 10 digits
                 'semester' => '2024-1',
-                'course' => 'BS Computer Science',
-                'year_level' => '4th Year'
+                'course' => 'BS Computer Science'
             ],
             [
                 'name' => 'Bob Student',
                 'email' => 'bob@test.com',
                 'student_id' => '2024000003', // 10 digits
                 'semester' => '2024-1',
-                'course' => 'BS Computer Science',
-                'year_level' => '4th Year'
+                'course' => 'BS Computer Science'
             ],
             [
                 'name' => 'Alice Student',
                 'email' => 'alice@test.com',
                 'student_id' => '2024000004', // 10 digits
                 'semester' => '2024-1',
-                'course' => 'BS Computer Science',
-                'year_level' => '4th Year'
+                'course' => 'BS Computer Science'
             ],
             [
                 'name' => 'Charlie Student',
                 'email' => 'charlie@test.com',
                 'student_id' => '2024000005', // 10 digits
                 'semester' => '2024-1',
-                'course' => 'BS Computer Science',
-                'year_level' => '4th Year'
+                'course' => 'BS Computer Science'
             ],
             [
                 'name' => 'Diana Student',
                 'email' => 'diana@test.com',
                 'student_id' => '2024000006', // 10 digits
                 'semester' => '2024-1',
-                'course' => 'BS Computer Science',
-                'year_level' => '4th Year'
+                'course' => 'BS Computer Science'
             ]
         ];
 
@@ -79,7 +73,6 @@ class StudentSeeder extends Seeder
                 'student_id' => $studentData['student_id'],
                 'semester' => $studentData['semester'],
                 'course' => $studentData['course'],
-                'year_level' => $studentData['year_level'],
                 'password' => Hash::make('password')
             ]);
         }

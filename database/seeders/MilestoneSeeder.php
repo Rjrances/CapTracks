@@ -25,8 +25,7 @@ class MilestoneSeeder extends Seeder
         $proposal = MilestoneTemplate::create([
             'name' => 'Project Proposal',
             'description' => 'Initial project proposal and requirements gathering',
-            'status' => 'todo',
-            'order' => 1
+            'status' => 'todo'
         ]);
 
         $this->createProposalTasks($proposal);
@@ -35,8 +34,7 @@ class MilestoneSeeder extends Seeder
         $design = MilestoneTemplate::create([
             'name' => 'System Design',
             'description' => 'System architecture and design documentation',
-            'status' => 'todo',
-            'order' => 2
+            'status' => 'todo'
         ]);
 
         $this->createDesignTasks($design);
@@ -45,8 +43,7 @@ class MilestoneSeeder extends Seeder
         $implementation = MilestoneTemplate::create([
             'name' => 'Implementation',
             'description' => 'Core system development and coding',
-            'status' => 'todo',
-            'order' => 3
+            'status' => 'todo'
         ]);
 
         $this->createImplementationTasks($implementation);
@@ -55,8 +52,7 @@ class MilestoneSeeder extends Seeder
         $testing = MilestoneTemplate::create([
             'name' => 'Testing & Documentation',
             'description' => 'System testing and final documentation',
-            'status' => 'todo',
-            'order' => 4
+            'status' => 'todo'
         ]);
 
         $this->createTestingTasks($testing);

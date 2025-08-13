@@ -47,38 +47,36 @@
                                     <td>{{ $user->school_id ?? 'N/A' }}</td>
                                     <td>{{ $user->department ?? 'N/A' }}</td>
                                     <td>
-                                        @if(count($user->currentRoles) > 0)
-                                            @foreach($user->currentRoles as $role)
-                                                <span class="badge bg-primary me-1">{{ ucfirst($role) }}</span>
-                                            @endforeach
+                                        @if($user->role)
+                                            <span class="badge bg-primary me-1">{{ ucfirst($user->role) }}</span>
                                         @else
-                                            <span class="text-muted">No roles assigned</span>
+                                            <span class="text-muted">No role assigned</span>
                                         @endif
                                     </td>
                                     <td>
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="chairperson" 
-                                                {{ in_array('chairperson', $user->currentRoles) ? 'checked' : '' }}>
+                                                {{ $user->role === 'chairperson' ? 'checked' : '' }}>
                                             <label class="form-check-label">Chairperson</label>
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="coordinator" 
-                                                {{ in_array('coordinator', $user->currentRoles) ? 'checked' : '' }}>
+                                                {{ $user->role === 'coordinator' ? 'checked' : '' }}>
                                             <label class="form-check-label">Coordinator</label>
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="teacher" 
-                                                {{ in_array('teacher', $user->currentRoles) ? 'checked' : '' }}>
+                                                {{ $user->role === 'teacher' ? 'checked' : '' }}>
                                             <label class="form-check-label">Teacher</label>
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="adviser" 
-                                                {{ in_array('adviser', $user->currentRoles) ? 'checked' : '' }}>
+                                                {{ $user->role === 'adviser' ? 'checked' : '' }}>
                                             <label class="form-check-label">Adviser</label>
                                         </div>
                                         <div class="form-check form-check-inline">
                                             <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="panelist" 
-                                                {{ in_array('panelist', $user->currentRoles) ? 'checked' : '' }}>
+                                                {{ $user->role === 'panelist' ? 'checked' : '' }}>
                                             <label class="form-check-label">Panelist</label>
                                         </div>
                                     </td>
@@ -130,12 +128,12 @@
                                                             <i class="fas fa-id-card me-1"></i>{{ $user->school_id }}
                                                         </small>
                                                     @endif
-                                                    @if($user->department || $user->position)
+                                                    @if($user->department || $user->role)
                                                         <br><small class="text-muted">
                                                             <i class="fas fa-building me-1"></i>
                                                             {{ $user->department ?? 'N/A' }}
-                                                            @if($user->position)
-                                                                • {{ $user->position }}
+                                                            @if($user->role)
+                                                                • {{ ucfirst($user->role) }}
                                                             @endif
                                                         </small>
                                                     @endif

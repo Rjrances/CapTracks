@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\Role;
+use App\Models\Student;
 
 class RoleController extends Controller
 {
@@ -44,32 +44,26 @@ class RoleController extends Controller
             ]
         ];
 
-        // Get users for each role using the new pivot table
+        // Get users for each role using the new direct role column
         foreach ($roles as $roleKey => &$role) {
             if ($roleKey === 'student') {
                 // Students are handled separately
-                $role['user_count'] = 0;
+                $role['user_count'] = Student::count();
                 $role['users'] = collect();
                 continue;
             }
             
-            $role['user_count'] = \DB::table('user_roles')->where('role', $roleKey)->count();
-            $userIds = \DB::table('user_roles')->where('role', $roleKey)->pluck('user_id');
-            $role['users'] = User::whereIn('id', $userIds)
-                ->select('id', 'name', 'email', 'school_id', 'department', 'position')
+            $role['user_count'] = User::where('role', $roleKey)->count();
+            $role['users'] = User::where('role', $roleKey)
+                ->select('id', 'name', 'email', 'school_id', 'department', 'role')
                 ->orderBy('name')
                 ->get();
         }
 
         // Get all users for role assignment
-        $allUsers = User::select('id', 'name', 'email', 'school_id', 'department', 'position')
+        $allUsers = User::select('id', 'name', 'email', 'school_id', 'department', 'role')
             ->orderBy('name')
             ->get();
-
-        // Get current roles for each user
-        foreach ($allUsers as $user) {
-            $user->currentRoles = $user->roles->pluck('name')->toArray();
-        }
 
         return view('chairperson.roles.index', compact('roles', 'allUsers'));
     }
@@ -82,36 +76,27 @@ class RoleController extends Controller
         ]);
 
         try {
-            // Remove all existing roles from user_roles table
-            \DB::table('user_roles')->where('user_id', $user->id)->delete();
-            
-            // Add new roles directly to user_roles table
-            foreach ($request->roles as $role) {
-                \DB::table('user_roles')->insert([
-                    'user_id' => $user->id,
-                    'role' => $role,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+            // Update the user's role (take the first role if multiple are selected)
+            $newRole = $request->roles[0] ?? 'teacher';
+            $user->update(['role' => $newRole]);
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'User roles updated successfully.'
+                    'message' => 'User role updated successfully.'
                 ]);
             }
 
-            return redirect()->back()->with('success', 'User roles updated successfully.');
+            return redirect()->back()->with('success', 'User role updated successfully.');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error updating roles: ' . $e->getMessage()
+                    'message' => 'Error updating role: ' . $e->getMessage()
                 ], 500);
             }
 
-            return redirect()->back()->with('error', 'Error updating roles: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error updating role: ' . $e->getMessage());
         }
     }
 }

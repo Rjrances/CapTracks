@@ -92,8 +92,8 @@
                                             id="role" 
                                             class="form-select @error('role') is-invalid @enderror" 
                                             required>
-                                        <option value="adviser" {{ old('role', $teacher->roles->first()->name ?? '') == 'adviser' ? 'selected' : '' }}>Adviser</option>
-                                        <option value="panelist" {{ old('role', $teacher->roles->first()->name ?? '') == 'panelist' ? 'selected' : '' }}>Panelist</option>
+                                        <option value="adviser" {{ old('role', $teacher->role) == 'adviser' ? 'selected' : '' }}>Adviser</option>
+                                        <option value="panelist" {{ old('role', $teacher->role) == 'panelist' ? 'selected' : '' }}>Panelist</option>
                                     </select>
                                     @error('role')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -119,22 +119,6 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="position" class="form-label fw-bold">
-                                        <i class="fas fa-briefcase me-1"></i>Position
-                                    </label>
-                                    <input type="text" 
-                                           name="position" 
-                                           id="position" 
-                                           class="form-control @error('position') is-invalid @enderror" 
-                                           value="{{ old('position', $teacher->position) }}" 
-                                           placeholder="e.g., Assistant Professor">
-                                    @error('position')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="password" class="form-label fw-bold">
