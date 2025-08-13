@@ -11,11 +11,11 @@
                 <p class="text-muted mb-0">
                     <i class="fas fa-calendar-alt me-1"></i>
                     @if($showAllTerms)
-                        Showing faculty assigned to offerings in: <strong>Active Term Only</strong>
-                        <span class="badge bg-info ms-2">Active Term Only</span>
+                        Showing <strong>All Faculty & Staff</strong> (all users except students)
+                        <span class="badge bg-success ms-2">All Faculty & Staff</span>
                     @else
-                        Showing <strong>All Faculty</strong> (use "Show Active Term Only" to filter by offerings)
-                        <span class="badge bg-success ms-2">All Faculty</span>
+                        Showing faculty assigned to offerings in: <strong>Active Term Only</strong> (use "Show All Faculty" to see all faculty & staff)
+                        <span class="badge bg-info ms-2">Active Term Only</span>
                     @endif
                 </p>
             @else
@@ -28,12 +28,12 @@
         <div class="d-flex gap-2">
             @if($activeTerm)
                 @if($showAllTerms)
-                    <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-success">
-                        <i class="fas fa-calendar-check"></i> Show All Faculty
+                    <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-info">
+                        <i class="fas fa-calendar-alt"></i> Show Active Term Only
                     </a>
                 @else
-                    <a href="{{ route('chairperson.teachers.index', ['show_all' => true]) }}" class="btn btn-outline-info">
-                        <i class="fas fa-calendar-alt"></i> Show Active Term Only
+                    <a href="{{ route('chairperson.teachers.index', ['show_all' => true]) }}" class="btn btn-outline-success">
+                        <i class="fas fa-users"></i> Show All Faculty & Staff
                     </a>
                 @endif
             @endif
@@ -80,7 +80,20 @@
                         <td><strong>{{ $teacher->school_id }}</strong></td>
                         <td>{{ $teacher->name }}</td>
                         <td>{{ $teacher->email }}</td>
-                        <td><span class="badge bg-{{ $teacher->roles->first()->name == 'adviser' ? 'primary' : 'info' }}">{{ ucfirst($teacher->roles->first()->name ?? 'N/A') }}</span></td>
+                        <td>
+                            @php
+                                $roleColors = [
+                                    'adviser' => 'primary',
+                                    'coordinator' => 'success', 
+                                    'teacher' => 'info',
+                                    'panelist' => 'warning',
+                                    'chairperson' => 'danger',
+                                    'admin' => 'dark'
+                                ];
+                                $badgeColor = $roleColors[$teacher->role] ?? 'secondary';
+                            @endphp
+                            <span class="badge bg-{{ $badgeColor }}">{{ ucfirst($teacher->role ?? 'N/A') }}</span>
+                        </td>
                         <td>{{ $teacher->department ?? 'N/A' }}</td>
                         <td>
                             <div class="btn-group btn-group-sm">
@@ -100,6 +113,20 @@
                 @endforeach
             </tbody>
         </table>
+        
+        @if($showAllTerms)
+            <div class="mt-3">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-info-circle me-1"></i>All Faculty & Staff View
+                    </h6>
+                    <p class="mb-0 small">
+                        This view shows all users in the system except students. 
+                        You can see faculty, staff, administrators, and other roles for complete system management.
+                    </p>
+                </div>
+            </div>
+        @endif
     @else
         <p>No teachers found.</p>
     @endif

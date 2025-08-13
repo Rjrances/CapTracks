@@ -60,19 +60,19 @@ class OfferingSeeder extends Seeder
         if ($activeTerm) {
             $offerings = [
                 [
-                    'subject_title' => 'Capstone Project I',
+                    'subject_title' => 'Capstone 1',
                     'subject_code' => 'CS 401',
                     'teacher_id' => $teachers->first()->id,
                     'academic_term_id' => $activeTerm->id,
                 ],
                 [
-                    'subject_title' => 'Capstone Project II',
+                    'subject_title' => 'Capstone 2',
                     'subject_code' => 'CS 402',
                     'teacher_id' => $teachers->count() > 1 ? $teachers[1]->id : $teachers->first()->id,
                     'academic_term_id' => $activeTerm->id,
                 ],
                 [
-                    'subject_title' => 'Software Engineering',
+                    'subject_title' => 'Thesis 1',
                     'subject_code' => 'CS 301',
                     'teacher_id' => $teachers->count() > 2 ? $teachers[2]->id : $teachers->first()->id,
                     'academic_term_id' => $activeTerm->id,

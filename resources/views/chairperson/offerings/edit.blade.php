@@ -24,12 +24,16 @@
                         @csrf
                         @method('PUT')
 
-                                                <div class="mb-3">
+                        <div class="mb-3">
                             <label for="subject_title" class="form-label">Subject Title</label>
-                            <input type="text" name="subject_title" id="subject_title"
-                                   class="form-control @error('subject_title') is-invalid @enderror" 
-                                   value="{{ old('subject_title', $offering->subject_title) }}" 
-                                   placeholder="Capstone" required>
+                            <select name="subject_title" id="subject_title"
+                                   class="form-select @error('subject_title') is-invalid @enderror" required>
+                                <option value="">Select Subject Title</option>
+                                <option value="Capstone 1" {{ old('subject_title', $offering->subject_title) == 'Capstone 1' ? 'selected' : '' }}>Capstone 1</option>
+                                <option value="Capstone 2" {{ old('subject_title', $offering->subject_title) == 'Capstone 2' ? 'selected' : '' }}>Capstone 2</option>
+                                <option value="Thesis 1" {{ old('subject_title', $offering->subject_title) == 'Thesis 1' ? 'selected' : '' }}>Thesis 1</option>
+                                <option value="Thesis 2" {{ old('subject_title', $offering->subject_title) == 'Thesis 2' ? 'selected' : '' }}>Thesis 2</option>
+                            </select>
                             <div class="form-text">
                                 <i class="fas fa-info-circle me-1"></i>
                                 This system is designed for Capstone project management
@@ -57,7 +61,7 @@
                                 @foreach($teachers as $teacher)
                                     <option value="{{ $teacher->id }}" 
                                         {{ old('teacher_id', $offering->teacher_id) == $teacher->id ? 'selected' : '' }}>
-                                        {{ $teacher->name }} ({{ ucfirst($teacher->roles->first()->name ?? 'N/A') }})
+                                        {{ $teacher->name }} ({{ ucfirst($teacher->role ?? 'N/A') }})
                                     </option>
                                 @endforeach
                             </select>
@@ -130,31 +134,28 @@
                                 </div>
                             @endforeach
                         </div>
-                    @else
+                                        @else
                         <p class="text-muted text-center">No students enrolled yet.</p>
+                        <div class="text-center mt-3">
+                            <a href="{{ route('chairperson.upload-form', ['offering_id' => $offering->id]) }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-upload me-2"></i>Import Students
+                            </a>
+                        </div>
                     @endif
 
-                    <!-- Add Students Section -->
-                    <hr>
-                    <h6>Add Students</h6>
-                    <form action="{{ route('chairperson.offerings.add-students', $offering->id) }}" method="POST">
-                        @csrf
-                        <div class="mb-3">
-                            <select name="student_ids[]" class="form-select" multiple size="5">
-                                @foreach($students as $student)
-                                    @if(!$offering->students->contains($student->id))
-                                        <option value="{{ $student->id }}">
-                                            {{ $student->name }} ({{ $student->student_id }})
-                                        </option>
-                                    @endif
-                                @endforeach
-                            </select>
-                            <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple students</small>
+                    <div class="mt-3">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-1"></i>Student Management
+                            </h6>
+                            <p class="mb-2 small">To add students to this offering:</p>
+                            <ol class="mb-0 small">
+                                <li>Use the "Import Students" button above</li>
+                                <li>Students will be automatically enrolled</li>
+                                <li>Or manually remove students using the remove buttons</li>
+                            </ol>
                         </div>
-                        <button type="submit" class="btn btn-success btn-sm w-100">
-                            <i class="fas fa-plus"></i> Add Selected Students
-                        </button>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>

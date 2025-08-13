@@ -11,11 +11,20 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterImport;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
-class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBatchInserts, WithChunkReading, SkipsOnError, SkipsEmptyRows, WithMapping
+class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBatchInserts, WithChunkReading, SkipsOnError, SkipsEmptyRows, WithMapping, WithEvents
 {
+    protected $offeringId;
+    protected $importedStudentIds = [];
+
+    public function __construct($offeringId = null)
+    {
+        $this->offeringId = $offeringId;
+    }
     public function map($row): array
     {
         // Transform data before validation to ensure proper types
@@ -30,7 +39,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
 
     public function model(array $row)
     {
-        return new Student([
+        $student = new Student([
             'student_id' => $row['student_id'],
             'name' => $row['name'],
             'email' => $row['email'],
@@ -38,6 +47,13 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             'course' => $row['course'],
             'password' => Hash::make('password123'), // Default password
         ]);
+        
+        // Store the student ID for later enrollment
+        if ($this->offeringId) {
+            $this->importedStudentIds[] = $row['student_id'];
+        }
+        
+        return $student;
     }
 
     public function rules(): array
@@ -97,5 +113,47 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
     public function onError(\Throwable $e)
     {
         Log::error('Student import error on row: ' . $e->getMessage());
+    }
+
+    /**
+     * After a batch is inserted, automatically enroll students in the offering if one is specified
+     * Students can only be enrolled in one offering at a time
+     */
+    public function afterImport()
+    {
+        if ($this->offeringId && !empty($this->importedStudentIds)) {
+            try {
+                $offering = \App\Models\Offering::find($this->offeringId);
+                if ($offering) {
+                    // Find students by their student_id (more reliable than time-based)
+                    $studentsToEnroll = \App\Models\Student::whereIn('student_id', $this->importedStudentIds)->get();
+                    
+                    if ($studentsToEnroll->count() > 0) {
+                        foreach ($studentsToEnroll as $student) {
+                            // Use the new single enrollment method
+                            $student->enrollInOffering($offering);
+                        }
+                        
+                        Log::info("Automatically enrolled {$studentsToEnroll->count()} students in offering {$offering->subject_code}");
+                        Log::info("Enrolled student IDs: " . implode(', ', $this->importedStudentIds));
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('Error auto-enrolling students: ' . $e->getMessage());
+                Log::error('Student IDs that failed to enroll: ' . implode(', ', $this->importedStudentIds));
+            }
+        }
+    }
+
+    /**
+     * Register events to ensure enrollment happens after import
+     */
+    public function registerEvents(): array
+    {
+        return [
+            AfterImport::class => function(AfterImport $event) {
+                $this->afterImport();
+            },
+        ];
     }
 }

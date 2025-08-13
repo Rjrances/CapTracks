@@ -60,7 +60,7 @@
                 <i class="fas fa-info-circle me-2"></i>
                 <strong>Importing students for:</strong> {{ $offering->subject_title }} ({{ $offering->subject_code }})
                 <br>
-                <small class="text-muted">Students will be imported to the system and can then be enrolled in this offering</small>
+                <small class="text-muted">Students will be imported and automatically enrolled in this offering. Note: Students can only be enrolled in one offering at a time.</small>
             </div>
         @endif
     @endif
@@ -144,15 +144,15 @@
                 </div>
                 
                 @if(request('offering_id') && $offering ?? null)
-                    <div class="alert alert-warning">
+                    <div class="alert alert-success">
                         <h6 class="alert-heading">
-                            <i class="fas fa-exclamation-triangle me-1"></i>Important Note
+                            <i class="fas fa-check-circle me-1"></i>Automatic Enrollment
                         </h6>
                         <p class="mb-2">After importing students:</p>
                         <ol class="mb-0">
                             <li>Students will be added to the system</li>
-                            <li>Go back to the offering and click "View"</li>
-                            <li>Use "Add Students" section to enroll them in <strong>{{ $offering->subject_title }}</strong></li>
+                            <li>Students will be automatically enrolled in <strong>{{ $offering->subject_title }}</strong></li>
+                            <li>No manual enrollment needed!</li>
                         </ol>
                     </div>
                 @endif

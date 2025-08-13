@@ -59,8 +59,8 @@ class NotificationService
     public static function adviserAssigned(string $groupName, string $adviserName, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
-            'Adviser Assignment',
-            "{$adviserName} has been assigned as adviser for {$groupName}",
+            'Teacher Assignment',
+            "{$adviserName} has been assigned as teacher for {$groupName}",
             'coordinator',
             $redirectUrl ?? route('coordinator.groups.index')
         );
@@ -77,7 +77,7 @@ class NotificationService
     }
 
     /**
-     * Specific notification methods for advisers
+     * Specific notification methods for teachers
      */
     public static function studentTaskCompleted(User $adviser, string $studentName, string $taskName, ?string $redirectUrl = null)
     {
@@ -112,8 +112,8 @@ class NotificationService
     public static function newAdviserInvitation(User $adviser, string $groupName, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
-            'New Adviser Invitation',
-            "You have received an adviser invitation from group: {$groupName}",
+            'New Teacher Invitation',
+            "You have received a teacher invitation from group: {$groupName}",
             'adviser',
             $redirectUrl ?? route('adviser.invitations.index')
         );

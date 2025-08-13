@@ -30,10 +30,14 @@
 
                         <div class="mb-3">
                             <label for="subject_title" class="form-label">Subject Title</label>
-                            <input type="text" name="subject_title" id="subject_title" 
-                                   class="form-control @error('subject_title') is-invalid @enderror" 
-                                   value="{{ old('subject_title', 'Capstone') }}" 
-                                   placeholder="Capstone" required>
+                            <select name="subject_title" id="subject_title" 
+                                    class="form-select @error('subject_title') is-invalid @enderror" required>
+                                <option value="">Select Subject Title</option>
+                                <option value="Capstone 1" {{ old('subject_title') == 'Capstone 1' ? 'selected' : '' }}>Capstone 1</option>
+                                <option value="Capstone 2" {{ old('subject_title') == 'Capstone 2' ? 'selected' : '' }}>Capstone 2</option>
+                                <option value="Thesis 1" {{ old('subject_title') == 'Thesis 1' ? 'selected' : '' }}>Thesis 1</option>
+                                <option value="Thesis 2" {{ old('subject_title') == 'Thesis 2' ? 'selected' : '' }}>Thesis 2</option>
+                            </select>
                             @error('subject_title')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -56,7 +60,7 @@
                                 <option value="">Select Teacher</option>
                                 @foreach($teachers as $teacher)
                                     <option value="{{ $teacher->id }}" {{ old('teacher_id') == $teacher->id ? 'selected' : '' }}>
-                                        {{ $teacher->name }} ({{ ucfirst($teacher->roles->first()->name ?? 'N/A') }})
+                                        {{ $teacher->name }} ({{ ucfirst($teacher->role ?? 'N/A') }})
                                     </option>
                                 @endforeach
                             </select>

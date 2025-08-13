@@ -156,7 +156,7 @@
             <div class="card-body text-center py-5">
                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">No groups assigned yet</h5>
-                <p class="text-muted">You don't have any groups assigned to you yet. Groups will appear here when you accept adviser invitations.</p>
+                <p class="text-muted">You don't have any groups assigned to you yet. Groups will appear here when you accept teacher invitations.</p>
                 <a href="{{ route('adviser.invitations') }}" class="btn btn-primary">
                     <i class="fas fa-envelope me-2"></i>Check Invitations
                 </a>

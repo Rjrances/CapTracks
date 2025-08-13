@@ -140,4 +140,46 @@ class User extends Authenticatable
     {
         return $this->role;
     }
+
+    /**
+     * Check if user should be coordinator based on offerings
+     * and update role accordingly
+     */
+    public function updateRoleBasedOnOfferings()
+    {
+        $hasOfferings = $this->offerings()->exists();
+        $currentRole = $this->role;
+        
+        \Log::info("Checking role for user {$this->name} (ID: {$this->id}): current role = '{$currentRole}', has offerings = " . ($hasOfferings ? 'true' : 'false'));
+        
+        if ($hasOfferings && $this->role !== 'coordinator') {
+            // Has offerings but not coordinator role
+            $oldRole = $this->role;
+            $this->role = 'coordinator';
+            $this->save();
+            \Log::info("User {$this->name} (ID: {$this->id}) role updated from '{$oldRole}' to 'coordinator' - has offerings");
+            return true;
+        } elseif (!$hasOfferings && $this->role === 'coordinator') {
+            // No offerings but has coordinator role
+            $this->role = 'teacher';
+            $this->save();
+            \Log::info("User {$this->name} (ID: {$this->id}) role reverted from 'coordinator' to 'teacher' - no offerings");
+            return true;
+        }
+        
+        \Log::info("User {$this->name} (ID: {$this->id}) no role change needed: current role = '{$currentRole}', has offerings = " . ($hasOfferings ? 'true' : 'false'));
+        return false; // No change needed
+    }
+
+    /**
+     * Get the appropriate role display name
+     */
+    public function getRoleDisplayNameAttribute()
+    {
+        if ($this->role === 'coordinator' && $this->offerings()->exists()) {
+            return 'Coordinator';
+        }
+        
+        return ucfirst($this->role);
+    }
 }

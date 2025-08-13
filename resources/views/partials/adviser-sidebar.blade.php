@@ -79,7 +79,7 @@
         <div class="d-flex align-items-center justify-content-between">
             <div class="small">
                 <div class="text-muted">{{ $userName }}</div>
-                <div class="text-muted">Adviser</div>
+                <div class="text-muted">Teacher</div>
             </div>
             <form method="POST" action="{{ route('logout') }}" class="d-inline">
                 @csrf

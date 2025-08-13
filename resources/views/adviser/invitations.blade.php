@@ -7,7 +7,7 @@
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 900px;">
         <div class="mb-4" style="margin-bottom: 1.2rem !important;">
             <h1 class="fw-bold mb-1 text-center" style="font-size:2.5rem; margin-bottom:0.1rem;">Invitations</h1>
-            <div class="text-muted text-center" style="font-size:1.1rem; margin-bottom:0;">Manage your adviser invitations</div>
+            <div class="text-muted text-center" style="font-size:1.1rem; margin-bottom:0;">Manage your teacher invitations</div>
         </div>
 
         @if(session('success'))

@@ -11,14 +11,11 @@
                     </h2>
                     <p class="text-muted mb-0">View and manage all students in the system</p>
                 </div>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('chairperson.upload-form') }}" class="btn btn-success">
-                        <i class="fas fa-upload me-2"></i>Import Students
-                    </a>
-                    <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Offerings
-                    </a>
-                </div>
+                                 <div class="d-flex gap-2">
+                     <a href="{{ route('chairperson.upload-form') }}" class="btn btn-success">
+                         <i class="fas fa-upload me-2"></i>Import Students
+                     </a>
+                 </div>
             </div>
 
             @if(session('success'))
@@ -68,14 +65,15 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label">&nbsp;</label>
-                            <div class="d-grid">
-                                <a href="{{ route('chairperson.students.index') }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-times me-2"></i>Clear
-                                </a>
-                            </div>
-                        </div>
+                                                 <div class="col-md-2">
+                             <label class="form-label">&nbsp;</label>
+                             <div class="d-grid">
+                                 <a href="{{ route('chairperson.students.index') }}" 
+                                    class="btn btn-outline-secondary {{ !request('search') && !request('course') && !request('semester') ? 'd-none' : '' }}">
+                                     <i class="fas fa-times me-2"></i>Clear
+                                 </a>
+                             </div>
+                         </div>
                     </form>
                     
                     @if(request('search') || request('course') || request('semester'))
@@ -97,19 +95,24 @@
                 </div>
             </div>
 
-            <!-- Export Button -->
+            <!-- Export Button and Bulk Actions -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h5 class="mb-0">Student List</h5>
                     <small class="text-muted">Total: {{ $students->total() }} students</small>
                 </div>
-                <div>
+                <div class="d-flex gap-2">
+                    <button type="button" id="deleteSelectedBtn" class="btn btn-danger" style="display: none;">
+                        <i class="fas fa-trash me-2"></i>Delete Selected (<span id="selectedCount">0</span>)
+                    </button>
                     <a href="{{ route('chairperson.students.export') }}?{{ http_build_query(request()->all()) }}" 
                        class="btn btn-outline-success">
                         <i class="fas fa-download me-2"></i>Export to CSV
                     </a>
                 </div>
             </div>
+
+
 
             <!-- Students Table -->
             <div class="card">
@@ -118,11 +121,69 @@
                         <table class="table table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Student ID</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Course</th>
-                                    <th>Semester</th>
+                                    <th style="width: 50px;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="selectAll" style="cursor: pointer;">
+                                            <label class="form-check-label text-white" for="selectAll" style="cursor: pointer; font-size: 0.8rem;">
+                                                All
+                                            </label>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <a href="{{ route('chairperson.students.index', array_merge(request()->query(), ['sort_by' => 'student_id', 'sort_order' => $sortBy === 'student_id' && $sortOrder === 'asc' ? 'desc' : 'asc'])) }}" 
+                                           class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                            Student ID
+                                            @if($sortBy === 'student_id')
+                                                <i class="fas fa-sort-{{ $sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                            @else
+                                                <i class="fas fa-sort ms-1 text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ route('chairperson.students.index', array_merge(request()->query(), ['sort_by' => 'name', 'sort_order' => $sortBy === 'name' && $sortOrder === 'asc' ? 'desc' : 'asc'])) }}" 
+                                           class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                            Name
+                                            @if($sortBy === 'name')
+                                                <i class="fas fa-sort-{{ $sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                            @else
+                                                <i class="fas fa-sort ms-1 text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ route('chairperson.students.index', array_merge(request()->query(), ['sort_by' => 'email', 'sort_order' => $sortBy === 'email' && $sortOrder === 'asc' ? 'desc' : 'asc'])) }}" 
+                                           class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                            Email
+                                            @if($sortBy === 'email')
+                                                <i class="fas fa-sort-{{ $sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                            @else
+                                                <i class="fas fa-sort ms-1 text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ route('chairperson.students.index', array_merge(request()->query(), ['sort_by' => 'course', 'sort_order' => $sortBy === 'course' && $sortOrder === 'asc' ? 'desc' : 'asc'])) }}" 
+                                           class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                            Course
+                                            @if($sortBy === 'course')
+                                                <i class="fas fa-sort-{{ $sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                            @else
+                                                <i class="fas fa-sort ms-1 text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="{{ route('chairperson.students.index', array_merge(request()->query(), ['sort_by' => 'semester', 'sort_order' => $sortBy === 'semester' && $sortOrder === 'asc' ? 'desc' : 'asc'])) }}" 
+                                           class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                            Semester
+                                            @if($sortBy === 'semester')
+                                                <i class="fas fa-sort-{{ $sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                            @else
+                                                <i class="fas fa-sort ms-1 text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
                                     <th>Enrolled Offerings</th>
                                     <th>Group Status</th>
                                     <th>Actions</th>
@@ -131,6 +192,13 @@
                             <tbody>
                                 @forelse($students as $student)
                                     <tr>
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input student-checkbox" type="checkbox" 
+                                                       value="{{ $student->id }}" id="student_{{ $student->id }}"
+                                                       data-student-name="{{ $student->name }}">
+                                            </div>
+                                        </td>
                                         <td>
                                             <strong>{{ $student->student_id }}</strong>
                                         </td>
@@ -146,20 +214,20 @@
                                         <td>
                                             <span class="badge bg-info">{{ $student->semester }}</span>
                                         </td>
-                                        <td>
-                                            @if($student->offerings->count() > 0)
-                                                <div class="d-flex flex-wrap gap-1">
-                                                    @foreach($student->offerings->take(2) as $offering)
-                                                        <span class="badge bg-success">{{ $offering->subject_code }}</span>
-                                                    @endforeach
-                                                    @if($student->offerings->count() > 2)
-                                                        <span class="badge bg-secondary">+{{ $student->offerings->count() - 2 }} more</span>
-                                                    @endif
-                                                </div>
-                                            @else
-                                                <span class="badge bg-warning">Not Enrolled</span>
-                                            @endif
-                                        </td>
+                                                                                 <td>
+                                             @if($student->offerings->count() > 0)
+                                                 @php
+                                                     $offering = $student->offerings->first();
+                                                 @endphp
+                                                 <div class="d-flex flex-column gap-1">
+                                                     <span class="badge bg-success">{{ $offering->subject_code }}</span>
+                                                     <small class="text-muted">{{ $offering->subject_title }}</small>
+                                                     <small class="text-muted">{{ $offering->academicTerm->name ?? 'N/A' }}</small>
+                                                 </div>
+                                             @else
+                                                 <span class="badge bg-warning">Not Enrolled</span>
+                                             @endif
+                                         </td>
                                         <td>
                                             @if($student->groups->count() > 0)
                                                 <span class="badge bg-success">
@@ -169,22 +237,24 @@
                                                 <span class="badge bg-secondary">No Group</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm" role="group">
-                                                <button type="button" class="btn btn-outline-info" 
-                                                        data-bs-toggle="tooltip" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-outline-primary" 
-                                                        data-bs-toggle="tooltip" title="Edit Student">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                            </div>
-                                        </td>
+                                                                                 <td>
+                                             <div class="btn-group btn-group-sm" role="group">
+                                                 <a href="{{ route('chairperson.students.edit', $student->id) }}" 
+                                                    class="btn btn-outline-primary" 
+                                                    data-bs-toggle="tooltip" title="Edit Student">
+                                                     <i class="fas fa-edit"></i>
+                                                 </a>
+                                                 <button type="button" class="btn btn-outline-danger" 
+                                                         data-bs-toggle="tooltip" title="Delete Student"
+                                                         onclick="deleteStudent({{ $student->id }}, '{{ $student->name }}')">
+                                                     <i class="fas fa-trash"></i>
+                                                 </button>
+                                             </div>
+                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center py-4">
+                                        <td colspan="9" class="text-center py-4">
                                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
                                             <h6 class="text-muted">No students found</h6>
                                             <p class="text-muted small">
@@ -250,15 +320,182 @@
 .pagination .page-item:not(:first-child) .page-link {
     margin-left: -1px;
 }
+
+/* Sortable header styling */
+.table-dark th a {
+    transition: all 0.2s ease;
+}
+
+.table-dark th a:hover {
+    opacity: 0.8;
+    text-decoration: none;
+}
+
+.table-dark th a:active {
+    transform: scale(0.98);
+}
+
+/* Delete button styling */
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.btn-outline-danger:active {
+    transform: scale(0.95);
+}
+
+/* Checkbox styling */
+.form-check-input {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.form-check-input:hover {
+    transform: scale(1.1);
+}
+
+.form-check-label {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Bulk delete button styling */
+#deleteSelectedBtn {
+    transition: all 0.2s ease;
+}
+
+#deleteSelectedBtn:hover {
+    transform: scale(1.02);
+}
+
+#deleteSelectedBtn:active {
+    transform: scale(0.98);
+}
 </style>
 
+<!-- Hidden Delete Form -->
+<form id="deleteStudentForm" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
+
+<!-- Hidden Bulk Delete Form -->
+<form id="bulkDeleteForm" method="POST" action="{{ route('chairperson.students.bulk-delete') }}" style="display: none;">
+    @csrf
+    @method('DELETE')
+    <input type="hidden" name="student_ids" id="bulkDeleteStudentIds">
+</form>
+
 <script>
-// Initialize tooltips
+
+
+function deleteStudent(studentId, studentName) {
+    if (confirm(`Are you sure you want to delete student "${studentName}"?\n\nThis action cannot be undone and will remove the student from all offerings and groups.`)) {
+        const form = document.getElementById('deleteStudentForm');
+        form.action = `/chairperson/students/${studentId}`;
+        form.submit();
+    }
+}
+
+// Initialize tooltips and bulk selection functionality
 document.addEventListener('DOMContentLoaded', function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+
+    // Initialize bulk selection functionality
+    initializeBulkSelection();
 });
+
+// Bulk selection functionality
+function initializeBulkSelection() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const studentCheckboxes = document.querySelectorAll('.student-checkbox');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    const selectedCountSpan = document.getElementById('selectedCount');
+
+    // Select All functionality
+    selectAllCheckbox.addEventListener('change', function() {
+        const isChecked = this.checked;
+        studentCheckboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+        });
+        updateBulkDeleteButton();
+    });
+
+    // Individual checkbox functionality
+    studentCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectAllState();
+            updateBulkDeleteButton();
+        });
+    });
+
+    // Update select all state
+    function updateSelectAllState() {
+        const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
+        const totalCount = studentCheckboxes.length;
+        
+        if (checkedCount === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (checkedCount === totalCount) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+            selectAllCheckbox.checked = false;
+        }
+    }
+
+    // Update bulk delete button
+    function updateBulkDeleteButton() {
+        const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
+        
+        if (checkedCount > 0) {
+            deleteSelectedBtn.style.display = 'inline-block';
+            selectedCountSpan.textContent = checkedCount;
+        } else {
+            deleteSelectedBtn.style.display = 'none';
+        }
+    }
+
+    // Bulk delete button click handler
+    deleteSelectedBtn.addEventListener('click', function() {
+        const checkedCheckboxes = document.querySelectorAll('.student-checkbox:checked');
+        const studentIds = Array.from(checkedCheckboxes).map(cb => cb.value);
+        const studentNames = Array.from(checkedCheckboxes).map(cb => cb.dataset.studentName);
+        
+        if (studentIds.length === 0) {
+            alert('Please select at least one student to delete.');
+            return;
+        }
+
+        const confirmMessage = `Are you sure you want to delete ${studentIds.length} selected student(s)?\n\n` +
+                             `Students to be deleted:\n${studentNames.join('\n')}\n\n` +
+                             `This action cannot be undone and will remove the students from all offerings and groups.`;
+
+        if (confirm(confirmMessage)) {
+            // Set the form data
+            const form = document.getElementById('bulkDeleteForm');
+            const input = document.getElementById('bulkDeleteStudentIds');
+            
+            if (form && input) {
+                input.value = JSON.stringify(studentIds);
+                form.submit();
+            } else {
+                alert('Error: Form not found. Please refresh the page and try again.');
+            }
+        }
+    });
+}
 </script>
 @endsection

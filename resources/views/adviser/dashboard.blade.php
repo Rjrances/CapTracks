@@ -1,6 +1,6 @@
 @extends('layouts.adviser')
 
-@section('title', 'Adviser Dashboard')
+@section('title', 'Teacher Dashboard')
 
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
@@ -9,7 +9,7 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
-                        <h1 class="h3 mb-1">Welcome, {{ auth()->check() ? auth()->user()->name : 'Adviser' }}!</h1>
+                        <h1 class="h3 mb-1">Welcome, {{ auth()->check() ? auth()->user()->name : 'Teacher' }}!</h1>
                         <p class="text-muted mb-0">Manage your groups, invitations, and student projects</p>
                     </div>
                     <div class="d-flex gap-2">
@@ -38,7 +38,7 @@
             </div>
         @endif
 
-        <!-- Adviser Overview -->
+        <!-- Teacher Overview -->
         <div class="row mb-4">
             <div class="col-md-2">
                 <div class="card bg-primary text-white">
@@ -119,7 +119,7 @@
                                     </p>
                                 </div>
                                 <div class="col-md-4 text-end">
-                                    <span class="text-muted small">Adviser View</span>
+                                    <span class="text-muted small">Teacher View</span>
                                 </div>
                             </div>
                         @else
@@ -135,7 +135,7 @@
                                     </p>
                                 </div>
                                 <div class="col-md-4 text-end">
-                                    <span class="text-muted small">Adviser View</span>
+                                    <span class="text-muted small">Teacher View</span>
                                 </div>
                             </div>
                         @endif
@@ -530,7 +530,7 @@
                             <div class="text-center py-4">
                                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
                                 <h6 class="text-muted">No groups assigned yet</h6>
-                                <p class="text-muted small">Groups will appear here when students invite you to be their adviser.</p>
+                                <p class="text-muted small">Groups will appear here when students invite you to be their teacher.</p>
                             </div>
                         @endif
                     </div>

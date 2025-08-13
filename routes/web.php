@@ -113,8 +113,12 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
         Route::delete('/offerings/{id}', [ChairpersonController::class, 'deleteOffering'])->name('offerings.delete');
         
         // Offering Student Management
-        Route::post('/offerings/{id}/add-students', [ChairpersonController::class, 'addStudentsToOffering'])->name('offerings.add-students');
         Route::delete('/offerings/{offeringId}/students/{studentId}', [ChairpersonController::class, 'removeStudentFromOffering'])->name('offerings.remove-student');
+
+        // Role Management
+        Route::post('/fix-roles', [ChairpersonController::class, 'fixRoleInconsistencies'])->name('fix-roles');
+        Route::post('/users/{userId}/update-role', [ChairpersonController::class, 'forceUpdateUserRole'])->name('users.update-role');
+        Route::post('/force-update-all-roles', [ChairpersonController::class, 'forceUpdateAllRoles'])->name('force-update-all-roles');
 
         // Teachers/Faculty Management
         Route::get('/teachers', [ChairpersonController::class, 'teachers'])->name('teachers.index');
@@ -132,6 +136,15 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
         // Student Management
         Route::get('/students', [ChairpersonController::class, 'indexStudents'])->name('students.index');
         Route::get('/students/export', [ChairpersonController::class, 'exportStudents'])->name('students.export');
+        Route::get('/students/{id}/edit', [ChairpersonController::class, 'editStudent'])->name('students.edit');
+        Route::put('/students/{id}', [ChairpersonController::class, 'updateStudent'])->name('students.update');
+        Route::delete('/students/bulk-delete', [ChairpersonController::class, 'bulkDeleteStudents'])->name('students.bulk-delete');
+        Route::delete('/students/{id}', [ChairpersonController::class, 'deleteStudent'])->name('students.delete');
+
+        // Student Enrollment Management
+        Route::get('/offerings/{offeringId}/unenrolled-students', [ChairpersonController::class, 'showUnenrolledStudents'])->name('offerings.unenrolled-students');
+        Route::post('/offerings/{offeringId}/enroll-student', [ChairpersonController::class, 'enrollStudent'])->name('offerings.enroll-student');
+        Route::post('/offerings/{offeringId}/enroll-multiple-students', [ChairpersonController::class, 'enrollMultipleStudents'])->name('offerings.enroll-multiple-students');
         
         // Student Import via Excel
         Route::get('/upload-students', fn () => view('chairperson.students.import'))->name('upload-form');

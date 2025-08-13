@@ -67,9 +67,9 @@
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="card bg-success text-white">
+                                    <div class="card bg-info text-white">
                                         <div class="card-body">
-                                            <h3>{{ $availableStudents->count() }}</h3>
+                                            <h3>{{ \App\Models\Student::count() - $offering->students->count() }}</h3>
                                             <small>Available Students</small>
                                         </div>
                                     </div>
@@ -126,29 +126,26 @@
                     @endif
 
                     <!-- Add Students Section -->
-                    @if($availableStudents->count() > 0)
-                        <hr>
-                        <h6>Add Students</h6>
-                        <form action="{{ route('chairperson.offerings.add-students', $offering->id) }}" method="POST">
-                            @csrf
-                            <div class="mb-3">
-                                <select name="student_ids[]" class="form-select" multiple size="5">
-                                    @foreach($availableStudents as $student)
-                                        <option value="{{ $student->id }}">
-                                            {{ $student->name }} ({{ $student->student_id }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple students</small>
-                            </div>
-                            <button type="submit" class="btn btn-success btn-sm w-100">
-                                <i class="fas fa-plus"></i> Add Selected Students
-                            </button>
-                        </form>
-                    @else
-                        <hr>
-                        <p class="text-muted text-center small">All students are already enrolled in this offering.</p>
-                    @endif
+                    <hr>
+                    <h6>Add Students</h6>
+                    <div class="d-grid gap-2 mb-3">
+                        <a href="{{ route('chairperson.upload-form', ['offering_id' => $offering->id]) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-upload me-2"></i>Import Students
+                        </a>
+                        <a href="{{ route('chairperson.offerings.unenrolled-students', $offering->id) }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-user-plus me-2"></i>Add Existing Students
+                        </a>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-info-circle me-1"></i>Single Enrollment System
+                        </h6>
+                        <p class="mb-0 small">
+                            Students can only be enrolled in one offering at a time. 
+                            <strong>Import Students:</strong> Upload new students from Excel/CSV files.
+                            <strong>Add Existing Students:</strong> Select from students already in the system who are not enrolled in any offering.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

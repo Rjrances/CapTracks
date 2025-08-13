@@ -42,6 +42,36 @@ class Student extends Model
                     ->withTimestamps();
     }
 
+    /**
+     * Enroll student in an offering, ensuring single enrollment
+     */
+    public function enrollInOffering(Offering $offering)
+    {
+        // Remove from any existing offerings first
+        $this->offerings()->detach();
+        
+        // Enroll in the new offering
+        $this->offerings()->attach($offering->id);
+        
+        return $this;
+    }
+
+    /**
+     * Check if student is enrolled in any offering
+     */
+    public function isEnrolled()
+    {
+        return $this->offerings()->exists();
+    }
+
+    /**
+     * Get the current offering the student is enrolled in
+     */
+    public function getCurrentOffering()
+    {
+        return $this->offerings()->first();
+    }
+
     protected $casts = [
         'must_change_password' => 'boolean',
     ];
