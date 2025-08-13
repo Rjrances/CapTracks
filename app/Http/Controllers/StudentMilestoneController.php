@@ -82,8 +82,8 @@ class StudentMilestoneController extends Controller
             return redirect()->route('student.milestones')->withErrors(['milestone' => 'Milestone not found.']);
         }
 
-        // Get tasks for this milestone
-        $tasks = $this->getMilestoneTasks($groupMilestone, $student);
+        // Get tasks for this milestone grouped by status
+        $tasks = $this->getMilestoneTasksByStatus($groupMilestone, $student);
         
         // Get milestone progress
         $progress = $this->calculateMilestoneProgress($groupMilestone);
@@ -99,6 +99,115 @@ class StudentMilestoneController extends Controller
             'progress',
             'isGroupLeader'
         ));
+    }
+
+    // ✅ NEW: Move task between status columns
+    public function moveTask(Request $request, $taskId)
+    {
+        $student = $this->getAuthenticatedStudent();
+        
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Not authenticated']);
+        }
+
+        $task = GroupMilestoneTask::find($taskId);
+        
+        if (!$task) {
+            return response()->json(['success' => false, 'message' => 'Task not found']);
+        }
+
+        // Check if student is part of the group
+        $group = $student->groups()->first();
+        if (!$group || $task->groupMilestone->group_id !== $group->id) {
+            return response()->json(['success' => false, 'message' => 'Not authorized']);
+        }
+
+        $request->validate([
+            'status' => 'required|in:pending,doing,done'
+        ]);
+
+        $task->updateStatus($request->status);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Task moved successfully',
+            'task' => $task->fresh(),
+            'milestone_progress' => $task->groupMilestone->calculateProgressPercentage()
+        ]);
+    }
+
+    // ✅ NEW: Bulk update tasks
+    public function bulkUpdateTasks(Request $request, $milestoneId)
+    {
+        $student = $this->getAuthenticatedStudent();
+        
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Not authenticated']);
+        }
+
+        $group = $student->groups()->first();
+        
+        if (!$group) {
+            return response()->json(['success' => false, 'message' => 'You are not part of any group']);
+        }
+
+        $groupMilestone = $group->groupMilestones()->find($milestoneId);
+        
+        if (!$groupMilestone) {
+            return response()->json(['success' => false, 'message' => 'Milestone not found']);
+        }
+
+        $request->validate([
+            'tasks' => 'required|array',
+            'tasks.*.id' => 'required|exists:group_milestone_tasks,id',
+            'tasks.*.status' => 'required|in:pending,doing,done'
+        ]);
+
+        foreach ($request->tasks as $taskData) {
+            $task = GroupMilestoneTask::find($taskData['id']);
+            if ($task && $task->groupMilestone->group_id === $group->id) {
+                $task->updateStatus($taskData['status']);
+            }
+        }
+
+        // Recalculate milestone progress
+        $groupMilestone->calculateProgressPercentage();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tasks updated successfully',
+            'milestone_progress' => $groupMilestone->progress_percentage
+        ]);
+    }
+
+    // ✅ NEW: Recompute progress
+    public function recomputeProgress($milestoneId)
+    {
+        $student = $this->getAuthenticatedStudent();
+        
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Not authenticated']);
+        }
+
+        $group = $student->groups()->first();
+        
+        if (!$group) {
+            return response()->json(['success' => false, 'message' => 'You are not part of any group']);
+        }
+
+        $groupMilestone = $group->groupMilestones()->find($milestoneId);
+        
+        if (!$groupMilestone) {
+            return response()->json(['success' => false, 'message' => 'Milestone not found']);
+        }
+
+        $progress = $groupMilestone->calculateProgressPercentage();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Progress recomputed successfully',
+            'progress' => $progress
+        ]);
     }
 
     public function updateTask(Request $request, $taskId)
@@ -123,6 +232,7 @@ class StudentMilestoneController extends Controller
 
         $task->update([
             'is_completed' => $request->input('is_completed', false),
+            'status' => $request->input('is_completed', false) ? 'done' : 'pending',
             'completed_at' => $request->input('is_completed', false) ? now() : null,
             'completed_by' => $request->input('is_completed', false) ? $student->id : null,
         ]);
@@ -183,6 +293,29 @@ class StudentMilestoneController extends Controller
             ->get();
     }
 
+    // ✅ NEW: Get tasks grouped by status for Kanban (with fallback)
+    private function getMilestoneTasksByStatus($groupMilestone, $student)
+    {
+        $tasks = GroupMilestoneTask::where('group_milestone_id', $groupMilestone->id)
+            ->with(['milestoneTask', 'assignedStudent'])
+            ->get()
+            ->map(function($task) use ($student) {
+                $task->is_assigned_to_me = $task->assigned_to == $student->id;
+                // Ensure status is set (fallback for existing data)
+                if (!$task->status) {
+                    $task->status = $task->is_completed ? 'done' : 'pending';
+                    $task->save();
+                }
+                return $task;
+            });
+
+        return [
+            'pending' => $tasks->where('status', 'pending'),
+            'doing' => $tasks->where('status', 'doing'),
+            'done' => $tasks->where('status', 'done')
+        ];
+    }
+
     private function getMilestoneTasks($groupMilestone, $student)
     {
         return GroupMilestoneTask::where('group_milestone_id', $groupMilestone->id)
@@ -202,7 +335,7 @@ class StudentMilestoneController extends Controller
             return 0;
         }
 
-        $completedTasks = $tasks->where('is_completed', true)->count();
+        $completedTasks = $tasks->where('status', 'done')->count();
         return round(($completedTasks / $tasks->count()) * 100);
     }
 
@@ -240,6 +373,7 @@ class StudentMilestoneController extends Controller
             if ($task->assigned_to === null || $task->assigned_to === $student->id) {
                 $task->update([
                     'is_completed' => $isCompleted,
+                    'status' => $isCompleted ? 'done' : 'pending',
                     'completed_at' => $isCompleted ? now() : null,
                     'completed_by' => $isCompleted ? $student->id : null,
                 ]);

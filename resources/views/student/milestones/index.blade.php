@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h2 mb-1">My Milestones</h1>
-            <p class="text-muted mb-0">Track your capstone project progress and tasks</p>
+            <p class="text-muted mb-0">Track your capstone project progress with Kanban boards</p>
         </div>
         <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
@@ -18,13 +18,6 @@
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>{{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
@@ -73,6 +66,126 @@
                                 @endif
                             </span>
                         @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Adviser & Defense Information -->
+        <div class="row mb-4">
+            <!-- Adviser Information -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chalkboard-teacher me-2"></i>Adviser Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if($group->adviser)
+                            <div class="text-center">
+                                <i class="fas fa-user-tie fa-3x text-primary mb-3"></i>
+                                <h5 class="mb-2">{{ $group->adviser->name }}</h5>
+                                <p class="text-muted mb-2">{{ $group->adviser->email }}</p>
+                                <span class="badge bg-success fs-6">Assigned</span>
+                            </div>
+                        @elseif($group->adviserInvitations->where('status', 'pending')->count() > 0)
+                            <div class="text-center">
+                                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                                <h5 class="mb-2">Pending Invitations</h5>
+                                <p class="text-muted mb-2">{{ $group->adviserInvitations->where('status', 'pending')->count() }} invitation(s) sent</p>
+                                <span class="badge bg-warning fs-6">Awaiting Response</span>
+                                
+                                <div class="mt-3">
+                                    @foreach($group->adviserInvitations->where('status', 'pending') as $invitation)
+                                        <div class="border rounded p-2 mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i>
+                                                {{ $invitation->faculty->name }}
+                                                <br>
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ $invitation->created_at->diffForHumans() }}
+                                            </small>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @else
+                            <div class="text-center">
+                                <i class="fas fa-user-tie fa-3x text-muted mb-3"></i>
+                                <h5 class="mb-2">No Adviser Assigned</h5>
+                                <p class="text-muted mb-3">You need an adviser to proceed with your project</p>
+                                <a href="{{ route('student.group') }}" class="btn btn-primary">
+                                    <i class="fas fa-envelope me-2"></i>Invite Adviser
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <!-- Defense Schedule Information -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-graduation-cap me-2"></i>Defense Schedule
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if($group->defenseSchedules->where('status', 'scheduled')->count() > 0)
+                            <div class="text-center mb-3">
+                                <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
+                                <h5 class="mb-2">Scheduled Defenses</h5>
+                            </div>
+                            @foreach($group->defenseSchedules->where('status', 'scheduled') as $defense)
+                                <div class="border rounded p-3 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ ucfirst(str_replace('_', ' ', $defense->defense_type)) }} Defense</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ $defense->scheduled_date->format('M d, Y') }}
+                                                <br>
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ $defense->scheduled_time }}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-success">Scheduled</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @elseif($group->defenseRequests->where('status', 'pending')->count() > 0)
+                            <div class="text-center mb-3">
+                                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                                <h5 class="mb-2">Pending Requests</h5>
+                            </div>
+                            @foreach($group->defenseRequests->where('status', 'pending') as $request)
+                                <div class="border rounded p-3 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ ucfirst(str_replace('_', ' ', $request->defense_type)) }} Defense</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Requested {{ $request->created_at->diffForHumans() }}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-warning">Pending</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="text-center">
+                                <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                                <h5 class="mb-2">No Defense Scheduled</h5>
+                                <p class="text-muted mb-3">Defense schedules will appear here when scheduled</p>
+                                @if($group->adviser)
+                                    <a href="{{ route('student.group') }}" class="btn btn-warning">
+                                        <i class="fas fa-rocket me-2"></i>Request Defense
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -131,7 +244,7 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="flex-grow-1">
                                             <h6 class="mb-1">{{ $groupMilestone->milestoneTemplate->name }}</h6>
-                                            <p class="text-muted mb-2">{{ $groupMilestone->milestoneTemplate->description }}</p>
+                                            <p class="text-muted mb-2">{{ Str::limit($groupMilestone->milestoneTemplate->description ?? '', 100) }}</p>
                                             <div class="progress" style="height: 15px;">
                                                 <div class="progress-bar {{ $groupMilestone->progress_percentage >= 80 ? 'bg-success' : ($groupMilestone->progress_percentage >= 50 ? 'bg-warning' : 'bg-danger') }}" 
                                                      role="progressbar" 
@@ -155,7 +268,7 @@
                                             <span class="badge bg-{{ $statusClass }}">{{ $statusText }}</span>
                                             <br>
                                             <a href="{{ route('student.milestones.show', $groupMilestone->id) }}" class="btn btn-sm btn-outline-primary mt-2">
-                                                <i class="fas fa-eye me-1"></i>View Details
+                                                <i class="fas fa-columns me-1"></i>Kanban Board
                                             </a>
                                         </div>
                                     </div>
@@ -174,36 +287,59 @@
             </div>
 
             <div class="col-md-4">
-                <!-- My Tasks -->
+                <!-- My Tasks Summary -->
                 <div class="card mb-3">
                     <div class="card-header bg-warning text-dark">
                         <h6 class="mb-0">
-                            <i class="fas fa-tasks me-2"></i>My Tasks
+                            <i class="fas fa-tasks me-2"></i>My Tasks Summary
                         </h6>
                     </div>
                     <div class="card-body">
                         @if($studentTasks->count() > 0)
+                            @php
+                                $pendingTasks = $studentTasks->where('status', 'pending')->count();
+                                $doingTasks = $studentTasks->where('status', 'doing')->count();
+                                $doneTasks = $studentTasks->where('status', 'done')->count();
+                            @endphp
+                            
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h4 class="text-secondary mb-0">{{ $pendingTasks }}</h4>
+                                        <small class="text-muted">Pending</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="border-end">
+                                        <h4 class="text-warning mb-0">{{ $doingTasks }}</h4>
+                                        <small class="text-muted">In Progress</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <h4 class="text-success mb-0">{{ $doneTasks }}</h4>
+                                    <small class="text-muted">Done</small>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
                             <div class="list-group list-group-flush">
-                                @foreach($studentTasks->take(5) as $task)
+                                @foreach($studentTasks->take(3) as $task)
                                 <div class="list-group-item px-0">
                                     <div class="d-flex align-items-center">
-                                        <div class="form-check me-2">
-                                            <input class="form-check-input task-checkbox" 
-                                                   type="checkbox" 
-                                                   data-task-id="{{ $task->id }}"
-                                                   {{ $task->is_completed ? 'checked' : '' }}>
-                                        </div>
+                                        <span class="badge bg-{{ $task->status_badge_class }} me-2">{{ ucfirst($task->status) }}</span>
                                         <div class="flex-grow-1">
-                                            <h6 class="mb-1">{{ $task->milestoneTask->name ?? 'Task' }}</h6>
-                                            <small class="text-muted">{{ Str::limit($task->milestoneTask->description ?? '', 50) }}</small>
+                                            <h6 class="mb-1">{{ Str::limit($task->milestoneTask->name ?? 'Task', 30) }}</h6>
+                                            <small class="text-muted">{{ Str::limit($task->milestoneTask->description ?? '', 40) }}</small>
                                         </div>
                                     </div>
                                 </div>
                                 @endforeach
                             </div>
-                            @if($studentTasks->count() > 5)
+                            
+                            @if($studentTasks->count() > 3)
                                 <div class="text-center mt-2">
-                                    <small class="text-muted">+{{ $studentTasks->count() - 5 }} more tasks</small>
+                                    <small class="text-muted">+{{ $studentTasks->count() - 3 }} more tasks</small>
                                 </div>
                             @endif
                         @else
@@ -240,6 +376,51 @@
                 </div>
             </div>
         </div>
+
+        <!-- Kanban Preview -->
+        @if($groupMilestones->count() > 0)
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-columns me-2"></i>Kanban Board Preview
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-secondary text-white rounded p-3 mb-2">
+                                <i class="fas fa-clock fa-2x mb-2"></i>
+                                <h6>Pending</h6>
+                                <h4>{{ $studentTasks->where('status', 'pending')->count() }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-warning text-dark rounded p-3 mb-2">
+                                <i class="fas fa-play fa-2x mb-2"></i>
+                                <h6>In Progress</h6>
+                                <h4>{{ $studentTasks->where('status', 'doing')->count() }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-success text-white rounded p-3 mb-2">
+                                <i class="fas fa-check fa-2x mb-2"></i>
+                                <h6>Completed</h6>
+                                <h4>{{ $studentTasks->where('status', 'done')->count() }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <p class="text-muted mb-0">Click on any milestone above to access the full Kanban board with drag & drop functionality!</p>
+                </div>
+            </div>
+        </div>
+        @endif
     @endif
 </div>
 

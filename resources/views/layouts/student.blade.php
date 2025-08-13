@@ -24,7 +24,12 @@
                         <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell fa-lg text-muted"></i>
                             @php
-                                $notificationCount = \App\Models\Notification::where('role', 'student')->where('is_read', false)->count();
+                                $notificationCount = 0;
+                                if (session('is_student') && session('student_id')) {
+                                    $notificationCount = \App\Models\Notification::where('role', 'student')
+                                        ->where('is_read', false)
+                                        ->count();
+                                }
                             @endphp
                             @if($notificationCount > 0)
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -35,15 +40,18 @@
                         <div class="dropdown-menu dropdown-menu-end" style="width: 350px; max-height: 400px; overflow-y: auto;">
                             <div class="dropdown-header d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Notifications</h6>
-                                <a href="#" class="text-decoration-none small">Mark all read</a>
+                                <a href="#" class="text-decoration-none small" onclick="markAllNotificationsAsRead()">Mark all read</a>
                             </div>
                             <div class="dropdown-divider"></div>
                             
                             @php
-                                $recentNotifications = \App\Models\Notification::where('role', 'student')
-                                    ->latest()
-                                    ->take(10)
-                                    ->get();
+                                $recentNotifications = collect();
+                                if (session('is_student') && session('student_id')) {
+                                    $recentNotifications = \App\Models\Notification::where('role', 'student')
+                                        ->latest()
+                                        ->take(10)
+                                        ->get();
+                                }
                             @endphp
                             
                             @if($recentNotifications->count() > 0)
@@ -144,6 +152,26 @@
             }
         })
         .catch(error => console.error('Error:', error));
+    }
+
+    function markAllNotificationsAsRead() {
+        fetch('/notifications/mark-all-as-read', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the page to show updated notification count
+                location.reload();
+            } else {
+                console.error('Failed to mark all notifications as read:', data.message);
+            }
+        })
+        .catch(error => console.error('Error marking all notifications as read:', error));
     }
     </script>
 </body>

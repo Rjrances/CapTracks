@@ -14,6 +14,7 @@ class GroupMilestoneTask extends Model
         'milestone_task_id',
         'assigned_to',
         'is_completed',
+        'status',
         'completed_at',
         'completed_by',
         'notes',
@@ -52,6 +53,7 @@ class GroupMilestoneTask extends Model
     {
         $this->update([
             'is_completed' => true,
+            'status' => 'done',
             'completed_at' => now(),
             'completed_by' => $completedBy
         ]);
@@ -65,8 +67,21 @@ class GroupMilestoneTask extends Model
     {
         $this->update([
             'is_completed' => false,
+            'status' => 'pending',
             'completed_at' => null,
             'completed_by' => null
+        ]);
+
+        // Recalculate milestone progress
+        $this->groupMilestone->calculateProgressPercentage();
+    }
+
+    // ✅ NEW: Update status
+    public function updateStatus($status)
+    {
+        $this->update([
+            'status' => $status,
+            'is_completed' => $status === 'done'
         ]);
 
         // Recalculate milestone progress
@@ -92,12 +107,43 @@ class GroupMilestoneTask extends Model
     // ✅ NEW: Get status text
     public function getStatusTextAttribute()
     {
-        if ($this->is_completed) {
+        if ($this->status === 'done') {
             return 'Completed';
+        } elseif ($this->status === 'doing') {
+            return 'In Progress';
         } elseif ($this->is_overdue) {
             return 'Overdue';
         } else {
             return 'Pending';
         }
+    }
+
+    // ✅ NEW: Get status badge class
+    public function getStatusBadgeClassAttribute()
+    {
+        return match($this->status) {
+            'done' => 'success',
+            'doing' => 'warning',
+            'pending' => 'secondary',
+            default => 'secondary'
+        };
+    }
+
+    // ✅ NEW: Scope for pending tasks
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    // ✅ NEW: Scope for doing tasks
+    public function scopeDoing($query)
+    {
+        return $query->where('status', 'doing');
+    }
+
+    // ✅ NEW: Scope for done tasks
+    public function scopeDone($query)
+    {
+        return $query->where('status', 'done');
     }
 }

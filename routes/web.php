@@ -190,6 +190,11 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::delete('/task/{groupMilestoneTask}/unassign', [\App\Http\Controllers\StudentMilestoneController::class, 'unassignTask'])->name('milestones.unassign-task');
     Route::patch('/task/{groupMilestoneTask}', [\App\Http\Controllers\StudentMilestoneController::class, 'updateTask'])->name('milestones.update-task');
     
+    // ✅ NEW: Kanban functionality routes
+    Route::patch('/milestones/tasks/{taskId}/move', [\App\Http\Controllers\StudentMilestoneController::class, 'moveTask'])->name('milestones.move-task');
+    Route::patch('/milestones/{milestoneId}/bulk-update', [\App\Http\Controllers\StudentMilestoneController::class, 'bulkUpdateTasks'])->name('milestones.bulk-update');
+    Route::post('/milestones/{milestoneId}/recompute-progress', [\App\Http\Controllers\StudentMilestoneController::class, 'recomputeProgress'])->name('milestones.recompute-progress');
+    
     // Defense Request Routes
     Route::post('/group/request-defense', [\App\Http\Controllers\StudentGroupController::class, 'requestDefense'])->name('group.request-defense');
 });

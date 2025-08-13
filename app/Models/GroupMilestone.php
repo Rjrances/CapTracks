@@ -57,7 +57,7 @@ class GroupMilestone extends Model
             return 0;
         }
 
-        $completedTasks = $this->groupTasks()->where('is_completed', true)->count();
+        $completedTasks = $this->groupTasks()->where('status', 'done')->count();
         $percentage = round(($completedTasks / $totalTasks) * 100);
         
         $this->update(['progress_percentage' => $percentage]);
