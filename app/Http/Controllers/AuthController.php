@@ -27,14 +27,20 @@ class AuthController extends Controller
         $user = User::where('school_id', $request->school_id)->first();
 
         if ($user) {
-            // Faculty/Staff login
-            // First-time login: No password yet
+            // Faculty/Staff login logic
+            // Case 1: No password set (first-time login)
             if (!$user->password) {
                 Auth::login($user);
                 return redirect('/change-password');
             }
+            
+            // Case 2: Password is set but user left it blank (treat as first-time login)
+            if (empty($request->password)) {
+                Auth::login($user);
+                return redirect('/change-password');
+            }
 
-            // If password is set, check if provided password matches
+            // Case 3: Password is set and user provided one - check if it matches
             if (!Hash::check($request->password, $user->password)) {
                 return back()->withErrors(['password' => 'Incorrect password.']);
             }
@@ -53,23 +59,42 @@ class AuthController extends Controller
         $student = Student::where('student_id', $request->school_id)->first();
 
         if ($student) {
-            // Student login - check password
-            // First-time login: No password yet
+            // Student login logic
+            // Case 1: No password set (first-time login)
             if (!$student->password) {
+                // Store student info in session
                 $request->session()->put('student_id', $student->id);
                 $request->session()->put('student_name', $student->name);
                 $request->session()->put('student_email', $student->email);
                 $request->session()->put('student_role', 'student');
+                $request->session()->put('student_school_id', $student->student_id);
                 $request->session()->put('is_student', true);
-                $request->session()->put('must_change_password', $student->must_change_password);
+                $request->session()->put('must_change_password', true);
 
-                // Regenerate session to ensure it's saved
-                $request->session()->regenerate();
+                // Save session immediately
+                $request->session()->save();
+
+                return redirect('/change-password');
+            }
+            
+            // Case 2: Password is set but user left it blank (treat as first-time login)
+            if (empty($request->password)) {
+                // Store student info in session
+                $request->session()->put('student_id', $student->id);
+                $request->session()->put('student_name', $student->name);
+                $request->session()->put('student_email', $student->email);
+                $request->session()->put('student_role', 'student');
+                $request->session()->put('student_school_id', $student->student_id);
+                $request->session()->put('is_student', true);
+                $request->session()->put('must_change_password', true);
+
+                // Save session immediately
+                $request->session()->save();
 
                 return redirect('/change-password');
             }
 
-            // If password is set, check if provided password matches
+            // Case 3: Password is set and user provided one - check if it matches
             if (!Hash::check($request->password, $student->password)) {
                 return back()->withErrors(['password' => 'Incorrect password.']);
             }
@@ -79,11 +104,12 @@ class AuthController extends Controller
             $request->session()->put('student_name', $student->name);
             $request->session()->put('student_email', $student->email);
             $request->session()->put('student_role', 'student');
+            $request->session()->put('student_school_id', $student->student_id);
             $request->session()->put('is_student', true);
             $request->session()->put('must_change_password', $student->must_change_password);
 
-            // Regenerate session to ensure it's saved
-            $request->session()->regenerate();
+            // Save session immediately
+            $request->session()->save();
 
             // Check if student must change password
             if ($student->must_change_password) {

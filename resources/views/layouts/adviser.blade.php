@@ -25,7 +25,15 @@
                         <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell fa-lg text-muted"></i>
                             @php
-                                $notificationCount = \App\Models\Notification::where('role', 'adviser')->where('is_read', false)->count();
+                                // Check for notifications with the user's actual role or common faculty roles
+                                $userRole = auth()->user()->role;
+                                $notificationCount = \App\Models\Notification::where('user_id', auth()->id())
+                                    ->where(function($query) use ($userRole) {
+                                        $query->where('role', $userRole)
+                                              ->orWhereIn('role', ['teacher', 'adviser', 'panelist']);
+                                    })
+                                    ->where('is_read', false)
+                                    ->count();
                             @endphp
                             @if($notificationCount > 0)
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -34,14 +42,23 @@
                             @endif
                         </a>
                         <div class="dropdown-menu dropdown-menu-end" style="width: 350px; max-height: 400px; overflow-y: auto;">
-                            <div class="dropdown-header d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">Notifications</h6>
-                                <a href="#" class="text-decoration-none small">Mark all read</a>
-                            </div>
+                                                           <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                   <h6 class="mb-0">Notifications</h6>
+                                   <form method="POST" action="{{ route('adviser.notifications.mark-all-read') }}" class="d-inline">
+                                       @csrf
+                                       <button type="submit" class="btn btn-link text-decoration-none small p-0 border-0 bg-transparent">Mark all read</button>
+                                   </form>
+                               </div>
                             <div class="dropdown-divider"></div>
                             
                             @php
-                                $recentNotifications = \App\Models\Notification::where('role', 'adviser')
+                                // Get notifications with the user's actual role or common faculty roles
+                                $userRole = auth()->user()->role;
+                                $recentNotifications = \App\Models\Notification::where('user_id', auth()->id())
+                                    ->where(function($query) use ($userRole) {
+                                        $query->where('role', $userRole)
+                                              ->orWhereIn('role', ['teacher', 'adviser', 'panelist']);
+                                    })
                                     ->latest()
                                     ->take(10)
                                     ->get();
@@ -49,18 +66,21 @@
                             
                             @if($recentNotifications->count() > 0)
                                 @foreach($recentNotifications as $notification)
-                                    <a class="dropdown-item py-2 {{ $notification->is_read ? '' : 'bg-light' }}" href="#">
-                                        <div class="d-flex align-items-start">
-                                            <div class="me-2">
-                                                <i class="fas fa-{{ $notification->icon ?? 'bell' }} text-primary"></i>
+                                    <form method="POST" action="{{ route('adviser.notifications.mark-read', $notification) }}" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-link dropdown-item py-2 {{ $notification->is_read ? '' : 'bg-light' }} p-0 border-0 bg-transparent text-start w-100">
+                                            <div class="d-flex align-items-start">
+                                                <div class="me-2">
+                                                    <i class="fas fa-{{ $notification->icon ?? 'bell' }} text-primary"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-semibold">{{ $notification->title }}</div>
+                                                    <small class="text-muted">{{ Str::limit($notification->description, 60) }}</small>
+                                                    <br><small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
+                                                </div>
                                             </div>
-                                            <div class="flex-grow-1">
-                                                <div class="fw-semibold">{{ $notification->title }}</div>
-                                                <small class="text-muted">{{ Str::limit($notification->description, 60) }}</small>
-                                                <br><small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
-                                            </div>
-                                        </div>
-                                    </a>
+                                        </button>
+                                    </form>
                                 @endforeach
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-center text-primary" href="#">
@@ -106,5 +126,7 @@
     @include('partials.footer')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+
 </body>
 </html> 

@@ -40,7 +40,10 @@
                         <div class="dropdown-menu dropdown-menu-end" style="width: 350px; max-height: 400px; overflow-y: auto;">
                             <div class="dropdown-header d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Notifications</h6>
-                                <a href="#" class="text-decoration-none small" onclick="markAllNotificationsAsRead()">Mark all read</a>
+                                <form method="POST" action="{{ route('student.notifications.mark-all-read') }}" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-link text-decoration-none small p-0 border-0 bg-transparent">Mark all read</button>
+                                </form>
                             </div>
                             <div class="dropdown-divider"></div>
                             
@@ -48,6 +51,7 @@
                                 $recentNotifications = collect();
                                 if (session('is_student') && session('student_id')) {
                                     $recentNotifications = \App\Models\Notification::where('role', 'student')
+                                        ->where('is_read', false)
                                         ->latest()
                                         ->take(10)
                                         ->get();
@@ -56,20 +60,21 @@
                             
                             @if($recentNotifications->count() > 0)
                                 @foreach($recentNotifications as $notification)
-                                    <a class="dropdown-item py-2 {{ $notification->is_read ? '' : 'bg-light' }}" 
-                                       href="{{ $notification->redirect_url ?? '#' }}" 
-                                       onclick="markNotificationAsRead({{ $notification->id }})">
-                                        <div class="d-flex align-items-start">
-                                            <div class="me-2">
-                                                <i class="fas fa-{{ $notification->icon ?? 'bell' }} text-primary"></i>
+                                    <form method="POST" action="{{ route('student.notifications.mark-read', $notification) }}" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-link dropdown-item py-2 {{ $notification->is_read ? '' : 'bg-light' }} p-0 border-0 bg-transparent text-start w-100">
+                                            <div class="d-flex align-items-start">
+                                                <div class="me-2">
+                                                    <i class="fas fa-{{ $notification->icon ?? 'bell' }} text-primary"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-semibold">{{ $notification->title }}</div>
+                                                    <small class="text-muted">{{ Str::limit($notification->description, 60) }}</small>
+                                                    <br><small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
+                                                </div>
                                             </div>
-                                            <div class="flex-grow-1">
-                                                <div class="fw-semibold">{{ $notification->title }}</div>
-                                                <small class="text-muted">{{ Str::limit($notification->description, 60) }}</small>
-                                                <br><small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
-                                            </div>
-                                        </div>
-                                    </a>
+                                        </button>
+                                    </form>
                                 @endforeach
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-center text-primary" href="#">
@@ -122,57 +127,43 @@
         </div>
     </div>
 
-    @include('partials.footer')
+        @include('partials.footer')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <script>
-    function markNotificationAsRead(notificationId) {
-        // Mark notification as read via AJAX
-        fetch(`/notifications/${notificationId}/mark-read`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update notification count
-                const badge = document.querySelector('.badge');
-                if (badge) {
-                    const currentCount = parseInt(badge.textContent);
-                    if (currentCount > 1) {
-                        badge.textContent = currentCount - 1;
-                    } else {
-                        badge.style.display = 'none';
-                    }
-                }
-            }
-        })
-        .catch(error => console.error('Error:', error));
+    <style>
+    .dropdown-item {
+        transition: all 0.2s ease;
     }
-
-    function markAllNotificationsAsRead() {
-        fetch('/notifications/mark-all-as-read', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Reload the page to show updated notification count
-                location.reload();
-            } else {
-                console.error('Failed to mark all notifications as read:', data.message);
-            }
-        })
-        .catch(error => console.error('Error marking all notifications as read:', error));
+    
+    .dropdown-item:hover {
+        background-color: rgba(13, 110, 253, 0.1) !important;
+        transform: translateX(2px);
     }
-    </script>
+    
+    .dropdown-item.bg-light {
+        opacity: 0.7;
+    }
+    
+    .notification-badge {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .notification-item {
+        border-left: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .notification-item:hover {
+        border-left-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    </style>
 </body>
 </html>

@@ -16,15 +16,40 @@ class NotificationController extends Controller
     {
         try {
             // Check if user has access to this notification
-            if ($notification->role !== auth()->user()->getPrimaryRoleAttribute()) {
+            $userRole = null;
+            
+            if (auth()->check()) {
+                // Authenticated user (faculty/staff)
+                $userRole = auth()->user()->getPrimaryRoleAttribute();
+            } elseif (session('is_student') && session('student_id')) {
+                // Session-based student
+                $userRole = 'student';
+            } else {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+            
+            if ($notification->role !== $userRole) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
             $success = NotificationService::markAsRead($notification->id);
             
             if ($success) {
+                // For students, always redirect back to dashboard with success message
+                if ($userRole === 'student') {
+                    return redirect()->route('student.dashboard')->with('success', 'Notification marked as read!');
+                }
+                
+                // For other users, if there's a redirect URL, redirect to it, otherwise return success
+                if ($notification->redirect_url) {
+                    return redirect($notification->redirect_url);
+                }
                 return response()->json(['success' => true]);
             } else {
+                // For students, redirect back to dashboard with error message
+                if ($userRole === 'student') {
+                    return redirect()->route('student.dashboard')->with('error', 'Failed to mark notification as read. Please try again.');
+                }
                 return response()->json(['success' => false, 'message' => 'Error updating notification'], 500);
             }
         } catch (\Exception $e) {
@@ -69,7 +94,17 @@ class NotificationController extends Controller
     public function markAllAsRead(Request $request)
     {
         try {
-            $userRole = auth()->user()->getPrimaryRoleAttribute();
+            $userRole = null;
+            
+            if (auth()->check()) {
+                // Authenticated user (faculty/staff)
+                $userRole = auth()->user()->getPrimaryRoleAttribute();
+            } elseif (session('is_student') && session('student_id')) {
+                // Session-based student
+                $userRole = 'student';
+            } else {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
             
             $notificationIds = Notification::where('role', $userRole)
                 ->where('is_read', false)
@@ -77,21 +112,38 @@ class NotificationController extends Controller
                 ->toArray();
 
             if (empty($notificationIds)) {
+                // For students, redirect back to dashboard with success message
+                if ($userRole === 'student') {
+                    return redirect()->route('student.dashboard')->with('success', 'All notifications marked as read!');
+                }
                 return response()->json(['success' => true, 'message' => 'No unread notifications']);
             }
 
             $success = NotificationService::markMultipleAsRead($notificationIds);
             
             if ($success) {
+                // For students, redirect back to dashboard with success message
+                if ($userRole === 'student') {
+                    return redirect()->route('student.dashboard')->with('success', 'All notifications marked as read!');
+                }
                 return response()->json(['success' => true]);
             } else {
+                // For students, redirect back to dashboard with error message
+                if ($userRole === 'student') {
+                    return redirect()->route('student.dashboard')->with('error', 'Failed to mark notifications as read. Please try again.');
+                }
                 return response()->json(['success' => false, 'message' => 'Error updating notifications'], 500);
             }
         } catch (\Exception $e) {
             Log::error('Error marking all notifications as read', [
-                'user_id' => auth()->id(),
+                'user_role' => $userRole,
                 'error' => $e->getMessage()
             ]);
+            
+            // For students, redirect back to dashboard with error message
+            if ($userRole === 'student') {
+                return redirect()->route('student.dashboard')->with('error', 'An error occurred. Please try again.');
+            }
             return response()->json(['success' => false, 'message' => 'Error updating notifications'], 500);
         }
     }

@@ -80,6 +80,14 @@
                     Milestones
                 </a>
             </li>
+            
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('student.defense-requests.*') ? 'active bg-primary' : '' }}" 
+                   href="{{ route('student.defense-requests.index') }}">
+                    <i class="fas fa-gavel me-2"></i>
+                    Defense Requests
+                </a>
+            </li>
         </ul>
     </nav>
 

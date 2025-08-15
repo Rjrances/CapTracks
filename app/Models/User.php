@@ -105,7 +105,7 @@ class User extends Authenticatable
 
     public function isTeacher(): bool
     {
-        return $this->hasAnyRole(['teacher', 'adviser', 'panelist']);
+        return $this->hasAnyRole(['teacher', 'adviser', 'panelist', 'coordinator']);
     }
 
     public function isOfferingCoordinator(): bool

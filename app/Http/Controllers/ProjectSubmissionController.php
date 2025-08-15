@@ -19,6 +19,8 @@ class ProjectSubmissionController extends Controller
         if (Auth::check()) {
             $user = Auth::user();
             
+
+            
             // Check if user is an adviser or student
             if ($user->isTeacher()) {
                 // Adviser view - show all submissions from their groups

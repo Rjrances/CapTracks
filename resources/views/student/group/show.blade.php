@@ -406,35 +406,30 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ route('student.group.request-defense') }}" method="POST">
-                @csrf
-                <input type="hidden" name="defense_type" id="defense_type_input">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Defense Type</label>
-                        <div class="form-control-plaintext" id="defense_type_display"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="defense_message" class="form-label">Message (Optional)</label>
-                        <textarea name="message" id="defense_message" class="form-control" rows="3" placeholder="Add any special requirements or notes for your defense..."></textarea>
-                    </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Defense Type</label>
+                    <div class="form-control-plaintext" id="defense_type_display"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-paper-plane"></i> Submit Request
-                    </button>
+                <div class="mb-3">
+                    <p class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        You'll be redirected to our new Defense Request system to complete your request.
+                    </p>
                 </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="{{ route('student.defense-requests.create') }}" class="btn btn-primary" id="defense_request_redirect">
+                    <i class="fas fa-external-link-alt me-2"></i>Go to Defense Requests
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
 function requestDefense(defenseType) {
-    // Set the defense type in the form
-    document.getElementById('defense_type_input').value = defenseType;
-    
     // Display the defense type
     const defenseTypeLabels = {
         'proposal': '📋 Proposal Defense',

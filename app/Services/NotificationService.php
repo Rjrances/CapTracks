@@ -111,12 +111,27 @@ class NotificationService
 
     public static function newAdviserInvitation(User $adviser, string $groupName, ?string $redirectUrl = null)
     {
-        return self::createSimpleNotification(
-            'New Teacher Invitation',
-            "You have received a teacher invitation from group: {$groupName}",
-            'adviser',
-            $redirectUrl ?? route('adviser.invitations.index')
-        );
+        // Create notification specifically for this faculty member
+        // Use the actual role from the database (teacher, adviser, or panelist)
+        $role = $adviser->role ?? 'teacher';
+        
+        try {
+            return Notification::create([
+                'title' => 'New Teacher Invitation',
+                'description' => "You have received a teacher invitation from group: {$groupName}",
+                'role' => $role, // Use the actual user role
+                'redirect_url' => $redirectUrl ?? route('adviser.invitations'),
+                'is_read' => false,
+                'user_id' => $adviser->id, // Add specific user ID
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error creating adviser invitation notification', [
+                'adviser_id' => $adviser->id,
+                'group_name' => $groupName,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
     }
 
     /**

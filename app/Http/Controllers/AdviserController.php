@@ -60,8 +60,13 @@ class AdviserController extends Controller
             'pending_invitations' => $pendingInvitations->count()
         ];
 
-        // Get recent notifications
-        $notifications = Notification::where('role', 'adviser')
+        // Get recent notifications with the user's actual role or common faculty roles
+        $userRole = $user->role;
+        $notifications = Notification::where('user_id', $user->id)
+            ->where(function($query) use ($userRole) {
+                $query->where('role', $userRole)
+                      ->orWhereIn('role', ['teacher', 'adviser', 'panelist']);
+            })
             ->latest()
             ->take(5)
             ->get();
@@ -309,6 +314,38 @@ class AdviserController extends Controller
         }
         
         return view('adviser.tasks.index', compact('tasks', 'groups'));
+    }
+
+    public function markAllNotificationsAsRead()
+    {
+        $user = Auth::user();
+        
+        $userRole = $user->role;
+        Notification::where('user_id', $user->id)
+            ->where(function($query) use ($userRole) {
+                $query->where('role', $userRole)
+                      ->orWhereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator']);
+            })
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+            
+        return back()->with('success', 'All notifications marked as read.');
+    }
+
+    public function markNotificationAsRead(Notification $notification)
+    {
+        $user = Auth::user();
+        
+        // Check if notification belongs to this user and has a valid faculty role
+        $validRoles = ['teacher', 'adviser', 'panelist', 'coordinator'];
+        if ($notification->user_id !== $user->id || !in_array($notification->role, $validRoles)) {
+            abort(403, 'Unauthorized');
+        }
+        
+        $notification->update(['is_read' => true]);
+        
+        // Redirect to the notification's redirect URL or invitations page
+        return redirect($notification->redirect_url ?? route('adviser.invitations'));
     }
 
     public function groupTasks(Group $group)

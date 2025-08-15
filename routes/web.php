@@ -196,11 +196,19 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::post('/milestones/{milestoneId}/recompute-progress', [\App\Http\Controllers\StudentMilestoneController::class, 'recomputeProgress'])->name('milestones.recompute-progress');
     
     // Defense Request Routes
-    Route::post('/group/request-defense', [\App\Http\Controllers\StudentGroupController::class, 'requestDefense'])->name('group.request-defense');
+    Route::get('/defense-requests', [\App\Http\Controllers\StudentDefenseRequestController::class, 'index'])->name('defense-requests.index');
+    Route::get('/defense-requests/create', [\App\Http\Controllers\StudentDefenseRequestController::class, 'create'])->name('defense-requests.create');
+    Route::post('/defense-requests', [\App\Http\Controllers\StudentDefenseRequestController::class, 'store'])->name('defense-requests.store');
+    Route::get('/defense-requests/{defenseRequest}', [\App\Http\Controllers\StudentDefenseRequestController::class, 'show'])->name('defense-requests.show');
+    Route::delete('/defense-requests/{defenseRequest}', [\App\Http\Controllers\StudentDefenseRequestController::class, 'cancel'])->name('defense-requests.cancel');
+    
+    // ✅ NEW: Student notification routes
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
 });
 
 // Adviser/Faculty Routes
-Route::middleware(['auth', 'checkrole:adviser,coordinator'])->prefix('adviser')->name('adviser.')->group(function () {
+Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\AdviserController::class, 'dashboard'])->name('dashboard');
     Route::get('/invitations', [\App\Http\Controllers\AdviserController::class, 'invitations'])->name('invitations');
     Route::post('/invitations/{invitation}/respond', [\App\Http\Controllers\AdviserController::class, 'respondToInvitation'])->name('invitations.respond');
@@ -213,10 +221,14 @@ Route::middleware(['auth', 'checkrole:adviser,coordinator'])->prefix('adviser')-
     Route::patch('/tasks/{task}', [\App\Http\Controllers\AdviserController::class, 'updateTask'])->name('tasks.update');
     
     // Project review routes
-    Route::get('/project', [\App\Http\Controllers\ProjectSubmissionController::class, 'index'])->name('project.index');
-    Route::get('/project/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'show'])->name('project.show');
-    Route::get('/project/{id}/edit', [\App\Http\Controllers\ProjectSubmissionController::class, 'edit'])->name('project.edit');
-    Route::put('/project/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'update'])->name('project.update');
+    Route::get('/projects', [\App\Http\Controllers\ProjectSubmissionController::class, 'index'])->name('project.index');
+    Route::get('/projects/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'show'])->name('project.show');
+    Route::get('/projects/{id}/edit', [\App\Http\Controllers\ProjectSubmissionController::class, 'edit'])->name('project.edit');
+    Route::put('/projects/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'update'])->name('project.update');
+    
+    // Notification management
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\AdviserController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\AdviserController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
 });
 
 // Coordinator Defense Request Routes

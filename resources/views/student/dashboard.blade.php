@@ -19,6 +19,9 @@
                         <a href="{{ route('student.group') }}" class="btn btn-outline-primary">
                             <i class="fas fa-users me-2"></i>My Group
                         </a>
+                        <a href="{{ route('student.defense-requests.index') }}" class="btn btn-outline-success">
+                            <i class="fas fa-gavel me-2"></i>Defense Requests
+                        </a>
                     </div>
                 </div>
             </div>
