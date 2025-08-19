@@ -93,6 +93,9 @@
                                 $badgeColor = $roleColors[$teacher->role] ?? 'secondary';
                             @endphp
                             <span class="badge bg-{{ $badgeColor }}">{{ ucfirst($teacher->role ?? 'N/A') }}</span>
+                            @if($teacher->effective_roles_string !== ucfirst($teacher->role))
+                                <br><small class="text-muted">Effective: {{ $teacher->effective_roles_string }}</small>
+                            @endif
                         </td>
                         <td>{{ $teacher->department ?? 'N/A' }}</td>
                         <td>

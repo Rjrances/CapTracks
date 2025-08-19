@@ -78,14 +78,12 @@
                                     <select name="adviser_id" id="adviser_id" class="form-select" required>
                                         <option value="">Choose an adviser...</option>
                                         @php
-                                            $availableFaculty = \App\Models\User::whereHas('roles', function($query) {
-                                                $query->whereIn('name', ['adviser', 'panelist']);
-                                            })->get();
+                                            $availableFaculty = \App\Models\User::whereIn('role', ['adviser', 'panelist', 'teacher'])->get();
                                         @endphp
                                         @foreach($availableFaculty as $faculty)
                                             <option value="{{ $faculty->id }}">
                                                 {{ $faculty->name }} 
-                                                <span class="text-muted">({{ ucfirst($faculty->roles->first()->name ?? 'N/A') }}{{ $faculty->department ? ' - ' . $faculty->department : '' }})</span>
+                                                <span class="text-muted">({{ ucfirst($faculty->role) }}{{ $faculty->department ? ' - ' . $faculty->department : '' }})</span>
                                             </option>
                                         @endforeach
                                     </select>

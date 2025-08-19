@@ -841,9 +841,7 @@ class ChairpersonController extends Controller
 
     public function facultyManagement()
     {
-        $faculty = User::whereHas('roles', function($query) {
-            $query->whereIn('name', ['teacher', 'adviser', 'panelist']);
-        })->with('roles')->get();
+        $faculty = User::whereIn('role', ['teacher', 'adviser', 'panelist'])->get();
         return view('chairperson.teachers.index', compact('faculty'));
     }
 

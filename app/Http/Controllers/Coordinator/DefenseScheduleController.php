@@ -55,9 +55,7 @@ class DefenseScheduleController extends Controller
             ->whereIn('offering_id', $coordinatorOfferings)
             ->get();
             
-        $faculty = User::whereHas('roles', function ($query) {
-            $query->whereIn('role', ['teacher', 'coordinator']);
-        })->get();
+        $faculty = User::whereIn('role', ['teacher', 'coordinator'])->get();
         $academicTerms = AcademicTerm::orderBy('school_year', 'desc')->orderBy('semester', 'desc')->get();
 
         return view('coordinator.defense.create', compact('groups', 'faculty', 'academicTerms'));

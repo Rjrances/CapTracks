@@ -23,9 +23,7 @@ class StudentGroupController extends Controller
         })->with(['adviser', 'members', 'adviserInvitations.faculty'])->first() : null;
         
         // Get available faculty for adviser invitation
-        $availableFaculty = User::whereHas('roles', function($query) {
-            $query->whereIn('name', ['adviser', 'panelist']);
-        })
+        $availableFaculty = User::whereIn('role', ['adviser', 'panelist', 'teacher'])
             ->whereDoesntHave('adviserInvitations', function($q) use ($group) {
                 if ($group) {
                     $q->where('group_id', $group->id)->where('status', 'pending');
@@ -84,16 +82,14 @@ class StudentGroupController extends Controller
         
         // Verify the selected adviser is actually a faculty member
         $adviser = User::where('id', $request->adviser_id)
-                      ->whereHas('roles', function($query) {
-                          $query->whereIn('name', ['adviser', 'panelist']);
-                      })
+                      ->whereIn('role', ['adviser', 'panelist', 'teacher'])
                       ->first();
         
         // Debug: Log adviser verification
         \Log::info('Adviser verification', [
             'requested_adviser_id' => $request->adviser_id,
             'adviser_found' => $adviser ? 'yes' : 'no',
-            'adviser_roles' => $adviser ? $adviser->roles->pluck('name')->implode(', ') : null
+            'adviser_role' => $adviser ? $adviser->role : null
         ]);
         
         if (!$adviser) {

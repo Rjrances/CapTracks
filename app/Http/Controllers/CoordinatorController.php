@@ -184,9 +184,7 @@ class CoordinatorController extends Controller
         $group = Group::with(['adviser', 'members', 'offering'])->findOrFail($id);
         
         // Get available faculty for adviser assignment (exclude coordinators of this offering)
-        $availableFaculty = User::whereHas('roles', function($query) {
-            $query->whereIn('name', ['teacher', 'adviser', 'panelist']);
-        })->where(function($query) use ($group) {
+        $availableFaculty = User::whereIn('role', ['teacher', 'adviser', 'panelist'])->where(function($query) use ($group) {
             // Exclude faculty who coordinate this offering
             $query->whereDoesntHave('offerings', function($q) use ($group) {
                 $q->where('id', $group->offering_id);

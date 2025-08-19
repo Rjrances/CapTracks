@@ -49,6 +49,9 @@
                                     <td>
                                         @if($user->role)
                                             <span class="badge bg-primary me-1">{{ ucfirst($user->role) }}</span>
+                                            @if($user->effective_roles_string !== ucfirst($user->role))
+                                                <br><small class="text-muted">Effective: {{ $user->effective_roles_string }}</small>
+                                            @endif
                                         @else
                                             <span class="text-muted">No role assigned</span>
                                         @endif

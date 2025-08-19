@@ -172,6 +172,36 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user should be adviser based on group assignments
+     * and update role accordingly
+     */
+    public function updateRoleBasedOnAdviserAssignments()
+    {
+        $hasAdviserGroups = \App\Models\Group::where('adviser_id', $this->id)->exists();
+        $currentRole = $this->role;
+        
+        \Log::info("Checking adviser role for user {$this->name} (ID: {$this->id}): current role = '{$currentRole}', has adviser groups = " . ($hasAdviserGroups ? 'true' : 'false'));
+        
+        if ($hasAdviserGroups && $this->role === 'teacher') {
+            // Has adviser groups but still has 'teacher' role
+            $oldRole = $this->role;
+            $this->role = 'adviser';
+            $this->save();
+            \Log::info("User {$this->name} (ID: {$this->id}) role updated from '{$oldRole}' to 'adviser' - has adviser groups");
+            return true;
+        } elseif (!$hasAdviserGroups && $this->role === 'adviser') {
+            // No adviser groups but still has 'adviser' role
+            $this->role = 'teacher';
+            $this->save();
+            \Log::info("User {$this->name} (ID: {$this->id}) role reverted from 'adviser' to 'teacher' - no adviser groups");
+            return true;
+        }
+        
+        \Log::info("User {$this->name} (ID: {$this->id}) no adviser role change needed: current role = '{$currentRole}', has adviser groups = " . ($hasAdviserGroups ? 'true' : 'false'));
+        return false; // No change needed
+    }
+
+    /**
      * Get the appropriate role display name
      */
     public function getRoleDisplayNameAttribute()
@@ -181,5 +211,38 @@ class User extends Authenticatable
         }
         
         return ucfirst($this->role);
+    }
+
+    /**
+     * Get all roles this user effectively has (including derived roles)
+     */
+    public function getEffectiveRolesAttribute()
+    {
+        $roles = [$this->role];
+        
+        // If they have offerings, they're effectively a coordinator
+        if ($this->offerings()->exists() && !in_array('coordinator', $roles)) {
+            $roles[] = 'coordinator';
+        }
+        
+        // If they're an adviser to any groups, they're effectively an adviser
+        if (\App\Models\Group::where('adviser_id', $this->id)->exists() && !in_array('adviser', $roles)) {
+            $roles[] = 'adviser';
+        }
+        
+        return array_unique($roles);
+    }
+
+    /**
+     * Get a formatted string of all effective roles
+     */
+    public function getEffectiveRolesStringAttribute()
+    {
+        $roles = $this->effective_roles;
+        if (count($roles) === 1) {
+            return ucfirst($roles[0]);
+        }
+        
+        return implode(' + ', array_map('ucfirst', $roles));
     }
 }
