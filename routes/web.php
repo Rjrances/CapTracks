@@ -203,8 +203,8 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::delete('/defense-requests/{defenseRequest}', [\App\Http\Controllers\StudentDefenseRequestController::class, 'cancel'])->name('defense-requests.cancel');
     
     // ✅ NEW: Student notification routes
-    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
-    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('student.notifications.mark-all-read');
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('student.notifications.mark-read');
 });
 
 // Adviser/Faculty Routes
@@ -227,8 +227,8 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::put('/projects/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'update'])->name('project.update');
     
     // Notification management
-    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\AdviserController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
-    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\AdviserController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\AdviserController::class, 'markAllNotificationsAsRead'])->name('adviser.notifications.mark-all-read');
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\AdviserController::class, 'markNotificationAsRead'])->name('adviser.notifications.mark-read');
 });
 
 // Coordinator Defense Request Routes
@@ -247,7 +247,7 @@ Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->nam
     Route::get('/scheduling/available-faculty', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'getAvailableFaculty'])->name('scheduling.available-faculty');
 });
 
-// Notification routes
+// General notification routes (for coordinators and other authenticated users)
 Route::middleware(['auth'])->group(function () {
     Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
     Route::post('/notifications/mark-multiple-read', [\App\Http\Controllers\NotificationController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read');

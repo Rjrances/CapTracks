@@ -33,14 +33,18 @@ class AuthController extends Controller
                 Auth::login($user);
                 return redirect('/change-password');
             }
-            
-            // Case 2: Password is set but user left it blank (treat as first-time login)
+
+            // Case 2: Password field left blank
             if (empty($request->password)) {
-                Auth::login($user);
-                return redirect('/change-password');
+                // Only allow bypass to change-password if the account still requires it
+                if ($user->must_change_password) {
+                    Auth::login($user);
+                    return redirect('/change-password');
+                }
+                return back()->withErrors(['password' => 'Password is required.']);
             }
 
-            // Case 3: Password is set and user provided one - check if it matches
+            // Case 3: Password is provided - verify
             if (!Hash::check($request->password, $user->password)) {
                 return back()->withErrors(['password' => 'Incorrect password.']);
             }
@@ -76,25 +80,27 @@ class AuthController extends Controller
 
                 return redirect('/change-password');
             }
-            
-            // Case 2: Password is set but user left it blank (treat as first-time login)
+
+            // Case 2: Password field left blank
             if (empty($request->password)) {
-                // Store student info in session
-                $request->session()->put('student_id', $student->id);
-                $request->session()->put('student_name', $student->name);
-                $request->session()->put('student_email', $student->email);
-                $request->session()->put('student_role', 'student');
-                $request->session()->put('student_school_id', $student->student_id);
-                $request->session()->put('is_student', true);
-                $request->session()->put('must_change_password', true);
+                if ($student->must_change_password) {
+                    // Store student info in session then redirect to change password
+                    $request->session()->put('student_id', $student->id);
+                    $request->session()->put('student_name', $student->name);
+                    $request->session()->put('student_email', $student->email);
+                    $request->session()->put('student_role', 'student');
+                    $request->session()->put('student_school_id', $student->student_id);
+                    $request->session()->put('is_student', true);
+                    $request->session()->put('must_change_password', true);
 
-                // Save session immediately
-                $request->session()->save();
+                    $request->session()->save();
 
-                return redirect('/change-password');
+                    return redirect('/change-password');
+                }
+                return back()->withErrors(['password' => 'Password is required.']);
             }
 
-            // Case 3: Password is set and user provided one - check if it matches
+            // Case 3: Password is provided - verify
             if (!Hash::check($request->password, $student->password)) {
                 return back()->withErrors(['password' => 'Incorrect password.']);
             }
@@ -108,10 +114,8 @@ class AuthController extends Controller
             $request->session()->put('is_student', true);
             $request->session()->put('must_change_password', $student->must_change_password);
 
-            // Save session immediately
             $request->session()->save();
 
-            // Check if student must change password
             if ($student->must_change_password) {
                 return redirect('/change-password');
             }

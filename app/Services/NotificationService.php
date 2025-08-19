@@ -215,7 +215,7 @@ class NotificationService
     /**
      * Create a simple database notification (fallback method)
      */
-    public static function createSimpleNotification(string $title, string $description, string $role, ?string $redirectUrl = null)
+    public static function createSimpleNotification(string $title, string $description, string $role, ?string $redirectUrl = null, ?int $userId = null)
     {
         try {
             return Notification::create([
@@ -224,11 +224,13 @@ class NotificationService
                 'role' => $role,
                 'redirect_url' => $redirectUrl,
                 'is_read' => false,
+                'user_id' => $userId, // Add user_id if provided
             ]);
         } catch (\Exception $e) {
             Log::error('Error creating simple notification', [
                 'title' => $title,
                 'role' => $role,
+                'user_id' => $userId,
                 'error' => $e->getMessage()
             ]);
             return null;

@@ -24,7 +24,14 @@
                         <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell fa-lg text-muted"></i>
                             @php
-                                $notificationCount = \App\Models\Notification::where('role', 'chairperson')->where('is_read', false)->count();
+                                // Count unread notifications for chairperson role OR specifically for this user
+                                $user = auth()->user();
+                                $notificationCount = \App\Models\Notification::where(function($query) use ($user) {
+                                    $query->where('role', 'chairperson')
+                                          ->orWhere('user_id', $user->id);
+                                })
+                                ->where('is_read', false)
+                                ->count();
                             @endphp
                             @if($notificationCount > 0)
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -35,15 +42,23 @@
                         <div class="dropdown-menu dropdown-menu-end" style="width: 350px; max-height: 400px; overflow-y: auto;">
                             <div class="dropdown-header d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Notifications</h6>
-                                <a href="#" class="text-decoration-none small">Mark all read</a>
+                                <form method="POST" action="{{ route('notifications.mark-all-read') }}" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-link text-decoration-none small p-0 border-0 bg-transparent">Mark all read</button>
+                                </form>
                             </div>
                             <div class="dropdown-divider"></div>
                             
                             @php
-                                $recentNotifications = \App\Models\Notification::where('role', 'chairperson')
-                                    ->latest()
-                                    ->take(10)
-                                    ->get();
+                                // Get notifications for chairperson role OR specifically for this user
+                                $user = auth()->user();
+                                $recentNotifications = \App\Models\Notification::where(function($query) use ($user) {
+                                    $query->where('role', 'chairperson')
+                                          ->orWhere('user_id', $user->id);
+                                })
+                                ->latest()
+                                ->take(10)
+                                ->get();
                             @endphp
                             
                             @if($recentNotifications->count() > 0)
@@ -100,6 +115,20 @@
         </nav>
 
         <div class="p-4">
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
             @yield('content')
         </div>
     </div>
@@ -122,19 +151,74 @@
         .then(data => {
             if (data.success) {
                 // Update notification count
-                const badge = document.querySelector('.badge');
-                if (badge) {
-                    const currentCount = parseInt(badge.textContent);
-                    if (currentCount > 1) {
-                        badge.textContent = currentCount - 1;
-                    } else {
-                        badge.style.display = 'none';
-                    }
-                }
+                updateNotificationCount();
+                // Reload the page to show updated notifications
+                location.reload();
             }
         })
         .catch(error => console.error('Error:', error));
     }
+
+    function updateNotificationCount() {
+        // Update the notification count badge
+        const badge = document.querySelector('.badge');
+        if (badge) {
+            const currentCount = parseInt(badge.textContent);
+            if (currentCount > 1) {
+                badge.textContent = currentCount - 1;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    }
+
+    // Add event listener for mark all read form submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const markAllReadForm = document.querySelector('form[action*="mark-all-read"]');
+        if (markAllReadForm) {
+            markAllReadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show loading state
+                const button = this.querySelector('button');
+                const originalText = button.textContent;
+                button.textContent = 'Marking...';
+                button.disabled = true;
+
+                // Submit the form
+                fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Hide notification badge
+                        const badge = document.querySelector('.badge');
+                        if (badge) {
+                            badge.style.display = 'none';
+                        }
+                        // Reload page to show updated notifications
+                        location.reload();
+                    } else {
+                        alert('Error marking notifications as read: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error marking notifications as read. Please try again.');
+                })
+                .finally(() => {
+                    // Reset button state
+                    button.textContent = originalText;
+                    button.disabled = false;
+                });
+            });
+        }
+    });
     </script>
 </body>
 </html>

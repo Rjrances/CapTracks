@@ -331,14 +331,17 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
         
-        $userRole = $user->role;
-        Notification::where('user_id', $user->id)
-            ->where(function($query) use ($userRole) {
-                $query->where('role', $userRole)
-                      ->orWhereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator']);
-            })
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
+        // Mark all notifications as read that are either:
+        // 1. Specifically for this user (user_id matches)
+        // 2. Match their role
+        // 3. Are for common faculty roles they can see
+        Notification::where(function($query) use ($user) {
+            $query->where('user_id', $user->id)
+                  ->orWhere('role', $user->role)
+                  ->orWhereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator']);
+        })
+        ->where('is_read', false)
+        ->update(['is_read' => true]);
             
         return back()->with('success', 'All notifications marked as read.');
     }
@@ -347,9 +350,13 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
         
-        // Check if notification belongs to this user and has a valid faculty role
+        // Check if notification belongs to this user OR matches their role OR is for a valid faculty role
         $validRoles = ['teacher', 'adviser', 'panelist', 'coordinator'];
-        if ($notification->user_id !== $user->id || !in_array($notification->role, $validRoles)) {
+        $hasAccess = $notification->user_id === $user->id || 
+                    $notification->role === $user->role || 
+                    in_array($notification->role, $validRoles);
+        
+        if (!$hasAccess) {
             abort(403, 'Unauthorized');
         }
         

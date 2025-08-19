@@ -50,11 +50,15 @@
                             @php
                                 $recentNotifications = collect();
                                 if (session('is_student') && session('student_id')) {
-                                    $recentNotifications = \App\Models\Notification::where('role', 'student')
-                                        ->where('is_read', false)
-                                        ->latest()
-                                        ->take(10)
-                                        ->get();
+                                    $studentId = session('student_id');
+                                    $recentNotifications = \App\Models\Notification::where(function($query) use ($studentId) {
+                                        $query->where('role', 'student')
+                                              ->orWhere('user_id', $studentId);
+                                    })
+                                    ->where('is_read', false)
+                                    ->latest()
+                                    ->take(10)
+                                    ->get();
                                 }
                             @endphp
                             

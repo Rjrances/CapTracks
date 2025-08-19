@@ -52,16 +52,16 @@
                             <div class="dropdown-divider"></div>
                             
                             @php
-                                // Get notifications with the user's actual role or common faculty roles
-                                $userRole = auth()->user()->role;
-                                $recentNotifications = \App\Models\Notification::where('user_id', auth()->id())
-                                    ->where(function($query) use ($userRole) {
-                                        $query->where('role', $userRole)
-                                              ->orWhereIn('role', ['teacher', 'adviser', 'panelist']);
-                                    })
-                                    ->latest()
-                                    ->take(10)
-                                    ->get();
+                                // Get notifications specifically for this user OR matching their role
+                                $user = auth()->user();
+                                $recentNotifications = \App\Models\Notification::where(function($query) use ($user) {
+                                    $query->where('user_id', $user->id)
+                                          ->orWhere('role', $user->role)
+                                          ->orWhereIn('role', ['teacher', 'adviser', 'panelist']);
+                                })
+                                ->latest()
+                                ->take(10)
+                                ->get();
                             @endphp
                             
                             @if($recentNotifications->count() > 0)

@@ -28,7 +28,8 @@ class NotificationController extends Controller
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
             
-            if ($notification->role !== $userRole) {
+            // Check if user has access to this notification (either by role or specific user_id)
+            if ($notification->role !== $userRole && $notification->user_id !== $userId) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
 
@@ -95,21 +96,29 @@ class NotificationController extends Controller
     {
         try {
             $userRole = null;
+            $userId = null;
             
             if (auth()->check()) {
                 // Authenticated user (faculty/staff)
-                $userRole = auth()->user()->getPrimaryRoleAttribute();
+                $user = auth()->user();
+                $userRole = $user->getPrimaryRoleAttribute();
+                $userId = $user->id;
             } elseif (session('is_student') && session('student_id')) {
                 // Session-based student
                 $userRole = 'student';
+                $userId = session('student_id');
             } else {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
             
-            $notificationIds = Notification::where('role', $userRole)
-                ->where('is_read', false)
-                ->pluck('id')
-                ->toArray();
+            // Get notifications that match either the user's role OR are specifically for this user
+            $notificationIds = Notification::where(function($query) use ($userRole, $userId) {
+                $query->where('role', $userRole)
+                      ->orWhere('user_id', $userId);
+            })
+            ->where('is_read', false)
+            ->pluck('id')
+            ->toArray();
 
             if (empty($notificationIds)) {
                 // For students, redirect back to dashboard with success message
