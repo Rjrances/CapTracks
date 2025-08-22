@@ -5,6 +5,7 @@
     <title>Student Dashboard - CapTrack</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    @stack('styles')
 </head>
 <body>
 
@@ -40,7 +41,7 @@
                         <div class="dropdown-menu dropdown-menu-end" style="width: 350px; max-height: 400px; overflow-y: auto;">
                             <div class="dropdown-header d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Notifications</h6>
-                                <form method="POST" action="{{ route('student.notifications.mark-all-read') }}" class="d-inline">
+                                <form method="POST" action="{{ route('notifications.mark-all-read') }}" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-link text-decoration-none small p-0 border-0 bg-transparent">Mark all read</button>
                                 </form>
@@ -64,7 +65,7 @@
                             
                             @if($recentNotifications->count() > 0)
                                 @foreach($recentNotifications as $notification)
-                                    <form method="POST" action="{{ route('student.notifications.mark-read', $notification) }}" class="d-inline">
+                                    <form method="POST" action="{{ route('notifications.mark-read', $notification) }}" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-link dropdown-item py-2 {{ $notification->is_read ? '' : 'bg-light' }} p-0 border-0 bg-transparent text-start w-100">
                                             <div class="d-flex align-items-start">
@@ -134,6 +135,7 @@
         @include('partials.footer')
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @stack('scripts')
     
     <style>
     .dropdown-item {

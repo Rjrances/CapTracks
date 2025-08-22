@@ -10,6 +10,7 @@ use App\Models\Group;
 use App\Models\User;
 use App\Models\AcademicTerm;
 use App\Models\Offering;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -26,9 +27,15 @@ class DefenseScheduleController extends Controller
             })
             ->orderBy('start_at', 'asc');
 
-        // Filter by academic term
+        // Filter by academic term - default to active term if no filter selected
         if ($request->filled('academic_term_id')) {
             $query->where('academic_term_id', $request->academic_term_id);
+        } else {
+            // Default to active term
+            $activeTerm = AcademicTerm::where('is_active', true)->first();
+            if ($activeTerm) {
+                $query->where('academic_term_id', $activeTerm->id);
+            }
         }
 
         // Filter by offering (only show coordinator's offerings)
@@ -41,8 +48,11 @@ class DefenseScheduleController extends Controller
         $defenseSchedules = $query->paginate(15);
         $academicTerms = AcademicTerm::orderBy('school_year', 'desc')->orderBy('semester', 'desc')->get();
         $offerings = Offering::whereIn('id', $coordinatorOfferings)->orderBy('subject_title')->get();
+        
+        // Get the active academic term for display
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
 
-        return view('coordinator.defense.index', compact('defenseSchedules', 'academicTerms', 'offerings'));
+        return view('coordinator.defense.index', compact('defenseSchedules', 'academicTerms', 'offerings', 'activeTerm'));
     }
 
     public function create()
@@ -55,10 +65,12 @@ class DefenseScheduleController extends Controller
             ->whereIn('offering_id', $coordinatorOfferings)
             ->get();
             
-        $faculty = User::whereIn('role', ['teacher', 'coordinator'])->get();
-        $academicTerms = AcademicTerm::orderBy('school_year', 'desc')->orderBy('semester', 'desc')->get();
+        $faculty = User::whereIn('role', ['teacher', 'chairperson'])->get();
+        
+        // Get the active academic term automatically
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
 
-        return view('coordinator.defense.create', compact('groups', 'faculty', 'academicTerms'));
+        return view('coordinator.defense.create', compact('groups', 'faculty', 'activeTerm'));
     }
 
     public function store(Request $request)
@@ -66,15 +78,23 @@ class DefenseScheduleController extends Controller
         $validated = $request->validate([
             'group_id' => 'required|exists:groups,id',
             'stage' => 'required|in:proposal,60,100',
-            'academic_term_id' => 'required|exists:academic_terms,id',
             'room' => 'required|string|max:255',
             'date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'panel_members' => 'required|array|min:1',
             'panel_members.*.faculty_id' => 'required|exists:users,id',
-            'panel_members.*.role' => 'required|in:chair,member,adviser'
+            'panel_members.*.role' => 'required|in:chair,member'
         ]);
+
+        // Get the active academic term automatically
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+        if (!$activeTerm) {
+            return back()->withErrors(['error' => 'No active academic term found. Please contact the chairperson to set an active term.'])->withInput();
+        }
+        
+        // Add the active term ID to validated data
+        $validated['academic_term_id'] = $activeTerm->id;
 
         // Check if the coordinator can create a schedule for this group
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
@@ -135,9 +155,14 @@ class DefenseScheduleController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('coordinator.defense.index')->with('success', 'Defense schedule created successfully.');
+            
+            // Send notifications to all relevant parties
+            $this->sendDefenseScheduleNotifications($schedule);
+            
+            return redirect()->route('coordinator.defense.index')->with('success', 'Defense schedule created successfully. All parties have been notified.');
         } catch (\Exception $e) {
             DB::rollback();
+            \Log::error('Defense schedule creation failed: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to create defense schedule.'])->withInput();
         }
     }
@@ -204,7 +229,7 @@ class DefenseScheduleController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'panel_members' => 'required|array|min:1',
             'panel_members.*.faculty_id' => 'required|exists:users,id',
-            'panel_members.*.role' => 'required|in:chair,member,adviser'
+            'panel_members.*.role' => 'required|in:chair,member'
         ]);
 
         $schedule = DefenseSchedule::findOrFail($id);
@@ -327,22 +352,21 @@ class DefenseScheduleController extends Controller
         // Check for room conflicts
         $conflict = $this->checkDoubleBooking($startAt, $endAt, $request->room);
         
-        // Get available faculty excluding coordinators and advisers of this group
-        $availableFaculty = User::whereHas('roles', function ($query) {
-            $query->whereIn('role', ['teacher', 'coordinator']);
-        })->where(function ($query) use ($group) {
-            // Exclude the adviser of this group
-            if ($group->adviser_id) {
-                $query->where('id', '!=', $group->adviser_id);
-            }
-            
-            // Exclude coordinators of this group's offering
-            if ($group->offering_id) {
-                $query->whereDoesntHave('offerings', function ($q) use ($group) {
-                    $q->where('id', $group->offering_id);
-                });
-            }
-        })->get();
+        // Get available faculty - show teachers and chairperson, exclude coordinators and advisers
+        $availableFaculty = User::whereIn('role', ['teacher', 'chairperson'])
+            ->where(function ($query) use ($group) {
+                // Exclude the adviser of this group
+                if ($group->adviser_id) {
+                    $query->where('id', '!=', $group->adviser_id);
+                }
+                
+                // Exclude coordinators of this group's offering
+                if ($group->offering_id) {
+                    $query->whereDoesntHave('offerings', function ($q) use ($group) {
+                        $q->where('id', $group->offering_id);
+                    });
+                }
+            })->get();
 
         return response()->json([
             'availableFaculty' => $availableFaculty,
@@ -368,5 +392,57 @@ class DefenseScheduleController extends Controller
         }
 
         return $query->exists();
+    }
+
+    /**
+     * Send notifications to all relevant parties when a defense schedule is created
+     */
+    private function sendDefenseScheduleNotifications($schedule)
+    {
+        $group = $schedule->group;
+        $formattedDate = $schedule->start_at->format('M d, Y \a\t h:i A');
+        $stageLabel = $schedule->stage_label;
+
+        // 1. Notify the group's adviser (if assigned)
+        if ($group->adviser) {
+            NotificationService::createSimpleNotification(
+                'Defense Schedule Created',
+                "A {$stageLabel} defense has been scheduled for {$group->name} on {$formattedDate} in {$schedule->room}",
+                'adviser',
+                route('adviser.dashboard'),
+                $group->adviser->id
+            );
+        }
+
+        // 2. Notify all panel members
+        foreach ($schedule->defensePanels as $panel) {
+            $panelMember = User::find($panel->faculty_id);
+            if ($panelMember) {
+                $roleLabel = ucfirst($panel->role);
+                NotificationService::createSimpleNotification(
+                    'Defense Panel Assignment',
+                    "You have been assigned as {$roleLabel} for {$group->name}'s {$stageLabel} defense on {$formattedDate}",
+                    $panelMember->role,
+                    route('coordinator.defense.index'),
+                    $panelMember->id
+                );
+            }
+        }
+
+        // 3. Notify group members (students) - general notification for all students
+        NotificationService::createSimpleNotification(
+            'Defense Schedule Created',
+            "A {$stageLabel} defense has been scheduled for {$group->name} on {$formattedDate} in {$schedule->room}",
+            'student',
+            route('student.dashboard')
+        );
+
+        // 4. Notify chairperson
+        NotificationService::createSimpleNotification(
+            'New Defense Schedule',
+            "A {$stageLabel} defense has been scheduled for {$group->name} on {$formattedDate}",
+            'chairperson',
+            route('chairperson.dashboard')
+        );
     }
 }

@@ -71,6 +71,14 @@
                     Tasks
                 </a>
             </li>
+            
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('adviser.calendar') ? 'active bg-primary' : '' }}" 
+                   href="{{ route('adviser.calendar') }}">
+                    <i class="fas fa-calendar me-2"></i>
+                    Calendar
+                </a>
+            </li>
         </ul>
     </nav>
 

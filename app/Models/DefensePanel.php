@@ -36,9 +36,9 @@ class DefensePanel extends Model
     {
         return match($this->role) {
             'adviser' => 'Adviser',
-            'subject_coordinator' => 'Subject Coordinator',
-            'panelist_1' => 'Panelist #1',
-            'panelist_2' => 'Panelist #2',
+            'coordinator' => 'Coordinator',
+            'chair' => 'Chair',
+            'member' => 'Member',
             default => 'Unknown Role'
         };
     }

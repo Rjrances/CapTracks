@@ -91,6 +91,9 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 
     // Events
     Route::get('/events', [CoordinatorController::class, 'events'])->name('events.index');
+    
+    // Calendar
+    Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'coordinatorCalendar'])->name('calendar');
 });
 
 
@@ -159,6 +162,9 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
         // Route::resource('scheduling', \App\Http\Controllers\Chairperson\DefenseScheduleController::class)->parameters(['scheduling' => 'defenseSchedule']);
         // Route::patch('/scheduling/{defenseSchedule}/status', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'updateStatus'])->name('scheduling.update-status');
         // Route::get('/scheduling/available-faculty', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'getAvailableFaculty'])->name('scheduling.available-faculty');
+        
+        // Calendar
+        Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'chairpersonCalendar'])->name('calendar');
     });
 });
 
@@ -202,9 +208,10 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::get('/defense-requests/{defenseRequest}', [\App\Http\Controllers\StudentDefenseRequestController::class, 'show'])->name('defense-requests.show');
     Route::delete('/defense-requests/{defenseRequest}', [\App\Http\Controllers\StudentDefenseRequestController::class, 'cancel'])->name('defense-requests.cancel');
     
-    // ✅ NEW: Student notification routes
-    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('student.notifications.mark-all-read');
-    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('student.notifications.mark-read');
+
+    
+    // Calendar
+    Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'studentCalendar'])->name('calendar');
 });
 
 // Adviser/Faculty Routes
@@ -227,8 +234,11 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::put('/projects/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'update'])->name('project.update');
     
     // Notification management
-    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\AdviserController::class, 'markAllNotificationsAsRead'])->name('adviser.notifications.mark-all-read');
-    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\AdviserController::class, 'markNotificationAsRead'])->name('adviser.notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\AdviserController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\AdviserController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
+    
+    // Calendar
+    Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'adviserCalendar'])->name('calendar');
 });
 
 // Coordinator Defense Request Routes
@@ -248,7 +258,7 @@ Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->nam
 });
 
 // General notification routes (for coordinators and other authenticated users)
-Route::middleware(['auth'])->group(function () {
+Route::group([], function () {
     Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
     Route::post('/notifications/mark-multiple-read', [\App\Http\Controllers\NotificationController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read');
     Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');

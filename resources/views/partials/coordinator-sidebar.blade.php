@@ -71,6 +71,14 @@
             </li>
             
             <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('coordinator.calendar') ? 'active bg-primary' : '' }}" 
+                   href="{{ route('coordinator.calendar') }}">
+                    <i class="fas fa-calendar me-2"></i>
+                    Calendar
+                </a>
+            </li>
+            
+            <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('coordinator.events.*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('coordinator.events.index') }}">
                     <i class="fas fa-calendar-alt me-2"></i>

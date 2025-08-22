@@ -164,9 +164,9 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <div class="fw-semibold">{{ $defense->scheduled_date->format('M d, Y') }}</div>
+                                                <div class="fw-semibold">{{ $defense->start_at ? $defense->start_at->format('M d, Y') : 'TBA' }}</div>
                                                 <small class="text-muted">
-                                                    {{ \Carbon\Carbon::parse($defense->scheduled_time)->format('h:i A') }}
+                                                    {{ $defense->start_at ? $defense->start_at->format('h:i A') : 'TBA' }}
                                                 </small>
                                             </td>
                                             <td>

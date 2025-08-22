@@ -201,10 +201,10 @@
                                             <h6 class="mb-1">{{ ucfirst(str_replace('_', ' ', $defense->defense_type)) }} Defense</h6>
                                             <small class="text-muted">
                                                 <i class="fas fa-calendar me-1"></i>
-                                                {{ $defense->scheduled_date->format('M d, Y') }}
+                                                {{ $defense->start_at ? $defense->start_at->format('M d, Y') : 'TBA' }}
                                                 <br>
                                                 <i class="fas fa-clock me-1"></i>
-                                                {{ $defense->scheduled_time }}
+                                                {{ $defense->start_at ? $defense->start_at->format('h:i A') : 'TBA' }}
                                             </small>
                                         </div>
                                         <span class="badge bg-success">Scheduled</span>
@@ -432,7 +432,7 @@
                                                 </td>
                                                 <td>
                                                     <span class="text-{{ $deadline->is_overdue ? 'danger' : 'primary' }}">
-                                                        {{ $deadline->due_date->format('M d, Y') }}
+                                                        {{ $deadline->due_date ? $deadline->due_date->format('M d, Y') : 'TBA' }}
                                                     </span>
                                                 </td>
                                                 <td>

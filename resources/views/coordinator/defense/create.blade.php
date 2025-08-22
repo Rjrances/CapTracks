@@ -23,7 +23,9 @@
             <!-- Information Alert -->
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>
-                <strong>Note:</strong> You can only create defense schedules for groups that belong to your coordinated offerings (capstone offer codes).
+                <strong>Note:</strong> You can only create defense schedules for groups that belong to your coordinated offerings (capstone offer codes). 
+                The academic term is automatically set to the current active term.
+                <br><small class="text-muted">Available faculty for panel assignment: {{ $faculty->count() }} members</small>
             </div>
 
             @if($errors->any())
@@ -91,20 +93,21 @@
                         </div>
 
                         <div class="row">
-                            <!-- Academic Term -->
+                            <!-- Academic Term (Auto-filled) -->
                             <div class="col-md-6 mb-3">
-                                <label for="academic_term_id" class="form-label">Academic Term <span class="text-danger">*</span></label>
-                                <select name="academic_term_id" id="academic_term_id" class="form-select @error('academic_term_id') is-invalid @enderror" required>
-                                    <option value="">Select Academic Term</option>
-                                    @foreach($academicTerms as $term)
-                                        <option value="{{ $term->id }}" {{ old('academic_term_id') == $term->id ? 'selected' : '' }}>
-                                            {{ $term->school_year }} - {{ $term->semester }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('academic_term_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label">Academic Term</label>
+                                @if($activeTerm)
+                                    <div class="form-control-plaintext bg-light">
+                                        <i class="fas fa-calendar-check text-success me-2"></i>
+                                        <strong>{{ $activeTerm->school_year }} - {{ $activeTerm->semester }}</strong>
+                                        <span class="badge bg-success ms-2">Active</span>
+                                    </div>
+                                @else
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <strong>No Active Term:</strong> Please contact the chairperson to set an active academic term.
+                                    </div>
+                                @endif
                             </div>
 
                             <!-- Room -->
@@ -168,7 +171,8 @@
                                 <label>Panel Members <span class="text-danger">*</span></label>
                                 <div class="alert alert-info mb-3">
                                     <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
-                                    You only need to add additional panel members below.
+                                    You can select teachers (imported faculty) and chairperson as additional panel members. 
+                                    Coordinators and advisers are excluded from the selection.
                                 </div>
                                 <div id="panel-members-container">
                                     <div class="panel-member-row mb-2">
@@ -176,7 +180,9 @@
                                             <div class="col-md-5">
                                                 <select name="panel_members[0][faculty_id]" class="form-control faculty-select" required>
                                                     <option value="">Select Faculty</option>
-                                                    <!-- Faculty options will be loaded dynamically -->
+                                                    @foreach($faculty as $member)
+                                                        <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->school_id }})</option>
+                                                    @endforeach
                                                 </select>
                                             </div>
                                             <div class="col-md-5">
@@ -184,7 +190,6 @@
                                                     <option value="">Select Role</option>
                                                     <option value="chair">Chair</option>
                                                     <option value="member">Member</option>
-                                                    <option value="adviser">Adviser</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-2">
@@ -204,7 +209,7 @@
                             <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
                                 Cancel
                             </a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" {{ !$activeTerm ? 'disabled' : '' }}>
                                 <i class="fas fa-save me-2"></i>Create Schedule
                             </button>
                         </div>
@@ -219,6 +224,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     let panelCount = 1;
     
+    // Load initial faculty data
+    loadInitialFaculty();
+    
     // Load faculty when group is selected
     document.getElementById('group_id').addEventListener('change', function() {
         const groupId = this.value;
@@ -229,6 +237,14 @@ document.addEventListener('DOMContentLoaded', function() {
             clearFacultyOptions();
         }
     });
+    
+    // Function to load initial faculty data
+    function loadInitialFaculty() {
+        const facultyData = @json($faculty);
+        if (facultyData && facultyData.length > 0) {
+            updateFacultyOptions(facultyData);
+        }
+    }
     
     // Function to load faculty for a specific group
     function loadFacultyForGroup(groupId) {
@@ -258,6 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to update faculty options in all faculty selects
     function updateFacultyOptions(faculty) {
         const facultySelects = document.querySelectorAll('.faculty-select');
+        
         facultySelects.forEach(select => {
             // Store current selection
             const currentValue = select.value;
@@ -298,7 +315,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="col-md-5">
                     <select name="panel_members[${panelCount}][faculty_id]" class="form-control faculty-select" required>
                         <option value="">Select Faculty</option>
-                        <!-- Faculty options will be loaded dynamically -->
+                        @foreach($faculty as $member)
+                            <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->school_id }})</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-5">
@@ -306,7 +325,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="">Select Role</option>
                         <option value="chair">Chair</option>
                         <option value="member">Member</option>
-                        <option value="adviser">Adviser</option>
                     </select>
                 </div>
                 <div class="col-md-2">

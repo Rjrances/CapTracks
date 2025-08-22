@@ -88,6 +88,14 @@
                     Defense Requests
                 </a>
             </li>
+            
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('student.calendar') ? 'active bg-primary' : '' }}" 
+                   href="{{ route('student.calendar') }}">
+                    <i class="fas fa-calendar me-2"></i>
+                    Calendar
+                </a>
+            </li>
         </ul>
     </nav>
 
