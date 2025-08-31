@@ -64,6 +64,9 @@ class StudentDashboardController extends Controller
         // ✅ NEW: Get notifications
         $notifications = $this->getNotifications($student);
         
+        // ✅ NEW: Get existing proposal for 60% defense readiness
+        $existingProposal = $this->getExistingProposal($student);
+        
         // Get current active term
         $activeTerm = AcademicTerm::where('is_active', true)->first();
 
@@ -80,7 +83,8 @@ class StudentDashboardController extends Controller
             'upcomingDeadlines',
             'adviserInfo',
             'defenseInfo',
-            'notifications'
+            'notifications',
+            'existingProposal'
         ));
     }
 
@@ -415,5 +419,16 @@ class StudentDashboardController extends Controller
             ->latest()
             ->take(5)
             ->get();
+    }
+
+    // ✅ NEW: Get existing proposal for 60% defense readiness
+    private function getExistingProposal($student)
+    {
+        if (!$student) return null;
+
+        return ProjectSubmission::where('student_id', $student->id)
+            ->where('type', 'proposal')
+            ->latest()
+            ->first();
     }
 }

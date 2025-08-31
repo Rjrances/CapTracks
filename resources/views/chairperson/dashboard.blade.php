@@ -303,68 +303,6 @@
     </div>
     @endif
 
-    <!-- Upcoming Events -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-calendar me-2"></i>Upcoming Events
-                    </h5>
-                </div>
-                <div class="card-body">
-                    @if($events->count() > 0)
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Event</th>
-                                        <th>Date</th>
-                                        <th>Time</th>
-                                        <th>Type</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($events as $event)
-                                        <tr>
-                                            <td>
-                                                <div class="fw-semibold">{{ $event->title }}</div>
-                                                <small class="text-muted">{{ $event->description ?? 'No description available' }}</small>
-                                            </td>
-                                            <td>
-                                                <span class="text-primary">
-                                                    {{ $event->date ? \Carbon\Carbon::parse($event->date)->format('M d, Y') : 'N/A' }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                {{ $event->time ? \Carbon\Carbon::parse($event->time)->format('h:i A') : 'N/A' }}
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-{{ $event->type == 'meeting' ? 'primary' : ($event->type == 'deadline' ? 'warning' : 'info') }}">
-                                                    {{ ucfirst($event->type ?? 'event') }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <a href="{{ route('events.show', $event->id) }}" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-eye"></i> View
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <div class="text-center py-4">
-                            <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
-                            <h6 class="text-muted">No upcoming events</h6>
-                            <p class="text-muted small">Events will appear here when they are scheduled.</p>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
+    
 </div>
 @endsection

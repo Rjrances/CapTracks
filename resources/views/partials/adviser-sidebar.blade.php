@@ -65,10 +65,10 @@
             </li>
             
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('adviser.tasks.*') ? 'active bg-primary' : '' }}" 
-                   href="{{ route('adviser.tasks.index') }}">
-                    <i class="fas fa-tasks me-2"></i>
-                    Tasks
+                <a class="nav-link text-white {{ request()->routeIs('adviser.proposal.*') ? 'active bg-primary' : '' }}" 
+                   href="{{ route('adviser.proposal.index') }}">
+                    <i class="fas fa-clipboard-check me-2"></i>
+                    Proposal Review
                 </a>
             </li>
             

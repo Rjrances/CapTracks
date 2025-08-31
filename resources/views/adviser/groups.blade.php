@@ -89,9 +89,6 @@
                                                     <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-success btn-sm px-3 me-2">
                                                         <i class="fas fa-eye me-1"></i> View Details
                                                     </a>
-                                                    <a href="{{ route('adviser.groups.tasks', $group) }}" class="btn btn-outline-primary btn-sm px-3 me-2">
-                                                        <i class="fas fa-tasks me-1"></i> View Tasks
-                                                    </a>
                                                     <a href="{{ route('adviser.project.index') }}" class="btn btn-outline-info btn-sm px-3">
                                                         <i class="fas fa-file-alt me-1"></i> View Projects
                                                     </a>

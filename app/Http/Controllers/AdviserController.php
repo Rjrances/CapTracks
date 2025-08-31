@@ -41,12 +41,9 @@ class AdviserController extends Controller
         ->map(function ($group) {
             // Calculate comprehensive progress for each group
             $group->progress_percentage = $this->calculateGroupProgress($group);
-            $group->completed_tasks = $this->getCompletedTasksCount($group);
-            $group->total_tasks = $this->getTotalTasksCount($group);
             $group->submissions_count = $this->getSubmissionsCount($group);
             $group->milestone_progress = $this->getMilestoneProgress($group);
             $group->next_milestone = $this->getNextMilestone($group);
-            $group->overdue_tasks = $this->getOverdueTasksCount($group);
             return $group;
         });
 
@@ -74,21 +71,13 @@ class AdviserController extends Controller
         // Get recent activities
         $recentActivities = $this->getRecentActivities($user);
 
-        // Get groups by progress category for quick overview
-        $groupsByProgress = [
-            'excellent' => $adviserGroups->filter(function($group) { return $group->progress_percentage >= 80; }),
-            'good' => $adviserGroups->filter(function($group) { return $group->progress_percentage >= 60 && $group->progress_percentage < 80; }),
-            'needs_attention' => $adviserGroups->filter(function($group) { return $group->progress_percentage < 60; })
-        ];
-
         return view('adviser.dashboard', compact(
             'activeTerm', 
             'pendingInvitations', 
             'adviserGroups', 
             'notifications', 
             'recentActivities',
-            'summaryStats',
-            'groupsByProgress'
+            'summaryStats'
         ));
     }
 
@@ -106,23 +95,7 @@ class AdviserController extends Controller
         return round($totalProgress / $groupMilestones->count());
     }
 
-    // ✅ NEW: Get completed tasks count
-    private function getCompletedTasksCount($group)
-    {
-        // Get completed tasks from group milestone tasks
-        return GroupMilestoneTask::whereHas('groupMilestone', function($query) use ($group) {
-            $query->where('group_id', $group->id);
-        })->where('is_completed', true)->count();
-    }
 
-    // ✅ NEW: Get total tasks count
-    private function getTotalTasksCount($group)
-    {
-        // Get total tasks from group milestone tasks
-        return GroupMilestoneTask::whereHas('groupMilestone', function($query) use ($group) {
-            $query->where('group_id', $group->id);
-        })->count();
-    }
 
     // ✅ NEW: Get submissions count
     private function getSubmissionsCount($group)
@@ -161,8 +134,7 @@ class AdviserController extends Controller
                 return [
                     'name' => $milestone->milestoneTemplate->name,
                     'progress' => $milestone->progress_percentage,
-                    'target_date' => $milestone->target_date,
-                    'remaining_tasks' => $this->getRemainingTasksCount($milestone)
+                    'target_date' => $milestone->target_date
                 ];
             }
         }
@@ -170,29 +142,7 @@ class AdviserController extends Controller
         return null;
     }
 
-    // ✅ NEW: Get overdue tasks count
-    private function getOverdueTasksCount($group)
-    {
-        $overdueCount = 0;
-        
-        foreach ($group->groupMilestones as $milestone) {
-            if ($milestone->target_date && now()->isAfter($milestone->target_date)) {
-                $overdueCount += $milestone->groupMilestoneTasks
-                    ->where('is_completed', false)
-                    ->count();
-            }
-        }
-        
-        return $overdueCount;
-    }
 
-    // ✅ NEW: Get remaining tasks count for a milestone
-    private function getRemainingTasksCount($milestone)
-    {
-        return $milestone->groupMilestoneTasks
-            ->where('is_completed', false)
-            ->count();
-    }
 
     // ✅ NEW: Get recent activities
     private function getRecentActivities($user)
@@ -307,92 +257,53 @@ class AdviserController extends Controller
         return view('adviser.group-details', compact('group'));
     }
 
-    // ✅ NEW: Task management methods
-    public function tasksIndex()
-    {
-        $user = Auth::user();
-        
-        $groups = Group::where('adviser_id', $user->id)->get();
-        $tasks = collect();
-        
-        foreach ($groups as $group) {
-            // Get tasks for each group (simplified)
-            $groupTasks = MilestoneTask::whereHas('milestoneTemplate', function($query) {
-                $query->where('status', '!=', 'done');
-            })->take(5)->get();
-            
-            $tasks = $tasks->merge($groupTasks);
-        }
-        
-        return view('adviser.tasks.index', compact('tasks', 'groups'));
-    }
+
 
     public function markAllNotificationsAsRead()
     {
-        $user = Auth::user();
-        
-        // Mark all notifications as read that are either:
-        // 1. Specifically for this user (user_id matches)
-        // 2. Match their role
-        // 3. Are for common faculty roles they can see
-        Notification::where(function($query) use ($user) {
-            $query->where('user_id', $user->id)
-                  ->orWhere('role', $user->role)
-                  ->orWhereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator']);
-        })
-        ->where('is_read', false)
-        ->update(['is_read' => true]);
+        try {
+            $user = Auth::user();
             
-        return back()->with('success', 'All notifications marked as read.');
+            // Mark all notifications as read that are either:
+            // 1. Specifically for this user (user_id matches)
+            // 2. Match their role
+            // 3. Are for common faculty roles they can see
+            $updatedCount = Notification::where(function($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhere('role', $user->role)
+                      ->orWhereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator']);
+            })
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+                
+            return response()->json(['success' => true, 'message' => $updatedCount . ' notifications marked as read']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error updating notifications'], 500);
+        }
     }
 
     public function markNotificationAsRead(Notification $notification)
     {
-        $user = Auth::user();
-        
-        // Check if notification belongs to this user OR matches their role OR is for a valid faculty role
-        $validRoles = ['teacher', 'adviser', 'panelist', 'coordinator'];
-        $hasAccess = $notification->user_id === $user->id || 
-                    $notification->role === $user->role || 
-                    in_array($notification->role, $validRoles);
-        
-        if (!$hasAccess) {
-            abort(403, 'Unauthorized');
+        try {
+            $user = Auth::user();
+            
+            // Check if notification belongs to this user OR matches their role OR is for a valid faculty role
+            $validRoles = ['teacher', 'adviser', 'panelist', 'coordinator'];
+            $hasAccess = $notification->user_id === $user->id || 
+                        $notification->role === $user->role || 
+                        in_array($notification->role, $validRoles);
+            
+            if (!$hasAccess) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+            
+            $notification->update(['is_read' => true]);
+            
+            return response()->json(['success' => true, 'message' => 'Notification marked as read']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error updating notification'], 500);
         }
-        
-        $notification->update(['is_read' => true]);
-        
-        // Redirect to the notification's redirect URL or invitations page
-        return redirect($notification->redirect_url ?? route('adviser.invitations'));
     }
 
-    public function groupTasks(Group $group)
-    {
-        // Check if user is the adviser of this group
-        if ($group->adviser_id !== Auth::id()) {
-            abort(403, 'Unauthorized');
-        }
 
-        $tasks = MilestoneTask::whereHas('milestoneTemplate', function($query) {
-            $query->where('status', '!=', 'done');
-        })->get();
-
-        return view('adviser.groups.tasks', compact('group', 'tasks'));
-    }
-
-    public function updateTask(Request $request, MilestoneTask $task)
-    {
-        $request->validate([
-            'is_completed' => 'required|boolean',
-            'comment' => 'nullable|string|max:500',
-        ]);
-
-        if ($request->is_completed) {
-            $task->markAsCompleted();
-        } else {
-            $task->markAsIncomplete();
-        }
-
-        return back()->with('success', 'Task updated successfully.');
-    }
 } 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Event;
+
 use App\Models\Notification;
 use App\Models\DefenseSchedule;
 use App\Models\Group;
@@ -33,11 +33,7 @@ class ChairpersonDashboardController extends Controller
                                      ->take(5)
                                      ->get();
 
-        // Fetch upcoming events
-        $events = Event::where('date', '>=', now())
-                       ->orderBy('date')
-                       ->take(5)
-                       ->get();
+
 
         // Dashboard statistics
         $stats = [
@@ -57,7 +53,6 @@ class ChairpersonDashboardController extends Controller
             'activeTerm',
             'upcomingDefenses',
             'notifications',
-            'events',
             'stats'
         ));
     }

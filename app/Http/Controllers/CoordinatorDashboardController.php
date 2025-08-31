@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Student;
-use App\Models\Event;
+
 use App\Models\Notification;
 use App\Models\Group;
 use App\Models\ProjectSubmission;
@@ -52,11 +52,7 @@ class CoordinatorDashboardController extends Controller
         $recentGroups = Group::with(['adviser', 'members'])->latest()->take(5)->get();
         $recentSubmissions = ProjectSubmission::with('student')->latest()->take(5)->get();
 
-        // Upcoming events
-        $events = Event::where('date', '>=', now())
-                       ->orderBy('date')
-                       ->take(5)
-                       ->get();
+
 
         // Latest notifications
         $notifications = Notification::latest()->take(5)->get();
@@ -107,7 +103,6 @@ class CoordinatorDashboardController extends Controller
             'recentStudents',
             'recentGroups',
             'recentSubmissions',
-            'events',
             'notifications',
             'pendingInvitations',
             'recentActivities',

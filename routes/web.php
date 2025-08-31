@@ -9,7 +9,7 @@ use App\Http\Controllers\ChairpersonDashboardController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ChairpersonController;
 use App\Http\Controllers\ClassController;
-use App\Http\Controllers\EventController;
+
 use App\Http\Controllers\MilestoneTemplateController;
 use App\Http\Controllers\MilestoneTaskController;
 
@@ -40,9 +40,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/classes/create', [ClassController::class, 'create'])->name('classes.create');
     Route::post('/classes', [ClassController::class, 'store'])->name('classes.store');
 
-    // Events
-    Route::get('/events', [CoordinatorController::class, 'events'])->name('events.index');
-    Route::get('/events/{id}', [EventController::class, 'show'])->name('events.show');
+
 
    // coordinator Routes
 Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinator')->name('coordinator.')->group(function () {
@@ -89,9 +87,6 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
     // Profile (optional)
     Route::get('/profile', [CoordinatorController::class, 'profile'])->name('profile');
 
-    // Events
-    Route::get('/events', [CoordinatorController::class, 'events'])->name('events.index');
-    
     // Calendar
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'coordinatorCalendar'])->name('calendar');
 });
@@ -188,7 +183,12 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::post('/group/add-member', [\App\Http\Controllers\StudentGroupController::class, 'addMember'])->name('group.add-member');
     Route::delete('/group/remove-member/{memberId}', [\App\Http\Controllers\StudentGroupController::class, 'removeMember'])->name('group.remove-member');
     
-    Route::get('/proposal', fn () => 'Proposal & Endorsement Page (to be implemented)')->name('proposal');
+    Route::get('/proposal', [\App\Http\Controllers\StudentProposalController::class, 'index'])->name('proposal');
+    Route::get('/proposal/create', [\App\Http\Controllers\StudentProposalController::class, 'create'])->name('proposal.create');
+    Route::post('/proposal', [\App\Http\Controllers\StudentProposalController::class, 'store'])->name('proposal.store');
+    Route::get('/proposal/{id}', [\App\Http\Controllers\StudentProposalController::class, 'show'])->name('proposal.show');
+    Route::get('/proposal/{id}/edit', [\App\Http\Controllers\StudentProposalController::class, 'edit'])->name('proposal.edit');
+    Route::put('/proposal/{id}', [\App\Http\Controllers\StudentProposalController::class, 'update'])->name('proposal.update');
     Route::get('/milestones', [\App\Http\Controllers\StudentMilestoneController::class, 'index'])->name('milestones');
     Route::get('/milestones/{milestone}', [\App\Http\Controllers\StudentMilestoneController::class, 'show'])->name('milestones.show');
     Route::patch('/milestones/{milestone}/update-tasks', [\App\Http\Controllers\StudentMilestoneController::class, 'updateMultipleTasks'])->name('milestones.update-tasks');
@@ -222,10 +222,7 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::get('/groups', [\App\Http\Controllers\AdviserController::class, 'myGroups'])->name('groups');
     Route::get('/groups/{group}', [\App\Http\Controllers\AdviserController::class, 'groupDetails'])->name('groups.details');
     
-    // ✅ NEW: Task management routes
-    Route::get('/tasks', [\App\Http\Controllers\AdviserController::class, 'tasksIndex'])->name('tasks.index');
-    Route::get('/groups/{group}/tasks', [\App\Http\Controllers\AdviserController::class, 'groupTasks'])->name('groups.tasks');
-    Route::patch('/tasks/{task}', [\App\Http\Controllers\AdviserController::class, 'updateTask'])->name('tasks.update');
+
     
     // Project review routes
     Route::get('/projects', [\App\Http\Controllers\ProjectSubmissionController::class, 'index'])->name('project.index');
@@ -233,9 +230,17 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::get('/projects/{id}/edit', [\App\Http\Controllers\ProjectSubmissionController::class, 'edit'])->name('project.edit');
     Route::put('/projects/{id}', [\App\Http\Controllers\ProjectSubmissionController::class, 'update'])->name('project.update');
     
+    // Proposal review routes
+    Route::get('/proposals', [\App\Http\Controllers\AdviserProposalController::class, 'index'])->name('proposal.index');
+    Route::get('/proposals/{id}', [\App\Http\Controllers\AdviserProposalController::class, 'show'])->name('proposal.show');
+    Route::get('/proposals/{id}/edit', [\App\Http\Controllers\AdviserProposalController::class, 'edit'])->name('proposal.edit');
+    Route::put('/proposals/{id}', [\App\Http\Controllers\AdviserProposalController::class, 'update'])->name('proposal.update');
+    Route::post('/proposals/bulk-update', [\App\Http\Controllers\AdviserProposalController::class, 'bulkUpdate'])->name('proposal.bulk-update');
+    Route::get('/proposals/stats', [\App\Http\Controllers\AdviserProposalController::class, 'getStats'])->name('proposal.stats');
+    
     // Notification management
-    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\AdviserController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
-    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\AdviserController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\AdviserController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read-adviser');
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\AdviserController::class, 'markNotificationAsRead'])->name('notifications.mark-read-adviser');
     
     // Calendar
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'adviserCalendar'])->name('calendar');

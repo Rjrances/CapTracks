@@ -13,6 +13,11 @@ class ProjectSubmission extends Model
         'status',
         'teacher_comment',
         'submitted_at',
+        'title',
+        'objectives',
+        'methodology',
+        'timeline',
+        'expected_outcomes',
     ];
 
     public function student()

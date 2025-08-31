@@ -36,21 +36,8 @@ class NotificationController extends Controller
             $success = NotificationService::markAsRead($notification->id);
             
             if ($success) {
-                // For students, always redirect back to dashboard with success message
-                if ($userRole === 'student') {
-                    return redirect()->route('student.dashboard')->with('success', 'Notification marked as read!');
-                }
-                
-                // For other users, if there's a redirect URL, redirect to it, otherwise return success
-                if ($notification->redirect_url) {
-                    return redirect($notification->redirect_url);
-                }
-                return response()->json(['success' => true]);
+                return response()->json(['success' => true, 'message' => 'Notification marked as read']);
             } else {
-                // For students, redirect back to dashboard with error message
-                if ($userRole === 'student') {
-                    return redirect()->route('student.dashboard')->with('error', 'Failed to mark notification as read. Please try again.');
-                }
                 return response()->json(['success' => false, 'message' => 'Error updating notification'], 500);
             }
         } catch (\Exception $e) {
@@ -121,39 +108,23 @@ class NotificationController extends Controller
             ->toArray();
 
             if (empty($notificationIds)) {
-                // For students, redirect back to dashboard with success message
-                if ($userRole === 'student') {
-                    return redirect()->route('student.dashboard')->with('success', 'All notifications marked as read!');
-                }
-                return response()->json(['success' => true, 'message' => 'No unread notifications']);
+                return response()->json(['success' => true, 'message' => 'No unread notifications found for your role']);
             }
 
             $success = NotificationService::markMultipleAsRead($notificationIds);
             
             if ($success) {
-                // For students, redirect back to dashboard with success message
-                if ($userRole === 'student') {
-                    return redirect()->route('student.dashboard')->with('success', 'All notifications marked as read!');
-                }
-                return response()->json(['success' => true]);
+                return response()->json(['success' => true, 'message' => count($notificationIds) . ' notifications marked as read']);
             } else {
-                // For students, redirect back to dashboard with error message
-                if ($userRole === 'student') {
-                    return redirect()->route('student.dashboard')->with('error', 'Failed to mark notifications as read. Please try again.');
-                }
                 return response()->json(['success' => false, 'message' => 'Error updating notifications'], 500);
             }
         } catch (\Exception $e) {
             Log::error('Error marking all notifications as read', [
-                'user_role' => $userRole,
+                'user_role' => $userRole ?? 'unknown',
                 'error' => $e->getMessage()
             ]);
             
-            // For students, redirect back to dashboard with error message
-            if ($userRole === 'student') {
-                return redirect()->route('student.dashboard')->with('error', 'An error occurred. Please try again.');
-            }
-            return response()->json(['success' => false, 'message' => 'Error updating notifications'], 500);
+            return response()->json(['success' => false, 'message' => 'Error updating notifications: ' . $e->getMessage()], 500);
         }
     }
 

@@ -85,7 +85,7 @@ class NotificationService
             'Task Completed',
             "{$studentName} has completed the task: {$taskName}",
             'adviser',
-            $redirectUrl ?? route('adviser.tasks.index')
+            $redirectUrl ?? route('adviser.groups.index')
         );
     }
 
@@ -209,6 +209,34 @@ class NotificationService
             "Academic term '{$termName}' status has been changed to {$status}",
             'chairperson',
             $redirectUrl ?? route('chairperson.academic-terms.index')
+        );
+    }
+
+    /**
+     * Proposal approval notification
+     */
+    public static function proposalApproved($student, string $groupName, string $proposalTitle, ?string $redirectUrl = null)
+    {
+        return self::createSimpleNotification(
+            'Proposal Approved!',
+            "Your proposal '{$proposalTitle}' for group {$groupName} has been approved by your adviser.",
+            'student',
+            $redirectUrl ?? route('student.proposal'),
+            $student->id
+        );
+    }
+
+    /**
+     * Proposal rejection notification
+     */
+    public static function proposalRejected($student, string $groupName, string $proposalTitle, string $feedback, ?string $redirectUrl = null)
+    {
+        return self::createSimpleNotification(
+            'Proposal Needs Revision',
+            "Your proposal '{$proposalTitle}' for group {$groupName} needs revision. Check feedback from your adviser.",
+            'student',
+            $redirectUrl ?? route('student.proposal'),
+            $student->id
         );
     }
 

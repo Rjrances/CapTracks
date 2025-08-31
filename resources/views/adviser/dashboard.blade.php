@@ -40,8 +40,8 @@
 
         <!-- Teacher Overview -->
         <div class="row mb-4">
-            <div class="col-md-2">
-                <div class="card bg-primary text-white">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white h-100">
                     <div class="card-body text-center">
                         <h5 class="card-title">Groups</h5>
                         <h3 class="mb-0">{{ $summaryStats['total_groups'] ?? 0 }}</h3>
@@ -49,47 +49,20 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-2">
-                <div class="card bg-success text-white">
+            <div class="col-md-4">
+                <div class="card bg-success text-white h-100">
                     <div class="card-body text-center">
                         <h5 class="card-title">Advisees</h5>
-                        <h3 class="mb-0">{{ $summaryStats['total_advisees'] ?? 0 }}</h3>
+                        <h3 class="m-0">{{ $summaryStats['total_advisees'] ?? 0 }}</h3>
                         <small>students</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-2">
-                <div class="card bg-info text-white">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Ready</h5>
-                        <h3 class="mb-0">{{ $summaryStats['groups_ready_for_defense'] ?? 0 }}</h3>
-                        <small>for defense</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="card bg-warning text-white">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Attention</h5>
-                        <h3 class="mb-0">{{ $summaryStats['groups_needing_attention'] ?? 0 }}</h3>
-                        <small>needed</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="card bg-danger text-white">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Overdue</h5>
-                        <h3 class="mb-0">{{ $summaryStats['overdue_tasks_total'] ?? 0 }}</h3>
-                        <small>tasks</small>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="card bg-secondary text-white">
+            <div class="col-md-4">
+                <div class="card bg-secondary text-white h-100">
                     <div class="card-body text-center">
                         <h5 class="card-title">Invitations</h5>
-                        <h3 class="mb-0">{{ $summaryStats['pending_invitations'] ?? 0 }}</h3>
+                        <h3 class="m-0">{{ $summaryStats['pending_invitations'] ?? 0 }}</h3>
                         <small>pending</small>
                     </div>
                 </div>
@@ -144,128 +117,7 @@
             </div>
         </div>
 
-        <!-- Groups by Progress Category -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card border-success">
-                    <div class="card-header bg-success text-white">
-                        <h6 class="mb-0">
-                            <i class="fas fa-star me-2"></i>Excellent Progress ({{ $groupsByProgress['excellent']->count() }})
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        @if($groupsByProgress['excellent']->count() > 0)
-                            <div class="list-group list-group-flush">
-                                @foreach($groupsByProgress['excellent']->take(3) as $group)
-                                    <div class="list-group-item d-flex justify-content-between align-items-center p-2">
-                                        <div>
-                                            <div class="fw-semibold">{{ $group->name }}</div>
-                                            <small class="text-muted">{{ $group->progress_percentage }}% complete</small>
-                                        </div>
-                                        <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-sm btn-outline-success">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </div>
-                                @endforeach
-                            </div>
-                            @if($groupsByProgress['excellent']->count() > 3)
-                                <div class="text-center mt-2">
-                                    <a href="{{ route('adviser.groups') }}" class="btn btn-sm btn-outline-success">
-                                        View All {{ $groupsByProgress['excellent']->count() }} Groups
-                                    </a>
-                                </div>
-                            @endif
-                        @else
-                            <div class="text-center py-3">
-                                <i class="fas fa-star fa-2x text-muted mb-2"></i>
-                                <p class="text-muted small mb-0">No groups yet</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card border-warning">
-                    <div class="card-header bg-warning text-white">
-                        <h6 class="mb-0">
-                            <i class="fas fa-check-circle me-2"></i>Good Progress ({{ $groupsByProgress['good']->count() }})
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        @if($groupsByProgress['good']->count() > 0)
-                            <div class="list-group list-group-flush">
-                                @foreach($groupsByProgress['good']->take(3) as $group)
-                                    <div class="list-group-item d-flex justify-content-between align-items-center p-2">
-                                        <div>
-                                            <div class="fw-semibold">{{ $group->name }}</div>
-                                            <small class="text-muted">{{ $group->progress_percentage }}% complete</small>
-                                        </div>
-                                        <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-sm btn-outline-warning">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </div>
-                                @endforeach
-                            </div>
-                            @if($groupsByProgress['good']->count() > 3)
-                                <div class="text-center mt-2">
-                                    <a href="{{ route('adviser.groups') }}" class="btn btn-sm btn-outline-warning">
-                                        View All {{ $groupsByProgress['good']->count() }} Groups
-                                    </a>
-                                </div>
-                            @endif
-                        @else
-                            <div class="text-center py-3">
-                                <i class="fas fa-check-circle fa-2x text-muted mb-2"></i>
-                                <p class="text-muted small mb-0">No groups yet</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="card border-danger">
-                    <div class="card-header bg-danger text-white">
-                        <h6 class="mb-0">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Needs Attention ({{ $groupsByProgress['needs_attention']->count() }})
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        @if($groupsByProgress['needs_attention']->count() > 0)
-                            <div class="list-group list-group-flush">
-                                @foreach($groupsByProgress['needs_attention']->take(3) as $group)
-                                    <div class="list-group-item d-flex justify-content-between align-items-center p-2">
-                                        <div>
-                                            <div class="fw-semibold">{{ $group->name }}</div>
-                                            <small class="text-muted">{{ $group->progress_percentage }}% complete</small>
-                                            @if($group->overdue_tasks > 0)
-                                                <br><small class="text-danger">{{ $group->overdue_tasks }} overdue tasks</small>
-                                            @endif
-                                        </div>
-                                        <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-sm btn-outline-danger">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </div>
-                                @endforeach
-                            </div>
-                            @if($groupsByProgress['needs_attention']->count() > 3)
-                                <div class="text-center mt-2">
-                                    <a href="{{ route('adviser.groups') }}" class="btn btn-sm btn-outline-danger">
-                                        View All {{ $groupsByProgress['needs_attention']->count() }} Groups
-                                    </a>
-                                </div>
-                            @endif
-                        @else
-                            <div class="text-center py-3">
-                                <i class="fas fa-exclamation-triangle fa-2x text-muted mb-2"></i>
-                                <p class="text-muted small mb-0">All groups doing well!</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
+
 
         <!-- Recent Activities and Quick Actions -->
         <div class="row mb-4">
@@ -325,9 +177,6 @@
                             </a>
                             <a href="{{ route('adviser.project.index') }}" class="btn btn-outline-info">
                                 <i class="fas fa-file-alt me-2"></i>Project Reviews
-                            </a>
-                            <a href="{{ route('adviser.tasks.index') }}" class="btn btn-outline-success">
-                                <i class="fas fa-tasks me-2"></i>Task Management
                             </a>
                         </div>
                     </div>
@@ -465,7 +314,6 @@
                                             <th>Members</th>
                                             <th>Progress</th>
                                             <th>Next Milestone</th>
-                                            <th>Tasks</th>
                                             <th>Submissions</th>
                                             <th>Actions</th>
                                         </tr>
@@ -502,23 +350,15 @@
                                                         <span class="text-muted">All complete!</span>
                                                     @endif
                                                 </td>
-                                                <td>
-                                                    <small class="text-muted">{{ $group->completed_tasks ?? 0 }}/{{ $group->total_tasks ?? 0 }}</small>
-                                                    @if($group->overdue_tasks > 0)
-                                                        <br><small class="text-danger">{{ $group->overdue_tasks }} overdue</small>
-                                                    @endif
-                                                </td>
+
                                                 <td>
                                                     <span class="badge bg-secondary">{{ $group->submissions_count ?? 0 }}</span>
                                                 </td>
                                                 <td>
                                                     <div class="d-flex gap-2">
-                                                        <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-sm btn-outline-primary">
-                                                            <i class="fas fa-eye"></i> View
-                                                        </a>
-                                                        <a href="{{ route('adviser.groups.tasks', $group) }}" class="btn btn-sm btn-outline-success">
-                                                            <i class="fas fa-tasks"></i> Tasks
-                                                        </a>
+                                                                                    <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
                                                     </div>
                                                 </td>
                                             </tr>

@@ -238,9 +238,7 @@
                             <a href="{{ route('coordinator.groups.create') }}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>Create Group
                             </a>
-                            <a href="{{ route('coordinator.events.index') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-calendar me-2"></i>Manage Events
-                            </a>
+
                             <a href="{{ route('coordinator.classlist.index') }}" class="btn btn-outline-success">
                                 <i class="fas fa-list me-2"></i>View Class List
                             </a>
@@ -397,105 +395,7 @@
             </div>
         </div>
 
-        <!-- Upcoming Events and Deadlines -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fas fa-calendar me-2"></i>Upcoming Events & Deadlines
-                            </h5>
-                            <a href="{{ route('coordinator.events.index') }}" class="btn btn-sm btn-outline-primary">
-                                View All
-                            </a>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        @if((isset($events) && $events->count() > 0) || (isset($upcomingDeadlines) && $upcomingDeadlines->count() > 0))
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Event/Deadline</th>
-                                            <th>Date</th>
-                                            <th>Type</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($events as $event)
-                                            <tr>
-                                                <td>
-                                                    <div class="fw-semibold">{{ $event->title }}</div>
-                                                    <small class="text-muted">Event</small>
-                                                </td>
-                                                <td>
-                                                    <span class="text-primary">
-                                                        {{ $event->date ? \Carbon\Carbon::parse($event->date)->format('M d, Y') : 'N/A' }}
-                                                        @if($event->time)
-                                                            at {{ \Carbon\Carbon::parse($event->time)->format('h:i A') }}
-                                                        @endif
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-info">Event</span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-success">Scheduled</span>
-                                                </td>
-                                                <td>
-                                                    <a href="{{ route('events.show', $event->id) }}" class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-eye"></i> View
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                        @foreach($upcomingDeadlines as $deadline)
-                                            <tr>
-                                                <td>
-                                                    <div class="fw-semibold">{{ $deadline->title }}</div>
-                                                    <small class="text-muted">{{ $deadline->description }}</small>
-                                                </td>
-                                                <td>
-                                                    <span class="text-{{ $deadline->is_overdue ? 'danger' : 'primary' }}">
-                                                        {{ $deadline->due_date->format('M d, Y') }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-warning">Deadline</span>
-                                                </td>
-                                                <td>
-                                                    @if($deadline->is_overdue)
-                                                        <span class="badge bg-danger">Overdue</span>
-                                                    @elseif($deadline->is_due_soon)
-                                                        <span class="badge bg-warning">Due Soon</span>
-                                                    @else
-                                                        <span class="badge bg-success">On Track</span>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-eye"></i> View
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <div class="text-center py-4">
-                                <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
-                                <h6 class="text-muted">No upcoming events or deadlines</h6>
-                                <p class="text-muted small">Events and deadlines will appear here when scheduled.</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
+
     </div>
 </div>
 @endsection

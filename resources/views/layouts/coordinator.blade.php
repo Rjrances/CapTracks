@@ -36,7 +36,7 @@
                         <div class="dropdown-menu dropdown-menu-end" style="width: 350px; max-height: 400px; overflow-y: auto;">
                             <div class="dropdown-header d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Notifications</h6>
-                                <a href="#" class="text-decoration-none small">Mark all read</a>
+                                <a href="#" class="text-decoration-none small" onclick="markAllNotificationsAsRead()">Mark all read</a>
                             </div>
                             <div class="dropdown-divider"></div>
                             
@@ -137,6 +137,40 @@
             }
         })
         .catch(error => console.error('Error:', error));
+    }
+
+    function markAllNotificationsAsRead() {
+        fetch('{{ route("notifications.mark-all-read") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hide the notification badge
+                const badge = document.querySelector('.badge');
+                if (badge) {
+                    badge.style.display = 'none';
+                }
+                
+                // Remove background highlighting from unread notifications
+                document.querySelectorAll('.dropdown-item.bg-light').forEach(item => {
+                    item.classList.remove('bg-light');
+                });
+                
+                // Refresh the page to show updated notification count
+                location.reload();
+            } else {
+                alert('Error marking notifications as read: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error marking notifications as read');
+        });
     }
     </script>
 </body>

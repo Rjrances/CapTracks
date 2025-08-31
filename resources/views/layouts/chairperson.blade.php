@@ -5,6 +5,7 @@
     <title>Chairperson Dashboard - CapTrack</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    @stack('styles')
 </head>
 <body>
 
@@ -42,10 +43,7 @@
                         <div class="dropdown-menu dropdown-menu-end" style="width: 350px; max-height: 400px; overflow-y: auto;">
                             <div class="dropdown-header d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Notifications</h6>
-                                <form method="POST" action="{{ route('notifications.mark-all-read') }}" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-link text-decoration-none small p-0 border-0 bg-transparent">Mark all read</button>
-                                </form>
+                                <a href="#" class="text-decoration-none small" onclick="markAllNotificationsAsRead()">Mark all read</a>
                             </div>
                             <div class="dropdown-divider"></div>
                             
@@ -137,6 +135,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    @stack('scripts')
+    
     <script>
     function markNotificationAsRead(notificationId) {
         // Mark notification as read via AJAX
@@ -172,53 +172,39 @@
         }
     }
 
-    // Add event listener for mark all read form submission
-    document.addEventListener('DOMContentLoaded', function() {
-        const markAllReadForm = document.querySelector('form[action*="mark-all-read"]');
-        if (markAllReadForm) {
-            markAllReadForm.addEventListener('submit', function(e) {
-                e.preventDefault();
+    function markAllNotificationsAsRead() {
+        fetch('{{ route("notifications.mark-all-read") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hide the notification badge
+                const badge = document.querySelector('.badge');
+                if (badge) {
+                    badge.style.display = 'none';
+                }
                 
-                // Show loading state
-                const button = this.querySelector('button');
-                const originalText = button.textContent;
-                button.textContent = 'Marking...';
-                button.disabled = true;
-
-                // Submit the form
-                fetch(this.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                    },
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Hide notification badge
-                        const badge = document.querySelector('.badge');
-                        if (badge) {
-                            badge.style.display = 'none';
-                        }
-                        // Reload page to show updated notifications
-                        location.reload();
-                    } else {
-                        alert('Error marking notifications as read: ' + (data.message || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error marking notifications as read. Please try again.');
-                })
-                .finally(() => {
-                    // Reset button state
-                    button.textContent = originalText;
-                    button.disabled = false;
+                // Remove background highlighting from unread notifications
+                document.querySelectorAll('.dropdown-item.bg-light').forEach(item => {
+                    item.classList.remove('bg-light');
                 });
-            });
-        }
-    });
+                
+                // Refresh the page to show updated notification count
+                location.reload();
+            } else {
+                alert('Error marking notifications as read: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error marking notifications as read');
+        });
+    }
     </script>
 </body>
 </html>

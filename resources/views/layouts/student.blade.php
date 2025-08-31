@@ -41,10 +41,7 @@
                         <div class="dropdown-menu dropdown-menu-end" style="width: 350px; max-height: 400px; overflow-y: auto;">
                             <div class="dropdown-header d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Notifications</h6>
-                                <form method="POST" action="{{ route('notifications.mark-all-read') }}" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-link text-decoration-none small p-0 border-0 bg-transparent">Mark all read</button>
-                                </form>
+                                <a href="#" class="text-decoration-none small" onclick="markAllNotificationsAsRead()">Mark all read</a>
                             </div>
                             <div class="dropdown-divider"></div>
                             
@@ -65,21 +62,20 @@
                             
                             @if($recentNotifications->count() > 0)
                                 @foreach($recentNotifications as $notification)
-                                    <form method="POST" action="{{ route('notifications.mark-read', $notification) }}" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-link dropdown-item py-2 {{ $notification->is_read ? '' : 'bg-light' }} p-0 border-0 bg-transparent text-start w-100">
-                                            <div class="d-flex align-items-start">
-                                                <div class="me-2">
-                                                    <i class="fas fa-{{ $notification->icon ?? 'bell' }} text-primary"></i>
-                                                </div>
-                                                <div class="flex-grow-1">
-                                                    <div class="fw-semibold">{{ $notification->title }}</div>
-                                                    <small class="text-muted">{{ Str::limit($notification->description, 60) }}</small>
-                                                    <br><small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
-                                                </div>
+                                    <a class="dropdown-item py-2 {{ $notification->is_read ? '' : 'bg-light' }}" 
+                                       href="{{ $notification->redirect_url ?? '#' }}" 
+                                       onclick="markNotificationAsRead({{ $notification->id }})">
+                                        <div class="d-flex align-items-start">
+                                            <div class="me-2">
+                                                <i class="fas fa-{{ $notification->icon ?? 'bell' }} text-primary"></i>
                                             </div>
-                                        </button>
-                                    </form>
+                                            <div class="flex-grow-1">
+                                                <div class="fw-semibold">{{ $notification->title }}</div>
+                                                <small class="text-muted">{{ Str::limit($notification->description, 60) }}</small>
+                                                <br><small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
+                                            </div>
+                                        </div>
+                                    </a>
                                 @endforeach
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-center text-primary" href="#">
@@ -136,6 +132,69 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     @stack('scripts')
+    
+    <script>
+    function markNotificationAsRead(notificationId) {
+        // Mark notification as read via AJAX
+        fetch(`/notifications/${notificationId}/mark-read`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update notification count
+                const badge = document.querySelector('.badge');
+                if (badge) {
+                    const currentCount = parseInt(badge.textContent);
+                    if (currentCount > 1) {
+                        badge.textContent = currentCount - 1;
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function markAllNotificationsAsRead() {
+        fetch('{{ route("notifications.mark-all-read") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hide the notification badge
+                const badge = document.querySelector('.badge');
+                if (badge) {
+                    badge.style.display = 'none';
+                }
+                
+                // Remove background highlighting from unread notifications
+                document.querySelectorAll('.dropdown-item.bg-light').forEach(item => {
+                    item.classList.remove('bg-light');
+                });
+                
+                // Refresh the page to show updated notification count
+                location.reload();
+            } else {
+                alert('Error marking notifications as read: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error marking notifications as read');
+        });
+    }
+    </script>
     
     <style>
     .dropdown-item {

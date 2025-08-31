@@ -230,9 +230,7 @@
                             <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-info">
                                 <i class="fas fa-calendar me-2"></i>Defense Scheduling
                             </a>
-                            <a href="{{ route('coordinator.events.index') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-calendar-alt me-2"></i>Events
-                            </a>
+
                         </div>
                     </div>
                 </div>

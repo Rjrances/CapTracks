@@ -124,6 +124,413 @@
             </div>
         </div>
 
+        <!-- 60% Defense Readiness Status -->
+        @if($group && ($defenseInfo['scheduled_defenses']->count() > 0 || $defenseInfo['pending_requests']->count() > 0))
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-graduation-cap me-2"></i>60% Defense Readiness Status
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                @if($defenseInfo['scheduled_defenses']->where('defense_type', '60_percent')->count() > 0)
+                                    @php
+                                        $defense = $defenseInfo['scheduled_defenses']->where('defense_type', '60_percent')->first();
+                                        $daysUntilDefense = $defense->start_at ? now()->diffInDays($defense->start_at, false) : null;
+                                    @endphp
+                                    <div class="d-flex align-items-center mb-2">
+                                        <h4 class="mb-0 me-3 text-success">Defense Scheduled!</h4>
+                                        <span class="badge bg-success fs-6">Ready</span>
+                                    </div>
+                                    <p class="text-muted mb-2">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        Your 60% defense is scheduled for {{ $defense->start_at ? $defense->start_at->format('M d, Y h:i A') : 'TBA' }}
+                                    </p>
+                                    @if($daysUntilDefense !== null)
+                                        @if($daysUntilDefense > 0)
+                                            <p class="text-warning mb-0">
+                                                <i class="fas fa-clock me-1"></i>
+                                                <strong>{{ $daysUntilDefense }} days</strong> until your defense
+                                            </p>
+                                        @elseif($daysUntilDefense === 0)
+                                            <p class="text-danger mb-0">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                <strong>Your defense is TODAY!</strong>
+                                            </p>
+                                        @else
+                                            <p class="text-success mb-0">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                <strong>Defense completed!</strong>
+                                            </p>
+                                        @endif
+                                    @endif
+                                @elseif($defenseInfo['pending_requests']->where('defense_type', '60_percent')->count() > 0)
+                                    <div class="d-flex align-items-center mb-2">
+                                        <h4 class="mb-0 me-3 text-warning">Defense Request Pending</h4>
+                                        <span class="badge bg-warning fs-6">Awaiting Approval</span>
+                                    </div>
+                                    <p class="text-muted mb-0">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Your 60% defense request is being reviewed by the coordinator
+                                    </p>
+                                @endif
+                            </div>
+                            <div class="col-md-4 text-end">
+                                @if($defenseInfo['scheduled_defenses']->where('defense_type', '60_percent')->count() > 0)
+                                    <a href="{{ route('student.defense-requests.index') }}" class="btn btn-success">
+                                        <i class="fas fa-eye me-2"></i>View Defense Details
+                                    </a>
+                                @elseif($defenseInfo['pending_requests']->where('defense_type', '60_percent')->count() > 0)
+                                    <a href="{{ route('student.defense-requests.index') }}" class="btn btn-warning">
+                                        <i class="fas fa-clock me-2"></i>Check Status
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- 60% Defense Requirements Checklist -->
+        @if($group)
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list-check me-2"></i>60% Defense Requirements Checklist
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="row">
+                                    @php
+                                        $requirements = [
+                                            'proposal_approved' => [
+                                                'title' => 'Proposal Approved',
+                                                'description' => 'Your project proposal has been approved by your adviser',
+                                                'icon' => 'check-circle',
+                                                'color' => 'success'
+                                            ],
+                                            'progress_report' => [
+                                                'title' => 'Progress Report',
+                                                'description' => 'Submit a detailed progress report of your project',
+                                                'icon' => 'file-alt',
+                                                'color' => 'info'
+                                            ],
+                                            'demo_ready' => [
+                                                'title' => 'Demo/Prototype Ready',
+                                                'description' => 'Have a working demo or prototype to present',
+                                                'icon' => 'laptop-code',
+                                                'color' => 'primary'
+                                            ],
+                                            'presentation_ready' => [
+                                                'title' => 'Presentation Ready',
+                                                'description' => 'Prepare your defense presentation slides',
+                                                'icon' => 'presentation',
+                                                'color' => 'warning'
+                                            ],
+                                            'defense_requested' => [
+                                                'title' => 'Defense Requested',
+                                                'description' => 'Submit a formal request for 60% defense',
+                                                'icon' => 'calendar-plus',
+                                                'color' => 'secondary'
+                                            ]
+                                        ];
+                                        
+                                        $proposalStatus = $existingProposal ?? null;
+                                        $hasProgressReport = $submissionsCount > 1;
+                                        $hasDemo = true; // This would need to be tracked in your system
+                                        $hasPresentation = true; // This would need to be tracked in your system
+                                        $defenseRequested = $defenseInfo['pending_requests']->where('defense_type', '60_percent')->count() > 0;
+                                        $defenseScheduled = $defenseInfo['scheduled_defenses']->where('defense_type', '60_percent')->count() > 0;
+                                    @endphp
+                                    
+                                    @foreach($requirements as $key => $requirement)
+                                        @php
+                                            $isCompleted = match($key) {
+                                                'proposal_approved' => $proposalStatus && $proposalStatus->status === 'approved',
+                                                'progress_report' => $hasProgressReport,
+                                                'demo_ready' => $hasDemo,
+                                                'presentation_ready' => $hasPresentation,
+                                                'defense_requested' => $defenseRequested || $defenseScheduled,
+                                                default => false
+                                            };
+                                            
+                                            $statusClass = $isCompleted ? 'success' : 'secondary';
+                                            $iconClass = $isCompleted ? 'check-circle' : 'circle';
+                                        @endphp
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <div class="d-flex align-items-start">
+                                                <div class="flex-shrink-0 me-3">
+                                                    <i class="fas fa-{{ $iconClass }} text-{{ $statusClass }} fa-lg"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1 {{ $isCompleted ? 'text-success' : 'text-muted' }}">
+                                                        {{ $requirement['title'] }}
+                                                    </h6>
+                                                    <small class="text-muted">{{ $requirement['description'] }}</small>
+                                                    @if($isCompleted)
+                                                        <br><small class="text-success"><i class="fas fa-check me-1"></i>Completed</small>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    @php
+                                        $completedCount = 0;
+                                        if($proposalStatus && $proposalStatus->status === 'approved') $completedCount++;
+                                        if($hasProgressReport) $completedCount++;
+                                        if($hasDemo) $completedCount++;
+                                        if($hasPresentation) $completedCount++;
+                                        if($defenseRequested || $defenseScheduled) $completedCount++;
+                                        $totalRequirements = 5;
+                                        $readinessPercentage = round(($completedCount / $totalRequirements) * 100);
+                                    @endphp
+                                    
+                                    <div class="mb-3">
+                                        <h3 class="text-{{ $readinessPercentage >= 80 ? 'success' : ($readinessPercentage >= 60 ? 'warning' : 'danger') }}">
+                                            {{ $readinessPercentage }}%
+                                        </h3>
+                                        <p class="text-muted mb-0">60% Defense Ready</p>
+                                    </div>
+                                    
+                                    <div class="progress mb-3" style="height: 8px;">
+                                        <div class="progress-bar bg-{{ $readinessPercentage >= 80 ? 'success' : ($readinessPercentage >= 60 ? 'warning' : 'danger') }}" 
+                                             style="width: {{ $readinessPercentage }}%"></div>
+                                    </div>
+                                    
+                                    @if($readinessPercentage >= 80)
+                                        <div class="alert alert-success small">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            <strong>Ready for Defense!</strong><br>
+                                            You have completed all major requirements.
+                                        </div>
+                                    @elseif($readinessPercentage >= 60)
+                                        <div class="alert alert-warning small">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            <strong>Almost Ready!</strong><br>
+                                            Complete remaining requirements to proceed.
+                                        </div>
+                                    @else
+                                        <div class="alert alert-danger small">
+                                            <i class="fas fa-times-circle me-1"></i>
+                                            <strong>Not Ready Yet</strong><br>
+                                            Focus on completing basic requirements first.
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- 60% Defense Timeline & Deadlines -->
+        @if($group && ($defenseInfo['scheduled_defenses']->where('defense_type', '60_percent')->count() > 0 || $defenseInfo['pending_requests']->where('defense_type', '60_percent')->count() > 0))
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2"></i>60% Defense Timeline & Deadlines
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @if($defenseInfo['scheduled_defenses']->where('defense_type', '60_percent')->count() > 0)
+                                @php
+                                    $defense = $defenseInfo['scheduled_defenses']->where('defense_type', '60_percent')->first();
+                                    $defenseDate = $defense->start_at;
+                                    $daysUntilDefense = $defenseDate ? now()->diffInDays($defenseDate, false) : null;
+                                    $weeksUntilDefense = $defenseDate ? now()->diffInWeeks($defenseDate, false) : null;
+                                @endphp
+                                
+                                <div class="col-md-8">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-primary mb-2">
+                                                <i class="fas fa-calendar-check me-2"></i>Defense Date
+                                            </h6>
+                                            <p class="mb-1">
+                                                <strong>{{ $defenseDate ? $defenseDate->format('l, F d, Y') : 'TBA' }}</strong>
+                                            </p>
+                                            <p class="mb-0 text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ $defenseDate ? $defenseDate->format('h:i A') : 'Time TBA' }}
+                                            </p>
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <h6 class="text-warning mb-2">
+                                                <i class="fas fa-hourglass-half me-2"></i>Time Remaining
+                                            </h6>
+                                            @if($daysUntilDefense !== null)
+                                                @if($daysUntilDefense > 0)
+                                                    <p class="mb-1">
+                                                        <strong class="text-{{ $daysUntilDefense <= 7 ? 'danger' : ($daysUntilDefense <= 14 ? 'warning' : 'success') }}">
+                                                            {{ $daysUntilDefense }} days
+                                                        </strong>
+                                                    </p>
+                                                    <p class="mb-0 text-muted">
+                                                        {{ $weeksUntilDefense }} weeks remaining
+                                                    </p>
+                                                @elseif($daysUntilDefense === 0)
+                                                    <p class="mb-0 text-danger">
+                                                        <strong><i class="fas fa-exclamation-triangle me-1"></i>DEFENSE IS TODAY!</strong>
+                                                    </p>
+                                                @else
+                                                    <p class="mb-0 text-success">
+                                                        <strong><i class="fas fa-check-circle me-1"></i>Defense Completed</strong>
+                                                    </p>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Critical Deadlines -->
+                                    @if($daysUntilDefense > 0)
+                                        <div class="mt-3">
+                                            <h6 class="text-danger mb-2">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>Critical Deadlines
+                                            </h6>
+                                            <div class="row">
+                                                @php
+                                                    $criticalDeadlines = [];
+                                                    if($daysUntilDefense <= 7) {
+                                                        $criticalDeadlines[] = [
+                                                            'title' => 'Final Presentation Rehearsal',
+                                                            'deadline' => 'Today',
+                                                            'status' => 'urgent',
+                                                            'icon' => 'presentation'
+                                                        ];
+                                                    }
+                                                    if($daysUntilDefense <= 14) {
+                                                        $criticalDeadlines[] = [
+                                                            'title' => 'Demo Testing',
+                                                            'deadline' => 'This Week',
+                                                            'status' => 'warning',
+                                                            'icon' => 'laptop-code'
+                                                        ];
+                                                    }
+                                                    if($daysUntilDefense <= 21) {
+                                                        $criticalDeadlines[] = [
+                                                            'title' => 'Progress Report Submission',
+                                                            'deadline' => 'Next Week',
+                                                            'status' => 'info',
+                                                            'icon' => 'file-alt'
+                                                        ];
+                                                    }
+                                                @endphp
+                                                
+                                                @foreach($criticalDeadlines as $deadline)
+                                                    <div class="col-md-4 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="me-2">
+                                                                <i class="fas fa-{{ $deadline['icon'] }} text-{{ $deadline['status'] === 'urgent' ? 'danger' : ($deadline['status'] === 'warning' ? 'warning' : 'info') }}"></i>
+                                                            </div>
+                                                            <div>
+                                                                <small class="fw-semibold">{{ $deadline['title'] }}</small><br>
+                                                                <small class="text-muted">{{ $deadline['deadline'] }}</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        @if($daysUntilDefense > 0)
+                                            <div class="mb-3">
+                                                <h2 class="text-{{ $daysUntilDefense <= 7 ? 'danger' : ($daysUntilDefense <= 14 ? 'warning' : 'success') }}">
+                                                    {{ $daysUntilDefense }}
+                                                </h2>
+                                                <p class="text-muted mb-0">Days Until Defense</p>
+                                            </div>
+                                            
+                                            @if($daysUntilDefense <= 7)
+                                                <div class="alert alert-danger">
+                                                    <i class="fas fa-fire me-2"></i>
+                                                    <strong>Final Week!</strong><br>
+                                                    <small>Focus on presentation and demo preparation.</small>
+                                                </div>
+                                            @elseif($daysUntilDefense <= 14)
+                                                <div class="alert alert-warning">
+                                                    <i class="fas fa-clock me-2"></i>
+                                                    <strong>Two Weeks Left!</strong><br>
+                                                    <small>Complete all deliverables and start rehearsing.</small>
+                                                </div>
+                                            @else
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-calendar me-2"></i>
+                                                    <strong>On Track!</strong><br>
+                                                    <small>Continue working on your project deliverables.</small>
+                                                </div>
+                                            @endif
+                                        @endif
+                                        
+                                        <a href="{{ route('student.defense-requests.index') }}" class="btn btn-primary">
+                                            <i class="fas fa-eye me-2"></i>View Defense Details
+                                        </a>
+                                    </div>
+                                </div>
+                            @elseif($defenseInfo['pending_requests']->where('defense_type', '60_percent')->count() > 0)
+                                <div class="col-12 text-center">
+                                    <div class="py-4">
+                                        <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                                        <h5 class="text-warning">Defense Request Pending</h5>
+                                        <p class="text-muted mb-3">Your 60% defense request is being reviewed by the coordinator.</p>
+                                        <p class="text-muted small mb-3">While waiting for approval, focus on:</p>
+                                        <div class="row justify-content-center">
+                                            <div class="col-md-3">
+                                                <div class="text-center">
+                                                    <i class="fas fa-file-alt text-info mb-2"></i>
+                                                    <p class="small text-muted">Progress Report</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="text-center">
+                                                    <i class="fas fa-laptop-code text-primary mb-2"></i>
+                                                    <p class="small text-muted">Demo/Prototype</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="text-center">
+                                                    <i class="fas fa-presentation text-warning mb-2"></i>
+                                                    <p class="small text-muted">Presentation</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <a href="{{ route('student.defense-requests.index') }}" class="btn btn-warning">
+                                            <i class="fas fa-clock me-2"></i>Check Request Status
+                                        </a>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Adviser & Defense Information -->
         @if($group)
         <div class="row mb-4">

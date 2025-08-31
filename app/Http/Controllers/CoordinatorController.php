@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Event;
+
 use App\Models\Notification;
 use App\Models\AcademicTerm;
 use App\Models\Student;
@@ -24,8 +24,7 @@ class CoordinatorController extends Controller
         // Get current active term
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         
-        // Get events
-        $events = Event::whereDate('date', '>=', now())->orderBy('date')->get();
+
         
         // Get notifications
         $notifications = Notification::latest()->take(5)->get();
@@ -85,7 +84,6 @@ class CoordinatorController extends Controller
 
         return view('coordinator.dashboard', compact(
             'activeTerm',
-            'events',
             'notifications',
             'stats',
             'recentActivities',
@@ -250,11 +248,7 @@ class CoordinatorController extends Controller
 
 
 
-    public function events()
-    {
-        $events = Event::orderBy('date', 'desc')->get();
-        return view('coordinator.events.index', compact('events'));
-    }
+
 
     public function defenseScheduling(Request $request)
     {

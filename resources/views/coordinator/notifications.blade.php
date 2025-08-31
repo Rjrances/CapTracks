@@ -251,28 +251,19 @@ function toggleReadStatus(notificationId) {
 // Mark all as read
 function markAllAsRead() {
     if (confirm('Mark all notifications as read?')) {
-        const unreadIds = Array.from(document.querySelectorAll('.notification-checkbox:not(:checked)'))
-            .map(cb => cb.value);
-        
-        if (unreadIds.length === 0) {
-            alert('No unread notifications to mark as read');
-            return;
-        }
-
         fetch('{{ route("notifications.mark-all-read") }}', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ notification_ids: unreadIds }),
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 location.reload();
             } else {
-                alert('Error marking notifications as read');
+                alert('Error marking notifications as read: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
