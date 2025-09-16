@@ -318,7 +318,7 @@ class ChairpersonController extends Controller
                         $q->where('academic_term_id', $activeTerm->id);
                     });
             })
-            ->orderBy('name')
+            ->orderBy('school_id')
             ->get();
             
         return view('chairperson.teachers.index', compact('teachers', 'activeTerm', 'showAllTerms'));
