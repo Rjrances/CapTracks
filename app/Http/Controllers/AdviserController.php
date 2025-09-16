@@ -47,10 +47,17 @@ class AdviserController extends Controller
             return $group;
         });
 
+        // Get groups where user is panel member
+        $panelGroups = Group::with(['academicTerm', 'defenseSchedules.defensePanels'])
+            ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
+                $query->where('faculty_id', $user->id);
+            })
+            ->get();
+
         // Calculate summary statistics
         $summaryStats = [
             'total_groups' => $adviserGroups->count(),
-            'total_advisees' => $adviserGroups->sum(function($group) { return $group->members->count(); }),
+            'panel_groups' => $panelGroups->count(),
             'groups_ready_for_defense' => $adviserGroups->filter(function($group) { return $group->progress_percentage >= 60; })->count(),
             'groups_needing_attention' => $adviserGroups->filter(function($group) { return $group->progress_percentage < 40; })->count(),
             'overdue_tasks_total' => $adviserGroups->sum('overdue_tasks'),
@@ -168,6 +175,63 @@ class AdviserController extends Controller
         return $activities;
     }
 
+    // ✅ NEW: Get overdue tasks count for a group
+    private function getOverdueTasks($group)
+    {
+        $overdueCount = 0;
+        
+        // Count overdue milestone tasks
+        foreach ($group->groupMilestoneTasks as $task) {
+            if ($task->milestoneTask->due_date && 
+                now()->isAfter($task->milestoneTask->due_date) && 
+                $task->status !== 'completed') {
+                $overdueCount++;
+            }
+        }
+        
+        return $overdueCount;
+    }
+
+    // ✅ NEW: Get recent activities for a specific group
+    private function getGroupRecentActivities($group)
+    {
+        $activities = collect();
+        
+        // Add recent submissions
+        $recentSubmissions = ProjectSubmission::whereHas('student', function($query) use ($group) {
+            $query->whereIn('id', $group->members->pluck('id'));
+        })->latest()->take(3)->get();
+        
+        foreach ($recentSubmissions as $submission) {
+            $activities->push((object)[
+                'title' => 'New submission from ' . $submission->student->name,
+                'description' => $submission->title,
+                'icon' => 'file-alt',
+                'created_at' => $submission->created_at,
+                'type' => 'submission'
+            ]);
+        }
+        
+        // Add milestone completions
+        $recentMilestones = $group->groupMilestones()
+            ->where('status', 'completed')
+            ->latest()
+            ->take(2)
+            ->get();
+            
+        foreach ($recentMilestones as $milestone) {
+            $activities->push((object)[
+                'title' => 'Milestone completed: ' . $milestone->milestoneTemplate->name,
+                'description' => 'Progress: ' . $milestone->progress_percentage . '%',
+                'icon' => 'check-circle',
+                'created_at' => $milestone->updated_at,
+                'type' => 'milestone'
+            ]);
+        }
+        
+        return $activities->sortByDesc('created_at')->take(5);
+    }
+
     public function invitations()
     {
         $user = Auth::user();
@@ -240,11 +304,57 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
         
-        $groups = Group::with(['members', 'adviserInvitations'])
-            ->where('adviser_id', $user->id)
-            ->paginate(10);
+        // Get groups with comprehensive data for detailed workspace
+        $groupsQuery = Group::with([
+            'members', 
+            'adviserInvitations', 
+            'groupMilestones.milestoneTemplate',
+            'groupMilestoneTasks.milestoneTask',
+            'academicTerm',
+            'offering',
+            'defenseSchedules'
+        ])
+        ->where('adviser_id', $user->id);
 
-        return view('adviser.groups', compact('groups'));
+        // Get all groups for statistics calculation
+        $allGroups = $groupsQuery->get()->map(function ($group) {
+            // Calculate comprehensive progress for each group
+            $group->progress_percentage = $this->calculateGroupProgress($group);
+            $group->submissions_count = $this->getSubmissionsCount($group);
+            $group->milestone_progress = $this->getMilestoneProgress($group);
+            $group->next_milestone = $this->getNextMilestone($group);
+            $group->overdue_tasks = $this->getOverdueTasks($group);
+            $group->recent_activities = $this->getGroupRecentActivities($group);
+            return $group;
+        });
+
+        // Get panel groups count for statistics
+        $panelGroupsCount = Group::whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
+            $query->where('faculty_id', $user->id);
+        })->count();
+
+        // Calculate simplified statistics for workspace
+        $workspaceStats = [
+            'total_adviser_groups' => $allGroups->count(),
+            'total_panel_groups' => $panelGroupsCount,
+            'average_progress' => $allGroups->avg('progress_percentage') ?? 0,
+        ];
+
+        // Get paginated groups for display
+        $groups = $groupsQuery->paginate(10);
+        
+        // Apply the same transformations to paginated groups
+        $groups->getCollection()->transform(function ($group) {
+            $group->progress_percentage = $this->calculateGroupProgress($group);
+            $group->submissions_count = $this->getSubmissionsCount($group);
+            $group->milestone_progress = $this->getMilestoneProgress($group);
+            $group->next_milestone = $this->getNextMilestone($group);
+            $group->overdue_tasks = $this->getOverdueTasks($group);
+            $group->recent_activities = $this->getGroupRecentActivities($group);
+            return $group;
+        });
+
+        return view('adviser.groups', compact('groups', 'workspaceStats'));
     }
 
     public function groupDetails(Group $group)
@@ -256,6 +366,155 @@ class AdviserController extends Controller
 
         return view('adviser.group-details', compact('group'));
     }
+
+    public function allGroups()
+    {
+        $user = Auth::user();
+        
+        // Get groups where user is adviser
+        $adviserGroups = Group::with([
+            'members', 
+            'members.submissions',
+            'adviserInvitations', 
+            'groupMilestones.milestoneTemplate',
+            'groupMilestoneTasks.milestoneTask',
+            'academicTerm',
+            'offering',
+            'defenseSchedules'
+        ])
+        ->where('adviser_id', $user->id)
+        ->get()
+        ->map(function ($group) {
+            $group->role_type = 'adviser';
+            $group->progress_percentage = $this->calculateGroupProgress($group);
+            $group->submissions_count = $this->getSubmissionsCount($group);
+            $group->milestone_progress = $this->getMilestoneProgress($group);
+            $group->next_milestone = $this->getNextMilestone($group);
+            $group->overdue_tasks = $this->getOverdueTasks($group);
+            $group->recent_activities = $this->getGroupRecentActivities($group);
+            return $group;
+        });
+        
+        // Get groups where user is panel member
+        $panelGroups = Group::with([
+            'members', 
+            'members.submissions',
+            'academicTerm', 
+            'defenseSchedules.defensePanels'
+        ])
+        ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
+            $query->where('faculty_id', $user->id);
+        })
+        ->get()
+        ->map(function ($group) use ($user) {
+            $group->role_type = 'panel';
+            $panelAssignment = $group->defenseSchedules->first()
+                ->defensePanels->where('faculty_id', $user->id)->first();
+            $group->panel_role = $panelAssignment->role ?? 'member';
+            $group->defense_schedule = $group->defenseSchedules->first();
+            $group->recent_activities = $this->getGroupRecentActivities($group);
+            return $group;
+        });
+        
+        // Combine and sort by creation date
+        $allGroups = $adviserGroups->concat($panelGroups)->sortByDesc('created_at');
+        
+        // Get all submissions from these groups
+        $memberIds = collect();
+        foreach ($allGroups as $group) {
+            $memberIds = $memberIds->merge($group->members->pluck('id'));
+        }
+        
+        $submissions = ProjectSubmission::with(['student'])
+            ->whereIn('student_id', $memberIds)
+            ->orderBy('submitted_at', 'desc')
+            ->get();
+        
+        // Group submissions by group
+        $submissionsByGroup = $allGroups->mapWithKeys(function ($group) {
+            $groupSubmissions = $group->members->flatMap(function ($member) {
+                return $member->submissions ?? collect();
+            });
+            
+            return [$group->id => [
+                'group' => $group,
+                'submissions' => $groupSubmissions->sortByDesc('submitted_at')->take(5), // Show only latest 5
+                'user_role' => $group->role_type
+            ]];
+        });
+        
+        // Calculate summary statistics
+        $summaryStats = [
+            'total_groups' => $allGroups->count(),
+            'adviser_groups' => $adviserGroups->count(),
+            'panel_groups' => $panelGroups->count(),
+            'total_submissions' => $submissions->count(),
+            'pending_submissions' => $submissions->where('status', 'pending')->count(),
+        ];
+
+        return view('adviser.all-groups', compact('allGroups', 'adviserGroups', 'panelGroups', 'submissions', 'submissionsByGroup', 'summaryStats'));
+    }
+
+    public function panelSubmissions()
+    {
+        $user = Auth::user();
+        
+        // Get only groups where user is panel member
+        $panelGroups = Group::with([
+            'members', 
+            'members.submissions',
+            'academicTerm', 
+            'defenseSchedules.defensePanels'
+        ])
+        ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
+            $query->where('faculty_id', $user->id);
+        })
+        ->get()
+        ->map(function ($group) use ($user) {
+            $group->role_type = 'panel';
+            $panelAssignment = $group->defenseSchedules->first()
+                ->defensePanels->where('faculty_id', $user->id)->first();
+            $group->panel_role = $panelAssignment->role ?? 'member';
+            $group->defense_schedule = $group->defenseSchedules->first();
+            return $group;
+        });
+
+        // Get all submissions from panel groups only
+        $memberIds = collect();
+        foreach ($panelGroups as $group) {
+            $memberIds = $memberIds->merge($group->members->pluck('id'));
+        }
+        
+        $submissions = ProjectSubmission::with(['student'])
+            ->whereIn('student_id', $memberIds)
+            ->orderBy('submitted_at', 'desc')
+            ->get();
+        
+        // Group submissions by group
+        $submissionsByGroup = $panelGroups->mapWithKeys(function ($group) {
+            $groupSubmissions = $group->members->flatMap(function ($member) {
+                return $member->submissions ?? collect();
+            });
+            
+            return [$group->id => [
+                'group' => $group,
+                'submissions' => $groupSubmissions->sortByDesc('submitted_at'),
+                'user_role' => 'panel'
+            ]];
+        });
+        
+        // Calculate statistics for panel groups only
+        $summaryStats = [
+            'total_groups' => $panelGroups->count(),
+            'total_submissions' => $submissions->count(),
+            'pending_submissions' => $submissions->where('status', 'pending')->count(),
+        ];
+
+        return view('adviser.project.index', compact('panelGroups', 'submissions', 'submissionsByGroup', 'summaryStats'))
+            ->with('allGroups', $panelGroups)
+            ->with('adviserGroups', collect()); // Empty collection since this is panel-only view
+    }
+
 
 
 

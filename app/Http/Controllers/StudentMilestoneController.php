@@ -62,6 +62,92 @@ class StudentMilestoneController extends Controller
         ));
     }
 
+    public function create()
+    {
+        $student = $this->getAuthenticatedStudent();
+        
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+
+        $group = $student->groups()->first();
+        
+        if (!$group) {
+            return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
+        }
+
+        // Check if student is group leader
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        if (!$isGroupLeader) {
+            return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can create milestones.']);
+        }
+
+        // Get all available milestone templates
+        $milestoneTemplates = MilestoneTemplate::with('tasks')->get();
+
+        return view('student.milestones.create', compact(
+            'student',
+            'group',
+            'milestoneTemplates'
+        ));
+    }
+
+    public function store(Request $request)
+    {
+        $student = $this->getAuthenticatedStudent();
+        
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+
+        $group = $student->groups()->first();
+        
+        if (!$group) {
+            return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
+        }
+
+        // Check if student is group leader
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        if (!$isGroupLeader) {
+            return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can create milestones.']);
+        }
+
+        $request->validate([
+            'milestone_template_id' => 'required|exists:milestone_templates,id',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'due_date' => 'nullable|date|after:today',
+        ]);
+
+        // Get the milestone template
+        $milestoneTemplate = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
+
+        // Create the group milestone
+        $groupMilestone = GroupMilestone::create([
+            'group_id' => $group->id,
+            'milestone_template_id' => $milestoneTemplate->id,
+            'title' => $request->title,
+            'description' => $request->description,
+            'due_date' => $request->due_date,
+            'progress_percentage' => 0,
+        ]);
+
+        // Create group milestone tasks from template
+        foreach ($milestoneTemplate->tasks as $templateTask) {
+            GroupMilestoneTask::create([
+                'group_milestone_id' => $groupMilestone->id,
+                'milestone_task_id' => $templateTask->id,
+                'title' => $templateTask->title,
+                'description' => $templateTask->description,
+                'status' => 'pending',
+                'is_completed' => false,
+            ]);
+        }
+
+        return redirect()->route('student.milestones')
+            ->with('success', 'Milestone created successfully!');
+    }
+
     public function show($milestoneId)
     {
         $student = $this->getAuthenticatedStudent();
@@ -99,6 +185,117 @@ class StudentMilestoneController extends Controller
             'progress',
             'isGroupLeader'
         ));
+    }
+
+    public function edit($milestoneId)
+    {
+        $student = $this->getAuthenticatedStudent();
+        
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+
+        $group = $student->groups()->first();
+        
+        if (!$group) {
+            return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
+        }
+
+        // Check if student is group leader
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        if (!$isGroupLeader) {
+            return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can edit milestones.']);
+        }
+
+        $groupMilestone = $group->groupMilestones()->with('milestoneTemplate')->find($milestoneId);
+        
+        if (!$groupMilestone) {
+            return redirect()->route('student.milestones')->withErrors(['milestone' => 'Milestone not found.']);
+        }
+
+        return view('student.milestones.edit', compact(
+            'student',
+            'group',
+            'groupMilestone'
+        ));
+    }
+
+    public function update(Request $request, $milestoneId)
+    {
+        $student = $this->getAuthenticatedStudent();
+        
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+
+        $group = $student->groups()->first();
+        
+        if (!$group) {
+            return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
+        }
+
+        // Check if student is group leader
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        if (!$isGroupLeader) {
+            return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can edit milestones.']);
+        }
+
+        $groupMilestone = $group->groupMilestones()->find($milestoneId);
+        
+        if (!$groupMilestone) {
+            return redirect()->route('student.milestones')->withErrors(['milestone' => 'Milestone not found.']);
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'due_date' => 'nullable|date|after:today',
+        ]);
+
+        $groupMilestone->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'due_date' => $request->due_date,
+        ]);
+
+        return redirect()->route('student.milestones')
+            ->with('success', 'Milestone updated successfully!');
+    }
+
+    public function destroy($milestoneId)
+    {
+        $student = $this->getAuthenticatedStudent();
+        
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+
+        $group = $student->groups()->first();
+        
+        if (!$group) {
+            return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
+        }
+
+        // Check if student is group leader
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        if (!$isGroupLeader) {
+            return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can delete milestones.']);
+        }
+
+        $groupMilestone = $group->groupMilestones()->find($milestoneId);
+        
+        if (!$groupMilestone) {
+            return redirect()->route('student.milestones')->withErrors(['milestone' => 'Milestone not found.']);
+        }
+
+        // Delete associated tasks first
+        $groupMilestone->groupMilestoneTasks()->delete();
+        
+        // Delete the milestone
+        $groupMilestone->delete();
+
+        return redirect()->route('student.milestones')
+            ->with('success', 'Milestone deleted successfully!');
     }
 
     // ✅ NEW: Move task between status columns

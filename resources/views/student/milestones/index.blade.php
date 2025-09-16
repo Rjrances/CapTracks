@@ -10,9 +10,16 @@
             <h1 class="h2 mb-1">My Milestones</h1>
             <p class="text-muted mb-0">Track your capstone project progress with Kanban boards</p>
         </div>
-        <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-        </a>
+        <div class="d-flex gap-2">
+            @if($group && $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists())
+                <a href="{{ route('student.milestones.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Create Milestone
+                </a>
+            @endif
+            <a href="{{ route('student.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
     </div>
 
     @if (session('success'))
@@ -267,9 +274,23 @@
                                             @endphp
                                             <span class="badge bg-{{ $statusClass }}">{{ $statusText }}</span>
                                             <br>
-                                            <a href="{{ route('student.milestones.show', $groupMilestone->id) }}" class="btn btn-sm btn-outline-primary mt-2">
-                                                <i class="fas fa-columns me-1"></i>Kanban Board
-                                            </a>
+                                            <div class="btn-group mt-2" role="group">
+                                                <a href="{{ route('student.milestones.show', $groupMilestone->id) }}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-columns me-1"></i>Kanban
+                                                </a>
+                                                @if($group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists())
+                                                    <a href="{{ route('student.milestones.edit', $groupMilestone->id) }}" class="btn btn-sm btn-outline-warning">
+                                                        <i class="fas fa-edit me-1"></i>Edit
+                                                    </a>
+                                                    <form action="{{ route('student.milestones.destroy', $groupMilestone->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this milestone? This action cannot be undone.')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="fas fa-trash me-1"></i>Delete
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

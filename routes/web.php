@@ -89,6 +89,19 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 
     // Calendar
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'coordinatorCalendar'])->name('calendar');
+    
+    // Milestone Templates Management
+    Route::resource('milestones', MilestoneTemplateController::class);
+    Route::patch('milestones/{milestone}/status', [MilestoneTemplateController::class, 'updateStatus'])->name('milestones.updateStatus');
+    
+    // Milestone Tasks Management
+    Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () {
+        Route::get('tasks', [MilestoneTaskController::class, 'index'])->name('tasks.index');
+        Route::post('tasks', [MilestoneTaskController::class, 'store'])->name('tasks.store');
+        Route::get('tasks/{task}/edit', [MilestoneTaskController::class, 'edit'])->name('tasks.edit');
+        Route::put('tasks/{task}', [MilestoneTaskController::class, 'update'])->name('tasks.update');
+        Route::delete('tasks/{task}', [MilestoneTaskController::class, 'destroy'])->name('tasks.destroy');
+    });
 });
 
 
@@ -190,7 +203,12 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::get('/proposal/{id}/edit', [\App\Http\Controllers\StudentProposalController::class, 'edit'])->name('proposal.edit');
     Route::put('/proposal/{id}', [\App\Http\Controllers\StudentProposalController::class, 'update'])->name('proposal.update');
     Route::get('/milestones', [\App\Http\Controllers\StudentMilestoneController::class, 'index'])->name('milestones');
+    Route::get('/milestones/create', [\App\Http\Controllers\StudentMilestoneController::class, 'create'])->name('milestones.create');
+    Route::post('/milestones', [\App\Http\Controllers\StudentMilestoneController::class, 'store'])->name('milestones.store');
     Route::get('/milestones/{milestone}', [\App\Http\Controllers\StudentMilestoneController::class, 'show'])->name('milestones.show');
+    Route::get('/milestones/{milestone}/edit', [\App\Http\Controllers\StudentMilestoneController::class, 'edit'])->name('milestones.edit');
+    Route::put('/milestones/{milestone}', [\App\Http\Controllers\StudentMilestoneController::class, 'update'])->name('milestones.update');
+    Route::delete('/milestones/{milestone}', [\App\Http\Controllers\StudentMilestoneController::class, 'destroy'])->name('milestones.destroy');
     Route::patch('/milestones/{milestone}/update-tasks', [\App\Http\Controllers\StudentMilestoneController::class, 'updateMultipleTasks'])->name('milestones.update-tasks');
     Route::patch('/task/{groupMilestoneTask}/assign', [\App\Http\Controllers\StudentMilestoneController::class, 'assignTask'])->name('milestones.assign-task');
     Route::delete('/task/{groupMilestoneTask}/unassign', [\App\Http\Controllers\StudentMilestoneController::class, 'unassignTask'])->name('milestones.unassign-task');
@@ -220,6 +238,8 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::get('/invitations', [\App\Http\Controllers\AdviserController::class, 'invitations'])->name('invitations');
     Route::post('/invitations/{invitation}/respond', [\App\Http\Controllers\AdviserController::class, 'respondToInvitation'])->name('invitations.respond');
     Route::get('/groups', [\App\Http\Controllers\AdviserController::class, 'myGroups'])->name('groups');
+    Route::get('/all-groups', [\App\Http\Controllers\AdviserController::class, 'allGroups'])->name('all-groups');
+    Route::get('/panel-submissions', [\App\Http\Controllers\AdviserController::class, 'panelSubmissions'])->name('panel-submissions');
     Route::get('/groups/{group}', [\App\Http\Controllers\AdviserController::class, 'groupDetails'])->name('groups.details');
     
 

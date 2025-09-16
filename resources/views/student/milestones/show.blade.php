@@ -203,13 +203,17 @@
 
 <!-- Task Assignment Modals -->
 @if($isGroupLeader)
-    @foreach($tasks['pending'] as $task)
-        @if(!$task->assigned_to)
+    @php
+        $allTasks = collect($tasks['pending'])->concat($tasks['doing'])->concat($tasks['done']);
+    @endphp
+    @foreach($allTasks as $task)
         <div class="modal fade" id="assignTaskModal{{ $task->id }}" tabindex="-1" aria-labelledby="assignTaskModalLabel{{ $task->id }}" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="assignTaskModalLabel{{ $task->id }}">Assign Task</h5>
+                        <h5 class="modal-title" id="assignTaskModalLabel{{ $task->id }}">
+                            {{ $task->assigned_to ? 'Reassign Task' : 'Assign Task' }}
+                        </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form action="{{ route('student.milestones.assign-task', $task->id) }}" method="POST">
@@ -219,25 +223,38 @@
                             <h6>{{ $task->milestoneTask->name }}</h6>
                             <p class="text-muted">{{ $task->milestoneTask->description }}</p>
                             
+                            @if($task->assigned_to)
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Currently assigned to: <strong>{{ $task->assignedStudent->name ?? 'Unknown' }}</strong>
+                                </div>
+                            @endif
+                            
                             <div class="mb-3">
-                                <label for="assigned_to_{{ $task->id }}" class="form-label">Assign to:</label>
+                                <label for="assigned_to_{{ $task->id }}" class="form-label">
+                                    {{ $task->assigned_to ? 'Reassign to:' : 'Assign to:' }}
+                                </label>
                                 <select class="form-select" id="assigned_to_{{ $task->id }}" name="assigned_to" required>
                                     <option value="">Select a group member</option>
                                     @foreach($group->members as $member)
-                                        <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->pivot->role }})</option>
+                                        <option value="{{ $member->id }}" 
+                                                {{ $task->assigned_to == $member->id ? 'selected' : '' }}>
+                                            {{ $member->name }} ({{ $member->pivot->role }})
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Assign Task</button>
+                            <button type="submit" class="btn btn-primary">
+                                {{ $task->assigned_to ? 'Reassign Task' : 'Assign Task' }}
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-        @endif
     @endforeach
 @endif
 

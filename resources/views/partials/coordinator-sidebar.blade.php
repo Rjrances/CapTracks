@@ -71,6 +71,14 @@
             </li>
             
             <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('coordinator.milestones.*') ? 'active bg-primary' : '' }}" 
+                   href="{{ route('coordinator.milestones.index') }}">
+                    <i class="fas fa-flag me-2"></i>
+                    Milestone Templates
+                </a>
+            </li>
+            
+            <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('coordinator.calendar') ? 'active bg-primary' : '' }}" 
                    href="{{ route('coordinator.calendar') }}">
                     <i class="fas fa-calendar me-2"></i>

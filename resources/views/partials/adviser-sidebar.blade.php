@@ -41,26 +41,19 @@
             </li>
             
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('adviser.groups.*') ? 'active bg-primary' : '' }}" 
-                   href="{{ route('adviser.groups') }}">
-                    <i class="fas fa-users me-2"></i>
-                    My Groups
-                </a>
+                <a class="nav-link text-white {{ request()->routeIs('adviser.all-groups') ? 'active bg-primary' : '' }}" 
+                   href="{{ route('adviser.all-groups') }}">
+                    <i class="fas fa-layer-group me-2"></i>
+                    All My Groups
+                    </a>
             </li>
+            
             
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('adviser.invitations') ? 'active bg-primary' : '' }}" 
                    href="{{ route('adviser.invitations') }}">
                     <i class="fas fa-envelope me-2"></i>
                     Invitations
-                </a>
-            </li>
-            
-            <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('adviser.project.*') ? 'active bg-primary' : '' }}" 
-                   href="{{ route('adviser.project.index') }}">
-                    <i class="fas fa-project-diagram me-2"></i>
-                    Projects
                 </a>
             </li>
             

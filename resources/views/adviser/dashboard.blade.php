@@ -13,8 +13,8 @@
                         <p class="text-muted mb-0">Manage your groups, invitations, and student projects</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('adviser.groups') }}" class="btn btn-primary">
-                            <i class="fas fa-users me-2"></i>My Groups
+                        <a href="{{ route('adviser.all-groups') }}" class="btn btn-primary">
+                            <i class="fas fa-layer-group me-2"></i>All My Groups
                         </a>
                         <a href="{{ route('adviser.invitations') }}" class="btn btn-outline-primary">
                             <i class="fas fa-envelope me-2"></i>View Invitations
@@ -50,11 +50,11 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card bg-success text-white h-100">
+                <div class="card bg-info text-white h-100">
                     <div class="card-body text-center">
-                        <h5 class="card-title">Advisees</h5>
-                        <h3 class="m-0">{{ $summaryStats['total_advisees'] ?? 0 }}</h3>
-                        <small>students</small>
+                        <h5 class="card-title">Panel Groups</h5>
+                        <h3 class="m-0">{{ $summaryStats['panel_groups'] ?? 0 }}</h3>
+                        <small>assigned</small>
                     </div>
                 </div>
             </div>

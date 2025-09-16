@@ -9,8 +9,8 @@
             <h2 class="mb-0">Project Submissions</h2>
             <p class="text-muted mb-0">Review and provide feedback on student submissions</p>
         </div>
-        <a href="{{ route('adviser.dashboard') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        <a href="{{ route('adviser.all-groups') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to All My Groups
         </a>
     </div>
 
@@ -23,15 +23,31 @@
 
     <!-- Project Overview Statistics -->
     <div class="row mb-4">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card bg-primary text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Total Groups</h5>
-                    <h3 class="mb-0">{{ $groups->count() }}</h3>
+                    <h3 class="mb-0">{{ $allGroups->count() }}</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Adviser Groups</h5>
+                    <h3 class="mb-0">{{ $adviserGroups->count() }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Panel Groups</h5>
+                    <h3 class="mb-0">{{ $panelGroups->count() }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
             <div class="card bg-warning text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Pending Review</h5>
@@ -40,39 +56,36 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-success text-white">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Total Submissions</h5>
-                    <h3 class="mb-0">{{ $submissions->count() }}</h3>
-                    <small>All time</small>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Projects by Group -->
-    @if($groups->count() > 0)
-        @foreach($groups as $group)
+    @if($allGroups->count() > 0)
+        @foreach($allGroups as $group)
             @php
-                $groupSubmissions = $submissionsByGroup[$group->id]['submissions'] ?? collect();
+                $groupData = $submissionsByGroup[$group->id] ?? null;
+                $groupSubmissions = $groupData['submissions'] ?? collect();
+                $userRole = $groupData['user_role'] ?? 'adviser';
                 $pendingCount = $groupSubmissions->where('status', 'pending')->count();
             @endphp
             
             <div class="card mb-4">
-                <div class="card-header">
+                <div class="card-header {{ $userRole === 'adviser' ? 'bg-success' : 'bg-info' }} text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-0">
-                                <i class="fas fa-users me-2"></i>{{ $group->name }}
+                                <i class="fas {{ $userRole === 'adviser' ? 'fa-user-tie' : 'fa-gavel' }} me-2"></i>
+                                {{ $group->name }}
+                                <span class="badge bg-light text-dark ms-2">
+                                    {{ $userRole === 'adviser' ? 'Adviser' : 'Panel Member' }}
+                                </span>
                             </h5>
-                            <small class="text-muted">{{ $group->members->count() }} members</small>
+                            <small class="text-white-50">{{ $group->members->count() }} members</small>
                             @if($pendingCount > 0)
                                 <span class="badge bg-warning ms-2">{{ $pendingCount }} pending review</span>
                             @endif
                         </div>
                         <div class="d-flex gap-2">
-                            <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-outline-primary btn-sm">
+                            <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-outline-light btn-sm">
                                 <i class="fas fa-eye"></i> Group Details
                             </a>
                         </div>
@@ -148,10 +161,15 @@
             <div class="card-body text-center py-5">
                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">No groups assigned yet</h5>
-                <p class="text-muted">You don't have any groups assigned to you yet. Groups will appear here when you accept teacher invitations.</p>
-                <a href="{{ route('adviser.invitations') }}" class="btn btn-primary">
-                    <i class="fas fa-envelope me-2"></i>Check Invitations
-                </a>
+                <p class="text-muted">You don't have any groups assigned as adviser or panel member yet. Groups will appear here when you accept invitations or are assigned to defense panels.</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{{ route('adviser.invitations') }}" class="btn btn-primary">
+                        <i class="fas fa-envelope me-2"></i>Check Invitations
+                    </a>
+                    <a href="{{ route('adviser.all-groups') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-layer-group me-2"></i>View All Groups
+                    </a>
+                </div>
             </div>
         </div>
     @endif

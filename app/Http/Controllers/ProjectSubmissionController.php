@@ -41,20 +41,29 @@ class ProjectSubmissionController extends Controller
     }
 
     /**
-     * Adviser view - show all submissions from groups they advise
+     * Adviser view - show all submissions from groups they advise or are panel member for
      */
     private function adviserIndex($user)
     {
         // Get groups where user is the adviser
-        $groups = Group::with(['members', 'members.submissions'])
+        $adviserGroups = Group::with(['members', 'members.submissions'])
             ->where('adviser_id', $user->id)
             ->get();
 
+        // Get groups where user is a panel member
+        $panelGroups = Group::with(['members', 'members.submissions'])
+            ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
+                $query->where('faculty_id', $user->id);
+            })
+            ->get();
+
+        // Combine both types of groups
+        $allGroups = $adviserGroups->concat($panelGroups)->unique('id');
+
         // Get all submissions from these groups
-        $groupIds = $groups->pluck('id');
         $memberIds = collect();
         
-        foreach ($groups as $group) {
+        foreach ($allGroups as $group) {
             $memberIds = $memberIds->merge($group->members->pluck('id'));
         }
 
@@ -64,18 +73,25 @@ class ProjectSubmissionController extends Controller
             ->get();
 
         // Group submissions by group for better organization
-        $submissionsByGroup = $groups->mapWithKeys(function ($group) {
+        $submissionsByGroup = $allGroups->mapWithKeys(function ($group) use ($user) {
             $groupSubmissions = $group->members->flatMap(function ($member) {
                 return $member->submissions ?? collect();
             });
             
+            // Determine user's role in this group
+            $userRole = 'adviser';
+            if ($group->adviser_id !== $user->id) {
+                $userRole = 'panel';
+            }
+            
             return [$group->id => [
                 'group' => $group,
-                'submissions' => $groupSubmissions->sortByDesc('submitted_at')
+                'submissions' => $groupSubmissions->sortByDesc('submitted_at'),
+                'user_role' => $userRole
             ]];
         });
 
-        return view('adviser.project.index', compact('groups', 'submissions', 'submissionsByGroup'));
+        return view('adviser.project.index', compact('allGroups', 'adviserGroups', 'panelGroups', 'submissions', 'submissionsByGroup'));
     }
 
     /**

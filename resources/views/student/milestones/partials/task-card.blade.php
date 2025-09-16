@@ -59,18 +59,17 @@
                 <!-- Task Actions (for group leaders) -->
                 @if($isGroupLeader)
                     <div class="task-card-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignTaskModal{{ $task->id }}" title="{{ $task->assigned_to ? 'Reassign Task' : 'Assign Task' }}">
+                            <i class="fas fa-{{ $task->assigned_to ? 'user-edit' : 'user-plus' }}"></i>
+                        </button>
                         @if($task->assigned_to)
                             <form action="{{ route('student.milestones.unassign-task', $task->id) }}" method="POST" class="d-inline">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('Unassign this task?')">
+                                <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('Unassign this task?')" title="Unassign Task">
                                     <i class="fas fa-user-minus"></i>
                                 </button>
                             </form>
-                        @else
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignTaskModal{{ $task->id }}">
-                                <i class="fas fa-user-plus"></i>
-                            </button>
                         @endif
                     </div>
                 @endif
@@ -116,7 +115,7 @@
 
 <script>
 function changeTaskStatus(taskId, newStatus) {
-    fetch(`/student/milestones/tasks/${taskId}/move`, {
+    fetch(`{{ url('/student/milestones/tasks') }}/${taskId}/move`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',
@@ -128,13 +127,15 @@ function changeTaskStatus(taskId, newStatus) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
+            showAlert('Task status updated successfully!', 'success');
             // Reload the page to update the Kanban board
-            location.reload();
+            setTimeout(() => location.reload(), 1000);
         } else {
-            showAlert('Failed to update task status: ' + data.message, 'danger');
+            showAlert('Failed to update task status: ' + (data.message || 'Unknown error'), 'danger');
         }
     })
-    .catch(() => {
+    .catch(error => {
+        console.error('Error:', error);
         showAlert('Error updating task status. Please try again.', 'danger');
     });
 }

@@ -21,69 +21,69 @@ class MilestoneSeeder extends Seeder
      */
     private function createMilestoneTemplates()
     {
-        // Milestone 1: Project Proposal
-        $proposal = MilestoneTemplate::create([
-            'name' => 'Project Proposal',
-            'description' => 'Initial project proposal and requirements gathering',
-            'status' => 'todo'
+        // Template 1: Standard Capstone Project
+        $standardCapstone = MilestoneTemplate::create([
+            'name' => 'Standard Capstone Project',
+            'description' => 'Complete capstone project following the standard milestone structure with must-haves, 60% screenshots, 100% screenshots, and final documentation',
+            'status' => 'active'
         ]);
 
-        $this->createProposalTasks($proposal);
+        $this->createStandardCapstoneTasks($standardCapstone);
 
-        // Milestone 2: System Design
+        // Template 2: Software Development Project
+        $softwareDev = MilestoneTemplate::create([
+            'name' => 'Software Development Project',
+            'description' => 'Software-focused capstone project with requirements, design, development phases, and testing',
+            'status' => 'active'
+        ]);
+
+        $this->createSoftwareDevTasks($softwareDev);
+
+        // Template 3: Research Project
+        $research = MilestoneTemplate::create([
+            'name' => 'Research Project',
+            'description' => 'Research-focused capstone project with literature review, data collection, analysis, and results',
+            'status' => 'active'
+        ]);
+
+        $this->createResearchTasks($research);
+
+        // Template 4: Design Project
         $design = MilestoneTemplate::create([
-            'name' => 'System Design',
-            'description' => 'System architecture and design documentation',
-            'status' => 'todo'
+            'name' => 'Design Project',
+            'description' => 'Design-focused capstone project with user research, design development, prototyping, and evaluation',
+            'status' => 'active'
         ]);
 
         $this->createDesignTasks($design);
-
-        // Milestone 3: Implementation
-        $implementation = MilestoneTemplate::create([
-            'name' => 'Implementation',
-            'description' => 'Core system development and coding',
-            'status' => 'todo'
-        ]);
-
-        $this->createImplementationTasks($implementation);
-
-        // Milestone 4: Testing & Documentation
-        $testing = MilestoneTemplate::create([
-            'name' => 'Testing & Documentation',
-            'description' => 'System testing and final documentation',
-            'status' => 'todo'
-        ]);
-
-        $this->createTestingTasks($testing);
 
         echo "✅ Created 4 milestone templates with tasks\n";
     }
 
     /**
-     * Create tasks for Project Proposal milestone
+     * Create tasks for Standard Capstone Project template
      */
-    private function createProposalTasks($milestone)
+    private function createStandardCapstoneTasks($milestone)
     {
         $tasks = [
             [
-                'name' => 'Project Title and Description',
-                'description' => 'Define the project title and provide a detailed description',
+                'name' => 'Must Haves → Document (Chapter 1 & 2)',
+                'description' => 'Complete project requirements analysis, write Chapter 1: Introduction and Background, write Chapter 2: Literature Review and Related Works, submit initial document for adviser review, revise based on feedback',
                 'order' => 1
             ],
             [
-                'name' => 'Problem Statement',
-                'description' => 'Clearly define the problem the project aims to solve',
+                'name' => 'Screenshots 60%',
+                'description' => 'Complete 60% of system implementation, capture screenshots of key features, document implementation progress, test core functionality, prepare progress presentation',
                 'order' => 2
             ],
             [
-                'name' => 'Objectives and Scope',
-                'description' => 'List project objectives and define the scope',
+                'name' => 'Screenshots 100%',
+                'description' => 'Complete full system implementation, capture comprehensive screenshots, conduct thorough testing, prepare final system demo, document all features and functionality',
                 'order' => 3
             ],
             [
-                'name' => 'Literature Review',
-                'description' => 'Research existing solutions and related work',
+                'name' => 'Document (Chapter 3 & 4)',
+                'description' => 'Write Chapter 3: System Design and Implementation, write Chapter 4: Testing, Results, and Conclusion, prepare final documentation, submit complete capstone document, prepare for final defense',
                 'order' => 4
             ]
         ];
@@ -99,105 +99,105 @@ class MilestoneSeeder extends Seeder
     }
 
     /**
-     * Create tasks for System Design milestone
+     * Create tasks for Software Development Project template
+     */
+    private function createSoftwareDevTasks($milestone)
+    {
+        $tasks = [
+            [
+                'name' => 'Requirements & Design → Document (Chapter 1 & 2)',
+                'description' => 'Gather and analyze requirements, create system architecture design, write Chapter 1: Project Overview, write Chapter 2: System Design and Architecture, create technical specifications',
+                'order' => 1
+            ],
+            [
+                'name' => 'Development 60% → Screenshots',
+                'description' => 'Implement core modules (60% complete), create database schema, develop user interface, capture development screenshots, conduct unit testing',
+                'order' => 2
+            ],
+            [
+                'name' => 'Development 100% → Screenshots',
+                'description' => 'Complete all system modules, integrate all components, capture final system screenshots, conduct integration testing, prepare system documentation',
+                'order' => 3
+            ],
+            [
+                'name' => 'Testing & Documentation → Document (Chapter 3 & 4)',
+                'description' => 'Write Chapter 3: Implementation Details, write Chapter 4: Testing, Results, and Evaluation, conduct user acceptance testing, prepare deployment documentation, submit final deliverables',
+                'order' => 4
+            ]
+        ];
+
+        foreach ($tasks as $task) {
+            MilestoneTask::create([
+                'milestone_template_id' => $milestone->id,
+                'name' => $task['name'],
+                'description' => $task['description'],
+                'order' => $task['order']
+            ]);
+        }
+    }
+
+    /**
+     * Create tasks for Research Project template
+     */
+    private function createResearchTasks($milestone)
+    {
+        $tasks = [
+            [
+                'name' => 'Literature Review → Document (Chapter 1 & 2)',
+                'description' => 'Conduct comprehensive literature review, identify research gaps, write Chapter 1: Introduction and Problem Statement, write Chapter 2: Literature Review and Theoretical Framework, develop research methodology',
+                'order' => 1
+            ],
+            [
+                'name' => 'Data Collection 60% → Evidence',
+                'description' => 'Collect 60% of required data, document data collection process, create preliminary analysis, capture research progress evidence, prepare interim report',
+                'order' => 2
+            ],
+            [
+                'name' => 'Data Collection 100% → Evidence',
+                'description' => 'Complete all data collection, conduct comprehensive analysis, capture final research evidence, validate research findings, prepare research presentation',
+                'order' => 3
+            ],
+            [
+                'name' => 'Analysis & Results → Document (Chapter 3 & 4)',
+                'description' => 'Write Chapter 3: Research Methodology and Data Analysis, write Chapter 4: Results, Discussion, and Conclusions, prepare final research report, submit complete research document, prepare for research defense',
+                'order' => 4
+            ]
+        ];
+
+        foreach ($tasks as $task) {
+            MilestoneTask::create([
+                'milestone_template_id' => $milestone->id,
+                'name' => $task['name'],
+                'description' => $task['description'],
+                'order' => $task['order']
+            ]);
+        }
+    }
+
+    /**
+     * Create tasks for Design Project template
      */
     private function createDesignTasks($milestone)
     {
         $tasks = [
             [
-                'name' => 'System Architecture',
-                'description' => 'Design the overall system architecture',
+                'name' => 'Design Brief → Document (Chapter 1 & 2)',
+                'description' => 'Complete design brief and requirements, conduct user research, write Chapter 1: Design Problem and Context, write Chapter 2: Design Research and Methodology, create design specifications',
                 'order' => 1
             ],
             [
-                'name' => 'Database Design',
-                'description' => 'Design the database schema and relationships',
+                'name' => 'Design Development 60% → Screenshots',
+                'description' => 'Create initial design concepts, develop wireframes and prototypes, capture design process screenshots, conduct user testing, refine design based on feedback',
                 'order' => 2
             ],
             [
-                'name' => 'User Interface Design',
-                'description' => 'Design the user interface mockups',
+                'name' => 'Design Development 100% → Screenshots',
+                'description' => 'Complete final design, create high-fidelity prototypes, capture final design screenshots, conduct final user testing, prepare design documentation',
                 'order' => 3
             ],
             [
-                'name' => 'API Design',
-                'description' => 'Design the API endpoints and structure',
-                'order' => 4
-            ]
-        ];
-
-        foreach ($tasks as $task) {
-            MilestoneTask::create([
-                'milestone_template_id' => $milestone->id,
-                'name' => $task['name'],
-                'description' => $task['description'],
-                'order' => $task['order']
-            ]);
-        }
-    }
-
-    /**
-     * Create tasks for Implementation milestone
-     */
-    private function createImplementationTasks($milestone)
-    {
-        $tasks = [
-            [
-                'name' => 'Backend Development',
-                'description' => 'Implement the backend functionality',
-                'order' => 1
-            ],
-            [
-                'name' => 'Frontend Development',
-                'description' => 'Implement the user interface',
-                'order' => 2
-            ],
-            [
-                'name' => 'Database Implementation',
-                'description' => 'Create and populate the database',
-                'order' => 3
-            ],
-            [
-                'name' => 'Integration Testing',
-                'description' => 'Test the integrated system',
-                'order' => 4
-            ]
-        ];
-
-        foreach ($tasks as $task) {
-            MilestoneTask::create([
-                'milestone_template_id' => $milestone->id,
-                'name' => $task['name'],
-                'description' => $task['description'],
-                'order' => $task['order']
-            ]);
-        }
-    }
-
-    /**
-     * Create tasks for Testing & Documentation milestone
-     */
-    private function createTestingTasks($milestone)
-    {
-        $tasks = [
-            [
-                'name' => 'Unit Testing',
-                'description' => 'Write and run unit tests for all components',
-                'order' => 1
-            ],
-            [
-                'name' => 'Integration Testing',
-                'description' => 'Test component integration and system flow',
-                'order' => 2
-            ],
-            [
-                'name' => 'User Acceptance Testing',
-                'description' => 'Conduct UAT with stakeholders',
-                'order' => 3
-            ],
-            [
-                'name' => 'Documentation',
-                'description' => 'Complete user manual and technical documentation',
+                'name' => 'Design Documentation → Document (Chapter 3 & 4)',
+                'description' => 'Write Chapter 3: Design Process and Development, write Chapter 4: Design Evaluation and Results, prepare design portfolio, submit complete design document, prepare for design presentation',
                 'order' => 4
             ]
         ];
