@@ -13,7 +13,9 @@
                         <p class="text-muted mb-0">View milestone templates and group assignments</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <!-- Navigation removed for cleaner interface -->
+                        <a href="{{ route('coordinator.milestones.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create New Template
+                        </a>
                     </div>
                 </div>
             </div>
@@ -46,6 +48,7 @@
                                             <th>Tasks</th>
                                             <th>Status</th>
                                             <th>Created</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -68,6 +71,32 @@
                                                     @endif
                                                 </td>
                                                 <td>{{ $template->created_at->format('M d, Y') }}</td>
+                                                <td>
+                                                    <div class="d-flex gap-1">
+                                                        <a href="{{ route('coordinator.milestones.edit', $template->id) }}" 
+                                                           class="btn btn-sm btn-outline-primary" 
+                                                           title="Edit Template">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <a href="{{ route('coordinator.milestones.tasks.index', $template->id) }}" 
+                                                           class="btn btn-sm btn-outline-info" 
+                                                           title="Manage Tasks">
+                                                            <i class="fas fa-tasks"></i>
+                                                        </a>
+                                                        <form action="{{ route('coordinator.milestones.destroy', $template->id) }}" 
+                                                              method="POST" 
+                                                              class="d-inline"
+                                                              onsubmit="return confirm('Are you sure you want to delete this template? This action cannot be undone.')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" 
+                                                                    class="btn btn-sm btn-outline-danger" 
+                                                                    title="Delete Template">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -208,7 +237,7 @@
                                 </div>
                             </div>
                             <div class="col-6">
-                                <h4 class="text-success mb-0">{{ $groups->where('milestones', '>', 0)->count() }}</h4>
+                                <h4 class="text-success mb-0">{{ $groups->filter(function($group) { return $group->milestones->count() > 0; })->count() }}</h4>
                                 <small class="text-muted">Groups with Milestones</small>
                             </div>
                         </div>

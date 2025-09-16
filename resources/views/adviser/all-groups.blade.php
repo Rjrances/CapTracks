@@ -261,7 +261,13 @@
                                                             </span>
                                                         </div>
                                                         <div class="d-flex justify-content-between align-items-center">
-                                                            <small class="text-muted">{{ $submission->submitted_at->diffForHumans() }}</small>
+                                                            <small class="text-muted">
+                                                                @if($submission->submitted_at)
+                                                                    {{ $submission->submitted_at->diffForHumans() }}
+                                                                @else
+                                                                    Not submitted
+                                                                @endif
+                                                            </small>
                                                             <div class="btn-group btn-group-sm">
                                                                 <a href="{{ route('adviser.project.show', $submission->id) }}" class="btn btn-outline-primary btn-sm">
                                                                     <i class="fas fa-eye"></i>

@@ -20,6 +20,12 @@ class ProjectSubmission extends Model
         'expected_outcomes',
     ];
 
+    protected $casts = [
+        'submitted_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     public function student()
     {
         return $this->belongsTo(\App\Models\Student::class);

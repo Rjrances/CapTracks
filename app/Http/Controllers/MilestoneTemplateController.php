@@ -10,12 +10,13 @@ class MilestoneTemplateController extends Controller
 {
     public function index()
     {
-        $statuses = ['todo', 'in_progress', 'done'];
-        $milestonesByStatus = [];
-        foreach ($statuses as $status) {
-            $milestonesByStatus[$status] = MilestoneTemplate::with('tasks')->where('status', $status)->get();
-        }
-        return view('coordinator.milestones.index', compact('milestonesByStatus'));
+        // Get all milestone templates with their tasks
+        $milestoneTemplates = MilestoneTemplate::with('tasks')->get();
+        
+        // Get all groups with their members, adviser, and milestones
+        $groups = \App\Models\Group::with(['members', 'adviser', 'milestones.template'])->get();
+        
+        return view('coordinator.milestones.index', compact('milestoneTemplates', 'groups'));
     }
 
     public function create()
@@ -28,6 +29,7 @@ class MilestoneTemplateController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'status' => 'required|in:active,inactive,draft',
         ]);
 
         MilestoneTemplate::create($data);
@@ -45,6 +47,7 @@ class MilestoneTemplateController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'status' => 'required|in:active,inactive,draft',
         ]);
 
         $milestone->update($data);
