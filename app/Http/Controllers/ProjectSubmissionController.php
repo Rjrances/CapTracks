@@ -127,8 +127,9 @@ class ProjectSubmissionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:pdf,doc,docx,zip',
+            'file' => 'required|file|mimes:pdf,doc,docx,zip,pptx,ppt|max:10240',
             'type' => 'required|in:proposal,final,other',
+            'description' => 'nullable|string|max:1000',
         ]);
         
         // Get student from either Auth or session
@@ -149,8 +150,23 @@ class ProjectSubmissionController extends Controller
             'type' => $request->type,
             'status' => 'pending',
             'submitted_at' => now(),
+            'title' => $this->getSubmissionTitle($request->type),
+            'objectives' => $request->description,
         ]);
         return redirect()->route('student.project')->with('success', 'Submission uploaded successfully!');
+    }
+
+    /**
+     * Get appropriate title for submission type
+     */
+    private function getSubmissionTitle($type)
+    {
+        return match($type) {
+            'proposal' => 'Project Proposal',
+            'final' => 'Final Project Report',
+            'other' => 'Additional Project File',
+            default => 'Project Submission'
+        };
     }
 
     /**

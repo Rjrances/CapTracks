@@ -162,7 +162,7 @@ class StudentMilestoneController extends Controller
             return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
         }
 
-        $groupMilestone = $group->groupMilestones()->with('milestoneTemplate.tasks')->find($milestoneId);
+        $groupMilestone = $group->groupMilestones()->with(['milestoneTemplate.tasks', 'groupTasks.submissions.student'])->find($milestoneId);
         
         if (!$groupMilestone) {
             return redirect()->route('student.milestones')->withErrors(['milestone' => 'Milestone not found.']);
@@ -207,7 +207,7 @@ class StudentMilestoneController extends Controller
             return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can edit milestones.']);
         }
 
-        $groupMilestone = $group->groupMilestones()->with('milestoneTemplate')->find($milestoneId);
+        $groupMilestone = $group->groupMilestones()->with(['milestoneTemplate', 'groupTasks'])->find($milestoneId);
         
         if (!$groupMilestone) {
             return redirect()->route('student.milestones')->withErrors(['milestone' => 'Milestone not found.']);
@@ -289,7 +289,7 @@ class StudentMilestoneController extends Controller
         }
 
         // Delete associated tasks first
-        $groupMilestone->groupMilestoneTasks()->delete();
+        $groupMilestone->groupTasks()->delete();
         
         // Delete the milestone
         $groupMilestone->delete();

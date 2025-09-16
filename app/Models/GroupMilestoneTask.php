@@ -48,6 +48,11 @@ class GroupMilestoneTask extends Model
         return $this->belongsTo(Student::class, 'completed_by');
     }
 
+    public function submissions()
+    {
+        return $this->hasMany(TaskSubmission::class);
+    }
+
     // ✅ NEW: Mark task as completed
     public function markAsCompleted($completedBy = null)
     {

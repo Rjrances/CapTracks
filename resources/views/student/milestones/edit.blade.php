@@ -115,7 +115,7 @@
                                         </div>
                                         <div class="mb-3">
                                             <strong>Tasks:</strong><br>
-                                            <span class="text-muted">{{ $groupMilestone->groupMilestoneTasks->count() }} tasks</span>
+                                            <span class="text-muted">{{ $groupMilestone->groupTasks ? $groupMilestone->groupTasks->count() : 0 }} tasks</span>
                                         </div>
                                         <div class="mb-0">
                                             <strong>Created:</strong><br>

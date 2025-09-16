@@ -211,6 +211,11 @@ Route::prefix('student')->name('student.')->group(function () {
     Route::delete('/milestones/{milestone}', [\App\Http\Controllers\StudentMilestoneController::class, 'destroy'])->name('milestones.destroy');
     Route::patch('/milestones/{milestone}/update-tasks', [\App\Http\Controllers\StudentMilestoneController::class, 'updateMultipleTasks'])->name('milestones.update-tasks');
     Route::patch('/task/{groupMilestoneTask}/assign', [\App\Http\Controllers\StudentMilestoneController::class, 'assignTask'])->name('milestones.assign-task');
+    
+    // Task Submission Routes
+    Route::get('/task-submission/{task}/create', [\App\Http\Controllers\TaskSubmissionController::class, 'create'])->name('task-submission.create');
+    Route::post('/task-submission/{task}/store', [\App\Http\Controllers\TaskSubmissionController::class, 'store'])->name('task-submission.store');
+    Route::get('/task-submission/{submission}/show', [\App\Http\Controllers\TaskSubmissionController::class, 'show'])->name('task-submission.show');
     Route::delete('/task/{groupMilestoneTask}/unassign', [\App\Http\Controllers\StudentMilestoneController::class, 'unassignTask'])->name('milestones.unassign-task');
     Route::patch('/task/{groupMilestoneTask}', [\App\Http\Controllers\StudentMilestoneController::class, 'updateTask'])->name('milestones.update-task');
     

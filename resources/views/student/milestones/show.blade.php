@@ -14,6 +14,9 @@
             <button class="btn btn-outline-info" onclick="recomputeProgress()">
                 <i class="fas fa-sync-alt me-2"></i>Recompute Progress
             </button>
+            <a href="{{ route('student.project') }}" class="btn btn-outline-primary">
+                <i class="fas fa-file-upload me-2"></i>View Project Submissions
+            </a>
             <a href="{{ route('student.milestones') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Back to Milestones
             </a>
@@ -74,7 +77,7 @@
                 </div>
                 <div class="card-body kanban-column-body" style="min-height: 400px;">
                     @foreach($tasks['pending'] as $task)
-                        @include('student.milestones.partials.task-card', ['task' => $task, 'isGroupLeader' => $isGroupLeader])
+                        @include('student.milestones.partials.task-card', ['task' => $task, 'isGroupLeader' => $isGroupLeader, 'student' => $student])
                     @endforeach
                     @if($tasks['pending']->count() === 0)
                         <div class="text-center text-muted py-4">
@@ -99,7 +102,7 @@
                 </div>
                 <div class="card-body kanban-column-body" style="min-height: 400px;">
                     @foreach($tasks['doing'] as $task)
-                        @include('student.milestones.partials.task-card', ['task' => $task, 'isGroupLeader' => $isGroupLeader])
+                        @include('student.milestones.partials.task-card', ['task' => $task, 'isGroupLeader' => $isGroupLeader, 'student' => $student])
                     @endforeach
                     @if($tasks['doing']->count() === 0)
                         <div class="text-center text-muted py-4">
@@ -124,7 +127,7 @@
                 </div>
                 <div class="card-body kanban-column-body" style="min-height: 400px;">
                     @foreach($tasks['done'] as $task)
-                        @include('student.milestones.partials.task-card', ['task' => $task, 'isGroupLeader' => $isGroupLeader])
+                        @include('student.milestones.partials.task-card', ['task' => $task, 'isGroupLeader' => $isGroupLeader, 'student' => $student])
                     @endforeach
                     @if($tasks['done']->count() === 0)
                         <div class="text-center text-muted py-4">

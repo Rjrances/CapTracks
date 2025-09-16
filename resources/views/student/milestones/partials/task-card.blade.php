@@ -56,9 +56,9 @@
                     @endif
                 </div>
 
-                <!-- Task Actions (for group leaders) -->
-                @if($isGroupLeader)
-                    <div class="task-card-actions">
+                <!-- Task Actions -->
+                <div class="task-card-actions">
+                    @if($isGroupLeader)
                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignTaskModal{{ $task->id }}" title="{{ $task->assigned_to ? 'Reassign Task' : 'Assign Task' }}">
                             <i class="fas fa-{{ $task->assigned_to ? 'user-edit' : 'user-plus' }}"></i>
                         </button>
@@ -71,8 +71,23 @@
                                 </button>
                             </form>
                         @endif
-                    </div>
-                @endif
+                    @endif
+                    
+                    <!-- Submit Task Button (for assigned student or if unassigned) -->
+                    @if($task->assigned_to === null || $task->assigned_to == $student->id)
+                        <a href="{{ route('student.task-submission.create', $task->id) }}" class="btn btn-sm btn-success" title="Submit Task">
+                            <i class="fas fa-upload"></i>
+                        </a>
+                    @endif
+                    
+                    <!-- View Submissions Button -->
+                    @if($task->submissions->count() > 0)
+                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#submissionsModal{{ $task->id }}" title="View Submissions">
+                            <i class="fas fa-eye"></i>
+                            <span class="badge bg-primary ms-1">{{ $task->submissions->count() }}</span>
+                        </button>
+                    @endif
+                </div>
             </div>
 
             <!-- Status Badge -->
