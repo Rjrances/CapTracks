@@ -42,7 +42,7 @@
     <nav class="p-3">
         <ul class="nav flex-column">
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('student.dashboard') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white {{ request()->routeIs('student.dashboard') || request()->is('student/dashboard') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.dashboard') }}">
                     <i class="fas fa-tachometer-alt me-2"></i>
                     Dashboard
@@ -50,7 +50,7 @@
             </li>
             
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('student.group.*') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white {{ request()->routeIs('student.group*') || request()->is('student/group*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.group') }}">
                     <i class="fas fa-users me-2"></i>
                     My Group
@@ -58,7 +58,7 @@
             </li>
             
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('student.project') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white {{ request()->routeIs('student.project*') || request()->is('student/project*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.project') }}">
                     <i class="fas fa-project-diagram me-2"></i>
                     Project Submissions
@@ -66,7 +66,7 @@
             </li>
             
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('student.proposal') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white {{ request()->routeIs('student.proposal*') || request()->is('student/proposal*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.proposal') }}">
                     <i class="fas fa-file-alt me-2"></i>
                     Proposal & Endorsement
@@ -74,7 +74,7 @@
             </li>
             
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('student.milestones.*') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white {{ request()->routeIs('student.milestones*') || request()->is('student/milestones*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.milestones') }}">
                     <i class="fas fa-flag me-2"></i>
                     Milestones
@@ -82,7 +82,7 @@
             </li>
             
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('student.defense-requests.*') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white {{ request()->routeIs('student.defense-requests*') || request()->is('student/defense-requests*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.defense-requests.index') }}">
                     <i class="fas fa-gavel me-2"></i>
                     Defense Requests
@@ -90,7 +90,7 @@
             </li>
             
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('student.calendar') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white {{ request()->routeIs('student.calendar') || request()->is('student/calendar') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.calendar') }}">
                     <i class="fas fa-calendar me-2"></i>
                     Calendar
@@ -98,6 +98,14 @@
             </li>
         </ul>
     </nav>
+
+    <!-- Debug Info -->
+    <div class="p-3 border-top border-secondary">
+        <div class="small text-muted">
+            <div>Current Route: {{ request()->route()->getName() ?? 'Unknown' }}</div>
+            <div>URL: {{ request()->url() }}</div>
+        </div>
+    </div>
 
     <!-- User Section -->
     <div class="mt-auto p-3 border-top border-secondary">

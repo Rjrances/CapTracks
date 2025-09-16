@@ -13,12 +13,15 @@
     </button>
     <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         <ul class="navbar-nav">
-            <li class="nav-item"><a class="nav-link text-white" href="{{ route('chairperson.offerings.index') }}">Offerings</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="{{ route('chairperson.teachers.index') }}">Teachers</a></li>
-            
-                            <li class="nav-item"><a class="nav-link text-white" href="{{ route('chairperson.roles.index') }}">Roles</a></li>
-
-
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('chairperson/offerings*') ? 'active' : '' }}" href="{{ route('chairperson.offerings.index') }}">Offerings</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('chairperson/teachers*') ? 'active' : '' }}" href="{{ route('chairperson.teachers.index') }}">Teachers</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white {{ request()->is('chairperson/roles*') ? 'active' : '' }}" href="{{ route('chairperson.roles.index') }}">Roles</a>
+            </li>
             <li class="nav-item">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -32,5 +35,18 @@
 .navbar-nav .nav-link.text-white:hover {
     text-decoration: underline;
     color: #fff;
+}
+
+.navbar-nav .nav-link.text-white.active {
+    background-color: #007bff !important;
+    color: white !important;
+    border-radius: 4px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.navbar-nav .nav-link.text-white.active:hover {
+    background-color: #0056b3 !important;
+    text-decoration: none;
 }
 </style>

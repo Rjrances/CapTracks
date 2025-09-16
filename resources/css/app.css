@@ -13,3 +13,17 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Navigation active state styling */
+.navbar-nav .nav-link.active {
+    background-color: #007bff !important;
+    color: white !important;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.navbar-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}

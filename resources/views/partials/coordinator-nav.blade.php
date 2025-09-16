@@ -10,12 +10,12 @@
 
                 {{-- Dashboard --}}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('coordinator.dashboard') }}">Dashboard</a>
+                    <a class="nav-link {{ request()->is('coordinator/dashboard') ? 'active' : '' }}" href="{{ route('coordinator.dashboard') }}">Dashboard</a>
                 </li>
 
                 {{-- Class List --}}
                 <li class="nav-item">
-                <a class="nav-link" href="{{ route('coordinator.classlist.index') }}">Class List</a>
+                    <a class="nav-link {{ request()->is('coordinator/classlist*') ? 'active' : '' }}" href="{{ route('coordinator.classlist.index') }}">Class List</a>
                 </li>
 
                 {{-- Milestones -- REMOVED for coordinators
@@ -26,24 +26,22 @@
 
                 {{-- Scheduling --}}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('coordinator.defense.index') }}">Defense Schedules</a>
+                    <a class="nav-link {{ request()->is('coordinator/defense*') ? 'active' : '' }}" href="{{ route('coordinator.defense.index') }}">Defense Schedules</a>
                 </li>
 
                 {{-- Group Management --}}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('coordinator.groups.index') }}">Groups</a>
+                    <a class="nav-link {{ request()->is('coordinator/groups*') ? 'active' : '' }}" href="{{ route('coordinator.groups.index') }}">Groups</a>
                 </li>
-
-
 
                 {{-- Notifications --}}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('coordinator.notifications') }}">Notifications</a>
+                    <a class="nav-link {{ request()->is('coordinator/notifications*') ? 'active' : '' }}" href="{{ route('coordinator.notifications') }}">Notifications</a>
                 </li>
 
                 {{-- Account / Profile --}}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('coordinator.profile') }}">Profile</a>
+                    <a class="nav-link {{ request()->is('coordinator/profile*') ? 'active' : '' }}" href="{{ route('coordinator.profile') }}">Profile</a>
                 </li>
 
             </ul>
