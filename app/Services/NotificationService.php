@@ -185,6 +185,7 @@ class NotificationService
         return self::createSimpleNotification(
             'Defense Schedule Update',
             "Defense schedule updated for {$groupName} on {$defenseDate}",
+            'panelist',
             $redirectUrl ?? route('dashboard')
         );
     }

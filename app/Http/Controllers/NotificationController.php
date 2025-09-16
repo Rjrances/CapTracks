@@ -29,6 +29,13 @@ class NotificationController extends Controller
             }
             
             // Check if user has access to this notification (either by role or specific user_id)
+            $userId = null;
+            if (auth()->check()) {
+                $userId = auth()->user()->id;
+            } elseif (session('is_student') && session('student_id')) {
+                $userId = session('student_id');
+            }
+            
             if ($notification->role !== $userRole && $notification->user_id !== $userId) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }

@@ -111,13 +111,19 @@ class CalendarController extends Controller
         // Check if user is authenticated via Laravel Auth (faculty/staff)
         if (Auth::check()) {
             $user = Auth::user();
-            $studentId = $user->id;
+            // For faculty/staff, get their associated student record if any
+            $student = $user->student;
+            $studentId = $student ? $student->id : null;
         } elseif (session('is_student') && session('student_id')) {
             // Session-based student authentication
             $studentId = session('student_id');
         } else {
             // Not authenticated
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+        
+        if (!$studentId) {
+            return redirect('/login')->withErrors(['auth' => 'Student access required for this page.']);
         }
         
         // Get the student's group

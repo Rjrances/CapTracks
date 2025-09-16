@@ -56,7 +56,7 @@
                                 <h6 class="mb-1">{{ $notification->title }}</h6>
                                 <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
                             </div>
-                            <p class="mb-1">{{ Str::limit($notification->message, 100) }}</p>
+                            <p class="mb-1">{{ Str::limit($notification->description, 100) }}</p>
                         </a>
                     </li>
                 @empty
