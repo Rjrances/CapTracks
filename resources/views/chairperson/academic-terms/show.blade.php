@@ -1,5 +1,4 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
@@ -19,7 +18,6 @@
                             <p class="text-muted">{{ $academicTerm->semester }}</p>
                         </div>
                     </div>
-                    
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <h5>Status</h5>
@@ -36,7 +34,6 @@
                             <p class="text-muted">{{ $academicTerm->created_at->format('F j, Y g:i A') }}</p>
                         </div>
                     </div>
-
                     @if($academicTerm->updated_at != $academicTerm->created_at)
                         <div class="row mt-3">
                             <div class="col-md-6">
@@ -45,7 +42,6 @@
                             </div>
                         </div>
                     @endif
-
                     <div class="mt-4">
                         <a href="{{ route('chairperson.academic-terms.edit', $academicTerm) }}" 
                            class="btn btn-primary">

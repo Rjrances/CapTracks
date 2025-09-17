@@ -1,5 +1,3 @@
-<!-- resources/views/classes/index.blade.php -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,16 +6,12 @@
     <title>Classes List</title>
 </head>
 <body>
-
     <h1>Classes</h1>
-
     <a href="{{ route('classes.create') }}">Create New Class</a>
-
     <ul>
         @foreach ($classes as $class)
             <li>{{ $class->name }}</li>
         @endforeach
     </ul>
-
 </body>
 </html>

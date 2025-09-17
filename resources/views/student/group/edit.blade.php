@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Edit Group')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -12,24 +10,20 @@
             <i class="fas fa-arrow-left me-2"></i>Back to Group
         </a>
     </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     @if($group)
         <div class="row">
-            <!-- Basic Group Information -->
             <div class="col-md-6 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-header bg-primary text-white">
@@ -64,8 +58,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Group Members Management -->
             <div class="col-md-6 mb-4">
                 <div class="card shadow-sm">
                     <div class="card-header bg-success text-white">
@@ -74,7 +66,6 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <!-- Current Members -->
                         <div class="mb-3">
                             <h6 class="fw-bold mb-2">Current Members:</h6>
                             @foreach($group->members as $member)
@@ -100,8 +91,6 @@
                                 </div>
                             @endforeach
                         </div>
-
-                        <!-- Add Member Form -->
                         @if($group->members->count() < 3)
                             <div class="border-top pt-3">
                                 <h6 class="fw-bold mb-2">Add New Member:</h6>
@@ -135,8 +124,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Adviser Management -->
         <div class="row">
             <div class="col-12 mb-4">
                 <div class="card shadow-sm">
@@ -195,8 +182,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Group Statistics -->
         <div class="row">
             <div class="col-12 mb-4">
                 <div class="card shadow-sm">
@@ -251,8 +236,6 @@
         </div>
     @endif
 </div>
-
-<!-- Invite Adviser Modal -->
 @if($group && !$group->adviser)
 <div class="modal fade" id="inviteAdviserModal" tabindex="-1">
     <div class="modal-dialog">

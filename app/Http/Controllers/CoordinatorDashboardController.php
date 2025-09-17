@@ -1,10 +1,7 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use App\Models\Student;
-
 use App\Models\Notification;
 use App\Models\Group;
 use App\Models\ProjectSubmission;
@@ -14,76 +11,47 @@ use App\Models\MilestoneTask;
 use App\Models\AdviserInvitation;
 use App\Models\AcademicTerm;
 use Carbon\Carbon;
-
 class CoordinatorDashboardController extends Controller
 {
-    // Dashboard page for coordinator
     public function index()
     {
-        // Get current active academic term
         $activeTerm = AcademicTerm::where('is_active', true)->first();
-        
-        // Basic statistics
         $studentCount = Student::count();
         $groupCount = Group::count();
         $facultyCount = User::whereHas('roles', function($query) {
             $query->whereIn('name', ['adviser', 'panelist']);
         })->count();
         $submissionCount = ProjectSubmission::count();
-
-        // Group statistics
         $groupsWithAdviser = Group::whereNotNull('adviser_id')->count();
         $groupsWithoutAdviser = $groupCount - $groupsWithAdviser;
         $totalGroupMembers = Group::withCount('members')->get()->sum('members_count');
-
-        // Submission statistics
         $pendingSubmissions = ProjectSubmission::where('status', 'pending')->count();
         $approvedSubmissions = ProjectSubmission::where('status', 'approved')->count();
         $rejectedSubmissions = ProjectSubmission::where('status', 'rejected')->count();
-
-        // Milestone statistics
         $milestoneTemplates = MilestoneTemplate::count();
         $activeMilestones = MilestoneTemplate::where('status', 'active')->count();
         $totalTasks = MilestoneTask::count();
         $completedTasks = MilestoneTask::where('is_completed', true)->count();
-
-        // Recent data
         $recentStudents = Student::latest()->take(5)->get();
         $recentGroups = Group::with(['adviser', 'members'])->latest()->take(5)->get();
         $recentSubmissions = ProjectSubmission::with('student')->latest()->take(5)->get();
-
-
-
-        // Latest notifications
         $notifications = Notification::latest()->take(5)->get();
-
-        // Pending adviser invitations
         $pendingInvitations = AdviserInvitation::where('status', 'pending')
                                               ->with(['group', 'faculty'])
                                               ->latest()
                                               ->take(5)
                                               ->get();
-
-        // Recent activities (simulated for now)
         $recentActivities = $this->getRecentActivities();
-
-        // Upcoming deadlines (based on milestone templates)
         $upcomingDeadlines = $this->getUpcomingDeadlines();
-
-        // Check if current user is a teacher-coordinator (has offerings)
         $user = auth()->user();
         $coordinatedOfferings = collect();
         $isTeacherCoordinator = false;
-        
         if ($user && $user->hasRole('coordinator') && $user->offerings()->exists()) {
             $isTeacherCoordinator = true;
             $coordinatedOfferings = $user->getCoordinatedOfferings();
         }
-        
-        // Ensure variables are always defined to prevent undefined variable errors
         $coordinatedOfferings = $coordinatedOfferings ?? collect();
         $isTeacherCoordinator = $isTeacherCoordinator ?? false;
-
         return view('coordinator.dashboard', compact(
             'activeTerm',
             'studentCount',
@@ -111,14 +79,9 @@ class CoordinatorDashboardController extends Controller
             'isTeacherCoordinator'
         ));
     }
-
     private function getRecentActivities()
     {
-        // This would typically come from an activities log table
-        // For now, we'll create some sample activities based on recent data
         $activities = collect();
-
-        // Add recent group creations
         $recentGroups = Group::latest()->take(3)->get();
         foreach ($recentGroups as $group) {
             $activities->push((object)[
@@ -129,8 +92,6 @@ class CoordinatorDashboardController extends Controller
                 'type' => 'group_created'
             ]);
         }
-
-        // Add recent submissions
         $recentSubs = ProjectSubmission::with('student')->latest()->take(3)->get();
         foreach ($recentSubs as $submission) {
             $activities->push((object)[
@@ -141,8 +102,6 @@ class CoordinatorDashboardController extends Controller
                 'type' => 'submission'
             ]);
         }
-
-        // Add recent adviser invitations
         $recentInvites = AdviserInvitation::with(['group', 'faculty'])->latest()->take(3)->get();
         foreach ($recentInvites as $invitation) {
             $activities->push((object)[
@@ -153,17 +112,11 @@ class CoordinatorDashboardController extends Controller
                 'type' => 'invitation'
             ]);
         }
-
         return $activities->sortByDesc('created_at')->take(8);
     }
-
     private function getUpcomingDeadlines()
     {
-        // This would typically come from milestone templates and their due dates
-        // For now, we'll create some sample deadlines
         $deadlines = collect();
-
-        // Add milestone template deadlines
         $milestones = MilestoneTemplate::where('status', 'active')->get();
         foreach ($milestones as $milestone) {
             $deadlines->push((object)[
@@ -175,8 +128,6 @@ class CoordinatorDashboardController extends Controller
                 'is_due_soon' => false
             ]);
         }
-
-        // Add some sample submission deadlines
         $deadlines->push((object)[
             'title' => 'Proposal Submission Deadline',
             'description' => 'All groups must submit their project proposals',
@@ -185,7 +136,6 @@ class CoordinatorDashboardController extends Controller
             'is_overdue' => false,
             'is_due_soon' => true
         ]);
-
         $deadlines->push((object)[
             'title' => 'Final Defense Schedule',
             'description' => 'Final project defense presentations',
@@ -194,7 +144,6 @@ class CoordinatorDashboardController extends Controller
             'is_overdue' => false,
             'is_due_soon' => false
         ]);
-
         return $deadlines->sortBy('due_date')->take(5);
     }
 }

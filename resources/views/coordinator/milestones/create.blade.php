@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Create Milestone Template - Coordinator Dashboard')
-
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 800px;">
@@ -20,14 +18,12 @@
                 </div>
             </div>
         </div>
-
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
         @if($errors->any())
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <ul class="mb-0">
@@ -38,8 +34,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
-        <!-- Create Form -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -51,7 +45,6 @@
                     <div class="card-body">
                         <form action="{{ route('coordinator.milestones.store') }}" method="POST">
                             @csrf
-                            
                             <div class="mb-4">
                                 <label for="name" class="form-label">
                                     Template Name <span class="text-danger">*</span>
@@ -68,7 +61,6 @@
                                 @enderror
                                 <div class="form-text">Enter a descriptive name for this milestone template</div>
                             </div>
-
                             <div class="mb-4">
                                 <label for="description" class="form-label">Description</label>
                                 <textarea class="form-control @error('description') is-invalid @enderror" 
@@ -81,7 +73,6 @@
                                 @enderror
                                 <div class="form-text">Provide a detailed description of this milestone template</div>
                             </div>
-
                             <div class="mb-4">
                                 <label for="status" class="form-label">Status</label>
                                 <select class="form-select @error('status') is-invalid @enderror" 
@@ -96,7 +87,6 @@
                                 @enderror
                                 <div class="form-text">Set the initial status for this template</div>
                             </div>
-
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save me-2"></i>Create Template
@@ -110,8 +100,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Help Section -->
         <div class="row mt-4">
             <div class="col-12">
                 <div class="card bg-light">
@@ -139,11 +127,9 @@
     </div>
 </div>
 @endsection
-
 @push('scripts')
 <script>
     $(document).ready(function() {
-        // Auto-resize textarea
         $('#description').on('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';

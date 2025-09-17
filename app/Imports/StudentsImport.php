@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Imports;
-
 use App\Models\Student;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -15,19 +13,16 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterImport;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-
 class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBatchInserts, WithChunkReading, SkipsOnError, SkipsEmptyRows, WithMapping, WithEvents
 {
     protected $offeringId;
     protected $importedStudentIds = [];
-
     public function __construct($offeringId = null)
     {
         $this->offeringId = $offeringId;
     }
     public function map($row): array
     {
-        // Transform data before validation to ensure proper types
         return [
             'student_id' => (string) $row['student_id'], // Force to string to handle Excel numeric conversion
             'name' => trim($row['name'] ?? ''),
@@ -36,7 +31,6 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             'course' => trim($row['course'] ?? ''),
         ];
     }
-
     public function model(array $row)
     {
         $student = new Student([
@@ -47,15 +41,11 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             'course' => $row['course'],
             'password' => Hash::make('password123'), // Default password
         ]);
-        
-        // Store the student ID for later enrollment
         if ($this->offeringId) {
             $this->importedStudentIds[] = $row['student_id'];
         }
-        
         return $student;
     }
-
     public function rules(): array
     {
         return [
@@ -71,21 +61,16 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             '*.course' => 'required|string|max:255',
         ];
     }
-
     public function prepareForValidation($data, $index)
     {
-        // Ensure student_id is treated as string and pad with zeros if needed
         if (isset($data['student_id'])) {
             $data['student_id'] = (string) $data['student_id'];
-            // If it's less than 10 digits, pad with leading zeros
             if (strlen($data['student_id']) < 10) {
                 $data['student_id'] = str_pad($data['student_id'], 10, '0', STR_PAD_LEFT);
             }
         }
-        
         return $data;
     }
-
     public function customValidationMessages(): array
     {
         return [
@@ -99,41 +84,29 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             '*.course.required' => 'Course is required on row :index.',
         ];
     }
-
     public function batchSize(): int
     {
         return 100;
     }
-
     public function chunkSize(): int
     {
         return 100;
     }
-
     public function onError(\Throwable $e)
     {
         Log::error('Student import error on row: ' . $e->getMessage());
     }
-
-    /**
-     * After a batch is inserted, automatically enroll students in the offering if one is specified
-     * Students can only be enrolled in one offering at a time
-     */
     public function afterImport()
     {
         if ($this->offeringId && !empty($this->importedStudentIds)) {
             try {
                 $offering = \App\Models\Offering::find($this->offeringId);
                 if ($offering) {
-                    // Find students by their student_id (more reliable than time-based)
                     $studentsToEnroll = \App\Models\Student::whereIn('student_id', $this->importedStudentIds)->get();
-                    
                     if ($studentsToEnroll->count() > 0) {
                         foreach ($studentsToEnroll as $student) {
-                            // Use the new single enrollment method
                             $student->enrollInOffering($offering);
                         }
-                        
                         Log::info("Automatically enrolled {$studentsToEnroll->count()} students in offering {$offering->subject_code}");
                         Log::info("Enrolled student IDs: " . implode(', ', $this->importedStudentIds));
                     }
@@ -144,10 +117,6 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             }
         }
     }
-
-    /**
-     * Register events to ensure enrollment happens after import
-     */
     public function registerEvents(): array
     {
         return [

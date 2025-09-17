@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Group Details')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,16 +14,13 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     @if($group)
-        <!-- Group Information -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-primary text-white">
                 <h4 class="card-title mb-0">
@@ -36,8 +31,6 @@
                 <div class="row">
                     <div class="col-md-8">
                         <p class="text-muted mb-3">{{ $group->description ?: 'No description provided.' }}</p>
-                        
-                        <!-- Group Members -->
                         <h6 class="fw-bold mb-3">
                             <i class="fas fa-users me-1"></i>Group Members
                         </h6>
@@ -77,8 +70,6 @@
                                 </tbody>
                             </table>
                         </div>
-
-                        <!-- Add Member Form -->
                         @if($group->members->count() < 3)
                             <div class="mt-4">
                                 <h6 class="fw-bold mb-3">
@@ -114,9 +105,7 @@
                             </div>
                         @endif
                     </div>
-
                     <div class="col-md-4">
-                        <!-- Adviser Information -->
                         <div class="card bg-light">
                             <div class="card-header">
                                 <h6 class="card-title mb-0">
@@ -135,8 +124,6 @@
                                     <div class="text-center">
                                         <i class="fas fa-user-tie fa-2x text-muted mb-2"></i>
                                         <p class="text-muted">No adviser assigned</p>
-                                        
-                                        <!-- Invite Adviser Form -->
                                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#inviteAdviserModal">
                                             <i class="fas fa-envelope"></i> Invite Adviser
                                         </button>
@@ -144,8 +131,6 @@
                                 @endif
                             </div>
                         </div>
-
-                        <!-- Pending Invitations -->
                         @if($group->adviserInvitations->where('status', 'pending')->count() > 0)
                             <div class="card bg-warning mt-3">
                                 <div class="card-header">
@@ -170,8 +155,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Defense Readiness Section -->
         @if($group->adviser_id)
         <div class="card mb-4">
             <div class="card-header">
@@ -180,8 +163,6 @@
                 </h5>
             </div>
             <div class="card-body">
-                
-                <!-- Proposal Defense -->
                 <div class="row align-items-center mb-3">
                     <div class="col-md-8">
                         <h6 class="mb-1">📋 Proposal Defense</h6>
@@ -211,8 +192,6 @@
                         @endif
                     </div>
                 </div>
-
-                <!-- 60% Progress Defense -->
                 <div class="row align-items-center mb-3">
                     <div class="col-md-8">
                         <h6 class="mb-1">📈 60% Progress Defense</h6>
@@ -248,8 +227,6 @@
                         @endif
                     </div>
                 </div>
-
-                <!-- 100% Final Defense -->
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <h6 class="mb-1">🏆 100% Final Defense</h6>
@@ -285,11 +262,8 @@
                         @endif
                     </div>
                 </div>
-
             </div>
         </div>
-
-        <!-- Defense Requests Status -->
         @if($group->defenseRequests->count() > 0)
         <div class="card mb-4">
             <div class="card-header">
@@ -331,8 +305,6 @@
         </div>
         @endif
         @endif
-
-        <!-- Group Actions -->
         <div class="d-flex gap-2">
             <a href="{{ route('student.group.edit') }}" class="btn btn-outline-primary">
                 <i class="fas fa-edit"></i> Edit Group
@@ -352,8 +324,6 @@
         </div>
     @endif
 </div>
-
-<!-- Invite Adviser Modal -->
 @if($group && !$group->adviser)
 <div class="modal fade" id="inviteAdviserModal" tabindex="-1">
     <div class="modal-dialog">
@@ -395,8 +365,6 @@
     </div>
 </div>
 @endif
-
-<!-- Defense Request Modal -->
 <div class="modal fade" id="defenseRequestModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -427,18 +395,14 @@
         </div>
     </div>
 </div>
-
 <script>
 function requestDefense(defenseType) {
-    // Display the defense type
     const defenseTypeLabels = {
         'proposal': '📋 Proposal Defense',
         '60_percent': '📈 60% Progress Defense',
         '100_percent': '🏆 100% Final Defense'
     };
     document.getElementById('defense_type_display').textContent = defenseTypeLabels[defenseType];
-    
-    // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('defenseRequestModal'));
     modal.show();
 }

@@ -1,5 +1,4 @@
 @extends('layouts.coordinator')
-
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
@@ -21,16 +20,13 @@
                 </div>
             </div>
         </div>
-
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
         @if($isTeacherCoordinator && $coordinatedOfferings->count() > 0)
-        <!-- My Coordinated Offerings -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-success">
@@ -76,8 +72,6 @@
             </div>
         </div>
         @endif
-
-        <!-- Current Academic Term Context -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-primary">
@@ -124,8 +118,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Project Management Overview -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
@@ -164,10 +156,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- Main Content Row -->
         <div class="row mb-4">
-            <!-- Recent Activities -->
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
@@ -223,10 +212,7 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Sidebar - Quick Actions & Notifications -->
             <div class="col-md-4">
-                <!-- Quick Actions -->
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -238,15 +224,12 @@
                             <a href="{{ route('coordinator.groups.create') }}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>Create Group
                             </a>
-
                             <a href="{{ route('coordinator.classlist.index') }}" class="btn btn-outline-success">
                                 <i class="fas fa-list me-2"></i>View Class List
                             </a>
                         </div>
                     </div>
                 </div>
-
-                <!-- Pending Invitations -->
                 <div class="card mb-3">
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
@@ -283,8 +266,6 @@
                         @endif
                     </div>
                 </div>
-
-                <!-- System Status -->
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -304,8 +285,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Recent Groups and Submissions -->
         <div class="row mb-4">
             <div class="col-md-6">
                 <div class="card">
@@ -355,7 +334,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header">
@@ -394,8 +372,6 @@
                 </div>
             </div>
         </div>
-
-
     </div>
 </div>
 @endsection

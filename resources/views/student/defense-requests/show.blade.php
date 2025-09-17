@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Defense Request Details')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -26,24 +24,20 @@
             @endif
         </div>
     </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     <div class="row">
         <div class="col-md-8">
-            <!-- Request Details -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
@@ -72,9 +66,7 @@
                             </span>
                         </div>
                     </div>
-                    
                     <hr>
-                    
                     <div class="row">
                         <div class="col-md-6">
                             <h6>Requested Date</h6>
@@ -89,7 +81,6 @@
                             </p>
                         </div>
                     </div>
-
                     @if($defenseRequest->student_message)
                         <hr>
                         <div class="row">
@@ -101,7 +92,6 @@
                             </div>
                         </div>
                     @endif
-
                     @if($defenseRequest->coordinator_notes)
                         <hr>
                         <div class="row">
@@ -113,7 +103,6 @@
                             </div>
                         </div>
                     @endif
-
                     @if($defenseRequest->responded_at)
                         <hr>
                         <div class="row">
@@ -127,8 +116,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Defense Schedule (if scheduled) -->
             @if($defenseRequest->defenseSchedule)
                 <div class="card mb-4">
                     <div class="card-header bg-success text-white">
@@ -153,7 +140,6 @@
                                 </p>
                             </div>
                         </div>
-                        
                         @if($defenseRequest->defenseSchedule->room)
                             <hr>
                             <div class="row">
@@ -163,7 +149,6 @@
                                 </div>
                             </div>
                         @endif
-
                         @if($defenseRequest->defenseSchedule->coordinator_notes)
                             <hr>
                             <div class="row">
@@ -179,9 +164,7 @@
                 </div>
             @endif
         </div>
-
         <div class="col-md-4">
-            <!-- Group Information -->
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
                     <h6 class="mb-0">
@@ -191,20 +174,16 @@
                 <div class="card-body">
                     <h6>Group Name</h6>
                     <p class="mb-2">{{ $defenseRequest->group->name }}</p>
-                    
                     <h6>Members</h6>
                     <ul class="list-unstyled mb-2">
                         @foreach($defenseRequest->group->members as $member)
                             <li><i class="fas fa-user me-1"></i>{{ $member->name }}</li>
                         @endforeach
                     </ul>
-                    
                     <h6>Adviser</h6>
                     <p class="mb-0">{{ $defenseRequest->group->adviser->name ?? 'Not assigned' }}</p>
                 </div>
             </div>
-
-            <!-- Status Timeline -->
             <div class="card">
                 <div class="card-header bg-secondary text-white">
                     <h6 class="mb-0">
@@ -222,7 +201,6 @@
                                 </small>
                             </div>
                         </div>
-                        
                         @if($defenseRequest->responded_at)
                             <div class="timeline-item">
                                 <div class="timeline-marker bg-{{ $statusClass }}"></div>
@@ -234,7 +212,6 @@
                                 </div>
                             </div>
                         @endif
-                        
                         @if($defenseRequest->defenseSchedule)
                             <div class="timeline-item">
                                 <div class="timeline-marker bg-success"></div>
@@ -251,13 +228,10 @@
             </div>
         </div>
     </div>
-
-    <!-- Action Buttons -->
     <div class="text-center mt-4">
         <a href="{{ route('student.defense-requests.index') }}" class="btn btn-primary">
             <i class="fas fa-list me-2"></i>View All Requests
         </a>
-        
         @if($defenseRequest->isPending())
             <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success">
                 <i class="fas fa-plus me-2"></i>Request Another Defense
@@ -265,18 +239,15 @@
         @endif
     </div>
 </div>
-
 <style>
 .timeline {
     position: relative;
     padding-left: 20px;
 }
-
 .timeline-item {
     position: relative;
     margin-bottom: 20px;
 }
-
 .timeline-marker {
     position: absolute;
     left: -25px;
@@ -285,11 +256,9 @@
     height: 12px;
     border-radius: 50%;
 }
-
 .timeline-content {
     margin-left: 10px;
 }
-
 .timeline-item:not(:last-child)::after {
     content: '';
     position: absolute;

@@ -1,26 +1,19 @@
 <?php
-
 namespace App\Imports;
-
 use App\Models\User;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Illuminate\Support\Facades\Hash;
-
 class FacultyImport implements ToModel, WithHeadingRow, WithValidation
 {
     public function model(array $row)
     {
-        // Get role from Excel file or default to "teacher"
         $roleName = $row['role'] ?? 'teacher';
-        
-        // Validate that the role exists, if not, default to "teacher"
         $validRoles = ['teacher', 'adviser', 'panelist'];
         if (!in_array(strtolower($roleName), $validRoles)) {
             $roleName = 'teacher';
         }
-
         return new User([
             'name' => $row['name'],
             'email' => $row['email'],
@@ -31,7 +24,6 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
             'must_change_password' => true,
         ]);
     }
-
     public function rules(): array
     {
         return [
@@ -46,7 +38,6 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
             '*.department' => 'nullable|string|max:255',
         ];
     }
-
     public function customValidationMessages(): array
     {
         return [

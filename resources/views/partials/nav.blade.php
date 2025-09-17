@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg" style="background-color: #182A56;">
     <div class="container d-flex align-items-center">
-        <div style="width:32px; height:32px; margin-right:10px;"></div> <!-- Empty logo space -->
+        <div style="width:32px; height:32px; margin-right:10px;"></div> 
         <a class="navbar-brand fw-bold text-white" href="#">CapTrack</a>
         <div class="collapse navbar-collapse justify-content-end">
             <ul class="navbar-nav ms-auto">

@@ -1,7 +1,5 @@
 @extends('layouts.chairperson')
-
 @section('title', 'Add Students to Offering')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -21,22 +19,18 @@
                     </a>
                 </div>
             </div>
-
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
             @if(session('error'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     {{ session('error') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
-            <!-- Info Alert -->
             <div class="alert alert-info">
                 <h6 class="alert-heading">
                     <i class="fas fa-info-circle me-1"></i>Single Enrollment System
@@ -45,8 +39,6 @@
                     Students can only be enrolled in one offering at a time. Adding students to this offering will automatically remove them from any other offerings they may be enrolled in.
                 </p>
             </div>
-
-            <!-- Bulk Actions -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h5 class="mb-0">Available Students</h5>
@@ -58,8 +50,6 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Students Table -->
             <div class="card">
                 <div class="card-body">
                     @if($unenrolledStudents->count() > 0)
@@ -135,45 +125,32 @@
         </div>
     </div>
 </div>
-
-<!-- Hidden Bulk Add Form -->
 <form id="bulkAddForm" method="POST" action="{{ route('chairperson.offerings.enroll-multiple-students', $offering->id) }}" style="display: none;">
     @csrf
     <input type="hidden" name="student_ids" id="bulkAddStudentIds">
 </form>
-
 <script>
-// Make offering subject code available to JavaScript
 const offeringSubjectCode = "{{ $offering->subject_code }}";
-
-// Initialize bulk selection functionality
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing bulk selection...');
     initializeBulkSelection();
 });
-
-// Bulk selection functionality
 function initializeBulkSelection() {
     console.log('Initializing bulk selection...');
-    
     const selectAllCheckbox = document.getElementById('selectAll');
     const studentCheckboxes = document.querySelectorAll('.student-checkbox');
     const addSelectedBtn = document.getElementById('addSelectedBtn');
     const selectedCountSpan = document.getElementById('selectedCount');
-
     console.log('Elements found:', {
         selectAll: selectAllCheckbox,
         studentCheckboxes: studentCheckboxes.length,
         addSelectedBtn: addSelectedBtn,
         selectedCountSpan: selectedCountSpan
     });
-
     if (!selectAllCheckbox || !addSelectedBtn) {
         console.error('Required elements not found');
         return;
     }
-
-    // Select All functionality
     selectAllCheckbox.addEventListener('change', function() {
         console.log('Select all changed to:', this.checked);
         const isChecked = this.checked;
@@ -182,8 +159,6 @@ function initializeBulkSelection() {
         });
         updateBulkAddButton();
     });
-
-    // Individual checkbox functionality
     studentCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             console.log('Individual checkbox changed:', this.value, this.checked);
@@ -191,14 +166,10 @@ function initializeBulkSelection() {
             updateBulkAddButton();
         });
     });
-
-    // Update select all state
     function updateSelectAllState() {
         const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
         const totalCount = studentCheckboxes.length;
-        
         console.log('Updating select all state:', checkedCount, 'of', totalCount);
-        
         if (checkedCount === 0) {
             selectAllCheckbox.indeterminate = false;
             selectAllCheckbox.checked = false;
@@ -210,12 +181,9 @@ function initializeBulkSelection() {
             selectAllCheckbox.checked = false;
         }
     }
-
-    // Update bulk add button
     function updateBulkAddButton() {
         const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
         console.log('Updating bulk add button:', checkedCount, 'checked');
-        
         if (checkedCount > 0) {
             addSelectedBtn.style.display = 'inline-block';
             selectedCountSpan.textContent = checkedCount;
@@ -223,30 +191,22 @@ function initializeBulkSelection() {
             addSelectedBtn.style.display = 'none';
         }
     }
-
-    // Bulk add button click handler
     addSelectedBtn.addEventListener('click', function() {
         console.log('Bulk add button clicked');
         const checkedCheckboxes = document.querySelectorAll('.student-checkbox:checked');
         const studentIds = Array.from(checkedCheckboxes).map(cb => cb.value);
         const studentNames = Array.from(checkedCheckboxes).map(cb => cb.dataset.studentName);
-        
         console.log('Selected students:', studentIds, studentNames);
-        
         if (studentIds.length === 0) {
             alert('Please select at least one student to add.');
             return;
         }
-
         const confirmMessage = `Are you sure you want to add ${studentIds.length} selected student(s) to ${offeringSubjectCode}?\n\n` +
                              `Students to be added:\n${studentNames.join('\n')}\n\n` +
                              `Note: This will remove them from any other offerings they may be enrolled in.`;
-
         if (confirm(confirmMessage)) {
-            // Set the form data
             const form = document.getElementById('bulkAddForm');
             const input = document.getElementById('bulkAddStudentIds');
-            
             if (form && input) {
                 input.value = JSON.stringify(studentIds);
                 console.log('Submitting form with:', input.value);
@@ -256,11 +216,8 @@ function initializeBulkSelection() {
             }
         }
     });
-
-    // Initialize the button state
     updateBulkAddButton();
     console.log('Bulk selection initialized successfully');
 }
 </script>
-
 @endsection

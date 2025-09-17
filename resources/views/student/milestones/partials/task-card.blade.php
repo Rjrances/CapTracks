@@ -5,12 +5,9 @@
                 <h6 class="mb-2 {{ $task->status === 'done' ? 'text-decoration-line-through text-muted' : '' }}">
                     {{ $task->milestoneTask->name ?? 'Task' }}
                 </h6>
-                
                 <p class="text-muted mb-2 small">
                     {{ Str::limit($task->milestoneTask->description ?? 'No description', 100) }}
                 </p>
-
-                <!-- Task Assignment Status -->
                 <div class="mb-2">
                     @if($task->is_assigned_to_me)
                         <span class="badge bg-info status-badge">
@@ -26,15 +23,11 @@
                         </span>
                     @endif
                 </div>
-
-                <!-- Task Notes -->
                 @if($task->notes)
                     <div class="task-notes">
                         <small><strong>Notes:</strong> {{ Str::limit($task->notes, 80) }}</small>
                     </div>
                 @endif
-
-                <!-- Task Meta Information -->
                 <div class="task-meta">
                     @if($task->deadline)
                         <div class="task-deadline {{ $task->is_overdue ? 'overdue' : '' }}">
@@ -45,7 +38,6 @@
                             @endif
                         </div>
                     @endif
-
                     @if($task->completed_at)
                         <div class="task-meta">
                             <small class="text-success">
@@ -55,8 +47,6 @@
                         </div>
                     @endif
                 </div>
-
-                <!-- Task Actions -->
                 <div class="task-card-actions">
                     @if($isGroupLeader)
                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignTaskModal{{ $task->id }}" title="{{ $task->assigned_to ? 'Reassign Task' : 'Assign Task' }}">
@@ -72,15 +62,11 @@
                             </form>
                         @endif
                     @endif
-                    
-                    <!-- Submit Task Button (for assigned student or if unassigned) -->
                     @if($task->assigned_to === null || $task->assigned_to == $student->id)
                         <a href="{{ route('student.task-submission.create', $task->id) }}" class="btn btn-sm btn-success" title="Submit Task">
                             <i class="fas fa-upload"></i>
                         </a>
                     @endif
-                    
-                    <!-- View Submissions Button -->
                     @if($task->submissions->count() > 0)
                         <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#submissionsModal{{ $task->id }}" title="View Submissions">
                             <i class="fas fa-eye"></i>
@@ -89,8 +75,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Status Badge -->
             <div class="ms-2">
                 <span class="badge bg-{{ $task->status_badge_class }} status-badge">
                     @if($task->status === 'done')
@@ -103,8 +87,6 @@
                 </span>
             </div>
         </div>
-
-        <!-- Quick Status Change Buttons -->
         <div class="mt-3 d-flex gap-1">
             <button type="button" 
                     class="btn btn-sm {{ $task->status === 'pending' ? 'btn-secondary' : 'btn-outline-secondary' }}"
@@ -127,7 +109,6 @@
         </div>
     </div>
 </div>
-
 <script>
 function changeTaskStatus(taskId, newStatus) {
     fetch(`{{ url('/student/milestones/tasks') }}/${taskId}/move`, {
@@ -143,7 +124,6 @@ function changeTaskStatus(taskId, newStatus) {
     .then(data => {
         if (data.success) {
             showAlert('Task status updated successfully!', 'success');
-            // Reload the page to update the Kanban board
             setTimeout(() => location.reload(), 1000);
         } else {
             showAlert('Failed to update task status: ' + (data.message || 'Unknown error'), 'danger');

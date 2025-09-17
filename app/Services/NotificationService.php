@@ -1,21 +1,10 @@
 <?php
-
 namespace App\Services;
-
 use App\Models\User;
 use App\Models\Notification;
-
 use Illuminate\Support\Facades\Log;
-
 class NotificationService
 {
-
-
-
-
-    /**
-     * Specific notification methods for coordinators
-     */
     public static function newGroupRegistration(string $groupName, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -25,7 +14,6 @@ class NotificationService
             $redirectUrl ?? route('coordinator.groups.index')
         );
     }
-
     public static function progressReportAvailable(int $percentage, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -35,7 +23,6 @@ class NotificationService
             $redirectUrl ?? route('coordinator.progress-validation.dashboard')
         );
     }
-
     public static function defenseScheduleUpdated(?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -45,7 +32,6 @@ class NotificationService
             $redirectUrl ?? route('coordinator.defense.index')
         );
     }
-
     public static function newProjectSubmission(string $groupName, string $projectType, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -55,7 +41,6 @@ class NotificationService
             $redirectUrl ?? route('coordinator.groups.index')
         );
     }
-
     public static function adviserAssigned(string $groupName, string $adviserName, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -65,7 +50,6 @@ class NotificationService
             $redirectUrl ?? route('coordinator.groups.index')
         );
     }
-
     public static function milestoneCompleted(string $groupName, string $milestoneName, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -75,10 +59,6 @@ class NotificationService
             $redirectUrl ?? route('coordinator.groups.index')
         );
     }
-
-    /**
-     * Specific notification methods for teachers
-     */
     public static function studentTaskCompleted(User $adviser, string $studentName, string $taskName, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -88,7 +68,6 @@ class NotificationService
             $redirectUrl ?? route('adviser.groups.index')
         );
     }
-
     public static function groupProgressUpdate(User $adviser, string $groupName, int $percentage, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -98,7 +77,6 @@ class NotificationService
             $redirectUrl ?? route('adviser.groups.index')
         );
     }
-
     public static function newSubmissionReceived(User $adviser, string $groupName, string $projectType, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -108,13 +86,9 @@ class NotificationService
             $redirectUrl ?? route('adviser.project.index')
         );
     }
-
     public static function newAdviserInvitation(User $adviser, string $groupName, ?string $redirectUrl = null)
     {
-        // Create notification specifically for this faculty member
-        // Use the actual role from the database (teacher, adviser, or panelist)
         $role = $adviser->role ?? 'teacher';
-        
         try {
             return Notification::create([
                 'title' => 'New Teacher Invitation',
@@ -133,10 +107,6 @@ class NotificationService
             return null;
         }
     }
-
-    /**
-     * Specific notification methods for students
-     */
     public static function milestoneDeadlineApproaching(User $student, string $milestoneName, int $daysLeft, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -146,7 +116,6 @@ class NotificationService
             $redirectUrl ?? route('student.milestones.index')
         );
     }
-
     public static function newTaskAssigned(User $student, string $taskName, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -156,7 +125,6 @@ class NotificationService
             $redirectUrl ?? route('student.milestones.index')
         );
     }
-
     public static function taskCompleted(User $student, string $taskName, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -166,10 +134,6 @@ class NotificationService
             $redirectUrl ?? route('student.milestones.index')
         );
     }
-
-    /**
-     * Specific notification methods for panelists
-     */
     public static function newPanelAssignment(User $panelist, string $groupName, string $defenseDate, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -179,7 +143,6 @@ class NotificationService
             $redirectUrl ?? route('dashboard')
         );
     }
-
     public static function defenseScheduleUpdate(User $panelist, string $groupName, string $defenseDate, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -189,10 +152,6 @@ class NotificationService
             $redirectUrl ?? route('dashboard')
         );
     }
-
-    /**
-     * Specific notification methods for chairpersons
-     */
     public static function facultyRoleAssigned(string $facultyName, string $role, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -202,7 +161,6 @@ class NotificationService
             $redirectUrl ?? route('chairperson.roles.index')
         );
     }
-
     public static function academicTermStatusChanged(string $termName, string $status, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -212,10 +170,6 @@ class NotificationService
             $redirectUrl ?? route('chairperson.academic-terms.index')
         );
     }
-
-    /**
-     * Proposal approval notification
-     */
     public static function proposalApproved($student, string $groupName, string $proposalTitle, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -226,10 +180,6 @@ class NotificationService
             $student->id
         );
     }
-
-    /**
-     * Proposal rejection notification
-     */
     public static function proposalRejected($student, string $groupName, string $proposalTitle, string $feedback, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -240,10 +190,6 @@ class NotificationService
             $student->id
         );
     }
-
-    /**
-     * Create a simple database notification (fallback method)
-     */
     public static function createSimpleNotification(string $title, string $description, string $role, ?string $redirectUrl = null, ?int $userId = null)
     {
         try {
@@ -265,10 +211,6 @@ class NotificationService
             return null;
         }
     }
-
-    /**
-     * Mark notification as read
-     */
     public static function markAsRead(int $notificationId): bool
     {
         try {
@@ -286,10 +228,6 @@ class NotificationService
             return false;
         }
     }
-
-    /**
-     * Mark multiple notifications as read
-     */
     public static function markMultipleAsRead(array $notificationIds): bool
     {
         try {
@@ -303,10 +241,6 @@ class NotificationService
             return false;
         }
     }
-
-    /**
-     * Delete notification
-     */
     public static function deleteNotification(int $notificationId): bool
     {
         try {
@@ -324,10 +258,6 @@ class NotificationService
             return false;
         }
     }
-
-    /**
-     * Delete multiple notifications
-     */
     public static function deleteMultipleNotifications(array $notificationIds): bool
     {
         try {

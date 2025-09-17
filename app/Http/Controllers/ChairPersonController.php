@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use App\Models\Offering;
 use App\Models\User;
@@ -12,39 +10,28 @@ use App\Models\Role;
 use App\Imports\StudentsImport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\FacultyImport;
-
 class ChairpersonController extends Controller
 {
     public function index()
     {
         return view('chairperson.dashboard');
     }
-
-    // ======= OFFERINGS =======
-
-    /**
-     * Get the current active academic term
-     */
     private function getActiveTerm()
     {
         return AcademicTerm::where('is_active', true)->first();
     }
-
     public function indexOfferings(Request $request)
     {
         $activeTerm = $this->getActiveTerm();
         $showAllTerms = $request->get('show_all', false);
-        
         $offerings = Offering::with(['teacher', 'academicTerm', 'students'])
             ->when($activeTerm && !$showAllTerms, function($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);
             })
             ->orderBy('created_at', 'desc')
             ->get();
-            
         return view('chairperson.offerings.index', compact('offerings', 'activeTerm', 'showAllTerms'));
     }
-
     public function createOffering()
     {
         $activeTerm = $this->getActiveTerm();
@@ -52,7 +39,6 @@ class ChairpersonController extends Controller
         $academicTerms = AcademicTerm::notArchived()->get();
         return view('chairperson.offerings.create', compact('teachers', 'academicTerms', 'activeTerm'));
     }
-
     public function storeOffering(Request $request)
     {
         $request->validate([
@@ -69,30 +55,22 @@ class ChairpersonController extends Controller
             'academic_term_id.required' => 'Please select an academic term.',
             'academic_term_id.exists' => 'Selected academic term does not exist.',
         ]);
-
         $data = $request->only('subject_title', 'subject_code', 'teacher_id', 'academic_term_id');
-        
-        // If no academic term is selected, use the active term
         if (empty($data['academic_term_id'])) {
             $activeTerm = $this->getActiveTerm();
             if ($activeTerm) {
                 $data['academic_term_id'] = $activeTerm->id;
             }
         }
-
         $offering = Offering::create($data);
-
-        // Automatically assign coordinator role to the teacher
         $teacher = User::find($data['teacher_id']);
         if ($teacher && !$teacher->hasRole('coordinator')) {
             $teacher->role = 'coordinator';
             $teacher->save();
             \Log::info("Automatically assigned coordinator role to teacher {$teacher->name} for offering {$offering->subject_code}");
         }
-
         return redirect()->route('chairperson.offerings.index')->with('success', 'Offering added successfully. Teacher automatically assigned as coordinator.');
     }
-
     public function editOffering($id)
     {
         $offering = Offering::with(['teacher', 'academicTerm', 'students'])->findOrFail($id);
@@ -100,7 +78,6 @@ class ChairpersonController extends Controller
         $academicTerms = AcademicTerm::notArchived()->get();
         return view('chairperson.offerings.edit', compact('offering', 'teachers', 'academicTerms'));
     }
-
     public function updateOffering(Request $request, $id)
     {
         $request->validate([
@@ -117,16 +94,11 @@ class ChairpersonController extends Controller
             'academic_term_id.required' => 'Please select an academic term.',
             'academic_term_id.exists' => 'Selected academic term does not exist.',
         ]);
-
         $offering = Offering::findOrFail($id);
         $oldTeacherId = $offering->teacher_id;
-        
         $offering->update($request->only('subject_title', 'subject_code', 'teacher_id', 'academic_term_id'));
-
-        // Handle coordinator role assignment for new teacher
         $newTeacherId = $request->input('teacher_id');
         if ($newTeacherId != $oldTeacherId) {
-            // Remove coordinator role from old teacher if they have no other offerings
             if ($oldTeacherId) {
                 $oldTeacher = User::find($oldTeacherId);
                 if ($oldTeacher && $oldTeacher->offerings()->count() === 0) {
@@ -135,8 +107,6 @@ class ChairpersonController extends Controller
                     \Log::info("Removed coordinator role from teacher {$oldTeacher->name} - no more offerings");
                 }
             }
-
-            // Assign coordinator role to new teacher
             $newTeacher = User::find($newTeacherId);
             if ($newTeacher && !$newTeacher->hasRole('coordinator')) {
                 $newTeacher->role = 'coordinator';
@@ -144,75 +114,49 @@ class ChairpersonController extends Controller
                 \Log::info("Automatically assigned coordinator role to teacher {$newTeacher->name} for offering {$offering->subject_code}");
             }
         }
-
         return redirect()->route('chairperson.offerings.index')->with('success', 'Offering updated successfully. Coordinator role updated automatically.');
     }
-
     public function deleteOffering($id)
     {
         $offering = Offering::with('teacher')->findOrFail($id);
         $teacher = $offering->teacher;
         $offeringCode = $offering->subject_code;
-        
-        // Delete the offering
         $offering->delete();
-        
-        // Check if teacher should revert to 'teacher' role
         if ($teacher && $teacher->hasRole('coordinator')) {
-            // Add a small delay to ensure database transaction is committed
             \DB::afterCommit(function() use ($teacher) {
                 $this->manageTeacherRoleTransition($teacher);
             });
         }
-
         $message = "Offering '{$offeringCode}' deleted successfully.";
         if ($teacher) {
             $message .= " Teacher role will be updated if needed.";
         }
-        
         return redirect()->route('chairperson.offerings.index')->with('success', $message);
     }
-
-    /**
-     * Force update all users' roles based on their current offerings
-     * This will fix any role inconsistencies
-     */
     public function forceUpdateAllRoles()
     {
         try {
             $usersUpdated = 0;
-            
-            // Get all users who might have role inconsistencies
             $users = User::whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])->get();
-            
             foreach ($users as $user) {
                 if ($user->updateRoleBasedOnOfferings()) {
                     $usersUpdated++;
                 }
             }
-            
             $message = "Role consistency check completed. {$usersUpdated} users had their roles updated.";
             \Log::info($message);
-            
             return redirect()->back()->with('success', $message);
-            
         } catch (\Exception $e) {
             \Log::error('Error updating all user roles: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Error updating user roles. Please check logs.');
         }
     }
-
-    /**
-     * Force update a specific user's role based on their current offerings
-     */
     public function forceUpdateUserRole($userId)
     {
         try {
             $user = User::findOrFail($userId);
             $oldRole = $user->role;
-            
             $roleChanged = $user->updateRoleBasedOnOfferings();
-            
             if ($roleChanged) {
                 $message = "User {$user->name} role updated from '{$oldRole}' to '{$user->role}'";
                 \Log::info($message);
@@ -221,55 +165,34 @@ class ChairpersonController extends Controller
                 $message = "User {$user->name} role is already correct: '{$user->role}'";
                 return redirect()->back()->with('info', $message);
             }
-            
         } catch (\Exception $e) {
             \Log::error('Error updating user role: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Error updating user role. Please check logs.');
         }
     }
-
-    /**
-     * Fix role inconsistencies for all users
-     * This method can be called to ensure all users have the correct role based on their offerings
-     */
     public function fixRoleInconsistencies()
     {
         try {
             $usersUpdated = 0;
-            
-            // Get all users who might have role inconsistencies
             $users = User::whereIn('role', ['teacher', 'coordinator', 'adviser', 'panelist'])->get();
-            
             foreach ($users as $user) {
                 if ($user->updateRoleBasedOnOfferings()) {
                     $usersUpdated++;
                 }
             }
-            
             $message = "Role consistency check completed. {$usersUpdated} users had their roles updated.";
             \Log::info($message);
-            
             return redirect()->route('chairperson.offerings.index')->with('success', $message);
-            
         } catch (\Exception $e) {
             \Log::error('Error fixing role inconsistencies: ' . $e->getMessage());
             return redirect()->route('chairperson.offerings.index')->with('error', 'Error fixing role inconsistencies. Please check logs.');
         }
     }
-
-    /**
-     * Manage teacher role transition when offerings are deleted
-     * If a coordinator has no more offerings, revert to 'teacher' role
-     */
     private function manageTeacherRoleTransition(User $teacher)
     {
         try {
-            // Refresh the user to get the latest data
             $teacher->refresh();
-            
-            // Use the new method from User model
             $roleChanged = $teacher->updateRoleBasedOnOfferings();
-            
             if ($roleChanged) {
                 \Log::info("Role transition completed for teacher {$teacher->name} (ID: {$teacher->id})");
             } else {
@@ -279,40 +202,26 @@ class ChairpersonController extends Controller
             \Log::error("Error managing role transition for teacher {$teacher->id}: " . $e->getMessage());
         }
     }
-
-    // ======= OFFERING STUDENT MANAGEMENT =======
-
     public function showOffering($id)
     {
         $offering = Offering::with(['teacher', 'academicTerm', 'students'])->findOrFail($id);
-        
         return view('chairperson.offerings.show', compact('offering'));
     }
-
-
-
     public function removeStudentFromOffering(Request $request, $offeringId, $studentId)
     {
         $offering = Offering::findOrFail($offeringId);
         $offering->students()->detach($studentId);
-
         return redirect()->route('chairperson.offerings.show', $offeringId)
             ->with('success', 'Student removed from offering successfully.');
     }
-
-    // ======= TEACHERS =======
-
     public function teachers(Request $request)
     {
         $activeTerm = $this->getActiveTerm();
         $showAllTerms = $request->get('show_all', false);
-        
         $teachers = User::query()
             ->when($showAllTerms, function($query) {
-                // "Show All Faculty" - show all users except students
                 return $query->whereNotIn('role', ['student']);
             }, function($query) use ($activeTerm) {
-                // Default view - show only faculty with offerings in active term
                 return $query->whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])
                     ->whereHas('offerings', function($q) use ($activeTerm) {
                         $q->where('academic_term_id', $activeTerm->id);
@@ -320,15 +229,12 @@ class ChairpersonController extends Controller
             })
             ->orderBy('school_id')
             ->get();
-            
         return view('chairperson.teachers.index', compact('teachers', 'activeTerm', 'showAllTerms'));
     }
-
     public function createTeacher()
     {
         return view('chairperson.teachers.create');
     }
-
     public function storeTeacher(Request $request)
     {
         $request->validate([
@@ -337,7 +243,6 @@ class ChairpersonController extends Controller
             'role'     => 'required|in:adviser,panelist',
             'password' => 'required|string|min:8',
         ]);
-
         $user = User::create([
             'name'                 => $request->name,
             'email'                => $request->email,
@@ -348,49 +253,34 @@ class ChairpersonController extends Controller
             'role'                 => $request->role,
             'must_change_password' => true,
         ]);
-
         return redirect()->route('teachers.index')->with('success', 'Teacher added successfully.');
     }
-
     public function editTeacher($id)
     {
         $teacher = User::findOrFail($id);
         return view('chairperson.teachers.edit', compact('teacher'));
     }
-
     public function updateTeacher(Request $request, $id)
     {
         $teacher = User::findOrFail($id);
-
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email,' . $teacher->id,
             'role'     => 'required|in:adviser,panelist',
             'password' => 'nullable|string|min:8',
         ]);
-
         $teacher->name = $request->name;
         $teacher->email = $request->email;
         $teacher->role = $request->role;
-
         if ($request->filled('password')) {
             $teacher->password = bcrypt($request->password);
         }
-
         $teacher->save();
-
         return redirect()->route('teachers.index')->with('success', 'Teacher updated successfully.');
     }
-
-
-
-    // ======= STUDENT MANAGEMENT =======
-
     public function indexStudents(Request $request)
     {
         $query = Student::query();
-        
-        // Search functionality
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function($q) use ($search) {
@@ -400,52 +290,31 @@ class ChairpersonController extends Controller
                   ->orWhere('course', 'like', "%{$search}%");
             });
         }
-        
-        // Filter by course
         if ($request->filled('course')) {
             $query->where('course', $request->get('course'));
         }
-        
-        // Filter by semester
         if ($request->filled('semester')) {
             $query->where('semester', $request->get('semester'));
         }
-        
-        // Sorting functionality
         $sortBy = $request->get('sort_by', 'student_id');
         $sortOrder = $request->get('sort_order', 'asc');
-        
-        // Validate sort fields
         $allowedSortFields = ['student_id', 'name', 'email', 'course', 'semester'];
         if (!in_array($sortBy, $allowedSortFields)) {
             $sortBy = 'student_id';
         }
-        
-        // Validate sort order
         if (!in_array($sortOrder, ['asc', 'desc'])) {
             $sortOrder = 'asc';
         }
-        
-        // Apply sorting
         $query->orderBy($sortBy, $sortOrder);
-        
-        // Get unique courses and semesters for filters
         $courses = Student::distinct()->pluck('course')->sort();
         $semesters = Student::distinct()->pluck('semester')->sort();
-        
         $students = $query->with(['offerings', 'groups'])->paginate(20);
-        
-        // Add sorting parameters to pagination
         $students->appends($request->all());
-            
         return view('chairperson.students.index', compact('students', 'courses', 'semesters', 'sortBy', 'sortOrder'));
     }
-
     public function exportStudents(Request $request)
     {
         $query = Student::query();
-        
-        // Apply same filters as index
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function($q) use ($search) {
@@ -455,53 +324,34 @@ class ChairpersonController extends Controller
                   ->orWhere('course', 'like', "%{$search}%");
             });
         }
-        
         if ($request->filled('course')) {
             $query->where('course', $request->get('course'));
         }
-        
         if ($request->filled('semester')) {
             $query->where('semester', $request->get('semester'));
         }
-        
-        // Apply same sorting as index
         $sortBy = $request->get('sort_by', 'student_id');
         $sortOrder = $request->get('sort_order', 'asc');
-        
-        // Validate sort fields
         $allowedSortFields = ['student_id', 'name', 'email', 'course', 'semester'];
         if (!in_array($sortBy, $allowedSortFields)) {
             $sortBy = 'student_id';
         }
-        
-        // Validate sort order
         if (!in_array($sortOrder, ['asc', 'desc'])) {
             $sortOrder = 'asc';
         }
-        
-        // Apply sorting
         $query->orderBy($sortBy, $sortOrder);
-        
         $students = $query->with(['offerings', 'groups'])->get();
-        
         $filename = 'students_' . now()->format('Y-m-d_H-i-s') . '.csv';
-        
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
-        
         $callback = function() use ($students) {
             $file = fopen('php://output', 'w');
-            
-            // CSV headers
             fputcsv($file, ['Student ID', 'Name', 'Email', 'Course', 'Semester', 'Enrolled Offerings', 'Group Status']);
-            
-            // CSV data
             foreach ($students as $student) {
                 $enrolledOfferings = $student->offerings->pluck('subject_title')->implode(', ');
                 $groupStatus = $student->groups->count() > 0 ? 'In Group: ' . $student->groups->first()->name : 'No Group';
-                
                 fputcsv($file, [
                     $student->student_id,
                     $student->name,
@@ -512,43 +362,32 @@ class ChairpersonController extends Controller
                     $groupStatus
                 ]);
             }
-            
             fclose($file);
         };
-        
         return response()->stream($callback, 200, $headers);
     }
-
     public function deleteStudent($id)
     {
         try {
             $student = Student::findOrFail($id);
             $studentName = $student->name;
-            
-            // Delete the student (this will automatically remove from offerings and groups due to foreign key constraints)
             $student->delete();
-            
             return redirect()->route('chairperson.students.index')
                 ->with('success', "Student '{$studentName}' has been deleted successfully.");
-                
         } catch (\Exception $e) {
             \Log::error('Error deleting student: ' . $e->getMessage());
-            
             return redirect()->route('chairperson.students.index')
                 ->with('error', 'Failed to delete student. Please try again.');
         }
     }
-
     public function editStudent($id)
     {
         $student = Student::findOrFail($id);
         return view('chairperson.students.edit', compact('student'));
     }
-
     public function updateStudent(Request $request, $id)
     {
         $student = Student::findOrFail($id);
-        
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:students,email,' . $id,
@@ -557,7 +396,6 @@ class ChairpersonController extends Controller
             'semester' => 'required|string|max:255',
             'password' => 'nullable|string|min:8',
         ]);
-
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
@@ -565,158 +403,106 @@ class ChairpersonController extends Controller
             'course' => $request->course,
             'semester' => $request->semester,
         ];
-
-        // Only update password if provided
         if ($request->filled('password')) {
             $updateData['password'] = bcrypt($request->password);
         }
-
         $student->update($updateData);
-
         return redirect()->route('chairperson.students.index')->with('success', 'Student updated successfully.');
     }
-
-    /**
-     * Show unenrolled students for an offering
-     */
     public function showUnenrolledStudents($offeringId)
     {
         $offering = Offering::findOrFail($offeringId);
-        
-        // Get students who are not enrolled in any offering
         $unenrolledStudents = Student::whereDoesntHave('offerings')
             ->orderBy('name')
             ->get();
-        
         return view('chairperson.offerings.unenrolled-students', compact('offering', 'unenrolledStudents'));
     }
-
-    /**
-     * Manually enroll a student in an offering
-     */
     public function enrollStudent(Request $request, $offeringId)
     {
         $request->validate([
             'student_id' => 'required|exists:students,id',
         ]);
-
         $offering = Offering::findOrFail($offeringId);
         $student = Student::findOrFail($request->student_id);
-
-        // Use the single enrollment method
         $student->enrollInOffering($offering);
-
         return redirect()->route('chairperson.offerings.show', $offeringId)
             ->with('success', "Student '{$student->name}' has been enrolled in {$offering->subject_code}.");
     }
-
-    /**
-     * Manually enroll multiple students in an offering
-     */
     public function enrollMultipleStudents(Request $request, $offeringId)
     {
         try {
-            // Handle both JSON and array input
             $studentIds = $request->input('student_ids');
             if (is_string($studentIds)) {
                 $studentIds = json_decode($studentIds, true);
             }
-            
             if (empty($studentIds) || !is_array($studentIds)) {
                 return redirect()->route('chairperson.offerings.show', $offeringId)
                     ->with('error', 'No students selected for enrollment.');
             }
-
             $offering = Offering::findOrFail($offeringId);
             $enrolledCount = 0;
             $enrolledNames = [];
             $errors = [];
-
             foreach ($studentIds as $studentId) {
                 try {
                     $student = Student::findOrFail($studentId);
                     $student->enrollInOffering($offering);
                     $enrolledCount++;
                     $enrolledNames[] = $student->name;
-                    
                     \Log::info("Student {$student->name} (ID: {$studentId}) enrolled in offering {$offering->subject_code}");
-                    
                 } catch (\Exception $e) {
                     $errors[] = "Student ID {$studentId}: " . $e->getMessage();
                     \Log::error("Error enrolling student ID {$studentId}: " . $e->getMessage());
                 }
             }
-
             $message = "Successfully enrolled {$enrolledCount} student(s): " . implode(', ', $enrolledNames);
-            
             if (!empty($errors)) {
                 $message .= "\nErrors occurred with some students: " . implode('; ', $errors);
                 return redirect()->route('chairperson.offerings.show', $offeringId)
                     ->with('warning', $message);
             }
-
             return redirect()->route('chairperson.offerings.show', $offeringId)
                 ->with('success', $message);
-                
         } catch (\Exception $e) {
             \Log::error('Error in bulk enrollment: ' . $e->getMessage());
             return redirect()->route('chairperson.offerings.show', $offeringId)
                 ->with('error', 'Error during bulk enrollment. Please try again.');
         }
     }
-
-    /**
-     * Bulk delete multiple students
-     */
     public function bulkDeleteStudents(Request $request)
     {
         try {
             $studentIds = json_decode($request->input('student_ids'), true);
-            
             if (empty($studentIds) || !is_array($studentIds)) {
                 return redirect()->route('chairperson.students.index')->with('error', 'No students selected for deletion.');
             }
-
             $deletedCount = 0;
             $deletedNames = [];
             $errors = [];
-
             foreach ($studentIds as $studentId) {
                 try {
                     $student = Student::findOrFail($studentId);
                     $studentName = $student->name;
-                    
-                    // Delete the student (this will automatically remove from offerings and groups due to foreign key constraints)
                     $student->delete();
-                    
                     $deletedCount++;
                     $deletedNames[] = $studentName;
-                    
                     \Log::info("Student {$studentName} (ID: {$studentId}) bulk deleted by chairperson");
-                    
                 } catch (\Exception $e) {
                     $errors[] = "Student ID {$studentId}: " . $e->getMessage();
                     \Log::error("Error bulk deleting student ID {$studentId}: " . $e->getMessage());
                 }
             }
-
             $message = "Successfully deleted {$deletedCount} student(s): " . implode(', ', $deletedNames);
-            
             if (!empty($errors)) {
                 $message .= "\nErrors occurred with some students: " . implode('; ', $errors);
                 return redirect()->route('chairperson.students.index')->with('warning', $message);
             }
-
             return redirect()->route('chairperson.students.index')->with('success', $message);
-            
         } catch (\Exception $e) {
             \Log::error('Error in bulk delete: ' . $e->getMessage());
             return redirect()->route('chairperson.students.index')->with('error', 'Error during bulk deletion. Please try again.');
         }
     }
-
-    // ======= STUDENT IMPORT =======
-
     public function uploadStudentList(Request $request)
     {
         $request->validate([
@@ -727,42 +513,27 @@ class ChairpersonController extends Controller
             'file.mimes' => 'Please upload an Excel file (.xlsx, .xls) or CSV file (.csv).',
             'file.max' => 'File size must not exceed 10MB.',
         ]);
-
         try {
-            // Add debugging
             \Log::info('Starting student import...');
-            
-            // Get file info for better feedback
             $file = $request->file('file');
             $fileName = $file->getClientOriginalName();
             $fileSize = number_format($file->getSize() / 1024, 2); // KB
-            
-            // Check if file is empty
             if ($file->getSize() === 0) {
                 return back()->with('error', '❌ Import failed: The uploaded file is empty. Please check your file and try again.');
             }
-            
             \Log::info("Importing file: {$fileName} (Size: {$fileSize} KB)");
-            
-            // Check if there's an offering_id parameter for auto-enrollment
             $offeringId = $request->get('offering_id');
             \Log::info("Importing students with offering_id: " . ($offeringId ?: 'none'));
-            
             $import = new StudentsImport($offeringId);
             Excel::import($import, $file);
-            
             \Log::info('Student import completed successfully');
-            
-            // Fallback: If we have an offering_id, ensure students are enrolled
             if ($offeringId) {
                 try {
                     $offering = \App\Models\Offering::find($offeringId);
                     if ($offering) {
-                        // Get recently created students (within last 2 minutes) and enroll them
                         $recentStudents = \App\Models\Student::where('created_at', '>=', now()->subMinutes(2))->get();
                         if ($recentStudents->count() > 0) {
                             foreach ($recentStudents as $student) {
-                                // Use the new single enrollment method
                                 $student->enrollInOffering($offering);
                             }
                             \Log::info("Fallback enrollment: Enrolled {$recentStudents->count()} students in offering {$offering->subject_code} (single enrollment)");
@@ -772,16 +543,10 @@ class ChairpersonController extends Controller
                     \Log::error('Fallback enrollment failed: ' . $e->getMessage());
                 }
             }
-            
-            // Get count of imported students (this is approximate since we don't track individual imports)
             $successMessage = "✅ Students imported successfully from '{$fileName}'!";
-            
-            // Check if there's an offering_id parameter to redirect to
             if ($request->has('offering_id')) {
                 $offeringId = $request->get('offering_id');
                 $offering = \App\Models\Offering::find($offeringId);
-                
-                // Double-check enrollment status and log it
                 if ($offering) {
                     $enrolledCount = $offering->students()->count();
                     \Log::info("Offering {$offering->subject_code} now has {$enrolledCount} enrolled students");
@@ -789,38 +554,25 @@ class ChairpersonController extends Controller
                 } else {
                     $enrollmentMessage = "";
                 }
-                
                 return redirect()->route('chairperson.offerings.show', $offeringId)
                     ->with('success', $successMessage . $enrollmentMessage);
             }
-            
-            // If no offering_id, redirect back to import page
             return back()->with('success', $successMessage);
-            
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             \Log::error('Student import validation failed: ' . $e->getMessage());
-            
             $errorMessage = "❌ Import failed due to validation errors:\n";
-            
-            // Collect all validation errors from failures
             $allErrors = [];
             foreach ($e->failures() as $failure) {
                 foreach ($failure->errors() as $error) {
                     $allErrors[] = $error;
                 }
             }
-            
             $errorMessage .= "• " . implode("\n• ", $allErrors);
-            
             return back()->with('error', $errorMessage);
-            
         } catch (\Exception $e) {
             \Log::error('Student import failed: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
             $errorMessage = "❌ Import failed: " . $e->getMessage();
-            
-            // Provide more user-friendly error messages for common issues
             if (str_contains(strtolower($e->getMessage()), 'duplicate entry')) {
                 $errorMessage = "❌ Import failed: Some student IDs or emails already exist in the system. Please check for duplicates.";
             } elseif (str_contains(strtolower($e->getMessage()), 'syntax error')) {
@@ -832,25 +584,19 @@ class ChairpersonController extends Controller
             } elseif (str_contains(strtolower($e->getMessage()), 'memory limit')) {
                 $errorMessage = "❌ Import failed: File is too large. Please try with a smaller file or contact administrator.";
             }
-            
             return back()->with('error', $errorMessage);
         }
     }
-
-    // ======= FACULTY MANAGEMENT =======
-
     public function facultyManagement()
     {
         $faculty = User::whereIn('role', ['teacher', 'adviser', 'panelist'])->get();
         return view('chairperson.teachers.index', compact('faculty'));
     }
-
     public function uploadFacultyList(Request $request)
     {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv',
         ]);
-
         try {
             Excel::import(new FacultyImport, $request->file('file'));
             return back()->with('success', 'Faculty imported successfully!');
@@ -858,23 +604,19 @@ class ChairpersonController extends Controller
             return back()->with('error', 'Error importing faculty: ' . $e->getMessage());
         }
     }
-
     public function createFaculty()
     {
         return view('chairperson.teachers.create');
     }
-
     public function createFacultyManual()
     {
         return view('chairperson.teachers.create-manual');
     }
-
     public function storeFaculty(Request $request)
     {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv',
         ]);
-
         try {
             Excel::import(new FacultyImport, $request->file('file'));
             return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty members imported successfully!');
@@ -882,7 +624,6 @@ class ChairpersonController extends Controller
             return back()->with('error', 'Error importing faculty: ' . $e->getMessage());
         }
     }
-
     public function storeFacultyManual(Request $request)
     {
         $request->validate([
@@ -898,7 +639,6 @@ class ChairpersonController extends Controller
         ], [
             'school_id.regex' => 'Faculty/Staff ID must be exactly 5 digits (e.g., 12345)',
         ]);
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -908,49 +648,38 @@ class ChairpersonController extends Controller
             'password' => bcrypt('password123'),
             'must_change_password' => true,
         ]);
-
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member added successfully!');
     }
-
     public function editFaculty($id)
     {
         $teacher = User::findOrFail($id);
         return view('chairperson.teachers.edit', compact('teacher'));
     }
-
     public function updateFaculty(Request $request, $id)
     {
         $faculty = User::findOrFail($id);
-        
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
             'department' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8',
         ]);
-
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
             'department' => $request->department,
         ];
-
-        // Only update password if provided
         if ($request->filled('password')) {
             $updateData['password'] = bcrypt($request->password);
             $updateData['must_change_password'] = false;
         }
-
         $faculty->update($updateData);
-
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member updated successfully.');
     }
-
     public function deleteFaculty($id)
     {
         $faculty = User::findOrFail($id);
         $faculty->delete();
-
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member deleted successfully.');
     }
 }

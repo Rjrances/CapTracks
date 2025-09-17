@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Group Details')
-
 @section('content')
 <div class="container mt-5">
     <nav aria-label="breadcrumb">

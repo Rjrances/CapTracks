@@ -1,5 +1,4 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -10,21 +9,18 @@
                     <i class="fas fa-plus"></i> Add New Term
                 </a>
             </div>
-
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
             @if(session('error'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     {{ session('error') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -57,7 +53,6 @@
                                                    class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
-                                                
                                                 @if(!$term->is_active && !$term->is_archived)
                                                     <form action="{{ route('chairperson.academic-terms.toggle-active', $term) }}" 
                                                           method="POST" class="d-inline">
@@ -67,7 +62,6 @@
                                                         </button>
                                                     </form>
                                                 @endif
-
                                                 @if($term->is_active)
                                                     <form action="{{ route('chairperson.academic-terms.toggle-active', $term) }}" 
                                                           method="POST" class="d-inline">
@@ -77,7 +71,6 @@
                                                         </button>
                                                     </form>
                                                 @endif
-
                                                 @if(!$term->is_active && !$term->is_archived)
                                                     <form action="{{ route('chairperson.academic-terms.toggle-archived', $term) }}" 
                                                           method="POST" class="d-inline">
@@ -87,7 +80,6 @@
                                                         </button>
                                                     </form>
                                                 @endif
-
                                                 @if($term->is_archived)
                                                     <form action="{{ route('chairperson.academic-terms.toggle-archived', $term) }}" 
                                                           method="POST" class="d-inline">
@@ -97,7 +89,6 @@
                                                         </button>
                                                     </form>
                                                 @endif
-
                                                 @if(!$term->is_active)
                                                     <form action="{{ route('chairperson.academic-terms.destroy', $term) }}" 
                                                           method="POST" class="d-inline"
@@ -125,7 +116,6 @@
         </div>
     </div>
 </div>
-
 <style>
 .btn-group .btn {
     margin-right: 2px;

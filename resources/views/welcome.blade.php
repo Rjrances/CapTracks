@@ -4,12 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>CapTrack - Capstone Project Management System</title>
-        
-        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet" />
-        
-        <!-- Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             tailwind.config = {
@@ -26,11 +22,9 @@
         </script>
     </head>
     <body class="bg-gray-50 font-sans">
-        <!-- Header Navigation -->
         <header class="bg-white shadow-sm border-b border-gray-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center h-16">
-                    <!-- Logo and Brand -->
                     <div class="flex items-center space-x-4">
                         <img src="{{ asset('images/Logo.png') }}" alt="CapTrack Logo" class="w-10 h-10" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                         <div class="text-2xl font-bold text-usjr-dark" style="display: none;">📊</div>
@@ -39,15 +33,11 @@
                         <p class="text-xs text-gray-600">Capstone Project Management</p>
                         </div>
                     </div>
-                    
-                    <!-- Navigation Links -->
                     <nav class="hidden md:flex space-x-8">
                         <a href="#home" class="text-captrack-dark hover:text-captrack-blue transition-colors">Home</a>
                         <a href="#features" class="text-captrack-dark hover:text-captrack-blue transition-colors">Features</a>
                         <a href="#about" class="text-captrack-dark hover:text-captrack-blue transition-colors">About</a>
                     </nav>
-                    
-                    <!-- Login/Register Buttons -->
                     <div class="flex items-center space-x-4">
                         @auth
                             <a href="{{ route('login') }}" class="bg-captrack-blue text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors">
@@ -67,12 +57,9 @@
                 </div>
             </div>
         </header>
-
-        <!-- Hero Section -->
         <section id="home" class="relative bg-gradient-to-br from-blue-600 to-indigo-700 py-20">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid lg:grid-cols-2 gap-12 items-center">
-                    <!-- Left Content -->
                     <div class="text-white">
                         <h1 class="text-5xl lg:text-6xl font-bold mb-6 leading-tight text-white">
                             CAPSTONE PROJECTS
@@ -91,8 +78,6 @@
                             </a>
                         </div>
                     </div>
-                    
-                    <!-- Right Content - Image/Illustration -->
                     <div class="relative">
                         <div class="bg-white rounded-2xl p-8 shadow-2xl">
                             <img src="{{ asset('images/Logo.png') }}" alt="CapTrack Dashboard Preview" class="w-full h-64 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -103,8 +88,6 @@
                 </div>
             </div>
         </section>
-
-        <!-- Features Section -->
         <section id="features" class="py-20 bg-white">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center mb-16">
@@ -113,10 +96,7 @@
                         CapTrack provides specialized features tailored to each role in the capstone project ecosystem
                     </p>
                 </div>
-                
-                <!-- Role-based Features -->
                 <div class="grid lg:grid-cols-2 gap-12 mb-16">
-                    <!-- Students -->
                     <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-2xl border border-blue-200">
                         <div class="flex items-center mb-6">
                             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mr-4">
@@ -150,8 +130,6 @@
                             </li>
                         </ul>
                     </div>
-
-                    <!-- Advisers -->
                     <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl border border-green-200">
                         <div class="flex items-center mb-6">
                             <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mr-4">
@@ -185,8 +163,6 @@
                             </li>
                         </ul>
                     </div>
-
-                    <!-- Coordinators -->
                     <div class="bg-gradient-to-br from-purple-50 to-violet-50 p-8 rounded-2xl border border-purple-200">
                         <div class="flex items-center mb-6">
                             <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mr-4">
@@ -220,8 +196,6 @@
                             </li>
                         </ul>
                     </div>
-
-                    <!-- Chairperson -->
                     <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-8 rounded-2xl border border-orange-200">
                         <div class="flex items-center mb-6">
                             <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mr-4">
@@ -256,15 +230,11 @@
                         </ul>
                     </div>
                 </div>
-
-                <!-- General Features -->
                 <div class="text-center mb-12">
                     <h3 class="text-3xl font-bold text-captrack-dark mb-4">Platform Features</h3>
                     <p class="text-lg text-gray-600">Core capabilities that benefit all users</p>
                 </div>
-                
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Feature 1 -->
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl text-white">📋</span>
@@ -274,8 +244,6 @@
                             Monitor project progress, milestones, and deadlines with our intuitive tracking system.
                         </p>
                     </div>
-                    
-                    <!-- Feature 2 -->
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl text-white">👥</span>
@@ -285,8 +253,6 @@
                             Facilitate seamless communication between students, advisers, and coordinators.
                         </p>
                     </div>
-                    
-                    <!-- Feature 3 -->
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl text-white">📊</span>
@@ -296,8 +262,6 @@
                             Get detailed insights and reports on project performance and completion rates.
                         </p>
                     </div>
-                    
-                    <!-- Feature 4 -->
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl text-white">📅</span>
@@ -307,8 +271,6 @@
                             Organize defense schedules, meetings, and important events efficiently.
                         </p>
                     </div>
-                    
-                    <!-- Feature 5 -->
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl text-white">📁</span>
@@ -318,8 +280,6 @@
                             Store and organize project documents, submissions, and related files securely.
                         </p>
                     </div>
-                    
-                    <!-- Feature 6 -->
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
                             <span class="text-2xl text-white">🔔</span>
@@ -332,8 +292,6 @@
                 </div>
             </div>
         </section>
-
-        <!-- About Section -->
         <section id="about" class="py-20 bg-gray-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid lg:grid-cols-2 gap-12 items-center">
@@ -358,7 +316,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="bg-white p-8 rounded-2xl shadow-lg">
                         <h3 class="text-2xl font-bold text-captrack-dark mb-6">Key Benefits</h3>
                         <ul class="space-y-4">
@@ -387,8 +344,6 @@
                 </div>
             </div>
         </section>
-
-        <!-- CTA Section -->
         <section class="py-20 bg-captrack-dark">
             <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
                 <h2 class="text-4xl font-bold text-white mb-6">Ready to Transform Your Capstone Management?</h2>
@@ -405,8 +360,6 @@
                 </div>
             </div>
         </section>
-
-        <!-- Footer -->
         <footer class="bg-gray-900 text-white py-12">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid md:grid-cols-3 gap-8">
@@ -423,7 +376,6 @@
                             © 2024 CapTrack. All rights reserved.
                         </p>
                     </div>
-                    
                     <div>
                         <h4 class="text-lg font-semibold mb-4">Quick Links</h4>
                         <ul class="space-y-2">
@@ -436,8 +388,6 @@
                 </div>
             </div>
         </footer>
-
-        <!-- Smooth scrolling script -->
         <script>
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {

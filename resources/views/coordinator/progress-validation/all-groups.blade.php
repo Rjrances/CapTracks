@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'All Groups - Group Progress Status')
-
 @section('content')
 <div class="container mt-5">
     <nav aria-label="breadcrumb">
@@ -10,12 +8,9 @@
             <li class="breadcrumb-item active" aria-current="page">All Groups Status</li>
         </ol>
     </nav>
-
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">All Groups - Group Progress Status</h2>
     </div>
-
-    <!-- Filter Options -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
@@ -48,8 +43,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Groups Table -->
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0">
@@ -171,7 +164,6 @@
         </div>
     </div>
 </div>
-
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -179,35 +171,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const adviserFilter = document.getElementById('adviser-filter');
     const searchInput = document.getElementById('search');
     const groupRows = document.querySelectorAll('.group-row');
-
     function filterGroups() {
         const statusValue = statusFilter.value;
         const adviserValue = adviserFilter.value;
         const searchValue = searchInput.value.toLowerCase();
-
         groupRows.forEach(row => {
             let show = true;
-
-            // Status filter
             if (statusValue && row.dataset.status !== statusValue) {
                 show = false;
             }
-
-            // Adviser filter
             if (adviserValue && row.dataset.adviser !== adviserValue) {
                 show = false;
             }
-
-            // Search filter
             if (searchValue && !row.dataset.name.includes(searchValue)) {
                 show = false;
             }
-
             row.style.display = show ? '' : 'none';
         });
     }
-
-    // Add event listeners
     statusFilter.addEventListener('change', filterGroups);
     adviserFilter.addEventListener('change', filterGroups);
     searchInput.addEventListener('input', filterGroups);

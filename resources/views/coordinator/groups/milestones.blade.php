@@ -1,10 +1,7 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Group Milestones - ' . $group->name)
-
 @section('content')
 <div class="container mt-5">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h2 mb-1">Milestones for: {{ $group->name }}</h1>
@@ -14,23 +11,18 @@
             <i class="fas fa-arrow-left me-2"></i>Back to Group
         </a>
     </div>
-
-    <!-- Success/Error Messages -->
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i>{{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
-    <!-- Group Information -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0">
@@ -60,10 +52,6 @@
             </div>
         </div>
     </div>
-
-
-
-    <!-- Overall Progress -->
     <div class="card mb-4">
         <div class="card-header bg-info text-white">
             <h5 class="mb-0">
@@ -103,8 +91,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Milestones List -->
     <div class="card">
         <div class="card-header bg-light">
             <div class="d-flex justify-content-between align-items-center">
@@ -195,8 +181,6 @@
             @endif
         </div>
     </div>
-
-    <!-- Quick Actions -->
     <div class="card mt-4 border-warning">
         <div class="card-header bg-warning text-dark">
             <h6 class="mb-0">

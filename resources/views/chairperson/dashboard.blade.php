@@ -1,5 +1,4 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
@@ -11,7 +10,6 @@
                     <p class="text-muted mb-0">Oversee capstone projects and academic operations</p>
                 </div>
                 <div class="d-flex gap-2">
-
                     <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-outline-primary">
                         <i class="fas fa-book me-2"></i>Manage Offerings
                     </a>
@@ -19,15 +17,12 @@
             </div>
         </div>
     </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
-    <!-- Current Academic Term Context -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-primary">
@@ -78,8 +73,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Department Overview Statistics -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card bg-primary text-white">
@@ -118,10 +111,7 @@
             </div>
         </div>
     </div>
-
-    <!-- Main Content Row -->
     <div class="row mb-4">
-        <!-- Upcoming Defense Schedules -->
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
@@ -129,7 +119,6 @@
                         <h5 class="mb-0">
                             <i class="fas fa-gavel me-2"></i>Upcoming Defense Schedules
                         </h5>
-
                     </div>
                 </div>
                 <div class="card-body">
@@ -182,7 +171,6 @@
                                                 @endif
                                             </td>
                                             <td>
-
                                             </td>
                                         </tr>
                                     @endforeach
@@ -194,16 +182,12 @@
                             <i class="fas fa-gavel fa-3x text-muted mb-3"></i>
                             <h6 class="text-muted">No upcoming defense schedules</h6>
                             <p class="text-muted small">Defense schedules for the next 30 days will appear here.</p>
-
                         </div>
                     @endif
                 </div>
             </div>
         </div>
-
-        <!-- Sidebar - Notifications & Quick Actions -->
         <div class="col-md-4">
-            <!-- Latest Notifications -->
             <div class="card mb-3">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
@@ -239,8 +223,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Quick Actions -->
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -249,14 +231,12 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-
                         <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-outline-primary">
                             <i class="fas fa-book me-2"></i>Manage Offerings
                         </a>
                         <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-chalkboard-teacher me-2"></i>View Teachers
                         </a>
-
                         <a href="{{ route('chairperson.roles.index') }}" class="btn btn-outline-warning">
                             <i class="fas fa-user-tag me-2"></i>Roles
                         </a>
@@ -265,8 +245,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Defense Statistics Row -->
     @if($activeTerm)
     <div class="row mb-4">
         <div class="col-12">
@@ -302,7 +280,5 @@
         </div>
     </div>
     @endif
-
-    
 </div>
 @endsection

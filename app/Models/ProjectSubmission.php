@@ -1,9 +1,6 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
-
 class ProjectSubmission extends Model
 {
     protected $fillable = [
@@ -19,13 +16,11 @@ class ProjectSubmission extends Model
         'timeline',
         'expected_outcomes',
     ];
-
     protected $casts = [
         'submitted_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-
     public function student()
     {
         return $this->belongsTo(\App\Models\Student::class);

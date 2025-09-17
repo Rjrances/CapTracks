@@ -4,7 +4,6 @@
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#chairNav">
             <span class="navbar-toggler-icon"></span>
         </button>
-
         <div class="collapse navbar-collapse" id="chairNav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
@@ -17,7 +16,6 @@
                     <a class="nav-link" href="{{ route('chairperson.offerings.index') }}">Offerings</a>
                 </li>
                 <li class="nav-item">
-    
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('chairperson.teachers.index') }}">Teachers</a>

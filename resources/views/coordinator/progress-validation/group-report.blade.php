@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Group Readiness Report - ' . $group->name)
-
 @section('content')
 <div class="container mt-5">
     <nav aria-label="breadcrumb">
@@ -10,7 +8,6 @@
             <li class="breadcrumb-item active" aria-current="page">{{ $group->name }} - Readiness Report</li>
         </ol>
     </nav>
-
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Group Progress Readiness Report</h2>
         <div>
@@ -21,8 +18,6 @@
             @endif
         </div>
     </div>
-
-    <!-- Group Information -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
@@ -46,8 +41,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Overall Readiness Status -->
     <div class="card mb-4">
         <div class="card-header {{ $report['is_ready'] ? 'bg-success' : 'bg-warning' }} text-white">
             <h5 class="mb-0">
@@ -83,8 +76,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Issues and Warnings -->
     @if(count($report['issues']) > 0 || count($report['warnings']) > 0)
     <div class="card mb-4">
         <div class="card-header bg-light">
@@ -105,7 +96,6 @@
                 </ul>
             </div>
             @endif
-
             @if(count($report['warnings']) > 0)
             <div>
                 <h6 class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i>Warnings</h6>
@@ -121,8 +111,6 @@
         </div>
     </div>
     @endif
-
-    <!-- Milestones Status -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
@@ -190,8 +178,6 @@
             @endif
         </div>
     </div>
-
-    <!-- Required Documents Status -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
@@ -242,8 +228,6 @@
             @endif
         </div>
     </div>
-
-    <!-- Recommendations -->
     @if(count($report['recommendations']) > 0)
     <div class="card mb-4">
         <div class="card-header bg-info text-white">
@@ -262,8 +246,6 @@
         </div>
     </div>
     @endif
-
-    <!-- Action Buttons -->
     <div class="card">
         <div class="card-body text-center">
             @if($report['is_ready'])

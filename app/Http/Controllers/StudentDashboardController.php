@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\ProjectSubmission;
@@ -12,64 +10,33 @@ use App\Models\Group;
 use App\Models\DefenseRequest;
 use App\Models\DefenseSchedule;
 use App\Models\Notification;
-
 class StudentDashboardController extends Controller
 {
     public function index()
     {
-        // Check if user is authenticated via Laravel Auth (faculty/staff)
         if (Auth::check()) {
             $user = Auth::user();
             $student = $user->student;
         } else {
-            // Check if student is authenticated via session
             if (session('is_student') && session('student_id')) {
                 $student = Student::find(session('student_id'));
             } else {
-                // Not authenticated
                 return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
             }
         }
-
-        // ✅ NEW: Get student's group information
         $group = $student->groups()->with(['adviser', 'adviserInvitations.faculty', 'defenseRequests', 'defenseSchedules'])->first();
-        
-        // ✅ NEW: Calculate overall progress
         $overallProgress = $this->calculateOverallProgress($student, $group);
-        
-        // ✅ NEW: Get task statistics
         $taskStats = $this->getTaskStatistics($student, $group);
-        
-        // ✅ NEW: Get submissions count
         $submissionsCount = $this->getSubmissionsCount($student);
-        
-        // ✅ NEW: Get current milestone info
         $milestoneInfo = $this->getCurrentMilestoneInfo($student, $group);
-        
-        // ✅ NEW: Get recent tasks
         $recentTasks = $this->getRecentTasks($student, $group);
-        
-        // ✅ NEW: Get recent activities
         $recentActivities = $this->getRecentActivities($student);
-        
-        // ✅ NEW: Get upcoming deadlines
         $upcomingDeadlines = $this->getUpcomingDeadlines($student, $group);
-        
-        // ✅ NEW: Get adviser information
         $adviserInfo = $this->getAdviserInfo($group);
-        
-        // ✅ NEW: Get defense schedule information
         $defenseInfo = $this->getDefenseInfo($group);
-        
-        // ✅ NEW: Get notifications
         $notifications = $this->getNotifications($student);
-        
-        // ✅ NEW: Get existing proposal for 60% defense readiness
         $existingProposal = $this->getExistingProposal($student);
-        
-        // Get current active term
         $activeTerm = AcademicTerm::where('is_active', true)->first();
-
         return view('student.dashboard', compact(
             'activeTerm',
             'student',
@@ -87,24 +54,16 @@ class StudentDashboardController extends Controller
             'existingProposal'
         ));
     }
-
-    // ✅ NEW: Calculate overall progress percentage
     private function calculateOverallProgress($student, $group = null)
     {
         if (!$student) return 0;
-
-        // If student has a group, use group milestone progress
         if ($group && $group->groupMilestones->count() > 0) {
             $totalProgress = $group->groupMilestones->sum('progress_percentage');
             return round($totalProgress / $group->groupMilestones->count());
         }
-
-        // Fallback to submission-based calculation
         $totalMilestones = 3; // Proposal, Progress, Final
         $completedMilestones = 0;
-        
         $submissions = ProjectSubmission::where('student_id', $student->id)->get();
-        
         if ($submissions->where('type', 'proposal')->count() > 0) {
             $completedMilestones++;
         }
@@ -114,11 +73,8 @@ class StudentDashboardController extends Controller
         if ($submissions->count() >= 2) {
             $completedMilestones++;
         }
-        
         return round(($completedMilestones / $totalMilestones) * 100);
     }
-
-    // ✅ NEW: Get task statistics
     private function getTaskStatistics($student, $group = null)
     {
         if (!$student) {
@@ -129,15 +85,12 @@ class StudentDashboardController extends Controller
                 'doing' => 0
             ];
         }
-
-        // If student has a group, use group milestone tasks
         if ($group) {
             $tasks = $group->groupMilestones->flatMap->groupTasks;
             $totalTasks = $tasks->count();
             $completedTasks = $tasks->where('status', 'done')->count();
             $doingTasks = $tasks->where('status', 'doing')->count();
             $pendingTasks = $tasks->where('status', 'pending')->count();
-
             return [
                 'completed' => $completedTasks,
                 'total' => $totalTasks,
@@ -145,19 +98,15 @@ class StudentDashboardController extends Controller
                 'doing' => $doingTasks
             ];
         }
-
-        // Fallback to general task counts
         $totalTasks = MilestoneTask::count();
         $completedTasks = MilestoneTask::where('is_completed', true)->count();
         $pendingTasks = $totalTasks - $completedTasks;
-
         if ($totalTasks === 0) {
             $submissions = ProjectSubmission::where('student_id', $student->id)->count();
             $totalTasks = 12;
             $completedTasks = min($submissions * 2, 6);
             $pendingTasks = $totalTasks - $completedTasks;
         }
-
         return [
             'completed' => $completedTasks,
             'total' => $totalTasks,
@@ -165,16 +114,11 @@ class StudentDashboardController extends Controller
             'doing' => 0
         ];
     }
-
-    // ✅ NEW: Get submissions count
     private function getSubmissionsCount($student)
     {
         if (!$student) return 0;
-        
         return ProjectSubmission::where('student_id', $student->id)->count();
     }
-
-    // ✅ NEW: Get current milestone information
     private function getCurrentMilestoneInfo($student, $group = null)
     {
         if (!$student) {
@@ -184,14 +128,11 @@ class StudentDashboardController extends Controller
                 'progress' => 0
             ];
         }
-
-        // If student has a group, use group milestones
         if ($group && $group->groupMilestones->count() > 0) {
             $currentMilestone = $group->groupMilestones->where('status', '!=', 'completed')->first();
             if (!$currentMilestone) {
                 $currentMilestone = $group->groupMilestones->last();
             }
-            
             if ($currentMilestone) {
                 return [
                     'name' => $currentMilestone->milestoneTemplate->name,
@@ -201,10 +142,7 @@ class StudentDashboardController extends Controller
                 ];
             }
         }
-
-        // Fallback to submission-based logic
         $submissions = ProjectSubmission::where('student_id', $student->id)->count();
-        
         if ($submissions === 0) {
             return [
                 'name' => 'Proposal Development',
@@ -228,13 +166,9 @@ class StudentDashboardController extends Controller
             ];
         }
     }
-
-    // ✅ NEW: Get recent tasks
     private function getRecentTasks($student, $group = null)
     {
         if (!$student) return collect();
-
-        // If student has a group, use actual group milestone tasks
         if ($group) {
             $tasks = $group->groupMilestones->flatMap->groupTasks->take(5);
             return $tasks->map(function($task) {
@@ -247,10 +181,7 @@ class StudentDashboardController extends Controller
                 ];
             });
         }
-
-        // Fallback to sample tasks
         $tasks = collect();
-        
         $tasks->push((object)[
             'name' => 'Research Topic',
             'description' => 'Conduct initial research on project topic',
@@ -258,7 +189,6 @@ class StudentDashboardController extends Controller
             'is_completed' => true,
             'assigned_to' => null
         ]);
-        
         $tasks->push((object)[
             'name' => 'Write Proposal',
             'description' => 'Draft project proposal document',
@@ -266,7 +196,6 @@ class StudentDashboardController extends Controller
             'is_completed' => true,
             'assigned_to' => null
         ]);
-        
         $tasks->push((object)[
             'name' => 'Submit Proposal',
             'description' => 'Submit proposal for review',
@@ -274,23 +203,16 @@ class StudentDashboardController extends Controller
             'is_completed' => false,
             'assigned_to' => null
         ]);
-        
         return $tasks;
     }
-
-    // ✅ NEW: Get recent activities
     private function getRecentActivities($student)
     {
         if (!$student) return collect();
-
         $activities = collect();
-        
-        // Get recent submissions
         $recentSubmissions = ProjectSubmission::where('student_id', $student->id)
             ->latest()
             ->take(3)
             ->get();
-            
         foreach ($recentSubmissions as $submission) {
             $activities->push((object)[
                 'title' => 'Document uploaded',
@@ -300,15 +222,12 @@ class StudentDashboardController extends Controller
                 'type' => 'submission'
             ]);
         }
-        
-        // Get recent task completions
         $group = $student->groups()->first();
         if ($group) {
             $recentCompletedTasks = $group->groupMilestones->flatMap->groupTasks
                 ->where('status', 'done')
                 ->where('completed_at', '>=', now()->subDays(7))
                 ->take(2);
-                
             foreach ($recentCompletedTasks as $task) {
                 $activities->push((object)[
                     'title' => 'Task completed',
@@ -319,19 +238,12 @@ class StudentDashboardController extends Controller
                 ]);
             }
         }
-        
-        // Sort by creation date and take top 5
         return $activities->sortByDesc('created_at')->take(5);
     }
-
-    // ✅ NEW: Get upcoming deadlines
     private function getUpcomingDeadlines($student, $group = null)
     {
         if (!$student) return collect();
-
         $deadlines = collect();
-        
-        // Get group milestone deadlines
         if ($group) {
             $milestoneDeadlines = $group->groupMilestones->map(function($milestone) {
                 return (object)[
@@ -345,11 +257,8 @@ class StudentDashboardController extends Controller
             })->filter(function($deadline) {
                 return $deadline->due_date;
             });
-            
             $deadlines = $deadlines->merge($milestoneDeadlines);
         }
-        
-        // Get task deadlines
         if ($group) {
             $taskDeadlines = $group->groupMilestones->flatMap->groupTasks
                 ->where('deadline', '!=', null)
@@ -363,15 +272,10 @@ class StudentDashboardController extends Controller
                         'type' => 'task'
                     ];
                 });
-                
             $deadlines = $deadlines->merge($taskDeadlines);
         }
-        
-        // Sort by due date and take top 5
         return $deadlines->sortBy('due_date')->take(5);
     }
-
-    // ✅ NEW: Get adviser information
     private function getAdviserInfo($group = null)
     {
         if (!$group) {
@@ -382,7 +286,6 @@ class StudentDashboardController extends Controller
                 'can_invite' => false
             ];
         }
-
         return [
             'has_adviser' => $group->adviser !== null,
             'adviser' => $group->adviser,
@@ -390,8 +293,6 @@ class StudentDashboardController extends Controller
             'can_invite' => $group->adviser === null && $group->adviserInvitations->where('status', 'pending')->count() === 0
         ];
     }
-
-    // ✅ NEW: Get defense information
     private function getDefenseInfo($group = null)
     {
         if (!$group) {
@@ -401,31 +302,24 @@ class StudentDashboardController extends Controller
                 'can_request' => false
             ];
         }
-
         return [
             'scheduled_defenses' => $group->defenseSchedules->where('status', 'scheduled'),
             'pending_requests' => $group->defenseRequests->where('status', 'pending'),
             'can_request' => $group->adviser !== null
         ];
     }
-
-    // ✅ NEW: Get notifications
     private function getNotifications($student)
     {
         if (!$student) return collect();
-
         return Notification::where('role', 'student')
             ->where('is_read', false)
             ->latest()
             ->take(5)
             ->get();
     }
-
-    // ✅ NEW: Get existing proposal for 60% defense readiness
     private function getExistingProposal($student)
     {
         if (!$student) return null;
-
         return ProjectSubmission::where('student_id', $student->id)
             ->where('type', 'proposal')
             ->latest()

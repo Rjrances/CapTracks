@@ -1,5 +1,4 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -15,7 +14,6 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
-
                     <div class="row">
                         <div class="col-md-6">
                             <h5>Group Information</h5>
@@ -82,7 +80,6 @@
                             </table>
                         </div>
                     </div>
-
                     @if($defenseSchedule->coordinator_notes)
                         <div class="row mt-3">
                             <div class="col-12">
@@ -93,7 +90,6 @@
                             </div>
                         </div>
                     @endif
-
                     <div class="mt-4">
                         <a href="{{ route('chairperson.scheduling.edit', $defenseSchedule) }}" class="btn btn-primary">
                             <i class="fas fa-edit"></i> Edit Schedule
@@ -105,8 +101,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Side Panel - Panelists -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
@@ -140,8 +134,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Group Members -->
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">

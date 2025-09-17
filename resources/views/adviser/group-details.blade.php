@@ -1,7 +1,5 @@
 @extends('layouts.adviser')
-
 @section('title', 'Group Details')
-
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 900px;">
@@ -9,22 +7,18 @@
             <h1 class="fw-bold mb-1 text-center" style="font-size:2.5rem; margin-bottom:0.1rem;">Group Details</h1>
             <div class="text-muted text-center" style="font-size:1.1rem; margin-bottom:0;">{{ $group->name }}</div>
         </div>
-
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
         @if(session('error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 {{ session('error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
-        <!-- Group Information -->
         <div class="mb-4">
             <div class="fw-bold mb-2" style="font-size:1.2rem;">
                 <i class="fas fa-info-circle me-2"></i>Group Information
@@ -54,8 +48,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Group Members -->
         <div class="mb-4">
             <div class="fw-bold mb-2" style="font-size:1.2rem;">
                 <i class="fas fa-users me-2"></i>Group Members
@@ -99,8 +91,6 @@
                 @endif
             </div>
         </div>
-
-        <!-- Project Submissions -->
         <div class="mb-4">
             <div class="fw-bold mb-2" style="font-size:1.2rem;">
                 <i class="fas fa-file-alt me-2"></i>Project Submissions
@@ -112,8 +102,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Navigation Buttons -->
         <div class="d-flex justify-content-center gap-2">
             <a href="{{ route('adviser.groups') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Back to Groups

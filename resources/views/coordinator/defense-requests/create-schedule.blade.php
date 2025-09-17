@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Create Defense Schedule')
-
 @section('content')
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -18,7 +16,6 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- Defense Request Info -->
                     <div class="alert alert-info mb-4">
                         <h6 class="alert-heading">
                             <i class="fas fa-info-circle me-2"></i>Defense Request Details
@@ -38,11 +35,8 @@
                             </div>
                         </div>
                     </div>
-
                     <form action="{{ route('coordinator.defense-requests.store-schedule', $defenseRequest) }}" method="POST">
                         @csrf
-                        
-                        <!-- Schedule Details -->
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="scheduled_date" class="form-label">Date *</label>
@@ -64,7 +58,6 @@
                                 @enderror
                             </div>
                         </div>
-
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="room" class="form-label">Room *</label>
@@ -85,17 +78,13 @@
                                 @enderror
                             </div>
                         </div>
-
                         <hr class="my-4">
-
-                        <!-- Panel Assignment -->
                         <h6 class="mb-3">
                             <i class="fas fa-users me-2"></i>Defense Panel Assignment
                         </h6>
                         <p class="text-muted small mb-3">
                             Assign the four required panel members. The same panel will serve for all defense phases.
                         </p>
-
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label for="adviser_id" class="form-label">Adviser *</label>
@@ -131,7 +120,6 @@
                                 @enderror
                             </div>
                         </div>
-
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <label for="panelist_1_id" class="form-label">Faculty Panelist #1 *</label>
@@ -166,8 +154,6 @@
                                 @enderror
                             </div>
                         </div>
-
-                        <!-- Important Notes -->
                         <div class="alert alert-warning">
                             <h6 class="alert-heading">
                                 <i class="fas fa-exclamation-triangle me-2"></i>Important Notes
@@ -179,8 +165,6 @@
                                 <li>Schedule changes can be made later if needed</li>
                             </ul>
                         </div>
-
-                        <!-- Submit Buttons -->
                         <div class="d-flex justify-content-end gap-2">
                             <a href="{{ route('coordinator.defense-requests.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-times me-1"></i>Cancel
@@ -195,16 +179,12 @@
         </div>
     </div>
 </div>
-
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Set minimum date to tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     document.getElementById('scheduled_date').min = tomorrow.toISOString().split('T')[0];
-    
-    // Auto-select adviser if group has one
     const groupAdviserId = {{ $defenseRequest->group->adviser_id ?? 'null' }};
     if (groupAdviserId) {
         document.getElementById('adviser_id').value = groupAdviserId;

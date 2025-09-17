@@ -9,19 +9,14 @@
     @stack('styles')
 </head>
 <body>
-
     @include('partials.student-sidebar')
-
     <div class="main-content" style="margin-left: 280px; min-height: 100vh;">
-        <!-- Top Navigation Bar with Notifications -->
         <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-4 py-2">
             <div class="container-fluid">
                 <div class="navbar-brand">
                     <h5 class="mb-0">@yield('title', 'Student Dashboard')</h5>
                 </div>
-                
                 <div class="navbar-nav ms-auto">
-                    <!-- Notification Bell -->
                     <div class="nav-item dropdown">
                         <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell fa-lg text-muted"></i>
@@ -45,7 +40,6 @@
                                 <a href="#" class="text-decoration-none small" onclick="markAllNotificationsAsRead()">Mark all read</a>
                             </div>
                             <div class="dropdown-divider"></div>
-                            
                             @php
                                 $recentNotifications = collect();
                                 if (session('is_student') && session('student_id')) {
@@ -60,7 +54,6 @@
                                     ->get();
                                 }
                             @endphp
-                            
                             @if($recentNotifications->count() > 0)
                                 @foreach($recentNotifications as $notification)
                                     <a class="dropdown-item py-2 {{ $notification->is_read ? '' : 'bg-light' }}" 
@@ -90,8 +83,6 @@
                             @endif
                         </div>
                     </div>
-                    
-                    <!-- User Menu -->
                     <div class="nav-item dropdown ms-3">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user-circle me-2"></i>
@@ -123,20 +114,15 @@
                 </div>
             </div>
         </nav>
-        
         <div class="p-4">
             @yield('content')
         </div>
     </div>
-
         @include('partials.footer')
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     @stack('scripts')
-    
     <script>
     function markNotificationAsRead(notificationId) {
-        // Mark notification as read via AJAX
         fetch(`/notifications/${notificationId}/mark-read`, {
             method: 'POST',
             headers: {
@@ -147,7 +133,6 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Update notification count
                 const badge = document.querySelector('.badge');
                 if (badge) {
                     const currentCount = parseInt(badge.textContent);
@@ -161,7 +146,6 @@
         })
         .catch(error => console.error('Error:', error));
     }
-
     function markAllNotificationsAsRead() {
         fetch('{{ route("notifications.mark-all-read") }}', {
             method: 'POST',
@@ -173,18 +157,13 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Hide the notification badge
                 const badge = document.querySelector('.badge');
                 if (badge) {
                     badge.style.display = 'none';
                 }
-                
-                // Remove background highlighting from unread notifications
                 document.querySelectorAll('.dropdown-item.bg-light').forEach(item => {
                     item.classList.remove('bg-light');
                 });
-                
-                // Refresh the page to show updated notification count
                 location.reload();
             } else {
                 alert('Error marking notifications as read: ' + (data.message || 'Unknown error'));
@@ -195,8 +174,6 @@
             alert('Error marking notifications as read');
         });
     }
-
-    // Global alert function for task status changes
     function showAlert(message, type) {
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
@@ -206,10 +183,7 @@
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        
         document.body.appendChild(alertDiv);
-        
-        // Auto-remove after 5 seconds
         setTimeout(() => {
             if (alertDiv.parentNode) {
                 alertDiv.remove();
@@ -217,36 +191,29 @@
         }, 5000);
     }
     </script>
-    
     <style>
     .dropdown-item {
         transition: all 0.2s ease;
     }
-    
     .dropdown-item:hover {
         background-color: rgba(13, 110, 253, 0.1) !important;
         transform: translateX(2px);
     }
-    
     .dropdown-item.bg-light {
         opacity: 0.7;
     }
-    
     .notification-badge {
         animation: pulse 2s infinite;
     }
-    
     @keyframes pulse {
         0% { transform: scale(1); }
         50% { transform: scale(1.1); }
         100% { transform: scale(1); }
     }
-    
     .notification-item {
         border-left: 3px solid transparent;
         transition: all 0.3s ease;
     }
-    
     .notification-item:hover {
         border-left-color: #0d6efd;
         background-color: rgba(13, 110, 253, 0.05);

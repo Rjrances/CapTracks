@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Defense Schedule Details')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -22,8 +20,6 @@
                     </a>
                 </div>
             </div>
-
-            <!-- Schedule Overview Card -->
             <div class="row mb-4">
                 <div class="col-md-8">
                     <div class="card">
@@ -48,7 +44,6 @@
                                     </div>
                                 </div>
                             </div>
-                            
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-semibold text-muted">Date & Time</label>
@@ -63,7 +58,6 @@
                                     <div class="h6 mb-0">{{ $defenseSchedule->room }}</div>
                                 </div>
                             </div>
-                            
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-semibold text-muted">Academic Term</label>
@@ -79,7 +73,6 @@
                         </div>
                     </div>
                 </div>
-                
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-header">
@@ -105,8 +98,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Group Information Card -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
@@ -130,7 +121,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold text-muted">Adviser</label>
@@ -161,8 +151,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Panel Members Card -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
@@ -172,7 +160,6 @@
                 <div class="card-body">
                     @if($defenseSchedule->defensePanels->count() > 0)
                         <div class="row">
-                            <!-- Automatically included members -->
                             @if($defenseSchedule->group->adviser || ($defenseSchedule->group->offering && $defenseSchedule->group->offering->teacher))
                                 <div class="col-md-6 mb-3">
                                     <div class="card border-success">
@@ -204,15 +191,12 @@
                                     </div>
                                 </div>
                             @endif
-                            
-                            <!-- Manually added panel members -->
                             @php
                                 $manualMembers = $defenseSchedule->defensePanels->filter(function($panel) use ($defenseSchedule) {
                                     return $panel->faculty_id != $defenseSchedule->group->adviser_id && 
                                            (!($defenseSchedule->group->offering && $defenseSchedule->group->offering->teacher_id == $panel->faculty_id));
                                 });
                             @endphp
-                            
                             @if($manualMembers->count() > 0)
                                 <div class="col-md-6 mb-3">
                                     <div class="card border-primary">
@@ -244,8 +228,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Notes Section (if any) -->
             @if($defenseSchedule->coordinator_notes)
                 <div class="card mb-4">
                     <div class="card-header">
@@ -261,27 +243,22 @@
         </div>
     </div>
 </div>
-
 <style>
 .card {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     border: 1px solid rgba(0, 0, 0, 0.125);
 }
-
 .card-header {
     background-color: #f8f9fa;
     border-bottom: 1px solid rgba(0, 0, 0, 0.125);
 }
-
 .badge {
     font-size: 0.875em;
 }
-
 .form-label {
     font-size: 0.875rem;
     margin-bottom: 0.25rem;
 }
-
 .h6 {
     font-size: 1.1rem;
     font-weight: 600;

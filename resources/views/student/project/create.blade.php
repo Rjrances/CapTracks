@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Upload Project Submission')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,8 +16,6 @@
             </a>
         </div>
     </div>
-
-    <!-- Information Cards -->
     <div class="row mb-4">
         <div class="col-md-4">
             <div class="card border-primary">
@@ -49,8 +45,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Submission Form -->
     <div class="card">
         <div class="card-header bg-light">
             <h5 class="mb-0">
@@ -60,7 +54,6 @@
         <div class="card-body">
             <form action="{{ route('student.project.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -86,21 +79,18 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="mb-3">
                     <label for="description" class="form-label">
                         <i class="fas fa-align-left me-1"></i>Description (Optional)
                     </label>
                     <textarea name="description" id="description" class="form-control" rows="3" placeholder="Brief description of what this document contains..."></textarea>
                 </div>
-
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>
                     <strong>Note:</strong> For milestone-specific tasks, please use the 
                     <a href="{{ route('student.milestones') }}" class="alert-link">Milestones section</a> 
                     instead. This form is for general project documents.
                 </div>
-
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-upload me-2"></i>Upload Document
@@ -112,8 +102,6 @@
             </form>
         </div>
     </div>
-
-    <!-- Quick Links -->
     <div class="mt-4">
         <h6 class="text-muted mb-3">Quick Links</h6>
         <div class="d-flex flex-wrap gap-2">
@@ -129,37 +117,30 @@
         </div>
     </div>
 </div>
-
 @push('styles')
 <style>
 .card {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-
 .card-header {
     border-bottom: 1px solid #dee2e6;
     font-weight: 600;
 }
-
 .form-select:focus, .form-control:focus {
     border-color: #0d6efd;
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
-
 .alert-link {
     font-weight: 600;
 }
-
 .btn {
     border-radius: 6px;
 }
-
 @media (max-width: 768px) {
     .d-flex.gap-2 {
         flex-direction: column;
     }
-    
     .d-flex.gap-2 .btn {
         width: 100%;
         margin-bottom: 0.5rem;

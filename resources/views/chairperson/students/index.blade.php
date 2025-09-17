@@ -1,5 +1,4 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -17,15 +16,12 @@
                      </a>
                  </div>
             </div>
-
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
-            <!-- Search and Filters -->
             <div class="card mb-4">
                 <div class="card-body">
                     <form method="GET" action="{{ route('chairperson.students.index') }}" class="row g-3">
@@ -75,7 +71,6 @@
                              </div>
                          </div>
                     </form>
-                    
                     @if(request('search') || request('course') || request('semester'))
                         <div class="mt-3">
                             <small class="text-muted">
@@ -94,8 +89,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Export Button and Bulk Actions -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h5 class="mb-0">Student List</h5>
@@ -111,10 +104,6 @@
                     </a>
                 </div>
             </div>
-
-
-
-            <!-- Students Table -->
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -270,8 +259,6 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Pagination -->
                     @if($students->hasPages())
                         <div class="d-flex justify-content-center mt-4">
                             <nav aria-label="Student pagination">
@@ -284,118 +271,93 @@
         </div>
     </div>
 </div>
-
 <style>
 /* Custom pagination styling */
 .pagination {
     margin-bottom: 0;
 }
-
 .pagination .page-link {
     color: #495057;
     border: 1px solid #dee2e6;
     padding: 0.5rem 0.75rem;
 }
-
 .pagination .page-link:hover {
     color: #0056b3;
     background-color: #e9ecef;
     border-color: #dee2e6;
 }
-
 .pagination .page-item.active .page-link {
     background-color: #0d6efd;
     border-color: #0d6efd;
     color: white;
 }
-
 .pagination .page-item.disabled .page-link {
     color: #6c757d;
     pointer-events: none;
     background-color: #fff;
     border-color: #dee2e6;
 }
-
 /* Ensure proper spacing */
 .pagination .page-item:not(:first-child) .page-link {
     margin-left: -1px;
 }
-
 /* Sortable header styling */
 .table-dark th a {
     transition: all 0.2s ease;
 }
-
 .table-dark th a:hover {
     opacity: 0.8;
     text-decoration: none;
 }
-
 .table-dark th a:active {
     transform: scale(0.98);
 }
-
 /* Delete button styling */
 .btn-outline-danger:hover {
     background-color: #dc3545;
     border-color: #dc3545;
     color: white;
 }
-
 .btn-outline-danger:active {
     transform: scale(0.95);
 }
-
 /* Checkbox styling */
 .form-check-input {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
 .form-check-input:checked {
     background-color: #0d6efd;
     border-color: #0d6efd;
 }
-
 .form-check-input:hover {
     transform: scale(1.1);
 }
-
 .form-check-label {
     cursor: pointer;
     user-select: none;
 }
-
 /* Bulk delete button styling */
 #deleteSelectedBtn {
     transition: all 0.2s ease;
 }
-
 #deleteSelectedBtn:hover {
     transform: scale(1.02);
 }
-
 #deleteSelectedBtn:active {
     transform: scale(0.98);
 }
 </style>
-
-<!-- Hidden Delete Form -->
 <form id="deleteStudentForm" method="POST" style="display: none;">
     @csrf
     @method('DELETE')
 </form>
-
-<!-- Hidden Bulk Delete Form -->
 <form id="bulkDeleteForm" method="POST" action="{{ route('chairperson.students.bulk-delete') }}" style="display: none;">
     @csrf
     @method('DELETE')
     <input type="hidden" name="student_ids" id="bulkDeleteStudentIds">
 </form>
-
 <script>
-
-
 function deleteStudent(studentId, studentName) {
     if (confirm(`Are you sure you want to delete student "${studentName}"?\n\nThis action cannot be undone and will remove the student from all offerings and groups.`)) {
         const form = document.getElementById('deleteStudentForm');
@@ -403,26 +365,18 @@ function deleteStudent(studentId, studentName) {
         form.submit();
     }
 }
-
-// Initialize tooltips and bulk selection functionality
 document.addEventListener('DOMContentLoaded', function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
-
-    // Initialize bulk selection functionality
     initializeBulkSelection();
 });
-
-// Bulk selection functionality
 function initializeBulkSelection() {
     const selectAllCheckbox = document.getElementById('selectAll');
     const studentCheckboxes = document.querySelectorAll('.student-checkbox');
     const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
     const selectedCountSpan = document.getElementById('selectedCount');
-
-    // Select All functionality
     selectAllCheckbox.addEventListener('change', function() {
         const isChecked = this.checked;
         studentCheckboxes.forEach(checkbox => {
@@ -430,20 +384,15 @@ function initializeBulkSelection() {
         });
         updateBulkDeleteButton();
     });
-
-    // Individual checkbox functionality
     studentCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             updateSelectAllState();
             updateBulkDeleteButton();
         });
     });
-
-    // Update select all state
     function updateSelectAllState() {
         const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
         const totalCount = studentCheckboxes.length;
-        
         if (checkedCount === 0) {
             selectAllCheckbox.indeterminate = false;
             selectAllCheckbox.checked = false;
@@ -455,11 +404,8 @@ function initializeBulkSelection() {
             selectAllCheckbox.checked = false;
         }
     }
-
-    // Update bulk delete button
     function updateBulkDeleteButton() {
         const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
-        
         if (checkedCount > 0) {
             deleteSelectedBtn.style.display = 'inline-block';
             selectedCountSpan.textContent = checkedCount;
@@ -467,27 +413,20 @@ function initializeBulkSelection() {
             deleteSelectedBtn.style.display = 'none';
         }
     }
-
-    // Bulk delete button click handler
     deleteSelectedBtn.addEventListener('click', function() {
         const checkedCheckboxes = document.querySelectorAll('.student-checkbox:checked');
         const studentIds = Array.from(checkedCheckboxes).map(cb => cb.value);
         const studentNames = Array.from(checkedCheckboxes).map(cb => cb.dataset.studentName);
-        
         if (studentIds.length === 0) {
             alert('Please select at least one student to delete.');
             return;
         }
-
         const confirmMessage = `Are you sure you want to delete ${studentIds.length} selected student(s)?\n\n` +
                              `Students to be deleted:\n${studentNames.join('\n')}\n\n` +
                              `This action cannot be undone and will remove the students from all offerings and groups.`;
-
         if (confirm(confirmMessage)) {
-            // Set the form data
             const form = document.getElementById('bulkDeleteForm');
             const input = document.getElementById('bulkDeleteStudentIds');
-            
             if (form && input) {
                 input.value = JSON.stringify(studentIds);
                 form.submit();

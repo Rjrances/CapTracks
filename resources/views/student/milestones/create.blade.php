@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Create New Milestone')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -24,7 +22,6 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
-
                     @if($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <i class="fas fa-exclamation-triangle me-2"></i>
@@ -36,10 +33,8 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
-
                     <form action="{{ route('student.milestones.store') }}" method="POST">
                         @csrf
-                        
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-4">
@@ -65,7 +60,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="mb-4">
                                     <label for="title" class="form-label">
                                         <i class="fas fa-tag me-2"></i>Milestone Title
@@ -81,7 +75,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="mb-4">
                                     <label for="description" class="form-label">
                                         <i class="fas fa-align-left me-2"></i>Description
@@ -95,7 +88,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="mb-4">
                                     <label for="due_date" class="form-label">
                                         <i class="fas fa-calendar me-2"></i>Due Date
@@ -111,7 +103,6 @@
                                     @enderror
                                 </div>
                             </div>
-
                             <div class="col-md-4">
                                 <div class="card">
                                     <div class="card-header">
@@ -125,7 +116,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="card mt-3">
                                     <div class="card-header">
                                         <h5 class="card-title mb-0">
@@ -155,7 +145,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-12">
                                 <div class="d-flex justify-content-end gap-2">
@@ -174,35 +163,26 @@
         </div>
     </div>
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const templateSelect = document.getElementById('milestone_template_id');
     const templatePreview = document.getElementById('template-preview');
     const titleInput = document.getElementById('title');
     const descriptionInput = document.getElementById('description');
-
     templateSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
-        
         if (selectedOption.value) {
             const description = selectedOption.dataset.description;
             const taskCount = selectedOption.dataset.tasks;
             const templateTitle = selectedOption.textContent.split(' (')[0];
-            
-            // Update preview
             templatePreview.innerHTML = `
                 <h6 class="text-primary">${templateTitle}</h6>
                 <p class="text-muted small mb-2">${description || 'No description available'}</p>
                 <div class="badge bg-info">${taskCount} tasks included</div>
             `;
-            
-            // Auto-fill title if empty
             if (!titleInput.value) {
                 titleInput.value = templateTitle;
             }
-            
-            // Auto-fill description if empty
             if (!descriptionInput.value && description) {
                 descriptionInput.value = description;
             }

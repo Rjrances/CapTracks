@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'My Defense Requests')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,21 +16,18 @@
             </a>
         </div>
     </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     @if($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <ul class="mb-0">
@@ -43,8 +38,6 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
-    <!-- Group Information -->
     <div class="card mb-4">
         <div class="card-header bg-info text-white">
             <h5 class="mb-0">
@@ -64,8 +57,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Defense Requests -->
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0">
@@ -134,7 +125,6 @@
                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            
                                             @if($request->isPending())
                                                 <form action="{{ route('student.defense-requests.cancel', $request) }}" 
                                                       method="POST" style="display: inline;">
@@ -165,8 +155,6 @@
             @endif
         </div>
     </div>
-
-    <!-- Information Card -->
     <div class="card mt-4 border-info">
         <div class="card-header bg-info text-white">
             <h6 class="mb-0">
@@ -178,14 +166,12 @@
                 <div class="col-md-6">
                     <h6>1. Submit Request</h6>
                     <p class="text-muted small">Choose your defense type and preferred date/time</p>
-                    
                     <h6>2. Coordinator Review</h6>
                     <p class="text-muted small">Your coordinator will review and approve/reject</p>
                 </div>
                 <div class="col-md-6">
                     <h6>3. Schedule Creation</h6>
                     <p class="text-muted small">If approved, coordinator will create the schedule</p>
-                    
                     <h6>4. Panel Assignment</h6>
                     <p class="text-muted small">Faculty panel will be assigned for your defense</p>
                 </div>

@@ -1,5 +1,4 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -42,14 +41,12 @@
                     </a>
                 </div>
             </div>
-
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -126,7 +123,6 @@
                                                    class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </a>
-                                                
                                                 @if($schedule->status == 'scheduled')
                                                     <div class="btn-group" role="group">
                                                         <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle" 
@@ -159,7 +155,6 @@
                                                         </ul>
                                                     </div>
                                                 @endif
-
                                                 <form action="{{ route('chairperson.scheduling.destroy', $schedule) }}" 
                                                       method="POST" class="d-inline"
                                                       onsubmit="return confirm('Are you sure you want to delete this defense schedule?')">
@@ -185,7 +180,6 @@
         </div>
     </div>
 </div>
-
 <style>
 .btn-group .btn {
     margin-right: 2px;

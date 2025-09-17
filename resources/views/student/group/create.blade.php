@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Create Group')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -19,7 +17,6 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <!-- Error Messages -->
                     @if($errors->any())
                         <div class="alert alert-danger">
                             <ul class="mb-0">
@@ -29,23 +26,18 @@
                             </ul>
                         </div>
                     @endif
-
                     @if(session('error'))
                         <div class="alert alert-danger">
                             {{ session('error') }}
                         </div>
                     @endif
-
                     @if(session('success'))
                         <div class="alert alert-success">
                             {{ session('success') }}
                         </div>
                     @endif
-
                     <form action="{{ route('student.group.store') }}" method="POST">
                         @csrf
-                        
-                        <!-- Group Information -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -62,8 +54,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Adviser Selection -->
                         <div class="mb-4">
                             <label class="form-label fw-bold">
                                 <i class="fas fa-chalkboard-teacher me-1"></i>Select Adviser *
@@ -72,7 +62,6 @@
                                 <i class="fas fa-info-circle me-1"></i>
                                 Choose a faculty member to serve as your group's adviser. This person will guide your project and provide mentorship.
                             </div>
-                            
                             <div class="row">
                                 <div class="col-md-8">
                                     <select name="adviser_id" id="adviser_id" class="form-select" required>
@@ -89,15 +78,12 @@
                                     </select>
                                 </div>
                             </div>
-                            
                             <div class="mt-3">
                                 <label for="adviser_message" class="form-label fw-bold">Message to Adviser (Optional)</label>
                                 <textarea name="adviser_message" id="adviser_message" class="form-control" rows="3"
                                           placeholder="Add a personal message explaining why you'd like this faculty member to be your adviser..."></textarea>
                             </div>
                         </div>
-
-                        <!-- Member Selection -->
                         <div class="mb-4">
                             <label class="form-label fw-bold">
                                 <i class="fas fa-user-plus me-1"></i>Select Group Members (Max 2 additional members)
@@ -106,7 +92,6 @@
                                 <i class="fas fa-info-circle me-1"></i>
                                 You will be automatically added as the group leader. Select up to 2 additional members (3 total members per group).
                             </div>
-                            
                             <div class="row">
                                 @php
                                     $availableStudents = \App\Models\Student::whereNotIn('id', function($query) {
@@ -114,7 +99,6 @@
                                               ->from('group_members');
                                     })->get();
                                 @endphp
-                                
                                 @foreach($availableStudents as $student)
                                     @if($student->email !== (Auth::check() ? Auth::user()->email : session('student_email')))
                                         <div class="col-md-6 mb-2">
@@ -134,13 +118,11 @@
                                     @endif
                                 @endforeach
                             </div>
-                            
                             <div class="mt-2">
                                 <small class="text-muted">
                                     <span id="selection-count">0</span> of 2 additional members selected (3 total including you)
                                 </small>
                             </div>
-                            
                             @if($availableStudents->count() <= 1)
                                 <div class="alert alert-warning">
                                     <i class="fas fa-exclamation-triangle me-1"></i>
@@ -148,8 +130,6 @@
                                 </div>
                             @endif
                         </div>
-
-                        <!-- Form Actions -->
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-plus me-1"></i>Create Group
@@ -164,23 +144,16 @@
         </div>
     </div>
 </div>
-
 <script>
 function limitSelections() {
     const checkboxes = document.querySelectorAll('.member-checkbox:checked');
     const maxSelections = 2;
     const countSpan = document.getElementById('selection-count');
-    
-    // Update count
     countSpan.textContent = checkboxes.length;
-    
-    // If more than 2 are selected, uncheck the last one
     if (checkboxes.length > maxSelections) {
         checkboxes[checkboxes.length - 1].checked = false;
         countSpan.textContent = maxSelections;
     }
-    
-    // Disable/enable checkboxes based on selection count
     const allCheckboxes = document.querySelectorAll('.member-checkbox');
     allCheckboxes.forEach(checkbox => {
         if (!checkbox.checked && checkboxes.length >= maxSelections) {

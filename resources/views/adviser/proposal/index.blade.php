@@ -1,7 +1,5 @@
 @extends('layouts.adviser')
-
 @section('title', 'Proposal Review')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -15,8 +13,6 @@
             </a>
         </div>
     </div>
-
-    <!-- Statistics Overview -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card bg-primary text-white">
@@ -51,8 +47,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Proposals by Group -->
     @if(count($proposalsByGroup) > 0)
         @foreach($proposalsByGroup as $groupId => $groupData)
             @php
@@ -62,7 +56,6 @@
                 $approvedCount = $groupData['approved_count'];
                 $rejectedCount = $groupData['rejected_count'];
             @endphp
-            
             <div class="card mb-4">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
@@ -161,9 +154,7 @@
         </div>
     @endif
 </div>
-
 <script>
-// Load proposal statistics
 document.addEventListener('DOMContentLoaded', function() {
     fetch('{{ route("adviser.proposal.stats") }}')
         .then(response => response.json())

@@ -1,10 +1,7 @@
 @extends('layouts.student')
-
 @section('title', 'Milestone Details')
-
 @section('content')
 <div class="container-fluid mt-5">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h2 mb-1">{{ $groupMilestone->milestoneTemplate->name }}</h1>
@@ -22,15 +19,12 @@
             </a>
         </div>
     </div>
-
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
-    <!-- Milestone Information -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
             <div class="row align-items-center">
@@ -61,10 +55,7 @@
             </div>
         </div>
     </div>
-
-    <!-- Kanban Board -->
     <div class="row">
-        <!-- Pending Column -->
         <div class="col-md-4">
             <div class="card kanban-column" data-status="pending">
                 <div class="card-header bg-secondary text-white">
@@ -88,8 +79,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Doing Column -->
         <div class="col-md-4">
             <div class="card kanban-column" data-status="doing">
                 <div class="card-header bg-warning text-dark">
@@ -113,8 +102,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Done Column -->
         <div class="col-md-4">
             <div class="card kanban-column" data-status="done">
                 <div class="card-header bg-success text-white">
@@ -139,8 +126,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Group Information -->
     <div class="card mt-4">
         <div class="card-header bg-info text-white">
             <h6 class="mb-0">
@@ -172,7 +157,6 @@
                         $statusText = ucfirst(str_replace('_', ' ', $groupMilestone->status));
                     @endphp
                     <span class="badge bg-{{ $statusClass }} fs-6">{{ $statusText }}</span>
-                    
                     @if($groupMilestone->target_date)
                         <br><small class="text-muted mt-2 d-block">
                             <i class="fas fa-calendar me-1"></i>
@@ -203,8 +187,6 @@
         </div>
     </div>
 </div>
-
-<!-- Task Assignment Modals -->
 @if($isGroupLeader)
     @php
         $allTasks = collect($tasks['pending'])->concat($tasks['doing'])->concat($tasks['done']);
@@ -225,14 +207,12 @@
                         <div class="modal-body">
                             <h6>{{ $task->milestoneTask->name }}</h6>
                             <p class="text-muted">{{ $task->milestoneTask->description }}</p>
-                            
                             @if($task->assigned_to)
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle me-2"></i>
                                     Currently assigned to: <strong>{{ $task->assignedStudent->name ?? 'Unknown' }}</strong>
                                 </div>
                             @endif
-                            
                             <div class="mb-3">
                                 <label for="assigned_to_{{ $task->id }}" class="form-label">
                                     {{ $task->assigned_to ? 'Reassign to:' : 'Assign to:' }}
@@ -260,82 +240,66 @@
         </div>
     @endforeach
 @endif
-
 @push('styles')
 <style>
 .kanban-column {
     height: 100%;
 }
-
 .kanban-column-body {
     overflow-y: auto;
     max-height: 600px;
 }
-
 .task-card {
     cursor: grab;
     transition: all 0.2s ease;
     border: 1px solid #dee2e6;
     margin-bottom: 1rem;
 }
-
 .task-card:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     transform: translateY(-2px);
 }
-
 .task-card.dragging {
     opacity: 0.5;
     cursor: grabbing;
 }
-
 .kanban-column.drag-over {
     background-color: #f8f9fa;
     border: 2px dashed #007bff;
 }
-
 .task-card-header {
     display: flex;
     justify-content-between;
     align-items: flex-start;
 }
-
 .task-card-content {
     flex-grow: 1;
 }
-
 .task-card-actions {
     display: flex;
     gap: 0.5rem;
     margin-top: 0.5rem;
 }
-
 .status-badge {
     font-size: 0.75rem;
 }
-
 .progress-sm {
     height: 8px;
 }
-
 .task-meta {
     font-size: 0.875rem;
     color: #6c757d;
 }
-
 .task-assignee {
     font-size: 0.875rem;
     font-weight: 500;
 }
-
 .task-deadline {
     font-size: 0.75rem;
 }
-
 .task-deadline.overdue {
     color: #dc3545;
 }
-
 .task-notes {
     background-color: #f8f9fa;
     border-left: 3px solid #007bff;
@@ -345,14 +309,11 @@
 }
 </style>
 @endpush
-
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize drag and drop for all kanban columns
     const columns = document.querySelectorAll('.kanban-column-body');
-    
     columns.forEach(column => {
         new Sortable(column, {
             group: 'tasks',
@@ -361,29 +322,23 @@ document.addEventListener('DOMContentLoaded', function() {
             onEnd: function(evt) {
                 const taskId = evt.item.dataset.taskId;
                 const newStatus = evt.to.closest('.kanban-column').dataset.status;
-                
                 moveTask(taskId, newStatus);
             }
         });
     });
-
-    // Add drag-over effect
     columns.forEach(column => {
         column.addEventListener('dragover', function(e) {
             e.preventDefault();
             this.closest('.kanban-column').classList.add('drag-over');
         });
-        
         column.addEventListener('dragleave', function(e) {
             this.closest('.kanban-column').classList.remove('drag-over');
         });
-        
         column.addEventListener('drop', function(e) {
             this.closest('.kanban-column').classList.remove('drag-over');
         });
     });
 });
-
 function moveTask(taskId, newStatus) {
     fetch(`/student/milestones/tasks/${taskId}/move`, {
         method: 'PATCH',
@@ -401,7 +356,6 @@ function moveTask(taskId, newStatus) {
             updateProgressBars();
         } else {
             showAlert('Failed to move task: ' + data.message, 'danger');
-            // Reload page to reset state
             setTimeout(() => location.reload(), 1000);
         }
     })
@@ -410,9 +364,7 @@ function moveTask(taskId, newStatus) {
         setTimeout(() => location.reload(), 1000);
     });
 }
-
 function updateProgressBars() {
-    // Update milestone progress bar
     fetch(`/student/milestones/{{ $groupMilestone->id }}/recompute-progress`, {
         method: 'POST',
         headers: {
@@ -426,13 +378,10 @@ function updateProgressBars() {
         if (data.success) {
             const progressBar = document.querySelector('.progress-bar');
             const progressText = document.querySelector('.h4');
-            
             if (progressBar && progressText) {
                 progressBar.style.width = data.progress + '%';
                 progressBar.setAttribute('aria-valuenow', data.progress);
                 progressText.textContent = data.progress + '%';
-                
-                // Update progress bar color
                 const progressContainer = progressBar.closest('.progress');
                 progressBar.className = 'progress-bar';
                 if (data.progress >= 80) {
@@ -449,7 +398,6 @@ function updateProgressBars() {
         }
     });
 }
-
 function recomputeProgress() {
     fetch(`/student/milestones/{{ $groupMilestone->id }}/recompute-progress`, {
         method: 'POST',
@@ -472,7 +420,6 @@ function recomputeProgress() {
         showAlert('Error recomputing progress. Please try again.', 'danger');
     });
 }
-
 function showAlert(message, type) {
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
@@ -481,10 +428,8 @@ function showAlert(message, type) {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
     const container = document.querySelector('.container-fluid');
     container.insertBefore(alertDiv, container.firstChild);
-    
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);

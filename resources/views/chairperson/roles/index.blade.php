@@ -1,19 +1,15 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">System Roles</h2>
     </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
-    <!-- Role Assignment Section -->
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">
@@ -98,8 +94,6 @@
             </form>
         </div>
     </div>
-
-    <!-- Role Overview Section -->
     <div class="row">
         @foreach($roles as $roleKey => $role)
             @if($roleKey !== 'student')
@@ -112,7 +106,6 @@
                         </div>
                         <div class="card-body">
                             <p class="text-muted mb-3">{{ $role['description'] }}</p>
-                            
                             <div class="mb-3">
                                 <h6 class="fw-semibold text-primary">
                                     <i class="fas fa-users me-1"></i>Users with this role ({{ $role['user_count'] }}):
@@ -151,7 +144,6 @@
                                     </div>
                                 @endif
                             </div>
-
                             <div class="mb-3">
                                 <h6 class="fw-semibold text-success">
                                     <i class="fas fa-key me-1"></i>Permissions:
@@ -177,8 +169,6 @@
             @endif
         @endforeach
     </div>
-
-    <!-- Role Summary -->
     <div class="row mt-4">
         <div class="col-12">
             <div class="card bg-light">
@@ -203,31 +193,23 @@
         </div>
     </div>
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle individual user role updates
     document.querySelectorAll('.update-user-roles').forEach(button => {
         button.addEventListener('click', function() {
             const userId = this.dataset.userId;
             const userName = this.dataset.userName;
-            
-            // Get the checked roles for this user
             const checkedRoles = [];
             const checkboxes = document.querySelectorAll(`input[name="roles[${userId}][]"]:checked`);
             checkboxes.forEach(checkbox => {
                 checkedRoles.push(checkbox.value);
             });
-            
-            // Create form data
             const formData = new FormData();
             formData.append('_token', '{{ csrf_token() }}');
             formData.append('_method', 'POST');
             checkedRoles.forEach(role => {
                 formData.append('roles[]', role);
             });
-            
-            // Send AJAX request
             fetch(`/chairperson/roles/${userId}`, {
                 method: 'POST',
                 body: formData,
@@ -238,9 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Show success message
                     alert(`Roles updated successfully for ${userName}`);
-                    // Reload the page to show updated roles
                     location.reload();
                 } else {
                     alert('Error updating roles: ' + data.message);

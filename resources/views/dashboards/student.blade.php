@@ -1,5 +1,4 @@
 @extends('layouts.student')
-
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
@@ -21,8 +20,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Current Academic Term Context -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-primary">
@@ -69,8 +66,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Quick Access Cards -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
@@ -121,10 +116,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- Main Content Row -->
         <div class="row mb-4">
-            <!-- Project Status -->
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
@@ -144,10 +136,7 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Sidebar - Quick Actions & Notifications -->
             <div class="col-md-4">
-                <!-- Quick Actions -->
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -171,8 +160,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Recent Activity -->
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -189,8 +176,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Upcoming Deadlines -->
         <div class="row">
             <div class="col-12">
                 <div class="card">

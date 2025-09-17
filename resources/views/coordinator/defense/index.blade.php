@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Defense Schedules')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -19,14 +17,12 @@
                     </a>
                 </div>
             </div>
-
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
             @if($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <ul class="mb-0">
@@ -37,8 +33,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
-            <!-- Filters Section -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
@@ -82,8 +76,6 @@
                     </form>
                 </div>
             </div>
-
-            <!-- Defense Schedules Table -->
             <div class="card">
                 <div class="card-header">
                     <h6 class="mb-0">
@@ -181,8 +173,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        
-                        <!-- Pagination -->
                         <div class="d-flex justify-content-center mt-4">
                             {{ $defenseSchedules->links() }}
                         </div>
@@ -211,14 +201,11 @@
         </div>
     </div>
 </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit form when filters change
     document.getElementById('academic_term_id').addEventListener('change', function() {
         document.getElementById('filterForm').submit();
     });
-    
     document.getElementById('offering').addEventListener('change', function() {
         document.getElementById('filterForm').submit();
     });

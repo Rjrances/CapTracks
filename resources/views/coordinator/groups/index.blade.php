@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Groups')
-
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
@@ -13,20 +11,16 @@
                         <p class="text-muted mb-0">Monitor groups, track progress, and manage capstone projects</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <!-- Groups are created by students, not coordinators -->
                     </div>
                 </div>
             </div>
         </div>
-
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
-        <!-- Statistics Cards -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
@@ -65,8 +59,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Search and Filter Section -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
@@ -86,12 +78,7 @@
                 </div>
             </div>
         </div>
-
-
-
-        <!-- Main Content Row -->
         <div class="row mb-4">
-            <!-- Groups Table -->
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
@@ -162,7 +149,6 @@
                                                         <a href="{{ route('coordinator.groups.milestones', $group->id) }}" class="btn btn-sm btn-outline-success" title="View Milestones">
                                                             <i class="fas fa-flag"></i>
                                                         </a>
-
                                                     </div>
                                                 </td>
                                             </tr>
@@ -170,8 +156,6 @@
                                     </tbody>
                                 </table>
                             </div>
-                            
-                            <!-- Pagination -->
                             <div class="d-flex justify-content-center mt-3">
                                 {{ $groups->links() }}
                             </div>
@@ -185,10 +169,7 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Sidebar - Group Details -->
             <div class="col-md-4">
-                <!-- Group Statistics -->
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -215,10 +196,6 @@
                         </div>
                     </div>
                 </div>
-
-
-
-                <!-- Quick Actions -->
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -230,7 +207,6 @@
                             <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-info">
                                 <i class="fas fa-calendar me-2"></i>Defense Scheduling
                             </a>
-
                         </div>
                     </div>
                 </div>

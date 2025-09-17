@@ -1,14 +1,10 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
 class DefenseSchedule extends Model
 {
     use HasFactory;
-
     protected $fillable = [
         'group_id',
         'stage',
@@ -19,40 +15,31 @@ class DefenseSchedule extends Model
         'remarks',
         'status'
     ];
-
     protected $casts = [
         'start_at' => 'datetime',
         'end_at' => 'datetime',
         'is_active' => 'boolean'
     ];
-
-    // Relationships
     public function group()
     {
         return $this->belongsTo(Group::class);
     }
-
     public function academicTerm()
     {
         return $this->belongsTo(AcademicTerm::class, 'academic_term_id');
     }
-
     public function defensePanels()
     {
         return $this->hasMany(DefensePanel::class);
     }
-
     public function panelists()
     {
         return $this->hasMany(DefensePanel::class);
     }
-
-    // Helper methods
     public function getFormattedDateTimeAttribute()
     {
         return $this->start_at->format('M d, Y') . ' at ' . $this->start_at->format('h:i A');
     }
-
     public function getStageLabelAttribute()
     {
         return match($this->stage) {
@@ -62,7 +49,6 @@ class DefenseSchedule extends Model
             default => 'Unknown Stage'
         };
     }
-
     public function getDurationAttribute()
     {
         if ($this->start_at && $this->end_at) {
@@ -70,7 +56,6 @@ class DefenseSchedule extends Model
         }
         return 0;
     }
-
     public function getFormattedDurationAttribute()
     {
         $duration = $this->duration;
@@ -81,22 +66,18 @@ class DefenseSchedule extends Model
         $minutes = $duration % 60;
         return $hours . 'h ' . $minutes . 'm';
     }
-
     public function isScheduled()
     {
         return $this->status === 'scheduled';
     }
-
     public function isInProgress()
     {
         return $this->status === 'in_progress';
     }
-
     public function isCompleted()
     {
         return $this->status === 'completed';
     }
-
     public function isCancelled()
     {
         return $this->status === 'cancelled';

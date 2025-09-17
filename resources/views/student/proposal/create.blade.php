@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Submit Proposal')
-
 @section('content')
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -26,10 +24,8 @@
                             Your previous proposal was rejected. Please review the feedback and submit a revised version.
                         </div>
                     @endif
-
                     <form action="{{ route('student.proposal.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="mb-3">
@@ -44,7 +40,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="mb-3">
@@ -59,7 +54,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="mb-3">
@@ -74,7 +68,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="mb-3">
@@ -89,7 +82,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="mb-3">
@@ -104,7 +96,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="mb-3">
@@ -118,7 +109,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="mb-3">
@@ -135,7 +125,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('student.proposal') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-times me-2"></i>Cancel
@@ -147,8 +136,6 @@
                     </form>
                 </div>
             </div>
-
-            <!-- Help Card -->
             <div class="card mt-4">
                 <div class="card-header">
                     <h5 class="mb-0">

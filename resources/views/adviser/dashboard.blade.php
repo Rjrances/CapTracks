@@ -1,7 +1,5 @@
 @extends('layouts.adviser')
-
 @section('title', 'Teacher Dashboard')
-
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
@@ -23,22 +21,18 @@
                 </div>
             </div>
         </div>
-
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
         @if(session('error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 {{ session('error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
-        <!-- Teacher Overview -->
         <div class="row mb-4">
             <div class="col-md-4">
                 <div class="card bg-primary text-white h-100">
@@ -68,8 +62,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Current Academic Term Context -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-primary">
@@ -116,10 +108,6 @@
                 </div>
             </div>
         </div>
-
-
-
-        <!-- Recent Activities and Quick Actions -->
         <div class="row mb-4">
             <div class="col-md-8">
                 <div class="card">
@@ -158,8 +146,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Quick Actions -->
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
@@ -181,8 +167,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Notifications -->
                 <div class="card mt-3">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -216,8 +200,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Pending Invitations -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
@@ -291,8 +273,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- My Groups -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
@@ -350,7 +330,6 @@
                                                         <span class="text-muted">All complete!</span>
                                                     @endif
                                                 </td>
-
                                                 <td>
                                                     <span class="badge bg-secondary">{{ $group->submissions_count ?? 0 }}</span>
                                                 </td>

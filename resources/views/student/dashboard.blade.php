@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Student Dashboard')
-
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
@@ -26,15 +24,12 @@
                 </div>
             </div>
         </div>
-
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
-        <!-- Current Academic Term Context -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-primary">
@@ -81,8 +76,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Project Progress Overview -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
@@ -123,8 +116,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- 60% Defense Readiness Status -->
         @if($group && ($defenseInfo['scheduled_defenses']->count() > 0 || $defenseInfo['pending_requests']->count() > 0))
         <div class="row mb-4">
             <div class="col-12">
@@ -196,8 +187,6 @@
             </div>
         </div>
         @endif
-
-        <!-- 60% Defense Requirements Checklist -->
         @if($group)
         <div class="row mb-4">
             <div class="col-12">
@@ -244,7 +233,6 @@
                                                 'color' => 'secondary'
                                             ]
                                         ];
-                                        
                                         $proposalStatus = $existingProposal ?? null;
                                         $hasProgressReport = $submissionsCount > 1;
                                         $hasDemo = true; // This would need to be tracked in your system
@@ -252,7 +240,6 @@
                                         $defenseRequested = $defenseInfo['pending_requests']->where('defense_type', '60_percent')->count() > 0;
                                         $defenseScheduled = $defenseInfo['scheduled_defenses']->where('defense_type', '60_percent')->count() > 0;
                                     @endphp
-                                    
                                     @foreach($requirements as $key => $requirement)
                                         @php
                                             $isCompleted = match($key) {
@@ -263,11 +250,9 @@
                                                 'defense_requested' => $defenseRequested || $defenseScheduled,
                                                 default => false
                                             };
-                                            
                                             $statusClass = $isCompleted ? 'success' : 'secondary';
                                             $iconClass = $isCompleted ? 'check-circle' : 'circle';
                                         @endphp
-                                        
                                         <div class="col-md-6 mb-3">
                                             <div class="d-flex align-items-start">
                                                 <div class="flex-shrink-0 me-3">
@@ -299,19 +284,16 @@
                                         $totalRequirements = 5;
                                         $readinessPercentage = round(($completedCount / $totalRequirements) * 100);
                                     @endphp
-                                    
                                     <div class="mb-3">
                                         <h3 class="text-{{ $readinessPercentage >= 80 ? 'success' : ($readinessPercentage >= 60 ? 'warning' : 'danger') }}">
                                             {{ $readinessPercentage }}%
                                         </h3>
                                         <p class="text-muted mb-0">60% Defense Ready</p>
                                     </div>
-                                    
                                     <div class="progress mb-3" style="height: 8px;">
                                         <div class="progress-bar bg-{{ $readinessPercentage >= 80 ? 'success' : ($readinessPercentage >= 60 ? 'warning' : 'danger') }}" 
                                              style="width: {{ $readinessPercentage }}%"></div>
                                     </div>
-                                    
                                     @if($readinessPercentage >= 80)
                                         <div class="alert alert-success small">
                                             <i class="fas fa-check-circle me-1"></i>
@@ -339,8 +321,6 @@
             </div>
         </div>
         @endif
-
-        <!-- 60% Defense Timeline & Deadlines -->
         @if($group && ($defenseInfo['scheduled_defenses']->where('defense_type', '60_percent')->count() > 0 || $defenseInfo['pending_requests']->where('defense_type', '60_percent')->count() > 0))
         <div class="row mb-4">
             <div class="col-12">
@@ -359,7 +339,6 @@
                                     $daysUntilDefense = $defenseDate ? now()->diffInDays($defenseDate, false) : null;
                                     $weeksUntilDefense = $defenseDate ? now()->diffInWeeks($defenseDate, false) : null;
                                 @endphp
-                                
                                 <div class="col-md-8">
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
@@ -374,7 +353,6 @@
                                                 {{ $defenseDate ? $defenseDate->format('h:i A') : 'Time TBA' }}
                                             </p>
                                         </div>
-                                        
                                         <div class="col-md-6 mb-3">
                                             <h6 class="text-warning mb-2">
                                                 <i class="fas fa-hourglass-half me-2"></i>Time Remaining
@@ -401,8 +379,6 @@
                                             @endif
                                         </div>
                                     </div>
-                                    
-                                    <!-- Critical Deadlines -->
                                     @if($daysUntilDefense > 0)
                                         <div class="mt-3">
                                             <h6 class="text-danger mb-2">
@@ -436,7 +412,6 @@
                                                         ];
                                                     }
                                                 @endphp
-                                                
                                                 @foreach($criticalDeadlines as $deadline)
                                                     <div class="col-md-4 mb-2">
                                                         <div class="d-flex align-items-center">
@@ -454,7 +429,6 @@
                                         </div>
                                     @endif
                                 </div>
-                                
                                 <div class="col-md-4">
                                     <div class="text-center">
                                         @if($daysUntilDefense > 0)
@@ -464,7 +438,6 @@
                                                 </h2>
                                                 <p class="text-muted mb-0">Days Until Defense</p>
                                             </div>
-                                            
                                             @if($daysUntilDefense <= 7)
                                                 <div class="alert alert-danger">
                                                     <i class="fas fa-fire me-2"></i>
@@ -485,7 +458,6 @@
                                                 </div>
                                             @endif
                                         @endif
-                                        
                                         <a href="{{ route('student.defense-requests.index') }}" class="btn btn-primary">
                                             <i class="fas fa-eye me-2"></i>View Defense Details
                                         </a>
@@ -530,11 +502,8 @@
             </div>
         </div>
         @endif
-
-        <!-- Adviser & Defense Information -->
         @if($group)
         <div class="row mb-4">
-            <!-- Adviser Information -->
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-header bg-info text-white">
@@ -556,7 +525,6 @@
                                 <h5 class="mb-2">Pending Invitations</h5>
                                 <p class="text-muted mb-2">{{ $adviserInfo['invitations']->count() }} invitation(s) sent</p>
                                 <span class="badge bg-warning fs-6">Awaiting Response</span>
-                                
                                 <div class="mt-3">
                                     @foreach($adviserInfo['invitations'] as $invitation)
                                         <div class="border rounded p-2 mb-2">
@@ -586,8 +554,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Defense Schedule Information -->
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-header bg-warning text-dark">
@@ -654,8 +620,6 @@
             </div>
         </div>
         @endif
-
-        <!-- Current Milestone -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
@@ -686,10 +650,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- Main Content Row -->
         <div class="row mb-4">
-            <!-- Recent Tasks -->
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
@@ -739,10 +700,7 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Sidebar - Quick Actions & Recent Activities -->
             <div class="col-md-4">
-                <!-- Quick Actions -->
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -766,8 +724,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Recent Activities -->
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -802,8 +758,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Upcoming Deadlines -->
         <div class="row">
             <div class="col-12">
                 <div class="card">

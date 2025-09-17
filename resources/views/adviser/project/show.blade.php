@@ -1,7 +1,5 @@
 @extends('layouts.adviser')
-
 @section('title', 'Review Submission')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,16 +16,13 @@
             </a>
         </div>
     </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     <div class="row">
-        <!-- Submission Details -->
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
@@ -46,7 +41,6 @@
                             <p>{{ $submission->student->email ?? 'N/A' }}</p>
                         </div>
                     </div>
-                    
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <strong>Submission Type:</strong>
@@ -69,7 +63,6 @@
                             </p>
                         </div>
                     </div>
-                    
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <strong>Submitted At:</strong>
@@ -84,7 +77,6 @@
                             </p>
                         </div>
                     </div>
-
                     @if($submission->teacher_comment)
                         <div class="mb-3">
                             <strong>Your Feedback:</strong>
@@ -95,8 +87,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Student Information -->
             <div class="card mt-4">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -127,8 +117,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Review Actions -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
@@ -152,15 +140,12 @@
                                 <small>This submission has already been reviewed.</small>
                             </div>
                         @endif
-                        
                         <a href="{{ route('adviser.project.edit', $submission->id) }}" class="btn btn-warning">
                             <i class="fas fa-edit me-2"></i>Add/Edit Feedback
                         </a>
                     </div>
                 </div>
             </div>
-
-            <!-- Quick Stats -->
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -180,8 +165,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Other Submissions from Student -->
             @php
                 $otherSubmissions = $submission->student->submissions->where('id', '!=', $submission->id)->take(3);
             @endphp
@@ -217,18 +200,14 @@
         </div>
     </div>
 </div>
-
 <script>
 function approveSubmission() {
     if (confirm('Are you sure you want to approve this submission?')) {
-        // Redirect to edit page with approval status
         window.location.href = "{{ route('adviser.project.edit', $submission->id) }}?action=approve";
     }
 }
-
 function rejectSubmission() {
     if (confirm('Are you sure you want to reject this submission?')) {
-        // Redirect to edit page with rejection status
         window.location.href = "{{ route('adviser.project.edit', $submission->id) }}?action=reject";
     }
 }

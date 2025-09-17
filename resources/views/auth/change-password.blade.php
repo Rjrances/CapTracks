@@ -1,4 +1,3 @@
-<!-- resources/views/auth/change-password.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,14 +6,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex">
-    <!-- Left Panel: Branding -->
     <div class="hidden md:flex flex-col justify-center items-start flex-1 bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-12">
         <div class="text-5xl font-bold mb-6">*</div>
         <h1 class="text-4xl font-extrabold leading-tight mb-4">Hello<br>CapTrack! <span class="inline-block">👋</span></h1>
         <p class="text-lg mb-auto">Secure your account by setting a strong password. Your privacy and security are important to us!</p>
         <footer class="mt-12 text-sm opacity-70">© 2024 CapTrack. All rights reserved.</footer>
     </div>
-    <!-- Right Panel: Change Password Form -->
     <div class="flex flex-col justify-center items-center flex-1 bg-white p-8 shadow-lg min-h-screen">
         <div class="w-full max-w-md">
             <div class="flex items-center justify-center mb-4">

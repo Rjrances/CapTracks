@@ -1,7 +1,5 @@
 @extends('layouts.chairperson')
-
 @section('title', 'Add Teachers')
-
 @section('content')
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -19,17 +17,14 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
-
                     @if(session('error'))
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             {{ session('error') }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
-
                     <form action="{{ route('chairperson.teachers.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        
                         <div class="mb-4">
                             <label for="file" class="form-label fw-bold">
                                 <i class="fas fa-file-excel me-1"></i>Select Excel File
@@ -39,8 +34,6 @@
                                 Upload an Excel file (.xlsx or .xls) containing faculty information.
                             </div>
                         </div>
-
-                        <!-- Excel Template Information -->
                         <div class="alert alert-info">
                             <h6 class="alert-heading">
                                 <i class="fas fa-info-circle me-1"></i>Excel File Format
@@ -54,8 +47,6 @@
                                 <li><strong>course</strong></li>
                             </ul>
                         </div>
-
-                        <!-- Excel Format Guide -->
                         <div class="alert alert-info">
                             <h6 class="alert-heading">
                                 <i class="fas fa-info-circle me-1"></i>Excel Format Guide
@@ -89,8 +80,6 @@
                                 • The role column is optional - if not specified, it will default to "teacher"<br>
                             </p>
                         </div>
-
-                        <!-- Important Notes -->
                         <div class="alert alert-warning">
                             <h6 class="alert-heading">
                                 <i class="fas fa-exclamation-triangle me-1"></i>Important Notes
@@ -101,7 +90,6 @@
                                 <li>Email addresses and School IDs must be unique</li>
                             </ul>
                         </div>
-
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-upload me-1"></i>Import Faculty

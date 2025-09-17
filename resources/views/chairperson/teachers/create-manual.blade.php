@@ -1,7 +1,5 @@
 @extends('layouts.chairperson')
-
 @section('title', 'Add Teacher')
-
 @section('content')
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -19,7 +17,6 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
-
                     @if($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <ul class="mb-0">
@@ -30,10 +27,8 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
-
                     <form action="{{ route('chairperson.teachers.store-manual') }}" method="POST">
                         @csrf
-                        
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -70,7 +65,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -109,7 +103,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -127,10 +120,7 @@
                                     @enderror
                                 </div>
                             </div>
-
                         </div>
-
-                        <!-- Important Notes -->
                         <div class="alert alert-info">
                             <h6 class="alert-heading">
                                 <i class="fas fa-info-circle me-1"></i>Important Notes
@@ -142,7 +132,6 @@
                                 <li>All fields marked with * are required</li>
                             </ul>
                         </div>
-
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-1"></i>Add Teacher

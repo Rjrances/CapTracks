@@ -1,9 +1,7 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
-        <!-- Main Content -->
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
@@ -19,11 +17,9 @@
                             </ul>
                         </div>
                     @endif
-
                     <form action="{{ route('chairperson.offerings.update', $offering->id) }}" method="POST">
                         @csrf
                         @method('PUT')
-
                         <div class="mb-3">
                             <label for="subject_title" class="form-label">Subject Title</label>
                             <select name="subject_title" id="subject_title"
@@ -42,7 +38,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
                         <div class="mb-3">
                             <label for="subject_code" class="form-label">Subject Code</label>
                             <input type="text" name="subject_code" id="subject_code" 
@@ -52,7 +47,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
                         <div class="mb-3">
                             <label for="teacher_id" class="form-label">Teacher</label>
                             <select name="teacher_id" id="teacher_id" 
@@ -69,7 +63,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
                         <div class="mb-3">
                             <label for="academic_term_id" class="form-label">Academic Term</label>
                             <select name="academic_term_id" id="academic_term_id" 
@@ -89,7 +82,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Back to List
@@ -102,8 +94,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Side Panel - Student Management -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
@@ -142,7 +132,6 @@
                             </a>
                         </div>
                     @endif
-
                     <div class="mt-3">
                         <div class="alert alert-info">
                             <h6 class="alert-heading">

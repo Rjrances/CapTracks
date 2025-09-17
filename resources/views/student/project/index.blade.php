@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Project Submissions')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -95,54 +93,45 @@
         <div class="alert alert-info">No submissions yet.</div>
     @endif
 </div>
-
 @push('styles')
 <style>
 .table-responsive {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-
 .table th {
     font-weight: 600;
     font-size: 0.9rem;
     padding: 12px 8px;
     border-bottom: 2px solid #dee2e6;
 }
-
 .table td {
     padding: 10px 8px;
     vertical-align: middle;
     font-size: 0.9rem;
 }
-
 .text-truncate {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
 .badge {
     font-size: 0.75rem;
     padding: 4px 8px;
 }
-
 .btn-sm {
     padding: 4px 8px;
     font-size: 0.8rem;
 }
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .table th, .table td {
         padding: 8px 4px;
         font-size: 0.8rem;
     }
-    
     .text-truncate {
         max-width: 120px !important;
     }
-    
     .btn-sm {
         padding: 2px 6px;
         font-size: 0.75rem;

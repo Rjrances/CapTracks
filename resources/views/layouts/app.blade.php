@@ -4,19 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@yield('title', 'CapTrack')</title>
-
     {{-- Bootstrap 5 CDN for consistent styling --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     {{-- Tailwind CSS (or your CSS framework) --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     {{-- Font Awesome for icons --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
     {{-- Optional: add your own scripts or styles --}}
     @stack('styles')
 </head>
 <body class="bg-gray-100 font-sans text-gray-900">
-
     {{-- Conditionally include navigation if the partial exists --}}
     @if (auth()->check() && auth()->user()->hasRole('student'))
         @include('partials.nav.student')
@@ -25,7 +22,6 @@
     @elseif (View::exists('partials.nav'))
         @include('partials.nav')
     @endif
-
     {{-- Notification Bell (Top-Right) --}}
     @auth
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
@@ -68,15 +64,12 @@
         </div>
     </div>
     @endauth
-
     <main class="container mx-auto p-6">
         {{-- Where page content goes --}}
         @yield('content')
     </main>
-
     {{-- Common footer --}}
     @include('partials.footer')
-
     {{-- Scripts --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     @stack('scripts')

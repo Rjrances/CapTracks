@@ -1,10 +1,9 @@
 @php
     $user = auth()->user();
 @endphp
-
 <nav class="navbar navbar-expand-lg px-4" style="background-color: #182A56;">
     <div class="d-flex align-items-center">
-        <div style="width:32px; height:32px; margin-right:10px;"></div> <!-- Empty logo space -->
+        <div style="width:32px; height:32px; margin-right:10px;"></div> 
         <a class="navbar-brand fw-bold text-white" href="{{ route('chairperson.dashboard') }}">CapTrack</a>
     </div>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -36,7 +35,6 @@
     text-decoration: underline;
     color: #fff;
 }
-
 .navbar-nav .nav-link.text-white.active {
     background-color: #007bff !important;
     color: white !important;
@@ -44,7 +42,6 @@
     font-weight: 600;
     text-decoration: none;
 }
-
 .navbar-nav .nav-link.text-white.active:hover {
     background-color: #0056b3 !important;
     text-decoration: none;

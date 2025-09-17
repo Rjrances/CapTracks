@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Defense Calendar')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -12,8 +10,6 @@
                     Defense Calendar
                 </h2>
             </div>
-             
-            <!-- Calendar -->
             <div class="calendar-container">
                 <div class="calendar-header">
                     <h2 class="calendar-title">
@@ -34,7 +30,6 @@
                         </button>
                     </div>
                 </div>
-                
                 <table class="calendar-table">
                     <thead>
                         <tr>
@@ -57,12 +52,10 @@
                             $today = now()->startOfDay();
                             $weekCount = 0;
                         @endphp
-                        
                         @while($currentDate <= $endDate)
                             @if($weekCount % 7 == 0)
                                 <tr>
                             @endif
-                            
                             @php
                                 $isToday = $currentDate->eq($today);
                                 $isOtherMonth = $currentDate->month !== $currentMonth;
@@ -70,10 +63,8 @@
                                     return \Carbon\Carbon::parse($event['start'])->startOfDay()->eq($currentDate);
                                 });
                             @endphp
-                            
                             <td class="calendar-day {{ $isToday ? 'today' : '' }} {{ $isOtherMonth ? 'other-month' : '' }}">
                                 <div class="calendar-day-number">{{ $currentDate->day }}</div>
-                                
                                 @foreach($dayEvents as $event)
                                     <div class="calendar-event {{ $event['className'] ?? 'scheduled' }}" 
                                          onclick="showEventDetails({{ json_encode($event) }})"
@@ -82,17 +73,14 @@
                                     </div>
                                 @endforeach
                             </td>
-                            
                             @if($weekCount % 7 == 6)
                                 </tr>
                             @endif
-                            
                             @php
                                 $currentDate->addDay();
                                 $weekCount++;
                             @endphp
                         @endwhile
-                        
                         @if($weekCount % 7 != 0)
                             @for($i = 0; $i < (7 - ($weekCount % 7)); $i++)
                                 <td class="calendar-day other-month"></td>
@@ -105,8 +93,6 @@
         </div>
     </div>
 </div>
-
-<!-- Defense Details Modal -->
 <div class="modal fade" id="defenseModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -115,7 +101,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="defenseModalBody">
-                <!-- Content will be loaded here -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -123,9 +108,7 @@
         </div>
     </div>
 </div>
-
 @endsection
-
 @push('styles')
 <style>
 /* Google Calendar-inspired Design */
@@ -140,7 +123,6 @@
     width: 100%;
     min-height: 80vh;
 }
-
 .calendar-header {
     background: white;
     padding: 16px 24px;
@@ -150,20 +132,17 @@
     align-items: center;
     border-bottom: 1px solid #e8eaed;
 }
-
 .calendar-title {
     font-size: 22px;
     font-weight: 400;
     margin: 0;
     color: #202124;
 }
-
 .calendar-nav {
     display: flex;
     gap: 8px;
     align-items: center;
 }
-
 .calendar-nav button {
     background: white;
     color: #5f6368;
@@ -176,27 +155,23 @@
     transition: all 0.2s ease;
     min-width: 80px;
 }
-
 .calendar-nav button:hover {
     background: #f8f9fa;
     border-color: #c6c6c6;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
-
 .calendar-nav button:disabled {
     background: #f1f3f4;
     color: #9aa0a6;
     cursor: not-allowed;
     border-color: #f1f3f4;
 }
-
 .calendar-table {
     width: 100%;
     border-collapse: collapse;
     background: white;
     table-layout: fixed;
 }
-
 .calendar-table th {
     background: #f8f9fa;
     padding: 20px 12px;
@@ -210,11 +185,9 @@
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-
 .calendar-table th:last-child {
     border-right: none;
 }
-
 .calendar-day {
     min-height: 150px;
     height: 150px;
@@ -227,32 +200,25 @@
     vertical-align: top;
     width: 14.28%;
 }
-
 .calendar-table td:last-child .calendar-day {
     border-right: none;
 }
-
 .calendar-day:hover {
     background: #f8f9fa;
 }
-
 .calendar-day.today {
     background: #e8f0fe;
 }
-
 .calendar-day.today .calendar-day-number {
     color: #1a73e8;
     font-weight: 500;
 }
-
 .calendar-day.other-month {
     background: #fafafa;
 }
-
 .calendar-day.other-month .calendar-day-number {
     color: #9aa0a6;
 }
-
 .calendar-day-number {
     font-weight: 600;
     color: #3c4043;
@@ -262,7 +228,6 @@
     z-index: 2;
     line-height: 1;
 }
-
 .calendar-event {
     background: #1a73e8;
     color: white;
@@ -282,37 +247,29 @@
     line-height: 1.3;
     max-width: 100%;
 }
-
 .calendar-event:hover {
     background: #1557b0;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
-
 .calendar-event.approved {
     background: #34a853;
 }
-
 .calendar-event.approved:hover {
     background: #2d8a47;
 }
-
 .calendar-event.scheduled {
     background: #34a853;
     color: white;
 }
-
 .calendar-event.scheduled:hover {
     background: #2d8a47;
 }
-
 .calendar-event.pending {
     background: #9aa0a6;
 }
-
 .calendar-event.pending:hover {
     background: #80868b;
 }
-
 /* Responsive Design */
 @media (max-width: 768px) {
     .calendar-header {
@@ -320,45 +277,37 @@
         gap: 12px;
         padding: 12px 16px;
     }
-    
     .calendar-title {
         font-size: 18px;
     }
-    
     .calendar-nav {
         width: 100%;
         justify-content: center;
     }
-    
     .calendar-nav button {
         padding: 6px 12px;
         font-size: 12px;
         min-width: 60px;
     }
-    
     .calendar-day {
         min-height: 80px;
         padding: 6px;
     }
-    
     .calendar-day-number {
         font-size: 12px;
         margin-bottom: 6px;
     }
-    
     .calendar-event {
         font-size: 10px;
         padding: 3px 6px;
         margin: 1px 0;
     }
-    
     .calendar-table th {
         padding: 8px 4px;
         font-size: 10px;
         height: 32px;
     }
 }
-
 /* Animation for calendar events */
 @keyframes fadeInUp {
     from {
@@ -370,22 +319,18 @@
         transform: translateY(0);
     }
 }
-
 .calendar-event {
     animation: fadeInUp 0.2s ease-out;
 }
 </style>
 @endpush
-
 @push('scripts')
 <script>
 function changeMonth(direction) {
     const urlParams = new URLSearchParams(window.location.search);
     let month = parseInt(urlParams.get('month')) || new Date().getMonth() + 1;
     let year = parseInt(urlParams.get('year')) || new Date().getFullYear();
-    
     month += direction;
-    
     if (month > 12) {
         month = 1;
         year++;
@@ -393,12 +338,10 @@ function changeMonth(direction) {
         month = 12;
         year--;
     }
-    
     urlParams.set('month', month);
     urlParams.set('year', year);
     window.location.search = urlParams.toString();
 }
-
 function goToToday() {
     const today = new Date();
     const urlParams = new URLSearchParams(window.location.search);
@@ -406,12 +349,8 @@ function goToToday() {
     urlParams.set('year', today.getFullYear());
     window.location.search = urlParams.toString();
 }
-
 function showEventDetails(event) {
-    // Show defense details modal
     const modal = new bootstrap.Modal(document.getElementById('defenseModal'));
-    
-    // Create event details HTML
     const eventDetails = `
         <div class="row">
             <div class="col-md-6">
@@ -429,7 +368,6 @@ function showEventDetails(event) {
             </div>
         </div>
     `;
-    
     document.getElementById('defenseModalBody').innerHTML = eventDetails;
     modal.show();
 }

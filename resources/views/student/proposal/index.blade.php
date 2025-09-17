@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Proposal & Endorsement')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -21,8 +19,6 @@
             @endif
         </div>
     </div>
-
-    <!-- Status Overview -->
     <div class="row mb-4">
         <div class="col-md-8">
             <div class="card">
@@ -37,7 +33,6 @@
                             <div class="col-md-8">
                                 <h6 class="mb-1">{{ $existingProposal->title ?? 'Project Proposal' }}</h6>
                                 <p class="text-muted mb-2">Submitted: {{ $existingProposal->submitted_at ? \Carbon\Carbon::parse($existingProposal->submitted_at)->format('M d, Y H:i') : 'N/A' }}</p>
-                                
                                 @switch($proposalStatus['status'])
                                     @case('pending')
                                         <span class="badge bg-warning fs-6">Under Review</span>
@@ -64,7 +59,6 @@
                                 @endif
                             </div>
                         </div>
-
                         @if($existingProposal->teacher_comment)
                             <div class="mt-3 p-3 bg-light rounded">
                                 <h6 class="mb-2">Adviser Feedback:</h6>
@@ -84,9 +78,7 @@
                 </div>
             </div>
         </div>
-
         <div class="col-md-4">
-            <!-- Next Steps Card -->
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -102,7 +94,6 @@
                                 </h6>
                                 <small class="text-muted">Your project proposal has been approved by your adviser.</small>
                             </div>
-                            
                             <div class="mb-3">
                                 <h6 class="text-primary mb-2">
                                     <i class="fas fa-rocket me-2"></i>Step 2: Request 60% Defense
@@ -114,14 +105,12 @@
                                     </a>
                                 </div>
                             </div>
-                            
                             <div class="mb-3">
                                 <h6 class="text-warning mb-2">
                                     <i class="fas fa-clock me-2"></i>Step 3: Prepare for Defense
                                 </h6>
                                 <small class="text-muted">Work on your progress report, demo, and presentation.</small>
                             </div>
-                            
                             <div class="alert alert-success">
                                 <i class="fas fa-lightbulb me-2"></i>
                                 <strong>Pro Tip:</strong><br>
@@ -134,7 +123,6 @@
                                 </h6>
                                 <small class="text-muted">Your proposal is currently under review by your adviser.</small>
                             </div>
-                            
                             <div class="mb-3">
                                 <h6 class="text-info mb-2">
                                     <i class="fas fa-edit me-2"></i>Step 2: Prepare for Feedback
@@ -148,7 +136,6 @@
                                 </h6>
                                 <small class="text-muted">Address the feedback and resubmit your proposal.</small>
                             </div>
-                            
                             <div class="mb-3">
                                 <h6 class="text-info mb-2">
                                     <i class="fas fa-comments me-2"></i>Step 2: Review Feedback
@@ -163,14 +150,12 @@
                             </h6>
                             <small class="text-muted">Start by submitting your project proposal.</small>
                         </div>
-                        
                         <div class="mb-3">
                             <h6 class="text-info mb-2">
                                 <i class="fas fa-users me-2"></i>Step 2: Get Adviser Approval
                             </h6>
                             <small class="text-muted">Your adviser will review and provide feedback.</small>
                         </div>
-                        
                         <div class="mb-3">
                             <h6 class="text-success mb-2">
                                 <i class="fas fa-gavel me-2"></i>Step 3: Request Defense
@@ -180,8 +165,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Requirements Card -->
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -219,8 +202,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Group Information -->
     <div class="row">
         <div class="col-12">
             <div class="card">

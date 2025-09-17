@@ -1,16 +1,12 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Student;
-
 class RoleController extends Controller
 {
     public function index()
     {
-        // Define available roles in the system
         $roles = [
             'chairperson' => [
                 'name' => 'Chairperson',
@@ -43,50 +39,38 @@ class RoleController extends Controller
                 'permissions' => ['Submit projects', 'Track milestones', 'Join groups', 'View progress']
             ]
         ];
-
-        // Get users for each role using the new direct role column
         foreach ($roles as $roleKey => &$role) {
             if ($roleKey === 'student') {
-                // Students are handled separately
                 $role['user_count'] = Student::count();
                 $role['users'] = collect();
                 continue;
             }
-            
             $role['user_count'] = User::where('role', $roleKey)->count();
             $role['users'] = User::where('role', $roleKey)
                 ->select('id', 'name', 'email', 'school_id', 'department', 'role')
                 ->orderBy('name')
                 ->get();
         }
-
-        // Get all users for role assignment
         $allUsers = User::select('id', 'name', 'email', 'school_id', 'department', 'role')
             ->orderBy('name')
             ->get();
-
         return view('chairperson.roles.index', compact('roles', 'allUsers'));
     }
-
     public function update(Request $request, User $user)
     {
         $request->validate([
             'roles' => 'required|array',
             'roles.*' => 'in:chairperson,coordinator,teacher,adviser,panelist',
         ]);
-
         try {
-            // Update the user's role (take the first role if multiple are selected)
             $newRole = $request->roles[0] ?? 'teacher';
             $user->update(['role' => $newRole]);
-
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'User role updated successfully.'
                 ]);
             }
-
             return redirect()->back()->with('success', 'User role updated successfully.');
         } catch (\Exception $e) {
             if ($request->ajax()) {
@@ -95,7 +79,6 @@ class RoleController extends Controller
                     'message' => 'Error updating role: ' . $e->getMessage()
                 ], 500);
             }
-
             return redirect()->back()->with('error', 'Error updating role: ' . $e->getMessage());
         }
     }

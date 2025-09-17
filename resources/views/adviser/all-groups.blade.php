@@ -1,10 +1,7 @@
 @extends('layouts.adviser')
-
 @section('title', 'All My Groups')
-
 @section('content')
 <div class="container-fluid py-4">
-    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
@@ -23,22 +20,18 @@
             </div>
         </div>
     </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
-    <!-- Summary Statistics -->
     <div class="row mb-4 justify-content-center">
         <div class="col-md-3">
             <div class="card bg-primary text-white">
@@ -93,8 +86,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Filter Tabs -->
     <div class="row mb-4">
         <div class="col-12">
             <ul class="nav nav-pills nav-fill" id="groupTabs" role="tablist">
@@ -116,10 +107,7 @@
             </ul>
         </div>
     </div>
-
-    <!-- Tab Content -->
     <div class="tab-content" id="groupTabsContent">
-        <!-- All Groups Tab -->
         <div class="tab-pane fade show active" id="all" role="tabpanel">
             @if($allGroups->count() > 0)
                 @foreach($allGroups as $group)
@@ -148,10 +136,8 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <!-- Group Information -->
                                 <div class="col-md-8">
                                     @if($group->role_type === 'adviser' && isset($group->progress_percentage))
-                                        <!-- Progress Section for Adviser Groups -->
                                         <div class="progress-section mb-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <small class="text-muted fw-bold">Overall Progress</small>
@@ -174,8 +160,6 @@
                                                 @endif
                                             </div>
                                         </div>
-
-                                        <!-- Milestone Progress -->
                                         @if($group->milestone_progress && count($group->milestone_progress) > 0)
                                             <div class="milestone-progress mb-3">
                                                 <small class="text-muted fw-bold mb-2 d-block">Milestone Progress</small>
@@ -196,7 +180,6 @@
                                             </div>
                                         @endif
                                     @elseif($group->role_type === 'panel' && isset($group->defense_schedule))
-                                        <!-- Defense Schedule Info for Panel Groups -->
                                         <div class="alert alert-info border-start border-info border-3 mb-3">
                                             <div class="d-flex align-items-center">
                                                 <i class="fas fa-calendar-alt me-2"></i>
@@ -210,8 +193,6 @@
                                             </div>
                                         </div>
                                     @endif
-
-                                    <!-- Recent Activities -->
                                     @if($group->recent_activities && $group->recent_activities->count() > 0)
                                         <div class="recent-activities mb-3">
                                             <h6 class="text-muted mb-2">
@@ -234,19 +215,15 @@
                                         </div>
                                     @endif
                                 </div>
-
-                                <!-- Recent Submissions -->
                                 <div class="col-md-4">
                                     @php
                                         $groupData = $submissionsByGroup[$group->id] ?? null;
                                         $groupSubmissions = $groupData['submissions'] ?? collect();
                                     @endphp
-                                    
                                     <div class="submissions-section">
                                         <h6 class="text-muted mb-3">
                                             <i class="fas fa-file-alt me-1"></i> Recent Submissions
                                         </h6>
-                                        
                                         @if($groupSubmissions->count() > 0)
                                             <div class="submissions-list" style="max-height: 200px; overflow-y: auto;">
                                                 @foreach($groupSubmissions as $submission)
@@ -280,7 +257,6 @@
                                                     </div>
                                                 @endforeach
                                             </div>
-                                            
                                             @if($groupSubmissions->count() >= 5)
                                                 <div class="text-center mt-2">
                                                     <a href="{{ route('adviser.project.index') }}" class="btn btn-outline-primary btn-sm">
@@ -318,8 +294,6 @@
                 </div>
             @endif
         </div>
-
-        <!-- Adviser Groups Tab -->
         <div class="tab-pane fade" id="adviser" role="tabpanel">
             @if($adviserGroups->count() > 0)
                 @foreach($adviserGroups as $group)
@@ -364,7 +338,6 @@
                                         <h6 class="text-muted mb-3">
                                             <i class="fas fa-info-circle me-1"></i> Group Information
                                         </h6>
-                                        
                                         <div class="group-actions mt-3">
                                             @if($group->role_type === 'adviser')
                                                 <a href="{{ route('adviser.project.index') }}" class="btn btn-outline-success btn-sm w-100 mb-2">
@@ -392,8 +365,6 @@
                 </div>
             @endif
         </div>
-
-        <!-- Panel Groups Tab -->
         <div class="tab-pane fade" id="panel" role="tabpanel">
             @if($panelGroups->count() > 0)
                 @foreach($panelGroups as $group)
@@ -441,7 +412,6 @@
                                         <h6 class="text-muted mb-3">
                                             <i class="fas fa-info-circle me-1"></i> Group Information
                                         </h6>
-                                        
                                         <div class="group-actions mt-3">
                                             <a href="{{ route('adviser.panel-submissions') }}" class="btn btn-outline-primary btn-sm w-100 mb-2">
                                                 <i class="fas fa-file-alt me-1"></i> View Submissions
@@ -470,95 +440,72 @@
         </div>
     </div>
 </div>
-
-<!-- Custom CSS for better styling -->
 <style>
 .nav-pills .nav-link {
     border-radius: 8px;
     font-weight: 500;
     transition: all 0.3s ease;
 }
-
 .nav-pills .nav-link:hover {
     background-color: rgba(0,123,255,0.1);
 }
-
 .nav-pills .nav-link.active {
     background-color: #007bff !important;
     color: white !important;
 }
-
 .submission-item {
     transition: all 0.3s ease;
 }
-
 .submission-item:hover {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     transform: translateY(-1px);
 }
-
 .activity-item {
     transition: all 0.3s ease;
 }
-
 .activity-item:hover {
     background-color: #f8f9fa !important;
 }
-
 .progress {
     border-radius: 10px;
     background-color: #e9ecef;
 }
-
 .progress-bar {
     border-radius: 10px;
     transition: width 0.6s ease;
 }
-
 .card {
     border-radius: 12px;
     overflow: hidden;
 }
-
 .card-header {
     background: linear-gradient(135deg, #007bff, #6f42c1) !important;
 }
-
 .card-header.bg-success {
     background: linear-gradient(135deg, #28a745, #20c997) !important;
 }
-
 .card-header.bg-info {
     background: linear-gradient(135deg, #17a2b8, #6f42c1) !important;
 }
-
 .description-item {
     transition: all 0.3s ease;
 }
-
 .description-item:hover {
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     transform: translateY(-1px);
 }
-
 .group-meta-item {
     transition: all 0.3s ease;
 }
-
 .group-meta-item:hover {
     background-color: #f8f9fa !important;
 }
 </style>
-
-<!-- JavaScript for tab functionality -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tab switching functionality is handled by Bootstrap
     const tabButtons = document.querySelectorAll('#groupTabs button[data-bs-toggle="pill"]');
-    
     tabButtons.forEach(button => {
         button.addEventListener('shown.bs.tab', function(event) {
-            // Optional: Add any additional functionality when tabs are switched
             console.log('Switched to tab:', event.target.getAttribute('data-bs-target'));
         });
     });

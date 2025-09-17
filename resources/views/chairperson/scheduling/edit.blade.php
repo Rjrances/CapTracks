@@ -1,5 +1,4 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -18,11 +17,9 @@
                             </ul>
                         </div>
                     @endif
-
                     <form action="{{ route('chairperson.scheduling.update', $defenseSchedule) }}" method="POST" id="defenseForm">
                         @csrf
                         @method('PUT')
-
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -41,7 +38,6 @@
                                     @enderror
                                 </div>
                             </div>
-
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="defense_type" class="form-label">Defense Type</label>
@@ -57,7 +53,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -71,7 +66,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -84,7 +78,6 @@
                                     @enderror
                                 </div>
                             </div>
-
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="scheduled_time" class="form-label">Scheduled Time</label>
@@ -97,7 +90,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="mb-3">
                             <label for="coordinator_notes" class="form-label">Coordinator Notes</label>
                             <textarea name="coordinator_notes" id="coordinator_notes" rows="3" 
@@ -106,7 +98,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('chairperson.scheduling.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Back to List
@@ -119,8 +110,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Side Panel - Panelist Management -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
@@ -148,9 +137,7 @@
                             </div>
                         @endforeach
                     </div>
-
                     <hr>
-
                     <div class="mb-3">
                         <label for="faculty_select" class="form-label">Add Panelist</label>
                         <select id="faculty_select" class="form-select">
@@ -164,7 +151,6 @@
                             @endforeach
                         </select>
                     </div>
-
                     <div class="mb-3">
                         <label for="panelist_role" class="form-label">Role</label>
                         <select id="panelist_role" class="form-select">
@@ -173,7 +159,6 @@
                             <option value="adviser">Adviser</option>
                         </select>
                     </div>
-
                     <button type="button" class="btn btn-success btn-sm w-100" onclick="addPanelist()">
                         <i class="fas fa-plus"></i> Add Panelist
                     </button>
@@ -182,31 +167,25 @@
         </div>
     </div>
 </div>
-
 <script>
 let panelistCounter = {{ $defenseSchedule->panelists->count() }};
 const addedPanelists = new Set(@json($defenseSchedule->panelists->pluck('id')->toArray()));
-
 function addPanelist() {
     const facultySelect = document.getElementById('faculty_select');
     const roleSelect = document.getElementById('panelist_role');
     const container = document.getElementById('panelistsContainer');
     const countBadge = document.getElementById('panelistCount');
-
     if (!facultySelect.value) {
         alert('Please select a faculty member');
         return;
     }
-
     const facultyId = facultySelect.value;
     const facultyName = facultySelect.options[facultySelect.selectedIndex].dataset.name;
     const role = roleSelect.value;
-
     if (addedPanelists.has(facultyId)) {
         alert('This faculty member is already added to the panel');
         return;
     }
-
     const panelistDiv = document.createElement('div');
     panelistDiv.className = 'panelist-item border rounded p-2 mb-2';
     panelistDiv.innerHTML = `
@@ -223,26 +202,19 @@ function addPanelist() {
         <input type="hidden" name="panelists[${panelistCounter}][faculty_id]" value="${facultyId}">
         <input type="hidden" name="panelists[${panelistCounter}][role]" value="${role}">
     `;
-
     container.appendChild(panelistDiv);
     addedPanelists.add(facultyId);
     panelistCounter++;
     countBadge.textContent = panelistCounter;
-
-    // Reset selects
     facultySelect.value = '';
     roleSelect.value = 'member';
 }
-
 function removePanelist(button, facultyId) {
     const panelistDiv = button.closest('.panelist-item');
     panelistDiv.remove();
     addedPanelists.delete(facultyId);
-    
     const countBadge = document.getElementById('panelistCount');
     countBadge.textContent = parseInt(countBadge.textContent) - 1;
-
-    // Reindex the hidden inputs
     const hiddenInputs = document.querySelectorAll('#panelistsContainer input[type="hidden"]');
     let newIndex = 0;
     for (let i = 0; i < hiddenInputs.length; i += 2) {
@@ -252,8 +224,6 @@ function removePanelist(button, facultyId) {
     }
     panelistCounter = newIndex;
 }
-
-// Form validation
 document.getElementById('defenseForm').addEventListener('submit', function(e) {
     if (panelistCounter === 0) {
         e.preventDefault();
@@ -262,7 +232,6 @@ document.getElementById('defenseForm').addEventListener('submit', function(e) {
     }
 });
 </script>
-
 <style>
 .panelist-item {
     background-color: #f8f9fa;

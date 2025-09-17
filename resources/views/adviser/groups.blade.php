@@ -1,10 +1,7 @@
 @extends('layouts.adviser')
-
 @section('title', 'Adviser Workspace')
-
 @section('content')
 <div class="container-fluid py-4">
-    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
@@ -26,8 +23,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Workspace Statistics -->
     <div class="row mb-4 justify-content-center">
         <div class="col-md-3">
             <div class="card bg-success text-white">
@@ -69,22 +64,18 @@
             </div>
         </div>
     </div>
-
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
         @if(session('error'))
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 {{ session('error') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-
-        <!-- Groups List -->
         <div class="row">
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
@@ -100,7 +91,6 @@
                             @foreach($groups as $group)
                                 <div class="group-item p-4 {{ !$loop->last ? 'border-bottom' : '' }}">
                                     <div class="row">
-                                        <!-- Group Icon and Basic Info -->
                                         <div class="col-md-1">
                                             <div class="group-icon-wrapper">
                                                 <span class="group-icon">
@@ -108,8 +98,6 @@
                                                 </span>
                                             </div>
                                         </div>
-                                        
-                                        <!-- Main Group Details -->
                                         <div class="col-md-7">
                                             <div class="group-content">
                                                 <div class="d-flex align-items-center mb-2">
@@ -124,7 +112,6 @@
                                                         </span>
                                                     @endif
                                                 </div>
-                                                
                                                 <div class="group-meta mb-3">
                                                     <span class="badge bg-info me-2">
                                                         <i class="fas fa-users me-1"></i>
@@ -139,8 +126,6 @@
                                                         Created {{ $group->created_at->diffForHumans() }}
                                                     </span>
                                                 </div>
-
-                                                <!-- Progress Section -->
                                                 <div class="progress-section mb-3">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                                         <small class="text-muted fw-bold">Overall Progress</small>
@@ -163,8 +148,6 @@
                                                         @endif
                                                     </div>
                                                 </div>
-
-                                                <!-- Milestone Progress -->
                                                 @if($group->milestone_progress && count($group->milestone_progress) > 0)
                                                     <div class="milestone-progress mb-3">
                                                         <small class="text-muted fw-bold mb-2 d-block">Milestone Progress</small>
@@ -184,7 +167,6 @@
                                                         </div>
                                                     </div>
                                                 @endif
-                                                
                                                 @if($group->description)
                                                     <div class="group-description mb-3">
                                                         <div class="alert alert-light border-start border-success border-3">
@@ -195,10 +177,7 @@
                                                 @endif
                                             </div>
                                         </div>
-
-                                        <!-- Recent Activities and Actions -->
                                         <div class="col-md-4">
-                                            <!-- Recent Activities -->
                                             @if($group->recent_activities && $group->recent_activities->count() > 0)
                                                 <div class="recent-activities mb-3">
                                                     <h6 class="text-muted mb-2">
@@ -220,8 +199,6 @@
                                                     </div>
                                                 </div>
                                             @endif
-
-                                            <!-- Action Buttons -->
                                             <div class="group-actions">
                                                 <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-success btn-sm px-3 me-2 mb-2 w-100">
                                                     <i class="fas fa-eye me-1"></i> View Details
@@ -237,8 +214,6 @@
                                     </div>
                                 </div>
                             @endforeach
-
-                    <!-- Pagination -->
                     @if($groups->hasPages())
                         <div class="d-flex justify-content-center p-4 border-top">
                             {{ $groups->links() }}
@@ -264,15 +239,12 @@
         </div>
     </div>
 </div>
-
-<!-- Custom CSS for better styling -->
 <style>
 .group-icon-wrapper {
     display: flex;
     align-items: center;
     justify-content-center;
 }
-
 .group-icon {
     width: 50px;
     height: 50px;
@@ -286,72 +258,58 @@
     box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
     transition: all 0.3s ease;
 }
-
 .group-item {
     transition: all 0.3s ease;
     border-left: 4px solid transparent;
 }
-
 .group-item:hover {
     background-color: #f8f9fa;
     border-left-color: #28a745;
     transform: translateX(5px);
 }
-
 .group-meta .badge {
     font-size: 0.8rem;
     padding: 0.5rem 0.75rem;
 }
-
 .group-description .alert {
     background: linear-gradient(135deg, #f8f9fa, #e9ecef);
     border: none;
     border-radius: 8px;
 }
-
 .group-actions .btn {
     border-radius: 6px;
     font-weight: 500;
     transition: all 0.3s ease;
 }
-
 .group-actions .btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-
 .empty-state {
     padding: 2rem;
 }
-
 .empty-state i {
     opacity: 0.6;
 }
-
 .card {
     border-radius: 12px;
     overflow: hidden;
 }
-
 .card-header {
     background: linear-gradient(135deg, #28a745, #20c997) !important;
 }
-
 .group-item:last-child {
     border-bottom: none;
 }
-
 /* Success theme colors */
 .bg-success {
     background: linear-gradient(135deg, #28a745, #20c997) !important;
 }
-
 .btn-success {
     background: linear-gradient(135deg, #28a745, #20c997);
     border: none;
     box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
 }
-
 .btn-success:hover {
     background: linear-gradient(135deg, #218838, #1e7e34);
     transform: translateY(-1px);

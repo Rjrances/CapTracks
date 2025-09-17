@@ -14,7 +14,7 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-/* Navigation active state styling */
+
 .navbar-nav .nav-link.active {
     background-color: #007bff !important;
     color: white !important;

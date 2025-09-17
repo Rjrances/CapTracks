@@ -6,9 +6,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex">
-    <!-- Left Panel: Branding -->
     <div class="hidden md:flex flex-col justify-center items-start flex-1 bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-12">
-        <!-- Logo Section -->
         <div class="mb-8 text-center">
             <img src="{{ asset('images/Logo.png') }}" alt="CapTrack Logo" class="w-24 h-24 mb-1 mx-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
             <div class="text-6xl font-bold mb-1" style="display: none;">📊</div>
@@ -17,7 +15,6 @@
         <p class="text-lg mb-auto">Skip repetitive and manual capstone tasks. Get highly productive through automation and save tons of time!</p>
         <footer class="mt-12 text-sm opacity-70">© 2024 CapTrack. All rights reserved.</footer>
     </div>
-    <!-- Right Panel: Login Form -->
     <div class="flex flex-col justify-center items-center flex-1 bg-white p-8 shadow-lg min-h-screen">
         <div class="w-full max-w-md">
             <div class="flex items-center justify-center mb-6">

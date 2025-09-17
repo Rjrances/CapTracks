@@ -1,7 +1,5 @@
 @extends('layouts.adviser')
-
 @section('title', 'View Proposal')
-
 @section('content')
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -26,7 +24,6 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- Proposal Details -->
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <h6>Student Information</h6>
@@ -59,8 +56,6 @@
                             </p>
                         </div>
                     </div>
-
-                    <!-- Proposal Content -->
                     <div class="row mb-4">
                         <div class="col-12">
                             <h6>Proposal Content</h6>
@@ -78,17 +73,14 @@
                                     </div>
                                 </div>
                             </div>
-                            
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Project Objectives</label>
                                 <div class="form-control-plaintext" style="min-height: 80px;">{{ $proposal->objectives ?? 'N/A' }}</div>
                             </div>
-                            
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Methodology & Approach</label>
                                 <div class="form-control-plaintext" style="min-height: 80px;">{{ $proposal->methodology ?? 'N/A' }}</div>
                             </div>
-                            
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
@@ -105,8 +97,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Review Status -->
                     @if($proposal->status !== 'pending')
                         <div class="row mb-4">
                             <div class="col-12">
@@ -121,7 +111,6 @@
                                         @endif
                                     </div>
                                 </div>
-                                
                                 @if($proposal->teacher_comment)
                                     <div class="mb-3">
                                         <label class="form-label fw-bold">Feedback & Comments</label>
@@ -131,8 +120,6 @@
                             </div>
                         </div>
                     @endif
-
-                    <!-- Action Buttons -->
                     <div class="d-flex justify-content-between">
                         <a href="{{ route('adviser.proposal.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Back to Proposals
@@ -151,8 +138,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Group Information -->
             <div class="card mt-4">
                 <div class="card-header">
                     <h5 class="mb-0">

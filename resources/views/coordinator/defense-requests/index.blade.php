@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Defense Requests')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -10,8 +8,6 @@
             <i class="fas fa-info-circle me-1"></i>Manage student defense requests
         </div>
     </div>
-
-    <!-- Filters Section -->
     <div class="card mb-4">
         <div class="card-header">
             <h6 class="mb-0">
@@ -60,8 +56,6 @@
             </form>
         </div>
     </div>
-
-    <!-- Defense Requests Table -->
     <div class="card">
         <div class="card-header">
             <h6 class="mb-0">
@@ -161,8 +155,6 @@
                         </tbody>
                     </table>
                 </div>
-
-                <!-- Pagination -->
                 <div class="d-flex justify-content-center mt-4">
                     {{ $defenseRequests->links() }}
                 </div>
@@ -182,8 +174,6 @@
         </div>
     </div>
 </div>
-
-<!-- Reject Request Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -208,10 +198,8 @@
         </div>
     </div>
 </div>
-
 @push('scripts')
 <script>
-// Auto-submit filters when changed
 document.addEventListener('DOMContentLoaded', function() {
     const filterSelects = document.querySelectorAll('#filterForm select');
     filterSelects.forEach(select => {
@@ -220,24 +208,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-
 function approveRequest(requestId) {
     if (confirm('Are you sure you want to approve this defense request?')) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/coordinator/defense-requests/${requestId}/approve`;
-        
         const csrfToken = document.createElement('input');
         csrfToken.type = 'hidden';
         csrfToken.name = '_token';
         csrfToken.value = '{{ csrf_token() }}';
-        
         form.appendChild(csrfToken);
         document.body.appendChild(form);
         form.submit();
     }
 }
-
 function rejectRequest(requestId) {
     const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
     const form = document.getElementById('rejectForm');

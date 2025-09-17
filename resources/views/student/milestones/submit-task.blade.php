@@ -1,7 +1,5 @@
 @extends('layouts.student')
-
 @section('title', 'Submit Task - ' . $task->milestoneTask->name)
-
 @section('content')
 <div class="container mt-5">
     <nav aria-label="breadcrumb">
@@ -11,7 +9,6 @@
             <li class="breadcrumb-item active" aria-current="page">Submit Task</li>
         </ol>
     </nav>
-
     <div class="row">
         <div class="col-md-8">
             <div class="card">
@@ -21,21 +18,16 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <!-- Task Information -->
                     <div class="mb-4">
                         <h6 class="fw-bold">Task Description:</h6>
                         <p class="text-muted">{{ $task->milestoneTask->description }}</p>
-                        
                         @if($task->notes)
                             <h6 class="fw-bold mt-3">Additional Notes:</h6>
                             <p class="text-muted">{{ $task->notes }}</p>
                         @endif
                     </div>
-
-                    <!-- Submission Form -->
                     <form action="{{ route('student.task-submission.store', $task->id) }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        
                         <div class="mb-4">
                             <label for="submission_type" class="form-label">
                                 <i class="fas fa-tag me-2"></i>Submission Type <span class="text-danger">*</span>
@@ -62,8 +54,6 @@
                                 Choose the type of submission based on your milestone phase
                             </div>
                         </div>
-
-                        <!-- Progress Percentage (for screenshots) -->
                         <div class="mb-4" id="progress_percentage_field" style="display: none;">
                             <label for="progress_percentage" class="form-label">
                                 <i class="fas fa-percentage me-2"></i>Progress Percentage
@@ -86,8 +76,6 @@
                                 For screenshots: 60% for first milestone, 100% for final milestone
                             </div>
                         </div>
-
-                        <!-- File Upload -->
                         <div class="mb-4">
                             <label for="file" class="form-label">
                                 <i class="fas fa-file me-2"></i>Upload File <span class="text-danger">*</span>
@@ -105,8 +93,6 @@
                                 Accepted formats: PDF, DOC, DOCX, JPG, PNG, ZIP (Max: 10MB)
                             </div>
                         </div>
-
-                        <!-- Description -->
                         <div class="mb-4">
                             <label for="description" class="form-label">
                                 <i class="fas fa-align-left me-2"></i>Description <span class="text-danger">*</span>
@@ -124,8 +110,6 @@
                                 Provide a detailed description of your work and submission
                             </div>
                         </div>
-
-                        <!-- Additional Notes -->
                         <div class="mb-4">
                             <label for="notes" class="form-label">
                                 <i class="fas fa-sticky-note me-2"></i>Additional Notes
@@ -139,7 +123,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-upload me-2"></i>Submit Task
@@ -152,9 +135,7 @@
                 </div>
             </div>
         </div>
-
         <div class="col-md-4">
-            <!-- Milestone Phase Guide -->
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
                     <h6 class="mb-0">
@@ -171,7 +152,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="milestone-phase mb-3">
                         <div class="d-flex align-items-center">
                             <span class="badge bg-success me-2">2</span>
@@ -181,7 +161,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="milestone-phase mb-3">
                         <div class="d-flex align-items-center">
                             <span class="badge bg-warning me-2">3</span>
@@ -191,7 +170,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="milestone-phase mb-3">
                         <div class="d-flex align-items-center">
                             <span class="badge bg-warning me-2">4</span>
@@ -201,7 +179,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="milestone-phase">
                         <div class="d-flex align-items-center">
                             <span class="badge bg-success me-2">5</span>
@@ -213,8 +190,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Submission Guidelines -->
             <div class="card">
                 <div class="card-header bg-light">
                     <h6 class="mb-0">
@@ -228,14 +203,12 @@
                         <li>• Include proper citations</li>
                         <li>• Follow academic writing standards</li>
                     </ul>
-
                     <h6 class="fw-bold">For Screenshots:</h6>
                     <ul class="list-unstyled small mb-3">
                         <li>• Show key functionality</li>
                         <li>• Include UI/UX elements</li>
                         <li>• Demonstrate progress clearly</li>
                     </ul>
-
                     <h6 class="fw-bold">For Progress Notes:</h6>
                     <ul class="list-unstyled small">
                         <li>• Be specific about accomplishments</li>
@@ -248,13 +221,11 @@
     </div>
 </div>
 @endsection
-
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const submissionType = document.getElementById('submission_type');
     const progressField = document.getElementById('progress_percentage_field');
-    
     submissionType.addEventListener('change', function() {
         if (this.value === 'screenshots') {
             progressField.style.display = 'block';
@@ -264,8 +235,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('progress_percentage').required = false;
         }
     });
-    
-    // Auto-resize textareas
     const textareas = document.querySelectorAll('textarea');
     textareas.forEach(textarea => {
         textarea.addEventListener('input', function() {

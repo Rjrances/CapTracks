@@ -1,5 +1,4 @@
 @php
-    // Get user info from either Auth or session
     if (auth()->check()) {
         $user = auth()->user();
         $userName = $user->name;
@@ -7,7 +6,6 @@
         $userName = session('student_name');
     }
 @endphp
-
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #182A56;">
     <div class="container-fluid">
         <a class="navbar-brand fw-bold" href="/student/dashboard">CapTrack</a>

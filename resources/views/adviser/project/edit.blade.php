@@ -1,7 +1,5 @@
 @extends('layouts.adviser')
-
 @section('title', 'Review Submission')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -13,16 +11,13 @@
             <i class="fas fa-arrow-left me-2"></i>Back to Review
         </a>
     </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     <div class="row">
-        <!-- Review Form -->
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
@@ -34,8 +29,6 @@
                     <form action="{{ route('adviser.project.update', $submission->id) }}" method="POST">
                         @csrf
                         @method('PUT')
-                        
-                        <!-- Submission Info -->
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <strong>Student:</strong>
@@ -48,8 +41,6 @@
                                 </p>
                             </div>
                         </div>
-
-                        <!-- Status Selection -->
                         <div class="mb-4">
                             <label for="status" class="form-label fw-bold">Submission Status</label>
                             <select name="status" id="status" class="form-select" required>
@@ -59,15 +50,11 @@
                             </select>
                             <div class="form-text">Select the appropriate status for this submission.</div>
                         </div>
-
-                        <!-- Feedback/Comment -->
                         <div class="mb-4">
                             <label for="teacher_comment" class="form-label fw-bold">Feedback/Comment</label>
                             <textarea name="teacher_comment" id="teacher_comment" rows="6" class="form-control" placeholder="Provide detailed feedback for the student...">{{ $submission->teacher_comment }}</textarea>
                             <div class="form-text">Provide constructive feedback to help the student improve their work.</div>
                         </div>
-
-                        <!-- Action Buttons -->
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Save Review
@@ -80,8 +67,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Submission Details -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
@@ -104,12 +89,10 @@
                             @endif
                         </p>
                     </div>
-
                     <div class="mb-3">
                         <strong>Submitted:</strong>
                         <p>{{ $submission->submitted_at ? \Carbon\Carbon::parse($submission->submitted_at)->format('M d, Y g:i A') : 'N/A' }}</p>
                     </div>
-
                     <div class="mb-3">
                         <strong>File:</strong>
                         <p>
@@ -118,7 +101,6 @@
                             </a>
                         </p>
                     </div>
-
                     @if($submission->teacher_comment)
                         <div class="mb-3">
                             <strong>Current Feedback:</strong>
@@ -129,8 +111,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Quick Actions -->
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -151,8 +131,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Feedback Templates -->
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -176,33 +154,25 @@
         </div>
     </div>
 </div>
-
 <script>
-// Handle URL parameters for quick actions
 document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
-    
     if (action === 'approve') {
         setStatus('approved');
     } else if (action === 'reject') {
         setStatus('rejected');
     }
 });
-
 function setStatus(status) {
     document.getElementById('status').value = status;
-    
-    // Auto-focus on comment field for rejected status
     if (status === 'rejected') {
         document.getElementById('teacher_comment').focus();
     }
 }
-
 function insertTemplate(type) {
     const commentField = document.getElementById('teacher_comment');
     let template = '';
-    
     switch(type) {
         case 'good':
             template = 'Excellent work! Your submission demonstrates a good understanding of the requirements. The content is well-structured and clearly presented. Keep up the good work!';
@@ -214,7 +184,6 @@ function insertTemplate(type) {
             template = 'This submission requires major revisions before it can be approved:\n\n- The content does not meet the basic requirements\n- Significant improvements needed in structure and clarity\n- Please consult the guidelines and resubmit\n\nPlease address these issues and submit a revised version.';
             break;
     }
-    
     commentField.value = template;
     commentField.focus();
 }

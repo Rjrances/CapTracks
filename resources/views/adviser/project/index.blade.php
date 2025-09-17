@@ -1,7 +1,5 @@
 @extends('layouts.adviser')
-
 @section('title', 'Project Submissions')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -13,15 +11,12 @@
             <i class="fas fa-arrow-left me-2"></i>Back to All My Groups
         </a>
     </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
-    <!-- Project Overview Statistics -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card bg-primary text-white">
@@ -57,8 +52,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Projects by Group -->
     @if($allGroups->count() > 0)
         @foreach($allGroups as $group)
             @php
@@ -67,7 +60,6 @@
                 $userRole = $groupData['user_role'] ?? 'adviser';
                 $pendingCount = $groupSubmissions->where('status', 'pending')->count();
             @endphp
-            
             <div class="card mb-4">
                 <div class="card-header {{ $userRole === 'adviser' ? 'bg-success' : 'bg-info' }} text-white">
                     <div class="d-flex justify-content-between align-items-center">
@@ -173,7 +165,5 @@
             </div>
         </div>
     @endif
-
-
 </div>
 @endsection 

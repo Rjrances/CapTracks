@@ -1,9 +1,7 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
-        <!-- Main Content -->
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
@@ -16,7 +14,6 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
-
                     <div class="row">
                         <div class="col-md-6">
                             <h5>Subject Information</h5>
@@ -77,7 +74,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="mt-4">
                         <a href="{{ route('chairperson.offerings.edit', $offering->id) }}" class="btn btn-primary">
                             <i class="fas fa-edit"></i> Edit Offering
@@ -89,8 +85,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Side Panel - Student Management -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
@@ -124,8 +118,6 @@
                     @else
                         <p class="text-muted text-center">No students enrolled yet.</p>
                     @endif
-
-                    <!-- Add Students Section -->
                     <hr>
                     <h6>Add Students</h6>
                     <div class="d-grid gap-2 mb-3">

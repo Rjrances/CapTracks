@@ -1,7 +1,5 @@
 @extends('layouts.adviser')
-
 @section('title', 'Review Proposal')
-
 @section('content')
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -19,7 +17,6 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- Proposal Details -->
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <h6>Student Information</h6>
@@ -52,8 +49,6 @@
                             </p>
                         </div>
                     </div>
-
-                    <!-- Proposal Content -->
                     <div class="row mb-4">
                         <div class="col-12">
                             <h6>Proposal Content</h6>
@@ -71,17 +66,14 @@
                                     </div>
                                 </div>
                             </div>
-                            
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Project Objectives</label>
                                 <div class="form-control-plaintext" style="min-height: 80px;">{{ $proposal->objectives ?? 'N/A' }}</div>
                             </div>
-                            
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Methodology & Approach</label>
                                 <div class="form-control-plaintext" style="min-height: 80px;">{{ $proposal->methodology ?? 'N/A' }}</div>
                             </div>
-                            
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
@@ -98,13 +90,10 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Review Form -->
                     @if($proposal->status === 'pending')
                         <form action="{{ route('adviser.proposal.update', $proposal->id) }}" method="POST">
                             @csrf
                             @method('PUT')
-                            
                             <div class="row mb-4">
                                 <div class="col-12">
                                     <h6>Review Decision</h6>
@@ -125,7 +114,6 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
                                     <div class="mb-3">
                                         <label for="teacher_comment" class="form-label fw-bold">Feedback & Comments <span class="text-danger">*</span></label>
                                         <textarea class="form-control @error('teacher_comment') is-invalid @enderror" 
@@ -138,7 +126,6 @@
                                     </div>
                                 </div>
                             </div>
-
                             <div class="d-flex justify-content-between">
                                 <a href="{{ route('adviser.proposal.index') }}" class="btn btn-outline-secondary">
                                     <i class="fas fa-times me-2"></i>Cancel
@@ -149,7 +136,6 @@
                             </div>
                         </form>
                     @else
-                        <!-- Show existing feedback if already reviewed -->
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h6>Review Decision</h6>
@@ -163,7 +149,6 @@
                                         @endif
                                     </div>
                                 </div>
-                                
                                 @if($proposal->teacher_comment)
                                     <div class="mb-3">
                                         <label class="form-label fw-bold">Feedback & Comments</label>
@@ -172,7 +157,6 @@
                                 @endif
                             </div>
                         </div>
-
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('adviser.proposal.index') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>Back to Proposals
@@ -186,8 +170,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Review Guidelines -->
             <div class="card mt-4">
                 <div class="card-header">
                     <h5 class="mb-0">

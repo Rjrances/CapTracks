@@ -1,5 +1,4 @@
 @extends('layouts.chairperson')
-
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
@@ -12,7 +11,6 @@
                     <form action="{{ route('chairperson.academic-terms.update', $academicTerm) }}" method="POST">
                         @csrf
                         @method('PUT')
-                        
                         <div class="mb-3">
                             <label for="school_year" class="form-label">School Year</label>
                             <input type="text" class="form-control @error('school_year') is-invalid @enderror" 
@@ -23,7 +21,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
                         <div class="mb-3">
                             <label for="semester" class="form-label">Semester</label>
                             <select class="form-select @error('semester') is-invalid @enderror" 
@@ -46,7 +43,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
                         <div class="mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
@@ -66,7 +62,6 @@
                                 </small>
                             @endif
                         </div>
-
                         <div class="mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="is_archived" name="is_archived" 
@@ -86,7 +81,6 @@
                                 </small>
                             @endif
                         </div>
-
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('chairperson.academic-terms.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Back to List

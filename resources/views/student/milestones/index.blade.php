@@ -1,10 +1,7 @@
 @extends('layouts.student')
-
 @section('title', 'My Milestones')
-
 @section('content')
 <div class="container mt-5">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h2 mb-1">My Milestones</h1>
@@ -21,16 +18,13 @@
             </a>
         </div>
     </div>
-
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-
     @if (!$group)
-        <!-- No Group Message -->
         <div class="card">
             <div class="card-body text-center py-5">
                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
@@ -42,7 +36,6 @@
             </div>
         </div>
     @else
-        <!-- Group Information -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
@@ -77,10 +70,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- Adviser & Defense Information -->
         <div class="row mb-4">
-            <!-- Adviser Information -->
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-header bg-info text-white">
@@ -102,7 +92,6 @@
                                 <h5 class="mb-2">Pending Invitations</h5>
                                 <p class="text-muted mb-2">{{ $group->adviserInvitations->where('status', 'pending')->count() }} invitation(s) sent</p>
                                 <span class="badge bg-warning fs-6">Awaiting Response</span>
-                                
                                 <div class="mt-3">
                                     @foreach($group->adviserInvitations->where('status', 'pending') as $invitation)
                                         <div class="border rounded p-2 mb-2">
@@ -130,8 +119,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Defense Schedule Information -->
             <div class="col-md-6">
                 <div class="card h-100">
                     <div class="card-header bg-warning text-dark">
@@ -197,8 +184,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Overall Progress -->
         <div class="card mb-4">
             <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
@@ -233,8 +218,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Milestones Overview -->
         <div class="row mb-4">
             <div class="col-md-8">
                 <div class="card">
@@ -306,9 +289,7 @@
                     </div>
                 </div>
             </div>
-
             <div class="col-md-4">
-                <!-- My Tasks Summary -->
                 <div class="card mb-3">
                     <div class="card-header bg-warning text-dark">
                         <h6 class="mb-0">
@@ -322,7 +303,6 @@
                                 $doingTasks = $studentTasks->where('status', 'doing')->count();
                                 $doneTasks = $studentTasks->where('status', 'done')->count();
                             @endphp
-                            
                             <div class="row text-center">
                                 <div class="col-4">
                                     <div class="border-end">
@@ -341,9 +321,7 @@
                                     <small class="text-muted">Done</small>
                                 </div>
                             </div>
-                            
                             <hr>
-                            
                             <div class="list-group list-group-flush">
                                 @foreach($studentTasks->take(3) as $task)
                                 <div class="list-group-item px-0">
@@ -357,7 +335,6 @@
                                 </div>
                                 @endforeach
                             </div>
-                            
                             @if($studentTasks->count() > 3)
                                 <div class="text-center mt-2">
                                     <small class="text-muted">+{{ $studentTasks->count() - 3 }} more tasks</small>
@@ -368,8 +345,6 @@
                         @endif
                     </div>
                 </div>
-
-                <!-- Recent Submissions -->
                 <div class="card">
                     <div class="card-header bg-success text-white">
                         <h6 class="mb-0">
@@ -397,8 +372,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Kanban Preview -->
         @if($groupMilestones->count() > 0)
         <div class="card">
             <div class="card-header bg-dark text-white">
@@ -444,19 +417,14 @@
         @endif
     @endif
 </div>
-
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle task completion checkboxes
     const taskCheckboxes = document.querySelectorAll('.task-checkbox');
-    
     taskCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const taskId = this.dataset.taskId;
             const isCompleted = this.checked;
-            
-            // Send AJAX request to update task
             fetch(`/student/milestones/tasks/${taskId}`, {
                 method: 'PATCH',
                 headers: {
@@ -469,25 +437,20 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    // Show success message
                     showAlert('Task updated successfully!', 'success');
-                    // Reload page to update progress
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showAlert('Failed to update task: ' + data.message, 'danger');
-                    // Revert checkbox
                     this.checked = !isCompleted;
                 }
             })
             .catch(() => {
                 showAlert('Error updating task. Please try again.', 'danger');
-                // Revert checkbox
                 this.checked = !isCompleted;
             });
         });
     });
 });
-
 function showAlert(message, type) {
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
@@ -496,10 +459,8 @@ function showAlert(message, type) {
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
     const container = document.querySelector('.container');
     container.insertBefore(alertDiv, container.firstChild);
-    
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);

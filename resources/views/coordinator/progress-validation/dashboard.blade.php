@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Group Progress Validation')
-
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -12,8 +10,6 @@
             </a>
         </div>
     </div>
-
-    <!-- Filters Section -->
     <div class="card mb-4">
         <div class="card-header">
             <h6 class="mb-0">
@@ -63,8 +59,6 @@
             </form>
         </div>
     </div>
-
-    <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card bg-primary text-white">
@@ -127,8 +121,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Ready Groups Section -->
     @if($readyGroups->count() > 0)
     <div class="card mb-4">
         <div class="card-header bg-success text-white">
@@ -194,8 +186,6 @@
         </div>
     </div>
     @endif
-
-    <!-- Groups Needing Attention -->
     @if($needingAttentionGroups->count() > 0)
     <div class="card mb-4">
         <div class="card-header bg-warning text-white">
@@ -266,7 +256,6 @@
         </div>
     </div>
     @endif
-
     @if($readyGroups->count() === 0 && $needingAttentionGroups->count() === 0)
     <div class="card">
         <div class="card-body text-center">
@@ -277,12 +266,9 @@
     </div>
     @endif
 </div>
-
 @push('scripts')
 <script>
-// Auto-refresh readiness status every 30 seconds
 setInterval(function() {
-    // You can add AJAX calls here to refresh the data
 }, 30000);
 </script>
 @endpush

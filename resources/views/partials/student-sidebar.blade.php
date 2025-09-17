@@ -1,5 +1,4 @@
 @php
-    // Handle both Laravel Auth users and session-based student authentication
     if (\Illuminate\Support\Facades\Auth::check()) {
         $user = \Illuminate\Support\Facades\Auth::user();
         $studentName = $user->name ?? 'User';
@@ -9,10 +8,8 @@
     } else {
         $studentName = 'Guest';
     }
-    
     $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
 @endphp
-
 <div class="sidebar bg-dark text-white" style="width: 280px; min-height: 100vh; position: fixed; left: 0; top: 0; z-index: 1000;">
     <div class="p-3 border-bottom border-secondary">
         <div class="d-flex align-items-center">
@@ -22,8 +19,6 @@
             </a>
         </div>
     </div>
-
-    <!-- Term Selector -->
     <div class="p-3 border-bottom border-secondary">
         <h6 class="text-muted mb-2">Current Term</h6>
         @if($activeTerm)
@@ -37,8 +32,6 @@
             </div>
         @endif
     </div>
-
-    <!-- Navigation Menu -->
     <nav class="p-3">
         <ul class="nav flex-column">
             <li class="nav-item mb-2">
@@ -48,7 +41,6 @@
                     Dashboard
                 </a>
             </li>
-            
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('student.group*') || request()->is('student/group*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.group') }}">
@@ -56,7 +48,6 @@
                     My Group
                 </a>
             </li>
-            
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('student.project*') || request()->is('student/project*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.project') }}">
@@ -64,7 +55,6 @@
                     Project Submissions
                 </a>
             </li>
-            
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('student.proposal*') || request()->is('student/proposal*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.proposal') }}">
@@ -72,7 +62,6 @@
                     Proposal & Endorsement
                 </a>
             </li>
-            
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('student.milestones*') || request()->is('student/milestones*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.milestones') }}">
@@ -80,7 +69,6 @@
                     Milestones
                 </a>
             </li>
-            
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('student.defense-requests*') || request()->is('student/defense-requests*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.defense-requests.index') }}">
@@ -88,7 +76,6 @@
                     Defense Requests
                 </a>
             </li>
-            
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('student.calendar') || request()->is('student/calendar') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.calendar') }}">
@@ -98,16 +85,12 @@
             </li>
         </ul>
     </nav>
-
-    <!-- Debug Info -->
     <div class="p-3 border-top border-secondary">
         <div class="small text-muted">
             <div>Current Route: {{ request()->route()->getName() ?? 'Unknown' }}</div>
             <div>URL: {{ request()->url() }}</div>
         </div>
     </div>
-
-    <!-- User Section -->
     <div class="mt-auto p-3 border-top border-secondary">
         <div class="d-flex align-items-center justify-content-between">
             <div class="small">
@@ -123,23 +106,19 @@
         </div>
     </div>
 </div>
-
 <style>
 .sidebar .nav-link {
     border-radius: 6px;
     transition: all 0.3s ease;
 }
-
 .sidebar .nav-link:hover {
     background-color: rgba(255, 255, 255, 0.1);
     text-decoration: none;
 }
-
 .sidebar .nav-link.active {
     background-color: #0d6efd !important;
     color: white !important;
 }
-
 .sidebar {
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }

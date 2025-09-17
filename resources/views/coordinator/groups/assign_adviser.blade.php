@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Assign Adviser')
-
 @section('content')
 <div class="container mt-5">
     <nav aria-label="breadcrumb">
@@ -26,7 +24,6 @@
                     </small>
                 </div>
             @endif
-
             <form method="POST" action="{{ route('coordinator.groups.update', $group->id) }}">
                 @csrf
                 @method('PUT')

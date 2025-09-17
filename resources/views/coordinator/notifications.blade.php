@@ -1,5 +1,4 @@
 @extends('layouts.coordinator')
-
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -18,22 +17,18 @@
                     </button>
                 </div>
             </div>
-
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
             @if(session('error'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     {{ session('error') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
-            <!-- Filter Options -->
             <div class="card mb-4">
                 <div class="card-body">
                     <div class="row align-items-center">
@@ -73,8 +68,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Notifications List -->
             <div class="card">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
@@ -174,8 +167,6 @@
                     @endif
                 </div>
             </div>
-
-            <!-- Bulk Actions -->
             @if($notifications->count() > 0)
                 <div class="card mt-3">
                     <div class="card-body">
@@ -200,9 +191,7 @@
         </div>
     </div>
 </div>
-
 <script>
-// Select all functionality
 document.getElementById('selectAll').addEventListener('change', function() {
     const checkboxes = document.querySelectorAll('.notification-checkbox');
     checkboxes.forEach(checkbox => {
@@ -210,22 +199,15 @@ document.getElementById('selectAll').addEventListener('change', function() {
     });
     updateSelectedCount();
 });
-
-// Update selected count
 document.querySelectorAll('.notification-checkbox').forEach(checkbox => {
     checkbox.addEventListener('change', updateSelectedCount);
 });
-
 function updateSelectedCount() {
     const selectedCount = document.querySelectorAll('.notification-checkbox:checked').length;
     document.getElementById('selectedCount').textContent = selectedCount;
-    
-    // Enable/disable bulk action buttons
     document.getElementById('markReadBtn').disabled = selectedCount === 0;
     document.getElementById('deleteSelectedBtn').disabled = selectedCount === 0;
 }
-
-// Toggle read status
 function toggleReadStatus(notificationId) {
     fetch(`/notifications/${notificationId}/mark-read`, {
         method: 'POST',
@@ -247,8 +229,6 @@ function toggleReadStatus(notificationId) {
         alert('Error updating notification status');
     });
 }
-
-// Mark all as read
 function markAllAsRead() {
     if (confirm('Mark all notifications as read?')) {
         fetch('{{ route("notifications.mark-all-read") }}', {
@@ -272,14 +252,10 @@ function markAllAsRead() {
         });
     }
 }
-
-// Mark selected as read
 function markSelectedAsRead() {
     const selectedIds = Array.from(document.querySelectorAll('.notification-checkbox:checked'))
         .map(cb => cb.value);
-    
     if (selectedIds.length === 0) return;
-
     fetch('{{ route("notifications.mark-multiple-read") }}', {
         method: 'POST',
         headers: {
@@ -301,8 +277,6 @@ function markSelectedAsRead() {
         alert('Error marking notifications as read');
     });
 }
-
-// Delete notification
 function deleteNotification(notificationId) {
     if (confirm('Are you sure you want to delete this notification?')) {
         fetch(`/notifications/${notificationId}`, {
@@ -326,14 +300,10 @@ function deleteNotification(notificationId) {
         });
     }
 }
-
-// Delete selected notifications
 function deleteSelected() {
     const selectedIds = Array.from(document.querySelectorAll('.notification-checkbox:checked'))
         .map(cb => cb.value);
-    
     if (selectedIds.length === 0) return;
-
     if (confirm(`Are you sure you want to delete ${selectedIds.length} selected notification(s)?`)) {
         fetch('{{ route("notifications.delete-multiple") }}', {
             method: 'DELETE',
@@ -357,29 +327,19 @@ function deleteSelected() {
         });
     }
 }
-
-// Apply filters
 function applyFilters() {
     const roleFilter = document.getElementById('roleFilter').value;
     const statusFilter = document.getElementById('statusFilter').value;
     const dateFilter = document.getElementById('dateFilter').value;
-    
-    // Build query string
     const params = new URLSearchParams();
     if (roleFilter) params.append('role', roleFilter);
     if (statusFilter) params.append('status', statusFilter);
     if (dateFilter) params.append('date', dateFilter);
-    
-    // Redirect with filters
     window.location.href = `{{ route('coordinator.notifications') }}?${params.toString()}`;
 }
-
-// Refresh notifications
 function refreshNotifications() {
     location.reload();
 }
-
-// Initialize
 document.addEventListener('DOMContentLoaded', function() {
     updateSelectedCount();
 });

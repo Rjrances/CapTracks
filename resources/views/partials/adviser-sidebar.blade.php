@@ -3,7 +3,6 @@
     $userName = $user ? $user->name : 'Adviser';
     $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
 @endphp
-
 <div class="sidebar bg-dark text-white" style="width: 280px; min-height: 100vh; position: fixed; left: 0; top: 0; z-index: 1000;">
     <div class="p-3 border-bottom border-secondary">
         <div class="d-flex align-items-center">
@@ -13,8 +12,6 @@
             </a>
         </div>
     </div>
-
-    <!-- Term Selector -->
     <div class="p-3 border-bottom border-secondary">
         <h6 class="text-muted mb-2">Current Term</h6>
         @if($activeTerm)
@@ -28,8 +25,6 @@
             </div>
         @endif
     </div>
-
-    <!-- Navigation Menu -->
     <nav class="p-3">
         <ul class="nav flex-column">
             <li class="nav-item mb-2">
@@ -39,7 +34,6 @@
                     Dashboard
                 </a>
             </li>
-            
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('adviser.all-groups') ? 'active bg-primary' : '' }}" 
                    href="{{ route('adviser.all-groups') }}">
@@ -47,8 +41,6 @@
                     All My Groups
                     </a>
             </li>
-            
-            
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('adviser.invitations') ? 'active bg-primary' : '' }}" 
                    href="{{ route('adviser.invitations') }}">
@@ -56,7 +48,6 @@
                     Invitations
                 </a>
             </li>
-            
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('adviser.proposal.*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('adviser.proposal.index') }}">
@@ -64,7 +55,6 @@
                     Proposal Review
                 </a>
             </li>
-            
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('adviser.calendar') ? 'active bg-primary' : '' }}" 
                    href="{{ route('adviser.calendar') }}">
@@ -74,8 +64,6 @@
             </li>
         </ul>
     </nav>
-
-    <!-- User Section -->
     <div class="mt-auto p-3 border-top border-secondary">
         <div class="d-flex align-items-center justify-content-between">
             <div class="small">
@@ -91,23 +79,19 @@
         </div>
     </div>
 </div>
-
 <style>
 .sidebar .nav-link {
     border-radius: 6px;
     transition: all 0.3s ease;
 }
-
 .sidebar .nav-link:hover {
     background-color: rgba(255, 255, 255, 0.1);
     text-decoration: none;
 }
-
 .sidebar .nav-link.active {
     background-color: #0d6efd !important;
     color: white !important;
 }
-
 .sidebar {
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }

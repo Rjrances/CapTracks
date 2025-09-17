@@ -1,7 +1,5 @@
 @extends('layouts.coordinator')
-
 @section('title', 'Create Group')
-
 @section('content')
 <div class="d-flex justify-content-center align-items-start" style="min-height: 80vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm p-5 w-100" style="max-width: 600px;">
