@@ -8,17 +8,12 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $this->createFacultyUsers();
     }
 
-    /**
-     * Create faculty users with proper 5-digit IDs
-     */
+
     private function createFacultyUsers()
     {
         // Create Coordinator
