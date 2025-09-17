@@ -276,9 +276,19 @@ class ProjectSubmissionController extends Controller
     {
         $submission = ProjectSubmission::findOrFail($id);
         
+        // Get student from either Auth or session
+        if (Auth::check()) {
+            $student = Auth::user()->student;
+        } else {
+            $student = Student::find(session('student_id'));
+        }
+        
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+        
         // Only students can delete their own submissions
-        $user = Auth::user();
-        if (!$user->isStudent() || $submission->student_id !== $user->student->id) {
+        if ($submission->student_id !== $student->id) {
             abort(403, 'Unauthorized to delete this submission.');
         }
         
