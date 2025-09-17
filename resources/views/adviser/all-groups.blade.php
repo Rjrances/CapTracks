@@ -310,8 +310,8 @@
                             <a href="{{ route('adviser.invitations') }}" class="btn btn-primary">
                                 <i class="fas fa-envelope me-2"></i>Check Invitations
                             </a>
-                            <a href="{{ route('adviser.workplace') }}" class="btn btn-outline-primary">
-                                <i class="fas fa-briefcase me-2"></i>View Workplace
+                            <a href="{{ route('adviser.groups') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-briefcase me-2"></i>View My Groups
                             </a>
                         </div>
                     </div>

@@ -99,6 +99,7 @@
                                             class="form-select @error('role') is-invalid @enderror" 
                                             required>
                                         <option value="">Select Role</option>
+                                        <option value="teacher" {{ old('role') == 'teacher' ? 'selected' : '' }}>Teacher</option>
                                         <option value="adviser" {{ old('role') == 'adviser' ? 'selected' : '' }}>Adviser</option>
                                         <option value="panelist" {{ old('role') == 'panelist' ? 'selected' : '' }}>Panelist</option>
                                     </select>
