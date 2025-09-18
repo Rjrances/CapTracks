@@ -68,9 +68,22 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <div class="alert alert-info">
+                                    <label for="faculty_id" class="form-label fw-bold">
+                                        <i class="fas fa-id-card me-1"></i>Faculty ID *
+                                    </label>
+                                    <input type="text" 
+                                           name="faculty_id" 
+                                           id="faculty_id" 
+                                           class="form-control @error('faculty_id') is-invalid @enderror" 
+                                           value="{{ old('faculty_id') }}" 
+                                           placeholder="e.g., 10001, 10002, 10003"
+                                           required>
+                                    @error('faculty_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <div class="form-text">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        <strong>Note:</strong> Faculty ID will be automatically generated (e.g., 10001, 10002, etc.)
+                                        Enter a unique faculty ID (e.g., 10001, 10002, etc.)
                                     </div>
                                 </div>
                             </div>
@@ -119,7 +132,8 @@
                             <ul class="mb-0">
                                 <li>Default password will be: <strong>password123</strong></li>
                                 <li>Teacher will be required to change password on first login</li>
-                                <li>Email and School ID must be unique</li>
+                                <li>Email and Faculty ID must be unique</li>
+                                <li>Faculty ID format: 10001, 10002, 10003, etc.</li>
                                 <li>All fields marked with * are required</li>
                             </ul>
                         </div>

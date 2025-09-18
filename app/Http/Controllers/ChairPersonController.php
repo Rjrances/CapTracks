@@ -250,29 +250,30 @@ class ChairpersonController extends Controller
     {
         $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
+            'email'    => 'required|email|unique:users,email|unique:faculty_accounts,email',
+            'faculty_id' => 'required|string|max:20|unique:users,account_id|unique:faculty_accounts,faculty_id',
             'role'     => 'required|in:adviser,panelist',
             'password' => 'required|string|min:8',
         ]);
+        // Use faculty_id from form input
+        $facultyId = $request->faculty_id;
+        
         $user = User::create([
             'name'                 => $request->name,
             'email'                => $request->email,
             'birthday'             => now()->subYears(30),
             'department'           => 'N/A',
             'role'                 => $request->role,
+            'account_id'           => $facultyId,
         ]);
 
-        // Create account for the user
-        $account = \App\Models\Account::create([
-            'faculty_id' => '100' . str_pad(\App\Models\Account::where('user_type', 'faculty')->count() + 1, 2, '0', STR_PAD_LEFT),
+        // Create faculty account
+        \App\Models\FacultyAccount::create([
+            'faculty_id' => $facultyId,
+            'user_id' => $user->id,
             'email' => $request->email,
             'password' => bcrypt($request->password),
-            'user_type' => 'faculty',
-            'user_id' => $user->id,
         ]);
-
-        // Update user with account_id
-        $user->update(['account_id' => $account->faculty_id]);
 
         return redirect()->route('teachers.index')->with('success', 'Teacher added successfully.');
     }
@@ -411,7 +412,7 @@ class ChairpersonController extends Controller
         $student = Student::findOrFail($id);
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:students,email,' . $id,
+            'email' => 'required|email|unique:students,email,student_id,' . $id,
             'student_id' => 'required|string|unique:students,student_id,' . $id,
             'course' => 'required|string|max:255',
             'semester' => 'required|string|max:255',
@@ -441,7 +442,7 @@ class ChairpersonController extends Controller
     public function enrollStudent(Request $request, $offeringId)
     {
         $request->validate([
-            'student_id' => 'required|exists:students,id',
+            'student_id' => 'required|exists:students,student_id',
         ]);
         $offering = Offering::findOrFail($offeringId);
         $student = Student::findOrFail($request->student_id);
@@ -649,27 +650,28 @@ class ChairpersonController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users,email|unique:faculty_accounts,email',
+            'faculty_id' => 'required|string|max:20|unique:users,account_id|unique:faculty_accounts,faculty_id',
             'department' => 'nullable|string|max:255',
         ]);
+        // Use faculty_id from form input
+        $facultyId = $request->faculty_id;
+        
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'department' => $request->department,
             'role' => 'teacher',
+            'account_id' => $facultyId,
         ]);
 
-        // Create account for the user
-        $account = \App\Models\Account::create([
-            'faculty_id' => '100' . str_pad(\App\Models\Account::where('user_type', 'faculty')->count() + 1, 2, '0', STR_PAD_LEFT),
+        // Create faculty account
+        \App\Models\FacultyAccount::create([
+            'faculty_id' => $facultyId,
+            'user_id' => $user->id,
             'email' => $request->email,
             'password' => bcrypt('password123'),
-            'user_type' => 'faculty',
-            'user_id' => $user->id,
         ]);
-
-        // Update user with account_id
-        $user->update(['account_id' => $account->faculty_id]);
 
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member added successfully!');
     }

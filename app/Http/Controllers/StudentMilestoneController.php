@@ -435,7 +435,7 @@ class StudentMilestoneController extends Controller
             return redirect()->back()->withErrors(['auth' => 'Only group leaders can assign tasks.']);
         }
         $request->validate([
-            'assigned_to' => 'required|exists:students,id',
+            'assigned_to' => 'required|exists:students,student_id',
         ]);
         $isGroupMember = $group->members()->where('group_members.student_id', $request->assigned_to)->exists();
         if (!$isGroupMember) {

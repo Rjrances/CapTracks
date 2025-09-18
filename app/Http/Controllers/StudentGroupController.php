@@ -54,7 +54,7 @@ class StudentGroupController extends Controller
             'adviser_id' => 'required|exists:users,id',
             'adviser_message' => 'nullable|string|max:500',
             'members' => 'nullable|array|max:2', // Max 2 additional members (3 total including leader)
-            'members.*' => 'exists:students,id',
+            'members.*' => 'exists:students,student_id',
         ]);
         
         // Get student and validate enrollment
@@ -238,7 +238,7 @@ class StudentGroupController extends Controller
     public function addMember(Request $request)
     {
         $request->validate([
-            'student_id' => 'required|exists:students,id',
+            'student_id' => 'required|exists:students,student_id',
         ]);
         if (Auth::check()) {
             $student = Auth::user()->student;

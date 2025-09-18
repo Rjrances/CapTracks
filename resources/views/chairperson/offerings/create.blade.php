@@ -40,26 +40,27 @@
                             @enderror
                         </div>
                         <div class="mb-3">
+                            <label for="subject_code" class="form-label">Subject Code</label>
+                            <input type="text" name="subject_code" id="subject_code" 
+                                   class="form-control @error('subject_code') is-invalid @enderror" 
+                                   value="{{ old('subject_code') }}" 
+                                   placeholder="Will be auto-filled based on subject title" 
+                                   readonly required>
+                            @error('subject_code')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Subject code will be automatically set based on the selected subject title.
+                            </div>
+                        </div>
+                        <div class="mb-3">
                             <label for="offer_code" class="form-label">Offer Code</label>
                             <input type="text" name="offer_code" id="offer_code" 
                                    class="form-control @error('offer_code') is-invalid @enderror" 
                                    value="{{ old('offer_code') }}" 
                                    placeholder="e.g., 1101, 1102, 1103, 1104" required>
                             @error('offer_code')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="mb-3">
-                            <label for="subject_code" class="form-label">Subject Code</label>
-                            <select name="subject_code" id="subject_code" 
-                                    class="form-select @error('subject_code') is-invalid @enderror" required>
-                                <option value="">Select Subject Code</option>
-                                <option value="CT1" {{ old('subject_code') == 'CT1' ? 'selected' : '' }}>CT1 - Capstone 1</option>
-                                <option value="CT2" {{ old('subject_code') == 'CT2' ? 'selected' : '' }}>CT2 - Capstone 2</option>
-                                <option value="T1" {{ old('subject_code') == 'T1' ? 'selected' : '' }}>T1 - Thesis 1</option>
-                                <option value="T2" {{ old('subject_code') == 'T2' ? 'selected' : '' }}>T2 - Thesis 2</option>
-                            </select>
-                            @error('subject_code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -111,4 +112,36 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const subjectTitleSelect = document.getElementById('subject_title');
+    const subjectCodeInput = document.getElementById('subject_code');
+    
+    // Mapping of subject titles to subject codes
+    const subjectCodeMapping = {
+        'Capstone 1': 'CT1',
+        'Capstone 2': 'CT2',
+        'Thesis 1': 'T1',
+        'Thesis 2': 'T2'
+    };
+    
+    // Handle subject title change
+    subjectTitleSelect.addEventListener('change', function() {
+        const selectedTitle = this.value;
+        
+        if (selectedTitle && subjectCodeMapping[selectedTitle]) {
+            subjectCodeInput.value = subjectCodeMapping[selectedTitle];
+        } else {
+            subjectCodeInput.value = '';
+        }
+    });
+    
+    // Set initial value if form has old input (for validation errors)
+    const initialTitle = subjectTitleSelect.value;
+    if (initialTitle && subjectCodeMapping[initialTitle]) {
+        subjectCodeInput.value = subjectCodeMapping[initialTitle];
+    }
+});
+</script>
 @endsection

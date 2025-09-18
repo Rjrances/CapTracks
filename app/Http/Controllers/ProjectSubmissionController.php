@@ -119,7 +119,7 @@ class ProjectSubmissionController extends Controller
             if ($user->isTeacher()) {
                 $hasAccess = Group::where('adviser_id', $user->id)
                     ->whereHas('members', function($query) use ($submission) {
-                        $query->where('students.id', $submission->student_id);
+                        $query->where('students.student_id', $submission->student_id);
                     })->exists();
                 if (!$hasAccess) {
                     abort(403, 'Unauthorized access to this submission.');
@@ -148,7 +148,7 @@ class ProjectSubmissionController extends Controller
         if ($user->isTeacher()) {
             $hasAccess = Group::where('adviser_id', $user->id)
                 ->whereHas('members', function($query) use ($submission) {
-                    $query->where('students.id', $submission->student_id);
+                    $query->where('students.student_id', $submission->student_id);
                 })->exists();
             if (!$hasAccess) {
                 abort(403, 'Unauthorized access to this submission.');
@@ -165,7 +165,7 @@ class ProjectSubmissionController extends Controller
         if ($user->isTeacher()) {
             $hasAccess = Group::where('adviser_id', $user->id)
                 ->whereHas('members', function($query) use ($submission) {
-                    $query->where('students.id', $submission->student_id);
+                    $query->where('students.student_id', $submission->student_id);
                 })->exists();
             if (!$hasAccess) {
                 abort(403, 'Unauthorized access to this submission.');
