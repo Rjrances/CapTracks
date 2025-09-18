@@ -6,24 +6,25 @@ class User extends Authenticatable
 {
     use Notifiable;
     protected $fillable = [
-        'school_id',      // Faculty/Staff ID
         'name',
         'email',
         'birthday',
         'department',     // Department instead of course
         'role',           // Role instead of position
-        'password',
-        'must_change_password',
+        'account_id',
     ];
     protected $hidden = [
-        'password',
         'remember_token',
     ];
     protected $casts = [
         'email_verified_at' => 'datetime',
         'birthday' => 'date',
-        'must_change_password' => 'boolean',
     ];
+    public function account()
+    {
+        return $this->belongsTo(Account::class, 'account_id', 'faculty_id');
+    }
+    
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'user_roles', 'user_id', 'role', 'id', 'name')

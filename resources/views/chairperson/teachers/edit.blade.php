@@ -36,7 +36,7 @@
                             </label>
                             <input type="text" 
                                    class="form-control bg-light" 
-                                   value="{{ $teacher->school_id }}" 
+                                   value="{{ $teacher->account_id }}" 
                                    readonly>
                             <small class="text-muted">School ID cannot be changed</small>
                         </div>

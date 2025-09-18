@@ -68,19 +68,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="school_id" class="form-label fw-bold">
-                                        <i class="fas fa-id-card me-1"></i>School ID *
-                                    </label>
-                                    <input type="text" 
-                                           name="school_id" 
-                                           id="school_id" 
-                                           class="form-control @error('school_id') is-invalid @enderror" 
-                                           value="{{ old('school_id') }}" 
-                                           placeholder="e.g., FAC001"
-                                           required>
-                                    @error('school_id')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        <strong>Note:</strong> Faculty ID will be automatically generated (e.g., 10001, 10002, etc.)
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-6">

@@ -24,7 +24,7 @@ class StudentDashboardController extends Controller
                 return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
             }
         }
-        $group = $student->groups()->with(['adviser', 'adviserInvitations.faculty', 'defenseRequests', 'defenseSchedules'])->first();
+        $group = $student->groups()->with(['adviser', 'adviserInvitations.faculty', 'defenseRequests', 'defenseSchedules', 'offering.teacher'])->first();
         $overallProgress = $this->calculateOverallProgress($student, $group);
         $taskStats = $this->getTaskStatistics($student, $group);
         $submissionsCount = $this->getSubmissionsCount($student);
@@ -36,6 +36,7 @@ class StudentDashboardController extends Controller
         $defenseInfo = $this->getDefenseInfo($group);
         $notifications = $this->getNotifications($student);
         $existingProposal = $this->getExistingProposal($student);
+        $offeringInfo = $this->getOfferingInfo($group);
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         return view('student.dashboard', compact(
             'activeTerm',
@@ -51,7 +52,8 @@ class StudentDashboardController extends Controller
             'adviserInfo',
             'defenseInfo',
             'notifications',
-            'existingProposal'
+            'existingProposal',
+            'offeringInfo'
         ));
     }
     private function calculateOverallProgress($student, $group = null)
@@ -324,5 +326,37 @@ class StudentDashboardController extends Controller
             ->where('type', 'proposal')
             ->latest()
             ->first();
+    }
+    private function getOfferingInfo($group = null)
+    {
+        // First check if student is directly enrolled in an offering
+        $student = null;
+        if (Auth::check()) {
+            $student = Auth::user()->student ?? null;
+        } else {
+            $student = \App\Models\Student::find(session('student_id'));
+        }
+        
+        $offering = $student ? $student->getCurrentOffering() : null;
+        
+        if (!$offering) {
+            return [
+                'has_offering' => false,
+                'offer_code' => null,
+                'subject_code' => null,
+                'subject_title' => null,
+                'teacher_name' => null,
+                'coordinator_name' => null
+            ];
+        }
+        
+        return [
+            'has_offering' => true,
+            'offer_code' => $offering->offer_code,
+            'subject_code' => $offering->subject_code,
+            'subject_title' => $offering->subject_title,
+            'teacher_name' => $offering->teacher_name,
+            'coordinator_name' => $offering->coordinator_name
+        ];
     }
 }

@@ -27,7 +27,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
-                    <form action="{{ route('chairperson.students.update', $student->id) }}" method="POST">
+                    <form action="{{ route('chairperson.students.update', $student->student_id) }}" method="POST">
                         @csrf
                         @method('PUT')
                         <div class="row">

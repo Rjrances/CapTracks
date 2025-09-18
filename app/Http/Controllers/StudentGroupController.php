@@ -27,7 +27,23 @@ class StudentGroupController extends Controller
     }
     public function create()
     {
-        return view('student.group.create');
+        if (Auth::check()) {
+            $student = Auth::user()->student ?? null;
+        } else {
+            $student = \App\Models\Student::find(session('student_id'));
+        }
+        
+        if (!$student) {
+            return redirect()->route('student.dashboard')->with('error', 'Student record not found. Please contact administrator.');
+        }
+        
+        // Check if student is enrolled in any offering
+        $offering = $student->getCurrentOffering();
+        if (!$offering) {
+            return redirect()->route('student.dashboard')->with('error', 'You must be enrolled in a capstone offering before creating a group. Please contact your coordinator to get enrolled.');
+        }
+        
+        return view('student.group.create', compact('offering'));
     }
     public function store(Request $request)
     {
@@ -40,6 +56,8 @@ class StudentGroupController extends Controller
             'members' => 'nullable|array|max:2', // Max 2 additional members (3 total including leader)
             'members.*' => 'exists:students,id',
         ]);
+        
+        // Get student and validate enrollment
         if (Auth::check()) {
             $student = Auth::user()->student;
             $userInfo = [
@@ -62,6 +80,13 @@ class StudentGroupController extends Controller
             \Log::error('Student record not found for user', $userInfo);
             return back()->with('error', 'Student record not found. Please contact administrator.');
         }
+        
+        // Validate that student is enrolled in an offering
+        $offering = $student->getCurrentOffering();
+        if (!$offering) {
+            \Log::error('Student not enrolled in any offering', ['student_id' => $student->id]);
+            return back()->with('error', 'You must be enrolled in a capstone offering before creating a group. Please contact your coordinator to get enrolled.');
+        }
         $adviser = User::where('id', $request->adviser_id)
                       ->whereIn('role', ['adviser', 'panelist', 'teacher'])
                       ->first();
@@ -74,10 +99,27 @@ class StudentGroupController extends Controller
             \Log::error('Invalid adviser selected', ['adviser_id' => $request->adviser_id]);
             return back()->with('error', 'Selected adviser is not a valid faculty member.');
         }
+        
+        // Validate that all group members are enrolled in the same offering
+        if ($request->has('members') && is_array($request->members)) {
+            foreach ($request->members as $memberId) {
+                $member = \App\Models\Student::find($memberId);
+                if (!$member) {
+                    return back()->with('error', "Student with ID {$memberId} not found.");
+                }
+                
+                $memberOffering = $member->getCurrentOffering();
+                if (!$memberOffering || $memberOffering->id !== $offering->id) {
+                    return back()->with('error', "Student {$member->name} is not enrolled in the same capstone offering as you. All group members must be enrolled in {$offering->offer_code} ({$offering->subject_code}).");
+                }
+            }
+        }
         try {
             $group = Group::create([
                 'name' => $request->name,
                 'description' => $request->description,
+                'offering_id' => $offering->id,
+                'academic_term_id' => $offering->academic_term_id,
             ]);
             \Log::info('Group created successfully', ['group_id' => $group->id]);
             $group->members()->attach($student->id, ['role' => 'leader']);
@@ -205,7 +247,7 @@ class StudentGroupController extends Controller
         }
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->id);
-        })->first() : null;
+        })->with('offering')->first() : null;
         if (!$group) {
             return back()->with('error', 'Group not found.');
         }
@@ -215,6 +257,18 @@ class StudentGroupController extends Controller
         if ($group->members()->where('group_members.student_id', $request->student_id)->exists()) {
             return back()->with('error', 'Student is already a member of this group.');
         }
+        
+        // Validate that the new member is enrolled in the same offering
+        $newMember = \App\Models\Student::find($request->student_id);
+        if (!$newMember) {
+            return back()->with('error', 'Student not found.');
+        }
+        
+        $memberOffering = $newMember->getCurrentOffering();
+        if (!$memberOffering || !$group->offering || $memberOffering->id !== $group->offering->id) {
+            return back()->with('error', "Student {$newMember->name} is not enrolled in the same capstone offering as your group. All group members must be enrolled in {$group->offering->offer_code} ({$group->offering->subject_code}).");
+        }
+        
         $group->members()->attach($request->student_id, ['role' => 'member']);
         return back()->with('success', 'Member added successfully!');
     }

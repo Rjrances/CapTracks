@@ -30,6 +30,47 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
+        @if($offeringInfo['has_offering'])
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-book me-2"></i>Current Capstone Subject
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-center mb-2">
+                                    <h4 class="mb-0 me-3">{{ $offeringInfo['offer_code'] }} - {{ $offeringInfo['subject_code'] }} - {{ $offeringInfo['subject_title'] }}</h4>
+                                    <span class="badge bg-success fs-6">Enrolled</span>
+                                </div>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-chalkboard-teacher me-1"></i>
+                                    Coordinator: <strong>{{ $offeringInfo['coordinator_name'] }}</strong>
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <span class="text-muted small">Capstone Project Course</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @else
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>No Capstone Subject Enrolled
+                    </h5>
+                    <p class="mb-0">You are not currently enrolled in any capstone offering. Please contact your coordinator to get enrolled in the appropriate capstone subject.</p>
+                </div>
+            </div>
+        </div>
+        @endif
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-primary">

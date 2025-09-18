@@ -8,7 +8,7 @@
             <p class="text-muted mb-0">Track your capstone project progress with Kanban boards</p>
         </div>
         <div class="d-flex gap-2">
-            @if($group && $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists())
+            @if($group && $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists())
                 <a href="{{ route('student.milestones.create') }}" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Create Milestone
                 </a>
@@ -61,7 +61,7 @@
                         @foreach($group->members as $member)
                             <span class="badge bg-secondary me-1 mb-1">
                                 {{ $member->name }}
-                                @if($member->id === $student->id)
+                                @if($member->student_id === $student->student_id)
                                     <i class="fas fa-user me-1"></i>(You)
                                 @endif
                             </span>
@@ -261,7 +261,7 @@
                                                 <a href="{{ route('student.milestones.show', $groupMilestone->id) }}" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-columns me-1"></i>Kanban
                                                 </a>
-                                                @if($group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists())
+                                                @if($group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists())
                                                     <a href="{{ route('student.milestones.edit', $groupMilestone->id) }}" class="btn btn-sm btn-outline-warning">
                                                         <i class="fas fa-edit me-1"></i>Edit
                                                     </a>

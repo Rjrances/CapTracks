@@ -5,8 +5,11 @@ use App\Models\User;
 use App\Models\Student;
 class RoleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $sortBy = $request->get('sort', 'name');
+        $sortDirection = $request->get('direction', 'asc');
+        
         $roles = [
             'chairperson' => [
                 'name' => 'Chairperson',
@@ -47,14 +50,14 @@ class RoleController extends Controller
             }
             $role['user_count'] = User::where('role', $roleKey)->count();
             $role['users'] = User::where('role', $roleKey)
-                ->select('id', 'name', 'email', 'school_id', 'department', 'role')
-                ->orderBy('name')
+                ->select('id', 'name', 'email', 'account_id', 'department', 'role')
+                ->orderBy($sortBy, $sortDirection)
                 ->get();
         }
-        $allUsers = User::select('id', 'name', 'email', 'school_id', 'department', 'role')
-            ->orderBy('name')
+        $allUsers = User::select('id', 'name', 'email', 'account_id', 'department', 'role')
+            ->orderBy($sortBy, $sortDirection)
             ->get();
-        return view('chairperson.roles.index', compact('roles', 'allUsers'));
+        return view('chairperson.roles.index', compact('roles', 'allUsers', 'sortBy', 'sortDirection'));
     }
     public function update(Request $request, User $user)
     {

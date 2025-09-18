@@ -24,10 +24,66 @@
                     <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>User</th>
-                                <th>Email</th>
-                                <th>School ID</th>
-                                <th>Department</th>
+                                <th>
+                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                       class="text-decoration-none text-dark">
+                                        User
+                                        @if(request('sort') == 'name')
+                                            @if(request('direction') == 'asc')
+                                                <i class="fas fa-sort-up"></i>
+                                            @else
+                                                <i class="fas fa-sort-down"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'email', 'direction' => request('sort') == 'email' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                       class="text-decoration-none text-dark">
+                                        Email
+                                        @if(request('sort') == 'email')
+                                            @if(request('direction') == 'asc')
+                                                <i class="fas fa-sort-up"></i>
+                                            @else
+                                                <i class="fas fa-sort-down"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'account_id', 'direction' => request('sort') == 'account_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                       class="text-decoration-none text-dark">
+                                        ID Number
+                                        @if(request('sort') == 'account_id')
+                                            @if(request('direction') == 'asc')
+                                                <i class="fas fa-sort-up"></i>
+                                            @else
+                                                <i class="fas fa-sort-down"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'department', 'direction' => request('sort') == 'department' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                       class="text-decoration-none text-dark">
+                                        Department
+                                        @if(request('sort') == 'department')
+                                            @if(request('direction') == 'asc')
+                                                <i class="fas fa-sort-up"></i>
+                                            @else
+                                                <i class="fas fa-sort-down"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </a>
+                                </th>
                                 <th>Current Roles</th>
                                 <th>Assign Roles</th>
                                 <th>Actions</th>
@@ -40,7 +96,7 @@
                                         <strong>{{ $user->name }}</strong>
                                     </td>
                                     <td>{{ $user->email }}</td>
-                                    <td>{{ $user->school_id ?? 'N/A' }}</td>
+                                    <td>{{ $user->account_id ?? 'N/A' }}</td>
                                     <td>{{ $user->department ?? 'N/A' }}</td>
                                     <td>
                                         @if($user->role)
@@ -119,9 +175,9 @@
                                                     <small class="text-muted">
                                                         <i class="fas fa-envelope me-1"></i>{{ $user->email }}
                                                     </small>
-                                                    @if($user->school_id)
+                                                    @if($user->account_id)
                                                         <br><small class="text-muted">
-                                                            <i class="fas fa-id-card me-1"></i>{{ $user->school_id }}
+                                                            <i class="fas fa-id-card me-1"></i>{{ $user->account_id }}
                                                         </small>
                                                     @endif
                                                     @if($user->department || $user->role)

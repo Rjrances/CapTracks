@@ -28,6 +28,14 @@
                 </h4>
             </div>
             <div class="card-body">
+                @if($group->offering)
+                    <div class="alert alert-success mb-3">
+                        <i class="fas fa-book me-2"></i>
+                        <strong>Capstone Subject:</strong> {{ $group->offering->offer_code }} - {{ $group->offering->subject_code }} - {{ $group->offering->subject_title }}
+                        <br><i class="fas fa-chalkboard-teacher me-2"></i>
+                        <strong>Coordinator:</strong> {{ $group->offering->coordinator_name }}
+                    </div>
+                @endif
                 <div class="row">
                     <div class="col-md-8">
                         <p class="text-muted mb-3">{{ $group->description ?: 'No description provided.' }}</p>
@@ -78,14 +86,21 @@
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle me-1"></i>
                                     You can add {{ 3 - $group->members->count() }} more member(s) to reach the maximum of 3 members.
+                                    <br><strong>Note:</strong> Only students enrolled in the same offering can be added to your group.
                                 </div>
                                 <form action="{{ route('student.group.add-member') }}" method="POST" class="row g-3">
                                     @csrf
                                     <div class="col-md-8">
                                         <select name="student_id" class="form-select" required>
                                             <option value="">Select a student...</option>
-                                            @foreach(\App\Models\Student::whereNotIn('id', $group->members->pluck('id'))->get() as $student)
-                                                <option value="{{ $student->id }}">{{ $student->name }} ({{ $student->student_id }})</option>
+                                            @foreach(\App\Models\Student::whereNotIn('id', $group->members->pluck('id'))
+                                                ->whereHas('offerings', function($query) use ($group) {
+                                                    if ($group->offering) {
+                                                        $query->where('offering_id', $group->offering->id);
+                                                    }
+                                                })
+                                                ->get() as $student)
+                                                <option value="{{ $student->student_id }}">{{ $student->name }} ({{ $student->student_id }})</option>
                                             @endforeach
                                         </select>
                                     </div>

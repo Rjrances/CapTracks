@@ -62,18 +62,88 @@
         <table class="table table-bordered">
             <thead class="table-dark">
                 <tr>
-                    <th>ID Number</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Department</th>
+                    <th>
+                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'account_id', 'direction' => request('sort') == 'account_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                           class="text-white text-decoration-none">
+                            ID Number
+                            @if(request('sort') == 'account_id')
+                                @if(request('direction') == 'asc')
+                                    <i class="fas fa-sort-up"></i>
+                                @else
+                                    <i class="fas fa-sort-down"></i>
+                                @endif
+                            @else
+                                <i class="fas fa-sort text-muted"></i>
+                            @endif
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                           class="text-white text-decoration-none">
+                            Name
+                            @if(request('sort') == 'name')
+                                @if(request('direction') == 'asc')
+                                    <i class="fas fa-sort-up"></i>
+                                @else
+                                    <i class="fas fa-sort-down"></i>
+                                @endif
+                            @else
+                                <i class="fas fa-sort text-muted"></i>
+                            @endif
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'email', 'direction' => request('sort') == 'email' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                           class="text-white text-decoration-none">
+                            Email
+                            @if(request('sort') == 'email')
+                                @if(request('direction') == 'asc')
+                                    <i class="fas fa-sort-up"></i>
+                                @else
+                                    <i class="fas fa-sort-down"></i>
+                                @endif
+                            @else
+                                <i class="fas fa-sort text-muted"></i>
+                            @endif
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'role', 'direction' => request('sort') == 'role' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                           class="text-white text-decoration-none">
+                            Role
+                            @if(request('sort') == 'role')
+                                @if(request('direction') == 'asc')
+                                    <i class="fas fa-sort-up"></i>
+                                @else
+                                    <i class="fas fa-sort-down"></i>
+                                @endif
+                            @else
+                                <i class="fas fa-sort text-muted"></i>
+                            @endif
+                        </a>
+                    </th>
+                    <th>
+                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'department', 'direction' => request('sort') == 'department' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                           class="text-white text-decoration-none">
+                            Department
+                            @if(request('sort') == 'department')
+                                @if(request('direction') == 'asc')
+                                    <i class="fas fa-sort-up"></i>
+                                @else
+                                    <i class="fas fa-sort-down"></i>
+                                @endif
+                            @else
+                                <i class="fas fa-sort text-muted"></i>
+                            @endif
+                        </a>
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($teachers as $teacher)
                     <tr>
-                        <td><strong>{{ $teacher->school_id }}</strong></td>
+                        <td><strong>{{ $teacher->account_id }}</strong></td>
                         <td>{{ $teacher->name }}</td>
                         <td>{{ $teacher->email }}</td>
                         <td>

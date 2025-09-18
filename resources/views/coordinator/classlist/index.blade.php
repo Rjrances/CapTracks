@@ -30,10 +30,66 @@
                     <table class="table table-borderless align-middle mb-0 bg-white rounded-3" style="overflow:hidden;">
                         <thead class="bg-light border-bottom">
                             <tr>
-                                <th>Student ID</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Course</th>
+                                <th>
+                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'student_id', 'direction' => request('sort') == 'student_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                       class="text-decoration-none text-dark">
+                                        Student ID
+                                        @if(request('sort') == 'student_id')
+                                            @if(request('direction') == 'asc')
+                                                <i class="fas fa-sort-up"></i>
+                                            @else
+                                                <i class="fas fa-sort-down"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                       class="text-decoration-none text-dark">
+                                        Name
+                                        @if(request('sort') == 'name')
+                                            @if(request('direction') == 'asc')
+                                                <i class="fas fa-sort-up"></i>
+                                            @else
+                                                <i class="fas fa-sort-down"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'email', 'direction' => request('sort') == 'email' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                       class="text-decoration-none text-dark">
+                                        Email
+                                        @if(request('sort') == 'email')
+                                            @if(request('direction') == 'asc')
+                                                <i class="fas fa-sort-up"></i>
+                                            @else
+                                                <i class="fas fa-sort-down"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'course', 'direction' => request('sort') == 'course' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                       class="text-decoration-none text-dark">
+                                        Course
+                                        @if(request('sort') == 'course')
+                                            @if(request('direction') == 'asc')
+                                                <i class="fas fa-sort-up"></i>
+                                            @else
+                                                <i class="fas fa-sort-down"></i>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </a>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>

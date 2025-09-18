@@ -7,6 +7,7 @@ class DefenseSchedule extends Model
     use HasFactory;
     protected $fillable = [
         'group_id',
+        'defense_request_id',
         'stage',
         'academic_term_id',
         'start_at',
@@ -27,6 +28,10 @@ class DefenseSchedule extends Model
     public function academicTerm()
     {
         return $this->belongsTo(AcademicTerm::class, 'academic_term_id');
+    }
+    public function defenseRequest()
+    {
+        return $this->belongsTo(DefenseRequest::class);
     }
     public function defensePanels()
     {

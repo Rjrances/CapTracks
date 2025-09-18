@@ -54,6 +54,7 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th>Subject Title</th>
+                                    <th>Offer Code</th>
                                     <th>Subject Code</th>
                                     <th>Teacher</th>
                                     <th>Academic Term</th>
@@ -65,6 +66,7 @@
                                 @forelse ($offerings as $offering)
                                     <tr>
                                         <td>{{ $offering->subject_title }}</td>
+                                        <td>{{ $offering->offer_code }}</td>
                                         <td>{{ $offering->subject_code }}</td>
                                         <td>
                                             @if($offering->teacher)

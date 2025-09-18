@@ -1,6 +1,7 @@
 <?php
 namespace App\Imports;
 use App\Models\Student;
+use App\Models\StudentAccount;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
@@ -33,14 +34,26 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
     }
     public function model(array $row)
     {
+        // Create the student first
         $student = new Student([
             'student_id' => $row['student_id'],
             'name' => $row['name'],
             'email' => $row['email'],
             'semester' => $row['semester'],
             'course' => $row['course'],
-            'password' => Hash::make('password123'), // Default password
         ]);
+        $student->save();
+
+        // Create student account using the same ID as student_id
+        StudentAccount::create([
+            'student_id' => $student->student_id, // Use same ID as student_id
+            'email' => $row['email'],
+            'password' => Hash::make('password123'),
+        ]);
+
+        // Update student with account_id (same as student_id)
+        $student->update(['account_id' => $student->student_id]);
+
         if ($this->offeringId) {
             $this->importedStudentIds[] = $row['student_id'];
         }
@@ -56,7 +69,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
                 'regex:/^\d{10}$/', // Must be exactly 10 digits
             ],
             '*.name' => 'required|string|max:255',
-            '*.email' => 'nullable|email|unique:students,email',
+            '*.email' => 'nullable|email|unique:students,email|unique:student_accounts,email',
             '*.semester' => 'required|string|max:50',
             '*.course' => 'required|string|max:255',
         ];

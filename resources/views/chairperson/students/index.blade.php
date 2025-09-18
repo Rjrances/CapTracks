@@ -184,7 +184,7 @@
                                         <td>
                                             <div class="form-check">
                                                 <input class="form-check-input student-checkbox" type="checkbox" 
-                                                       value="{{ $student->id }}" id="student_{{ $student->id }}"
+                                                       value="{{ $student->student_id }}" id="student_{{ $student->student_id }}"
                                                        data-student-name="{{ $student->name }}">
                                             </div>
                                         </td>
@@ -228,14 +228,14 @@
                                         </td>
                                                                                  <td>
                                              <div class="btn-group btn-group-sm" role="group">
-                                                 <a href="{{ route('chairperson.students.edit', $student->id) }}" 
+                                                 <a href="{{ route('chairperson.students.edit', $student->student_id) }}" 
                                                     class="btn btn-outline-primary" 
                                                     data-bs-toggle="tooltip" title="Edit Student">
                                                      <i class="fas fa-edit"></i>
                                                  </a>
                                                  <button type="button" class="btn btn-outline-danger" 
                                                          data-bs-toggle="tooltip" title="Delete Student"
-                                                         onclick="deleteStudent({{ $student->id }}, '{{ $student->name }}')">
+                                                         onclick="deleteStudent('{{ $student->student_id }}', '{{ $student->name }}')">
                                                      <i class="fas fa-trash"></i>
                                                  </button>
                                              </div>

@@ -100,7 +100,7 @@
                                         <select name="student_id" class="form-select @error('student_id') is-invalid @enderror" required>
                                             <option value="">Select a student...</option>
                                             @foreach(\App\Models\Student::whereNotIn('id', $group->members->pluck('id'))->get() as $student)
-                                                <option value="{{ $student->id }}" {{ old('student_id') == $student->id ? 'selected' : '' }}>
+                                                <option value="{{ $student->student_id }}" {{ old('student_id') == $student->student_id ? 'selected' : '' }}>
                                                     {{ $student->name }} ({{ $student->student_id }})
                                                 </option>
                                             @endforeach

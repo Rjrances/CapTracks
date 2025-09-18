@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Student;
+use App\Models\FacultyAccount;
+use App\Models\StudentAccount;
 use App\Models\Role;
 class AuthController extends Controller
 {
@@ -18,72 +20,47 @@ class AuthController extends Controller
             'school_id' => ['required'],
             'password' => ['nullable'],
         ]);
-        $user = User::where('school_id', $request->school_id)->first();
-        if ($user) {
-            if (!$user->password) {
-                Auth::login($user);
-                return redirect('/change-password');
-            }
-            if (empty($request->password)) {
-                if ($user->must_change_password) {
-                    Auth::login($user);
-                    return redirect('/change-password');
+        
+        // Try to find faculty account by faculty_id
+        $facultyAccount = FacultyAccount::where('faculty_id', $request->school_id)->first();
+        
+        if ($facultyAccount) {
+            $user = $facultyAccount->user;
+            if ($user) {
+                if (empty($request->password)) {
+                    return back()->withErrors(['password' => 'Password is required.']);
                 }
-                return back()->withErrors(['password' => 'Password is required.']);
+                if (!Hash::check($request->password, $facultyAccount->password)) {
+                    return back()->withErrors(['password' => 'Incorrect password.']);
+                }
+                Auth::login($user);
+                $request->session()->regenerate();
+                return $this->redirectBasedOnRole($user->getPrimaryRoleAttribute());
             }
-            if (!Hash::check($request->password, $user->password)) {
-                return back()->withErrors(['password' => 'Incorrect password.']);
-            }
-            Auth::login($user);
-            $request->session()->regenerate();
-            if ($user->must_change_password) {
-                return redirect('/change-password');
-            }
-            return $this->redirectBasedOnRole($user->getPrimaryRoleAttribute());
         }
-        $student = Student::where('student_id', $request->school_id)->first();
-        if ($student) {
-            if (!$student->password) {
-                $request->session()->put('student_id', $student->id);
+        
+        // Try to find student account by student_id
+        $studentAccount = StudentAccount::where('student_id', $request->school_id)->first();
+        if ($studentAccount) {
+            $student = $studentAccount->student;
+            if ($student) {
+                if (empty($request->password)) {
+                    return back()->withErrors(['password' => 'Password is required.']);
+                }
+                if (!Hash::check($request->password, $studentAccount->password)) {
+                    return back()->withErrors(['password' => 'Incorrect password.']);
+                }
+                $request->session()->put('student_id', $student->student_id);
                 $request->session()->put('student_name', $student->name);
                 $request->session()->put('student_email', $student->email);
                 $request->session()->put('student_role', 'student');
                 $request->session()->put('student_school_id', $student->student_id);
                 $request->session()->put('is_student', true);
-                $request->session()->put('must_change_password', true);
                 $request->session()->save();
-                return redirect('/change-password');
+                return redirect()->route('student.dashboard');
             }
-            if (empty($request->password)) {
-                if ($student->must_change_password) {
-                    $request->session()->put('student_id', $student->id);
-                    $request->session()->put('student_name', $student->name);
-                    $request->session()->put('student_email', $student->email);
-                    $request->session()->put('student_role', 'student');
-                    $request->session()->put('student_school_id', $student->student_id);
-                    $request->session()->put('is_student', true);
-                    $request->session()->put('must_change_password', true);
-                    $request->session()->save();
-                    return redirect('/change-password');
-                }
-                return back()->withErrors(['password' => 'Password is required.']);
-            }
-            if (!Hash::check($request->password, $student->password)) {
-                return back()->withErrors(['password' => 'Incorrect password.']);
-            }
-            $request->session()->put('student_id', $student->id);
-            $request->session()->put('student_name', $student->name);
-            $request->session()->put('student_email', $student->email);
-            $request->session()->put('student_role', 'student');
-            $request->session()->put('student_school_id', $student->student_id);
-            $request->session()->put('is_student', true);
-            $request->session()->put('must_change_password', $student->must_change_password);
-            $request->session()->save();
-            if ($student->must_change_password) {
-                return redirect('/change-password');
-            }
-            return redirect()->route('student.dashboard');
         }
+        
         return back()->withErrors(['school_id' => 'Invalid School ID.']);
     }
     private function redirectBasedOnRole($role)
@@ -118,7 +95,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
+            'email' => 'required|email|unique:faculty_accounts|unique:student_accounts',
             'password' => 'required|min:8|confirmed',
             'role' => 'nullable|in:student,coordinator,adviser,panelist,chairperson,teacher',
         ]);
@@ -126,16 +103,42 @@ class AuthController extends Controller
         if (Auth::check() && Auth::user()->hasRole('chairperson') && $request->filled('role')) {
             $role = $request->role;
         }
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'school_id' => now()->timestamp, // dummy unique ID
-            'birthday' => now()->subYears(25),
-            'department' => 'N/A',
-            'role' => $role,
-            'must_change_password' => true,
-        ]);
+        
+        if ($role === 'student') {
+            // Create student
+            $student = Student::create([
+                'student_id' => now()->timestamp, // Generate unique student ID
+                'name' => $request->name,
+                'email' => $request->email,
+                'account_id' => now()->timestamp, // Set account_id same as student_id
+            ]);
+            
+            // Create student account
+            StudentAccount::create([
+                'student_id' => $student->student_id,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+        } else {
+            // Create faculty user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'birthday' => now()->subYears(25),
+                'department' => 'N/A',
+                'role' => $role,
+                'account_id' => '100' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT), // Generate faculty_id
+            ]);
+            
+            // Create faculty account
+            FacultyAccount::create([
+                'faculty_id' => $user->account_id,
+                'user_id' => $user->id,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+        }
+        
         return redirect('/login')->with('success', 'Registration successful. Please log in.');
     }
     public function showChangePasswordForm()
@@ -153,9 +156,11 @@ class AuthController extends Controller
         if (session('is_student')) {
             $student = Student::find(session('student_id'));
             if ($student) {
-                $student->password = Hash::make($request->password);
-                $student->must_change_password = false;
-                $student->save();
+                $account = StudentAccount::where('student_id', $student->student_id)->first();
+                if ($account) {
+                    $account->password = Hash::make($request->password);
+                    $account->save();
+                }
                 $request->session()->forget('must_change_password');
                 return redirect()->route('student.dashboard');
             }
@@ -165,9 +170,11 @@ class AuthController extends Controller
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         $user = Auth::user();
-        $user->password = Hash::make($request->password);
-        $user->must_change_password = false;
-        $user->save();
+        $account = FacultyAccount::where('user_id', $user->id)->first();
+        if ($account) {
+            $account->password = Hash::make($request->password);
+            $account->save();
+        }
         return $this->redirectBasedOnRole($user->getPrimaryRoleAttribute());
     }
 }

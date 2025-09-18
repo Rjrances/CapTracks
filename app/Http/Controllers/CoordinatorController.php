@@ -69,6 +69,9 @@ class CoordinatorController extends Controller
     }
     public function classlist(Request $request)
     {
+        $sortBy = $request->get('sort', 'student_id');
+        $sortDirection = $request->get('direction', 'asc');
+        
         $semesters = DB::table('students')
             ->select('semester')
             ->distinct()
@@ -90,9 +93,10 @@ class CoordinatorController extends Controller
                       ->orWhere('email', 'like', "%$search%" );
                 });
             }
-            $students = $studentsQuery->paginate(10)->appends($request->only(['semester', 'search']));
+            $students = $studentsQuery->orderBy($sortBy, $sortDirection)
+                ->paginate(10)->appends($request->only(['semester', 'search', 'sort', 'direction']));
         }
-        return view('coordinator.classlist.index', compact('semesters', 'students', 'selectedSemester'));
+        return view('coordinator.classlist.index', compact('semesters', 'students', 'selectedSemester', 'sortBy', 'sortDirection'));
     }
     public function groups(Request $request)
     {

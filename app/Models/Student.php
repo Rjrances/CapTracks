@@ -10,12 +10,11 @@ class Student extends Model
         'course',
         'year',
         'semester',
-        'password',
-        'must_change_password',
+        'account_id',
     ];
-    public function user()
+    public function account()
     {
-        return $this->belongsTo(User::class, 'email', 'email');
+        return $this->belongsTo(Account::class, 'account_id', 'student_id');
     }
     public function groups()
     {
@@ -29,7 +28,7 @@ class Student extends Model
     }
     public function offerings()
     {
-        return $this->belongsToMany(Offering::class, 'offering_student')
+        return $this->belongsToMany(Offering::class, 'offering_student', 'student_id', 'offering_id')
                     ->withTimestamps();
     }
     public function enrollInOffering(Offering $offering)
@@ -46,7 +45,8 @@ class Student extends Model
     {
         return $this->offerings()->first();
     }
-    protected $casts = [
-        'must_change_password' => 'boolean',
-    ];
+    // Set primary key
+    protected $primaryKey = 'student_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 }

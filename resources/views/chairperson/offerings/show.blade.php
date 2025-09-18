@@ -66,7 +66,7 @@
                                 <div class="col-6">
                                     <div class="card bg-info text-white">
                                         <div class="card-body">
-                                            <h3>{{ \App\Models\Student::count() - $offering->students->count() }}</h3>
+                                            <h3>{{ \App\Models\Student::whereDoesntHave('offerings')->count() }}</h3>
                                             <small>Available Students</small>
                                         </div>
                                     </div>
@@ -103,7 +103,7 @@
                                         <br>
                                         <small class="text-muted">{{ $student->student_id }} - {{ $student->course }}</small>
                                     </div>
-                                    <form action="{{ route('chairperson.offerings.remove-student', ['offeringId' => $offering->id, 'studentId' => $student->id]) }}" 
+                                    <form action="{{ route('chairperson.offerings.remove-student', ['offeringId' => $offering->id, 'studentId' => $student->student_id]) }}" 
                                           method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')

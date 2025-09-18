@@ -42,20 +42,24 @@ class ChairpersonController extends Controller
     public function storeOffering(Request $request)
     {
         $request->validate([
+            'offer_code' => 'required|string|unique:offerings,offer_code',
             'subject_title' => 'required|in:Capstone 1,Capstone 2,Thesis 1,Thesis 2',
-            'subject_code' => 'required|string|max:100',
+            'subject_code' => 'required|in:CT1,CT2,T1,T2',
             'teacher_id' => 'required|exists:users,id',
             'academic_term_id' => 'required|exists:academic_terms,id',
         ], [
+            'offer_code.required' => 'Offer code is required (e.g., 1101, 1102, 1103, 1104).',
+            'offer_code.unique' => 'This offer code is already in use.',
             'subject_title.required' => 'Please select a subject title from the dropdown.',
             'subject_title.in' => 'Please select a valid subject title from the dropdown.',
-            'subject_code.required' => 'Subject code is required (e.g., CS401, IT401).',
+            'subject_code.required' => 'Subject code is required (CT1, CT2, T1, T2).',
+            'subject_code.in' => 'Subject code must be one of: CT1, CT2, T1, T2.',
             'teacher_id.required' => 'Please select a teacher for this offering.',
             'teacher_id.exists' => 'Selected teacher does not exist.',
             'academic_term_id.required' => 'Please select an academic term.',
             'academic_term_id.exists' => 'Selected academic term does not exist.',
         ]);
-        $data = $request->only('subject_title', 'subject_code', 'teacher_id', 'academic_term_id');
+        $data = $request->only('offer_code', 'subject_title', 'subject_code', 'teacher_id', 'academic_term_id');
         if (empty($data['academic_term_id'])) {
             $activeTerm = $this->getActiveTerm();
             if ($activeTerm) {
@@ -81,14 +85,18 @@ class ChairpersonController extends Controller
     public function updateOffering(Request $request, $id)
     {
         $request->validate([
+            'offer_code' => 'required|string|unique:offerings,offer_code,' . $id,
             'subject_title' => 'required|in:Capstone 1,Capstone 2,Thesis 1,Thesis 2',
-            'subject_code'  => 'required|string|max:100',
+            'subject_code' => 'required|in:CT1,CT2,T1,T2',
             'teacher_id' => 'required|exists:users,id',
             'academic_term_id' => 'required|exists:academic_terms,id',
         ], [
+            'offer_code.required' => 'Offer code is required (e.g., 1101, 1102, 1103, 1104).',
+            'offer_code.unique' => 'This offer code is already in use.',
             'subject_title.required' => 'Please select a subject title from the dropdown.',
             'subject_title.in' => 'Please select a valid subject title from the dropdown.',
-            'subject_code.required' => 'Subject code is required (e.g., CS401, IT401).',
+            'subject_code.required' => 'Subject code is required (CT1, CT2, T1, T2).',
+            'subject_code.in' => 'Subject code must be one of: CT1, CT2, T1, T2.',
             'teacher_id.required' => 'Please select a teacher for this offering.',
             'teacher_id.exists' => 'Selected teacher does not exist.',
             'academic_term_id.required' => 'Please select an academic term.',
@@ -96,7 +104,7 @@ class ChairpersonController extends Controller
         ]);
         $offering = Offering::findOrFail($id);
         $oldTeacherId = $offering->teacher_id;
-        $offering->update($request->only('subject_title', 'subject_code', 'teacher_id', 'academic_term_id'));
+        $offering->update($request->only('offer_code', 'subject_title', 'subject_code', 'teacher_id', 'academic_term_id'));
         $newTeacherId = $request->input('teacher_id');
         if ($newTeacherId != $oldTeacherId) {
             if ($oldTeacherId) {
@@ -218,6 +226,9 @@ class ChairpersonController extends Controller
     {
         $activeTerm = $this->getActiveTerm();
         $showAllTerms = $request->get('show_all', false);
+        $sortBy = $request->get('sort', 'name');
+        $sortDirection = $request->get('direction', 'asc');
+        
         $teachers = User::query()
             ->when($showAllTerms, function($query) {
                 return $query->whereNotIn('role', ['student']);
@@ -227,9 +238,9 @@ class ChairpersonController extends Controller
                         $q->where('academic_term_id', $activeTerm->id);
                     });
             })
-            ->orderBy('school_id')
+            ->orderBy($sortBy, $sortDirection)
             ->get();
-        return view('chairperson.teachers.index', compact('teachers', 'activeTerm', 'showAllTerms'));
+        return view('chairperson.teachers.index', compact('teachers', 'activeTerm', 'showAllTerms', 'sortBy', 'sortDirection'));
     }
     public function createTeacher()
     {
@@ -246,13 +257,23 @@ class ChairpersonController extends Controller
         $user = User::create([
             'name'                 => $request->name,
             'email'                => $request->email,
-            'password'             => bcrypt($request->password),
-            'school_id'            => now()->timestamp, // dummy unique ID
             'birthday'             => now()->subYears(30),
             'department'           => 'N/A',
             'role'                 => $request->role,
-            'must_change_password' => true,
         ]);
+
+        // Create account for the user
+        $account = \App\Models\Account::create([
+            'faculty_id' => '100' . str_pad(\App\Models\Account::where('user_type', 'faculty')->count() + 1, 2, '0', STR_PAD_LEFT),
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+            'user_type' => 'faculty',
+            'user_id' => $user->id,
+        ]);
+
+        // Update user with account_id
+        $user->update(['account_id' => $account->faculty_id]);
+
         return redirect()->route('teachers.index')->with('success', 'Teacher added successfully.');
     }
     public function editTeacher($id)
@@ -629,25 +650,27 @@ class ChairpersonController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'school_id' => [
-                'required',
-                'string',
-                'unique:users,school_id',
-                'regex:/^\d{5}$/', // Must be exactly 5 digits
-            ],
             'department' => 'nullable|string|max:255',
-        ], [
-            'school_id.regex' => 'Faculty/Staff ID must be exactly 5 digits (e.g., 12345)',
         ]);
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'school_id' => $request->school_id,
             'department' => $request->department,
             'role' => 'teacher',
-            'password' => bcrypt('password123'),
-            'must_change_password' => true,
         ]);
+
+        // Create account for the user
+        $account = \App\Models\Account::create([
+            'faculty_id' => '100' . str_pad(\App\Models\Account::where('user_type', 'faculty')->count() + 1, 2, '0', STR_PAD_LEFT),
+            'email' => $request->email,
+            'password' => bcrypt('password123'),
+            'user_type' => 'faculty',
+            'user_id' => $user->id,
+        ]);
+
+        // Update user with account_id
+        $user->update(['account_id' => $account->faculty_id]);
+
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member added successfully!');
     }
     public function editFaculty($id)

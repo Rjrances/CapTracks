@@ -92,9 +92,9 @@
                     <input type="hidden" name="offering_id" value="{{ request('offering_id') }}">
                 @endif
                 <div class="mb-3">
-                    <label for="file" class="form-label">Select Excel/CSV File</label>
-                    <input type="file" name="file" class="form-control" required accept=".xlsx,.xls,.csv" id="fileInput">
-                    <div class="form-text">Maximum file size: 10MB. Supported formats: .xlsx, .xls, .csv</div>
+                    <label for="file" class="form-label">Select CSV File</label>
+                    <input type="file" name="file" class="form-control" required accept=".csv" id="fileInput">
+                    <div class="form-text">Maximum file size: 10MB. Supported format: .csv</div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100" id="submitBtn">
                     <span class="btn-text">

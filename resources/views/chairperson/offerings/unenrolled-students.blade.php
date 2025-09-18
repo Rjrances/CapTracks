@@ -79,7 +79,7 @@
                                             <td>
                                                 <div class="form-check">
                                                     <input class="form-check-input student-checkbox" type="checkbox" 
-                                                           value="{{ $student->id }}" id="student_{{ $student->id }}"
+                                                           value="{{ $student->student_id }}" id="student_{{ $student->student_id }}"
                                                            data-student-name="{{ $student->name }}">
                                                 </div>
                                             </td>
@@ -101,7 +101,7 @@
                                             <td>
                                                 <form action="{{ route('chairperson.offerings.enroll-student', $offering->id) }}" method="POST" class="d-inline">
                                                     @csrf
-                                                    <input type="hidden" name="student_id" value="{{ $student->id }}">
+                                                    <input type="hidden" name="student_id" value="{{ $student->student_id }}">
                                                     <button type="submit" class="btn btn-sm btn-outline-success" 
                                                             onclick="return confirm('Add {{ $student->name }} to {{ $offering->subject_code }}?')">
                                                         <i class="fas fa-plus me-1"></i>Add

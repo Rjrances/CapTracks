@@ -62,7 +62,7 @@
                             </form>
                         @endif
                     @endif
-                    @if($task->assigned_to === null || $task->assigned_to == $student->id)
+                    @if($task->assigned_to === null || $task->assigned_to == $student->student_id)
                         <a href="{{ route('student.task-submission.create', $task->id) }}" class="btn btn-sm btn-success" title="Submit Task">
                             <i class="fas fa-upload"></i>
                         </a>

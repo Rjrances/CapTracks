@@ -39,10 +39,25 @@
                             @enderror
                         </div>
                         <div class="mb-3">
+                            <label for="offer_code" class="form-label">Offer Code</label>
+                            <input type="text" name="offer_code" id="offer_code" 
+                                   class="form-control @error('offer_code') is-invalid @enderror" 
+                                   value="{{ old('offer_code', $offering->offer_code) }}" 
+                                   placeholder="e.g., 1101, 1102, 1103, 1104" required>
+                            @error('offer_code')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
                             <label for="subject_code" class="form-label">Subject Code</label>
-                            <input type="text" name="subject_code" id="subject_code" 
-                                   class="form-control @error('subject_code') is-invalid @enderror" 
-                                   value="{{ old('subject_code', $offering->subject_code) }}" required>
+                            <select name="subject_code" id="subject_code" 
+                                    class="form-select @error('subject_code') is-invalid @enderror" required>
+                                <option value="">Select Subject Code</option>
+                                <option value="CT1" {{ old('subject_code', $offering->subject_code) == 'CT1' ? 'selected' : '' }}>CT1 - Capstone 1</option>
+                                <option value="CT2" {{ old('subject_code', $offering->subject_code) == 'CT2' ? 'selected' : '' }}>CT2 - Capstone 2</option>
+                                <option value="T1" {{ old('subject_code', $offering->subject_code) == 'T1' ? 'selected' : '' }}>T1 - Thesis 1</option>
+                                <option value="T2" {{ old('subject_code', $offering->subject_code) == 'T2' ? 'selected' : '' }}>T2 - Thesis 2</option>
+                            </select>
                             @error('subject_code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -112,7 +127,7 @@
                                         <br>
                                         <small class="text-muted">{{ $student->student_id }} - {{ $student->course }}</small>
                                     </div>
-                                    <form action="{{ route('chairperson.offerings.remove-student', ['offeringId' => $offering->id, 'studentId' => $student->id]) }}" 
+                                    <form action="{{ route('chairperson.offerings.remove-student', ['offeringId' => $offering->id, 'studentId' => $student->student_id]) }}" 
                                           method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')

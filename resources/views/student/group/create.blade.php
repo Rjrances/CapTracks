@@ -3,7 +3,15 @@
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Create New Group</h2>
+        <div>
+            <h2 class="mb-0">Create New Group</h2>
+            @if(isset($offering))
+                <p class="text-muted mb-0">
+                    <i class="fas fa-book me-1"></i>
+                    For: <strong>{{ $offering->offer_code }} - {{ $offering->subject_code }} - {{ $offering->subject_title }}</strong>
+                </p>
+            @endif
+        </div>
         <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
             <i class="fas fa-arrow-left me-2"></i>Return to Dashboard
         </a>
@@ -91,23 +99,28 @@
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-1"></i>
                                 You will be automatically added as the group leader. Select up to 2 additional members (3 total members per group).
+                                <br><strong>Note:</strong> Only students enrolled in the same capstone offering can be added to your group.
                             </div>
                             <div class="row">
                                 @php
                                     $availableStudents = \App\Models\Student::whereNotIn('id', function($query) {
                                         $query->select('student_id')
                                               ->from('group_members');
-                                    })->get();
+                                    })
+                                    ->whereHas('offerings', function($query) use ($offering) {
+                                        $query->where('offering_id', $offering->id);
+                                    })
+                                    ->get();
                                 @endphp
                                 @foreach($availableStudents as $student)
                                     @if($student->email !== (Auth::check() ? Auth::user()->email : session('student_email')))
                                         <div class="col-md-6 mb-2">
                                             <div class="form-check">
                                                 <input class="form-check-input member-checkbox" type="checkbox" 
-                                                       name="members[]" value="{{ $student->id }}" 
-                                                       id="student_{{ $student->id }}" 
+                                                       name="members[]" value="{{ $student->student_id }}" 
+                                                       id="student_{{ $student->student_id }}" 
                                                        onchange="limitSelections()">
-                                                <label class="form-check-label" for="student_{{ $student->id }}">
+                                                <label class="form-check-label" for="student_{{ $student->student_id }}">
                                                     <strong>{{ $student->name }}</strong><br>
                                                     <small class="text-muted">
                                                         {{ $student->student_id }} • {{ $student->email }}

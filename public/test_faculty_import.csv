@@ -1,0 +1,4 @@
+faculty_id,name,email,role,department
+10020,Dr. Alice Johnson,alice.johnson@university.edu,teacher,Computer Science
+10021,Prof. Bob Wilson,bob.wilson@university.edu,adviser,Information Technology
+10022,Dr. Carol Davis,carol.davis@university.edu,panelist,Software Engineering
