@@ -194,7 +194,7 @@
                             @php
                                 $manualMembers = $defenseSchedule->defensePanels->filter(function($panel) use ($defenseSchedule) {
                                     return $panel->faculty_id != $defenseSchedule->group->adviser_id && 
-                                           (!($defenseSchedule->group->offering && $defenseSchedule->group->offering->teacher_id == $panel->faculty_id));
+                                           (!($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id == $panel->faculty_id));
                                 });
                             @endphp
                             @if($manualMembers->count() > 0)

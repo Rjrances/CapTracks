@@ -28,11 +28,11 @@
                 @csrf
                 @method('PUT')
                 <div class="mb-3">
-                    <label for="adviser_id" class="form-label">Select Adviser</label>
-                    <select class="form-select" id="adviser_id" name="adviser_id" required>
+                    <label for="faculty_id" class="form-label">Select Adviser</label>
+                    <select class="form-select" id="faculty_id" name="faculty_id" required>
                         <option value="">-- Select Adviser --</option>
                         @foreach($availableFaculty as $faculty)
-                            <option value="{{ $faculty->id }}" {{ $group->adviser_id == $faculty->id ? 'selected' : '' }}>
+                            <option value="{{ $faculty->faculty_id }}" {{ $group->faculty_id == $faculty->faculty_id ? 'selected' : '' }}>
                                 {{ $faculty->name }} 
                                 @if($faculty->hasRole('teacher'))
                                     <span class="badge bg-primary">Teacher</span>

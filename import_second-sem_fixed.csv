@@ -1,0 +1,63 @@
+student_id,name,email,semester,course,offer_code
+2024000079,Diego Salazar,diegosalazar@student.university.edu,2024-2,BS Computer Science,11000
+2024000080,Carlos Rivera,carlosrivera@student.university.edu,2024-2,BS Information Technology,11000
+2024000081,Antonio Cruz,antoniocruz@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11000
+2024000082,Teresa Bautista,teresabautista@student.university.edu,2024-2,BS Computer Science,11000
+2024000083,Carmen Gonzales,carmengonzales@student.university.edu,2024-2,BS Information Technology,11000
+2024000084,Andres Torres,andrestorres@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11000
+2024000085,Rosa Bautista,rosabautista@student.university.edu,2024-2,BS Computer Science,11000
+2024000086,Juan Cruz,juancruz@student.university.edu,2024-2,BS Information Technology,11000
+2024000087,Carlos Salazar,carlossalazar@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11000
+2024000088,Miguel Castillo,miguelcastillo@student.university.edu,2024-2,BS Computer Science,11000
+2024000089,Luz Gonzales,luzgonzales@student.university.edu,2024-2,BS Information Technology,11000
+2024000090,Sofia Domingo,sofiadomingo@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11000
+2024000091,Elena Flores,elenaflores@student.university.edu,2024-2,BS Computer Science,11001
+2024000092,Isabel Aquino,isabelaquino@student.university.edu,2024-2,BS Information Technology,11001
+2024000093,Patricia Reyes,patriciareyes@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11001
+2024000094,Monica Santos,monicasantos@student.university.edu,2024-2,BS Computer Science,11001
+2024000095,Adriana Morales,adrianamorales@student.university.edu,2024-2,BS Information Technology,11001
+2024000096,Valeria Jimenez,valeriajimenez@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11001
+2024000097,Daniela Herrera,danielaherrera@student.university.edu,2024-2,BS Computer Science,11001
+2024000098,Mariana Vargas,marianavargas@student.university.edu,2024-2,BS Information Technology,11001
+2024000099,Andrea Castro,andreacastro@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11001
+2024000100,Paola Mendoza,paolamendoza@student.university.edu,2024-2,BS Computer Science,11001
+2024000101,Claudia Rojas,claudiarojas@student.university.edu,2024-2,BS Information Technology,11001
+2024000102,Silvia Pena,silviapena@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11001
+2024000103,Beatriz Guzman,beatrizguzman@student.university.edu,2024-2,BS Computer Science,11002
+2024000104,Esperanza Aguilar,esperanzaaguilar@student.university.edu,2024-2,BS Information Technology,11002
+2024000105,Consuelo Vega,consuelovega@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11002
+2024000106,Rosario Medina,rosariomedina@student.university.edu,2024-2,BS Computer Science,11002
+2024000107,Guadalupe Contreras,guadalupecontreras@student.university.edu,2024-2,BS Information Technology,11002
+2024000108,Francisca Delgado,franciscadelgado@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11002
+2024000109,Estela Ramirez,estelaramirez@student.university.edu,2024-2,BS Computer Science,11002
+2024000110,Magdalena Flores,magdalenaflores@student.university.edu,2024-2,BS Information Technology,11002
+2024000111,Isabela Ortega,isabelaortega@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11002
+2024000112,Valentina Silva,valentinasilva@student.university.edu,2024-2,BS Computer Science,11002
+2024000113,Regina Torres,reginatorres@student.university.edu,2024-2,BS Information Technology,11002
+2024000114,Emilia Vargas,emiliavargas@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11002
+2024000115,Victoria Herrera,victoriaherrera@student.university.edu,2024-2,BS Computer Science,11003
+2024000116,Sofia Castro,sofiacastro@student.university.edu,2024-2,BS Information Technology,11003
+2024000117,Martina Mendoza,martinamendoza@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11003
+2024000118,Julieta Rojas,julietarojas@student.university.edu,2024-2,BS Computer Science,11003
+2024000119,Valeria Pena,valeriapena@student.university.edu,2024-2,BS Information Technology,11003
+2024000120,Daniela Guzman,danielaguzman@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11003
+2024000121,Mariana Aguilar,marianaaguilar@student.university.edu,2024-2,BS Computer Science,11003
+2024000122,Andrea Vega,andreavega@student.university.edu,2024-2,BS Information Technology,11003
+2024000123,Paola Medina,paolamedina@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11003
+2024000124,Claudia Contreras,claudiacontreras@student.university.edu,2024-2,BS Computer Science,11003
+2024000125,Silvia Delgado,silviadelgado@student.university.edu,2024-2,BS Information Technology,11003
+2024000126,Beatriz Ramirez,beatrizramirez@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11003
+2024000127,Esperanza Flores,esperanzaflores@student.university.edu,2024-2,BS Computer Science,11004
+2024000128,Consuelo Ortega,consueloortega@student.university.edu,2024-2,BS Information Technology,11004
+2024000129,Rosario Silva,rosariosilva@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11004
+2024000130,Guadalupe Torres,guadalupetorres@student.university.edu,2024-2,BS Computer Science,11004
+2024000131,Francisca Vargas,franciscavargas@student.university.edu,2024-2,BS Information Technology,11004
+2024000132,Estela Herrera,estelaherrera@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11004
+2024000133,Magdalena Castro,magdalenacastro@student.university.edu,2024-2,BS Computer Science,11004
+2024000134,Isabela Mendoza,isabelamendoza@student.university.edu,2024-2,BS Information Technology,11004
+2024000135,Valentina Rojas,valentinarojas@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11004
+2024000136,Regina Pena,reginapena@student.university.edu,2024-2,BS Computer Science,11004
+2024000137,Emilia Guzman,emiliaguzman@student.university.edu,2024-2,BS Information Technology,11004
+2024000138,Victoria Aguilar,victoriaaguilar@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,11004
+2024000139,Sofia Vega,sofiavega@student.university.edu,2024-2,BS Computer Science,11000
+2024000140,Martina Medina,martinamedina@student.university.edu,2024-2,BS Information Technology,11000

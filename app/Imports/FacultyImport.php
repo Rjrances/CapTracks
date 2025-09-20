@@ -1,7 +1,7 @@
 <?php
 namespace App\Imports;
 use App\Models\User;
-use App\Models\FacultyAccount;
+use App\Models\UserAccount;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
@@ -25,16 +25,16 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
             'email' => $row['email'],
             'department' => $row['department'] ?? null,
             'role' => strtolower($roleName),
-            'account_id' => $facultyId,
+            'faculty_id' => $facultyId,
         ]);
         $user->save();
 
         // Create faculty account
-        FacultyAccount::create([
+        UserAccount::create([
             'faculty_id' => $facultyId,
-            'user_id' => $user->id,
             'email' => $row['email'],
             'password' => Hash::make('password123'),
+            'must_change_password' => true,
         ]);
 
         return $user;
@@ -42,9 +42,9 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
     public function rules(): array
     {
         return [
-            '*.faculty_id' => 'required|string|max:20|unique:users,account_id|unique:faculty_accounts,faculty_id',
+            '*.faculty_id' => 'required|string|max:20|unique:users,faculty_id|unique:user_accounts,faculty_id',
             '*.name' => 'required|string|max:255',
-            '*.email' => 'required|email|unique:users,email|unique:faculty_accounts,email',
+            '*.email' => 'required|email|unique:users,email|unique:user_accounts,email',
             '*.role' => 'nullable|string|in:teacher,adviser,panelist',
             '*.department' => 'nullable|string|max:255',
         ];

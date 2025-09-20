@@ -43,7 +43,7 @@
                         <div class="row align-items-center">
                             <div class="col-md-8">
                                 <div class="d-flex align-items-center mb-2">
-                                    <h4 class="mb-0 me-3">{{ $offeringInfo['offer_code'] }} - {{ $offeringInfo['subject_code'] }} - {{ $offeringInfo['subject_title'] }}</h4>
+                                    <h4 class="mb-0 me-3">{{ $offeringInfo['subject_title'] }}</h4>
                                     <span class="badge bg-success fs-6">Enrolled</span>
                                 </div>
                                 <p class="text-muted mb-0">

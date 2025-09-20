@@ -10,7 +10,7 @@ class ProgressValidationService
         if ($group->overall_progress_percentage < 60) {
             return false;
         }
-        if (!$group->adviser_id) {
+        if (!$group->faculty_id) {
             return false;
         }
         if (!$this->hasRequiredMilestonesCompleted($group)) {
@@ -37,7 +37,7 @@ class ProgressValidationService
         } else {
             $report['warnings'][] = "Overall progress is {$group->overall_progress_percentage}%";
         }
-        if (!$group->adviser_id) {
+        if (!$group->faculty_id) {
             $report['issues'][] = "No adviser assigned to the group";
         }
         $milestonesStatus = $this->getMilestonesStatus($group);
@@ -153,8 +153,8 @@ class ProgressValidationService
         if (isset($filters['academic_term_id']) && $filters['academic_term_id']) {
             $query->where('academic_term_id', $filters['academic_term_id']);
         }
-        if (isset($filters['adviser_id']) && $filters['adviser_id']) {
-            $query->where('adviser_id', $filters['adviser_id']);
+        if (isset($filters['faculty_id']) && $filters['faculty_id']) {
+            $query->where('faculty_id', $filters['faculty_id']);
         }
         if (isset($filters['search']) && $filters['search']) {
             $query->where('name', 'like', '%' . $filters['search'] . '%');

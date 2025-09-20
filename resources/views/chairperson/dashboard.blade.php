@@ -1,20 +1,20 @@
 @extends('layouts.chairperson')
 @section('content')
-<div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
-    <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="h3 mb-1">Welcome, {{ auth()->check() ? auth()->user()->name : 'Chairperson' }}!</h1>
-                    <p class="text-muted mb-0">Oversee capstone projects and academic operations</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-book me-2"></i>Manage Offerings
-                    </a>
-                </div>
-            </div>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </h2>
+            <p class="text-muted mb-0">Welcome back, {{ auth()->check() ? auth()->user()->name : 'Chairperson' }}! Oversee capstone projects and academic operations</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-outline-primary">
+                <i class="fas fa-book me-2"></i>Manage Offerings
+            </a>
+            <a href="{{ route('chairperson.roles.index') }}" class="btn btn-outline-warning">
+                <i class="fas fa-user-tag me-2"></i>Manage Roles
+            </a>
         </div>
     </div>
     @if(session('success'))
@@ -73,66 +73,93 @@
             </div>
         </div>
     </div>
+    <!-- Statistics Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
+        <div class="col-md-3 mb-3">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-project-diagram me-2"></i>Active Projects
+                    </h5>
+                </div>
                 <div class="card-body text-center">
-                    <h5 class="card-title">Active Projects</h5>
-                    <h3 class="mb-0">{{ $stats['activeProjects'] ?? 0 }}</h3>
-                    <small>capstone projects</small>
+                    <h2 class="text-primary mb-1">{{ $stats['activeProjects'] ?? 0 }}</h2>
+                    <p class="text-muted mb-0">Capstone Projects</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
+        <div class="col-md-3 mb-3">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-gradient-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>Faculty Members
+                    </h5>
+                </div>
                 <div class="card-body text-center">
-                    <h5 class="card-title">Faculty Members</h5>
-                    <h3 class="mb-0">{{ $stats['facultyCount'] ?? 0 }}</h3>
-                    <small>active advisers</small>
+                    <h2 class="text-success mb-1">{{ $stats['facultyCount'] ?? 0 }}</h2>
+                    <p class="text-muted mb-0">Active Advisers</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-white">
+        <div class="col-md-3 mb-3">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-gradient-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-gavel me-2"></i>Pending Defenses
+                    </h5>
+                </div>
                 <div class="card-body text-center">
-                    <h5 class="card-title">Pending Defenses</h5>
-                    <h3 class="mb-0">{{ $stats['pendingReviews'] ?? 0 }}</h3>
-                    <small>scheduled</small>
+                    <h2 class="text-warning mb-1">{{ $stats['pendingReviews'] ?? 0 }}</h2>
+                    <p class="text-muted mb-0">Scheduled</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
+        <div class="col-md-3 mb-3">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-gradient-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book me-2"></i>Course Offerings
+                    </h5>
+                </div>
                 <div class="card-body text-center">
-                    <h5 class="card-title">Course Offerings</h5>
-                    <h3 class="mb-0">{{ $stats['offeringsCount'] ?? 0 }}</h3>
-                    <small>active sections</small>
+                    <h2 class="text-info mb-1">{{ $stats['offeringsCount'] ?? 0 }}</h2>
+                    <p class="text-muted mb-0">Active Sections</p>
                 </div>
             </div>
         </div>
     </div>
     <div class="row mb-4">
         <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-gavel me-2"></i>Upcoming Defense Schedules
-                        </h5>
-                    </div>
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-gavel me-2"></i>Upcoming Defense Schedules
+                    </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     @if($upcomingDefenses->count() > 0)
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Group</th>
-                                        <th>Stage</th>
-                                        <th>Date & Time</th>
-                                        <th>Room</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
+                                        <th class="border-0">
+                                            <i class="fas fa-users me-2"></i>Group
+                                        </th>
+                                        <th class="border-0">
+                                            <i class="fas fa-layer-group me-2"></i>Stage
+                                        </th>
+                                        <th class="border-0">
+                                            <i class="fas fa-calendar-alt me-2"></i>Date & Time
+                                        </th>
+                                        <th class="border-0">
+                                            <i class="fas fa-door-open me-2"></i>Room
+                                        </th>
+                                        <th class="border-0">
+                                            <i class="fas fa-info-circle me-2"></i>Status
+                                        </th>
+                                        <th class="border-0">
+                                            <i class="fas fa-tools me-2"></i>Actions
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -188,13 +215,13 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card mb-3">
-                <div class="card-header">
+            <div class="card mb-3 shadow-sm border-0">
+                <div class="card-header bg-gradient-info text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i class="fas fa-bell me-2"></i>Latest Notifications
                         </h5>
-                        <span class="badge bg-primary">{{ $notifications->count() }}</span>
+                        <span class="badge bg-light text-dark">{{ $notifications->count() }}</span>
                     </div>
                 </div>
                 <div class="card-body">
@@ -223,8 +250,8 @@
                     @endif
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-success text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-bolt me-2"></i>Quick Actions
                     </h5>
@@ -238,7 +265,10 @@
                             <i class="fas fa-chalkboard-teacher me-2"></i>View Teachers
                         </a>
                         <a href="{{ route('chairperson.roles.index') }}" class="btn btn-outline-warning">
-                            <i class="fas fa-user-tag me-2"></i>Roles
+                            <i class="fas fa-user-tag me-2"></i>Manage Roles
+                        </a>
+                        <a href="{{ route('chairperson.students.index') }}" class="btn btn-outline-info">
+                            <i class="fas fa-user-graduate me-2"></i>View Students
                         </a>
                     </div>
                 </div>
@@ -248,8 +278,8 @@
     @if($activeTerm)
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-warning text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-chart-bar me-2"></i>Defense Statistics ({{ $activeTerm->full_name }})
                     </h5>
@@ -281,4 +311,80 @@
     </div>
     @endif
 </div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover,
+.btn-outline-warning:hover,
+.btn-outline-info:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.list-group-item {
+    border: none;
+    padding: 0.75rem 0;
+}
+
+.list-group-item:not(:last-child) {
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+}
+
+.text-primary { color: #007bff !important; }
+.text-success { color: #28a745 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-info { color: #17a2b8 !important; }
+</style>
 @endsection
+
+

@@ -6,13 +6,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class FacultyAccount extends Authenticatable
 {
-    protected $table = 'faculty_accounts';
+    protected $table = 'user_accounts';
     
     protected $fillable = [
         'faculty_id',
-        'user_id',
         'email',
         'password',
+        'must_change_password',
     ];
 
     protected $hidden = [
@@ -27,7 +27,7 @@ class FacultyAccount extends Authenticatable
     // Relationships
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'faculty_id', 'faculty_id');
     }
 
     // Authentication methods

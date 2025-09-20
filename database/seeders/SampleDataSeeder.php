@@ -84,10 +84,10 @@ class SampleDataSeeder extends Seeder
         // Create offerings
         $users = User::all();
         $offerings = [
-            ['offer_code' => '1101', 'subject_title' => 'Capstone 1', 'subject_code' => 'CT1', 'teacher_id' => $users[0]->id],
-            ['offer_code' => '1102', 'subject_title' => 'Capstone 2', 'subject_code' => 'CT2', 'teacher_id' => $users[1]->id],
-            ['offer_code' => '1103', 'subject_title' => 'Thesis 1', 'subject_code' => 'T1', 'teacher_id' => $users[2]->id],
-            ['offer_code' => '1104', 'subject_title' => 'Thesis 2', 'subject_code' => 'T2', 'teacher_id' => $users[3]->id],
+            ['offer_code' => '1101', 'subject_title' => 'Capstone 1', 'subject_code' => 'CT1', 'faculty_id' => $users[0]->faculty_id],
+            ['offer_code' => '1102', 'subject_title' => 'Capstone 2', 'subject_code' => 'CT2', 'faculty_id' => $users[1]->faculty_id],
+            ['offer_code' => '1103', 'subject_title' => 'Thesis 1', 'subject_code' => 'T1', 'faculty_id' => $users[2]->faculty_id],
+            ['offer_code' => '1104', 'subject_title' => 'Thesis 2', 'subject_code' => 'T2', 'faculty_id' => $users[3]->faculty_id],
         ];
 
         foreach ($offerings as $offeringData) {
@@ -95,7 +95,7 @@ class SampleDataSeeder extends Seeder
                 'offer_code' => $offeringData['offer_code'],
                 'subject_title' => $offeringData['subject_title'],
                 'subject_code' => $offeringData['subject_code'],
-                'teacher_id' => $offeringData['teacher_id'],
+                'faculty_id' => $offeringData['faculty_id'],
                 'academic_term_id' => $academicTerm->id,
             ]);
         }

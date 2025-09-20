@@ -35,7 +35,7 @@
                 <div class="card bg-success text-white">
                     <div class="card-body text-center">
                         <h5 class="card-title">With Adviser</h5>
-                        <h3 class="mb-0">{{ $groups->where('adviser_id', '!=', null)->count() }}</h3>
+                        <h3 class="mb-0">{{ $groups->where('faculty_id', '!=', null)->count() }}</h3>
                         <small>assigned</small>
                     </div>
                 </div>
@@ -44,7 +44,7 @@
                 <div class="card bg-warning text-white">
                     <div class="card-body text-center">
                         <h5 class="card-title">No Adviser</h5>
-                        <h3 class="mb-0">{{ $groups->where('adviser_id', null)->count() }}</h3>
+                        <h3 class="mb-0">{{ $groups->where('faculty_id', null)->count() }}</h3>
                         <small>unassigned</small>
                     </div>
                 </div>
@@ -180,12 +180,12 @@
                         <div class="row text-center">
                             <div class="col-6">
                                 <div class="border-end">
-                                    <h4 class="text-primary mb-0">{{ $groups->where('adviser_id', '!=', null)->count() }}</h4>
+                                    <h4 class="text-primary mb-0">{{ $groups->where('faculty_id', '!=', null)->count() }}</h4>
                                     <small class="text-muted">With Adviser</small>
                                 </div>
                             </div>
                             <div class="col-6">
-                                <h4 class="text-warning mb-0">{{ $groups->where('adviser_id', null)->count() }}</h4>
+                                <h4 class="text-warning mb-0">{{ $groups->where('faculty_id', null)->count() }}</h4>
                                 <small class="text-muted">No Adviser</small>
                             </div>
                         </div>

@@ -1,0 +1,15 @@
+offer_code,subject_title,subject_code,faculty_id,academic_term
+11000,Capstone Project I,CS-CAP-401,10004,1
+11001,Capstone Project I,CS-CAP-401,10005,1
+11002,Capstone Project II,CS-CAP-402,10006,1
+11003,Thesis I,CS-THS-301,10007,1
+11004,Thesis II,CS-THS-302,10008,1
+12000,Capstone Project I,CS-CAP-401,10009,2
+12001,Capstone Project I,CS-CAP-401,10010,2
+12002,Capstone Project II,CS-CAP-402,10011,2
+12003,Thesis I,CS-THS-301,10012,2
+12004,Thesis II,CS-THS-302,10004,2
+13000,Capstone Project I,CS-CAP-401,10005,3
+13001,Capstone Project I,CS-CAP-401,10006,3
+13002,Thesis I,CS-THS-301,10007,3
+13003,Thesis II,CS-THS-302,10008,3

@@ -59,9 +59,9 @@ class FixDataIntegrity extends Command
             $defaultOffering = Offering::create([
                 'subject_code' => 'CS 199',
                 'subject_title' => 'Capstone Project I',
-                'teacher_id' => User::whereHas('roles', function($q) {
+                'faculty_id' => User::whereHas('roles', function($q) {
                     $q->where('name', 'coordinator');
-                })->first()?->id ?? User::first()?->id,
+                })->first()?->faculty_id ?? User::first()?->faculty_id,
                 'academic_term_id' => \App\Models\AcademicTerm::where('is_active', true)->first()?->id ?? 1
             ]);
             $this->line("  ✓ Created default offering: {$defaultOffering->subject_code}");

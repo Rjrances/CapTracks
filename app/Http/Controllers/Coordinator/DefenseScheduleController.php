@@ -104,10 +104,10 @@ class DefenseScheduleController extends Controller
                     'role' => 'adviser'
                 ]);
             }
-            if ($schedule->group->offering && $schedule->group->offering->teacher_id) {
+            if ($schedule->group->offering && $schedule->group->offering->faculty_id) {
                 DefensePanel::create([
                     'defense_schedule_id' => $schedule->id,
-                    'faculty_id' => $schedule->group->offering->teacher_id,
+                    'faculty_id' => $schedule->group->offering->faculty_id,
                     'role' => 'coordinator'
                 ]);
             }
@@ -205,10 +205,10 @@ class DefenseScheduleController extends Controller
                     'role' => 'adviser'
                 ]);
             }
-            if ($schedule->group->offering && $schedule->group->offering->teacher_id) {
+            if ($schedule->group->offering && $schedule->group->offering->faculty_id) {
                 DefensePanel::create([
                     'defense_schedule_id' => $schedule->id,
-                    'faculty_id' => $schedule->group->offering->teacher_id,
+                    'faculty_id' => $schedule->group->offering->faculty_id,
                     'role' => 'coordinator'
                 ]);
             }

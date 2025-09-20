@@ -3,10 +3,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 class Group extends Model
 {
-    protected $fillable = ['name', 'description', 'adviser_id', 'academic_term_id', 'offering_id'];
+    protected $fillable = ['name', 'description', 'faculty_id', 'academic_term_id', 'offering_id'];
     public function adviser()
     {
-        return $this->belongsTo(User::class, 'adviser_id');
+        return $this->belongsTo(User::class, 'faculty_id', 'faculty_id');
     }
     public function members()
     {
@@ -64,7 +64,7 @@ class Group extends Model
         if ($this->overall_progress_percentage < 60) {
             return false;
         }
-        if (!$this->adviser_id) {
+        if (!$this->faculty_id) {
             return false;
         }
         $requiredMilestones = $this->groupMilestones()
@@ -86,7 +86,7 @@ class Group extends Model
         if ($this->overall_progress_percentage < 60) {
             $issues[] = "Overall progress is {$this->overall_progress_percentage}% (needs 60%)";
         }
-        if (!$this->adviser_id) {
+        if (!$this->faculty_id) {
             $issues[] = "No adviser assigned";
         }
         return implode(', ', $issues);

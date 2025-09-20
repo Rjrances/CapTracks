@@ -1,0 +1,29 @@
+student_id,name,email,semester,course,offer_code
+2024000001,Alexandra Martinez,alexandra.martinez@student.university.edu,2024-1,BS Computer Science,11000
+2024000002,David Thompson,david.thompson@student.university.edu,2024-1,BS Computer Science,11000
+2024000003,Emily Rodriguez,emily.rodriguez@student.university.edu,2024-1,BS Information Technology,11001
+2024000004,James Wilson,james.wilson@student.university.edu,2024-1,BS Information Technology,11001
+2024000005,Sophia Kim,sophia.kim@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11002
+2024000006,Ryan O'Connor,ryan.oconnor@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11002
+2024000007,Isabella Garcia,isabella.garcia@student.university.edu,2024-1,BS Computer Science,11003
+2024000008,Lucas Anderson,lucas.anderson@student.university.edu,2024-1,BS Computer Science,11003
+2024000009,Olivia White,olivia.white@student.university.edu,2024-1,BS Information Technology,11004
+2024000010,Noah Johnson,noah.johnson@student.university.edu,2024-1,BS Information Technology,11004
+2024000011,Gabriela Santos,gabriela.santos@student.university.edu,2024-2,BS Computer Science,12000
+2024000012,Marcus Chen,marcus.chen@student.university.edu,2024-2,BS Computer Science,12000
+2024000013,Natalie Foster,natalie.foster@student.university.edu,2024-2,BS Information Technology,12001
+2024000014,Tyler Richardson,tyler.richardson@student.university.edu,2024-2,BS Information Technology,12001
+2024000015,Zoe Mitchell,zoe.mitchell@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,12002
+2024000016,Ethan Parker,ethan.parker@student.university.edu,2024-2,BS Entertainment and Multimedia Computing,12002
+2024000017,Ava Brown,ava.brown@student.university.edu,2024-2,BS Computer Science,12003
+2024000018,William Davis,william.davis@student.university.edu,2024-2,BS Computer Science,12003
+2024000019,Mia Taylor,mia.taylor@student.university.edu,2024-2,BS Information Technology,12004
+2024000020,Benjamin Miller,benjamin.miller@student.university.edu,2024-2,BS Information Technology,12004
+2024000021,Priya Patel,priya.patel@student.university.edu,2024-S,BS Computer Science,13000
+2024000022,Alexander Torres,alexander.torres@student.university.edu,2024-S,BS Computer Science,13000
+2024000023,Luna Zhang,luna.zhang@student.university.edu,2024-S,BS Information Technology,13001
+2024000024,Caleb Murphy,caleb.murphy@student.university.edu,2024-S,BS Information Technology,13001
+2024000025,Charlotte Wilson,charlotte.wilson@student.university.edu,2024-S,BS Entertainment and Multimedia Computing,13002
+2024000026,Henry Moore,henry.moore@student.university.edu,2024-S,BS Entertainment and Multimedia Computing,13002
+2024000027,Emma Thompson,emma.thompson@student.university.edu,2024-S,BS Computer Science,13003
+2024000028,Daniel Rodriguez,daniel.rodriguez@student.university.edu,2024-S,BS Computer Science,13003

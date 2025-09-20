@@ -25,10 +25,10 @@
                             <select name="subject_title" id="subject_title"
                                    class="form-select @error('subject_title') is-invalid @enderror" required>
                                 <option value="">Select Subject Title</option>
-                                <option value="Capstone 1" {{ old('subject_title', $offering->subject_title) == 'Capstone 1' ? 'selected' : '' }}>Capstone 1</option>
-                                <option value="Capstone 2" {{ old('subject_title', $offering->subject_title) == 'Capstone 2' ? 'selected' : '' }}>Capstone 2</option>
-                                <option value="Thesis 1" {{ old('subject_title', $offering->subject_title) == 'Thesis 1' ? 'selected' : '' }}>Thesis 1</option>
-                                <option value="Thesis 2" {{ old('subject_title', $offering->subject_title) == 'Thesis 2' ? 'selected' : '' }}>Thesis 2</option>
+                                <option value="Capstone Project I" {{ old('subject_title', $offering->subject_title) == 'Capstone Project I' ? 'selected' : '' }}>Capstone Project I</option>
+                                <option value="Capstone Project II" {{ old('subject_title', $offering->subject_title) == 'Capstone Project II' ? 'selected' : '' }}>Capstone Project II</option>
+                                <option value="Thesis I" {{ old('subject_title', $offering->subject_title) == 'Thesis I' ? 'selected' : '' }}>Thesis I</option>
+                                <option value="Thesis II" {{ old('subject_title', $offering->subject_title) == 'Thesis II' ? 'selected' : '' }}>Thesis II</option>
                             </select>
                             <div class="form-text">
                                 <i class="fas fa-info-circle me-1"></i>
@@ -58,24 +58,24 @@
                             <input type="text" name="offer_code" id="offer_code" 
                                    class="form-control @error('offer_code') is-invalid @enderror" 
                                    value="{{ old('offer_code', $offering->offer_code) }}" 
-                                   placeholder="e.g., 1101, 1102, 1103, 1104" required>
+                                   placeholder="e.g., 11000, 11001, 11002, 11003, 11004" required>
                             @error('offer_code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         <div class="mb-3">
-                            <label for="teacher_id" class="form-label">Teacher</label>
-                            <select name="teacher_id" id="teacher_id" 
-                                    class="form-select @error('teacher_id') is-invalid @enderror" required>
+                            <label for="faculty_id" class="form-label">Teacher</label>
+                            <select name="faculty_id" id="faculty_id" 
+                                    class="form-select @error('faculty_id') is-invalid @enderror" required>
                                 <option value="">Select Teacher</option>
                                 @foreach($teachers as $teacher)
-                                    <option value="{{ $teacher->id }}" 
-                                        {{ old('teacher_id', $offering->teacher_id) == $teacher->id ? 'selected' : '' }}>
+                                    <option value="{{ $teacher->faculty_id }}" 
+                                        {{ old('faculty_id', $offering->faculty_id) == $teacher->faculty_id ? 'selected' : '' }}>
                                         {{ $teacher->name }} ({{ ucfirst($teacher->role ?? 'N/A') }})
                                     </option>
                                 @endforeach
                             </select>
-                            @error('teacher_id')
+                            @error('faculty_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -114,7 +114,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-users me-2"></i>Enrolled Students
+                        <i class="fas fa-users me-2"></i>Total Students
                         <span class="badge bg-primary ms-2">{{ $offering->students->count() }}</span>
                     </h5>
                 </div>
@@ -174,10 +174,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Mapping of subject titles to subject codes
     const subjectCodeMapping = {
-        'Capstone 1': 'CT1',
-        'Capstone 2': 'CT2',
-        'Thesis 1': 'T1',
-        'Thesis 2': 'T2'
+        'Capstone Project I': 'CS-CAP-401',
+        'Capstone Project II': 'CS-CAP-402',
+        'Thesis I': 'CS-THS-301',
+        'Thesis II': 'CS-THS-302'
     };
     
     // Handle subject title change

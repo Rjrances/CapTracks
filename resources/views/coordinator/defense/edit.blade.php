@@ -153,7 +153,7 @@
                                 <div id="panel-members-container">
                                     @foreach($defenseSchedule->defensePanels as $index => $panel)
                                         @if($panel->faculty_id != $defenseSchedule->group->adviser_id && 
-                                             (!($defenseSchedule->group->offering && $defenseSchedule->group->offering->teacher_id == $panel->faculty_id)))
+                                             (!($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id == $panel->faculty_id)))
                                             <div class="panel-member-row mb-2">
                                                 <div class="row">
                                                     <div class="col-md-5">
@@ -198,7 +198,7 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let panelCount = {{ $defenseSchedule->defensePanels->where('faculty_id', '!=', $defenseSchedule->group->adviser_id)->where('faculty_id', '!=', $defenseSchedule->group->offering->teacher_id ?? 0)->count() }};
+    let panelCount = {{ $defenseSchedule->defensePanels->where('faculty_id', '!=', $defenseSchedule->group->adviser_id)->where('faculty_id', '!=', $defenseSchedule->group->offering->faculty_id ?? 0)->count() }};
     document.getElementById('group_id').addEventListener('change', function() {
         const groupId = this.value;
         if (groupId) {

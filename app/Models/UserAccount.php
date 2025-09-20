@@ -2,18 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Account extends Authenticatable
+class UserAccount extends Authenticatable
 {
+    protected $table = 'user_accounts';
+    
     protected $fillable = [
         'faculty_id',
-        'student_id',
         'email',
         'password',
-        'user_type',
-        'user_id'
+        'must_change_password',
     ];
 
     protected $hidden = [
@@ -23,17 +22,13 @@ class Account extends Authenticatable
 
     protected $casts = [
         'password' => 'hashed',
+        'must_change_password' => 'boolean',
     ];
 
     // Relationships
-    public function student()
-    {
-        return $this->hasOne(Student::class, 'account_id', 'student_id');
-    }
-
     public function user()
     {
-        return $this->hasOne(User::class, 'account_id', 'faculty_id');
+        return $this->belongsTo(User::class, 'faculty_id', 'faculty_id');
     }
 
     // Authentication methods
@@ -48,23 +43,13 @@ class Account extends Authenticatable
     }
 
     // Helper methods
-    public function isStudent()
+    public function isUser()
     {
-        return $this->user_type === 'student';
-    }
-
-    public function isFaculty()
-    {
-        return $this->user_type === 'faculty';
+        return true; // This is always a user account
     }
 
     public function getAssociatedUser()
     {
-        if ($this->isStudent()) {
-            return $this->student;
-        } elseif ($this->isFaculty()) {
-            return $this->user;
-        }
-        return null;
+        return $this->user;
     }
 }

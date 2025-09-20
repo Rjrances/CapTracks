@@ -1,0 +1,7 @@
+student_id,name,email,semester,course,offer_code
+2024000001,John Smith,johnsmith@student.university.edu,2024-1,BS Computer Science,11000
+2024000002,Jane Doe,janedoe@student.university.edu,2024-1,BS Information Technology,11001
+2024000003,Bob Johnson,bobjohnson@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11002
+2024000004,Alice Brown,alicebrown@student.university.edu,2024-2,BS Computer Science,12000
+2024000005,Charlie Wilson,charliewilson@student.university.edu,2024-2,BS Information Technology,12001
+2024000006,Diana Lee,dianalee@student.university.edu,2024-S,BS Entertainment and Multimedia Computing,13000

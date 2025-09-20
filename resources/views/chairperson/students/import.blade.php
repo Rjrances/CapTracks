@@ -115,17 +115,24 @@
                     <ul class="mb-0">
                         <li><strong>student_id</strong> - Student ID number (must be exactly 10 digits)</li>
                         <li><strong>name</strong> - Full name</li>
-                        <li><strong>email</strong> - Email address</li>
-                        <li><strong>semester</strong> - Current semester</li>
-                        <li><strong>course</strong> - Course/Program</li>
+                        <li><strong>email</strong> - Email address (must be unique)</li>
+                        <li><strong>semester</strong> - Current semester (format: "2024-1", "2024-2", "2024-S")</li>
+                        <li><strong>course</strong> - Course/Program (BS Computer Science, BS Information Technology, BS Entertainment and Multimedia Computing)</li>
+                        <li><strong>offer_code</strong> - Offering code for automatic enrollment (e.g., "11000", "11001", "11002")</li>
                     </ul>
                     <hr class="my-2">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-download me-2"></i>
-                        <a href="/student_import_template.csv" class="btn btn-sm btn-outline-info" download>
+                        <a href="/student_import_template_final.csv" class="btn btn-sm btn-outline-info" download>
                             Download CSV Template
                         </a>
                         <small class="text-muted ms-2">Use this template to ensure correct format</small>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-magic me-1"></i>
+                            <strong>Automatic Enrollment:</strong> Students will be automatically enrolled in their specified offering based on the offer_code.
+                        </small>
                     </div>
                 </div>
                 @if(request('offering_id') && $offering ?? null)

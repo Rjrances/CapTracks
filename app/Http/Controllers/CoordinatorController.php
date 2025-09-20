@@ -36,8 +36,8 @@ class CoordinatorController extends Controller
             'submissionCount' => ProjectSubmission::count(),
             'pendingSubmissions' => ProjectSubmission::where('status', 'pending')->count(),
             'totalGroupMembers' => Group::withCount('members')->get()->sum('members_count'),
-            'groupsWithAdviser' => Group::whereNotNull('adviser_id')->count(),
-            'groupsWithoutAdviser' => Group::whereNull('adviser_id')->count(),
+            'groupsWithAdviser' => Group::whereNotNull('faculty_id')->count(),
+            'groupsWithoutAdviser' => Group::whereNull('faculty_id')->count(),
         ];
         $recentActivities = collect();
         $recentGroups = Group::with(['adviser', 'members'])
@@ -150,19 +150,19 @@ class CoordinatorController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'adviser_id' => 'nullable|exists:users,id',
+            'faculty_id' => 'nullable|exists:users,faculty_id',
         ]);
-        if (isset($validated['adviser_id']) && $validated['adviser_id']) {
-            $adviser = User::find($validated['adviser_id']);
+        if (isset($validated['faculty_id']) && $validated['faculty_id']) {
+            $adviser = User::where('faculty_id', $validated['faculty_id'])->first();
             if ($adviser && $group->offering && $adviser->offerings()->where('id', $group->offering_id)->exists()) {
-                return back()->withErrors(['adviser_id' => 'This faculty member coordinates this offering and cannot be assigned as an adviser due to conflict of interest.']);
+                return back()->withErrors(['faculty_id' => 'This faculty member coordinates this offering and cannot be assigned as an adviser due to conflict of interest.']);
             }
         }
         $group->update($validated);
         $message = 'Group updated successfully!';
-        if (isset($validated['adviser_id'])) {
-            if ($validated['adviser_id']) {
-                $adviser = User::find($validated['adviser_id']);
+        if (isset($validated['faculty_id'])) {
+            if ($validated['faculty_id']) {
+                $adviser = User::where('faculty_id', $validated['faculty_id'])->first();
                 $message = "Adviser assigned successfully to {$adviser->name}!";
             } else {
                 $message = "Adviser removed successfully!";

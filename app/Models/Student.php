@@ -10,11 +10,16 @@ class Student extends Model
         'course',
         'year',
         'semester',
-        'account_id',
+        'offer_code',
     ];
     public function account()
     {
-        return $this->belongsTo(Account::class, 'account_id', 'student_id');
+        return $this->hasOne(StudentAccount::class, 'student_id', 'student_id');
+    }
+
+    public function offering()
+    {
+        return $this->belongsTo(Offering::class, 'offer_code', 'offer_code');
     }
     public function groups()
     {
@@ -28,13 +33,15 @@ class Student extends Model
     }
     public function offerings()
     {
-        return $this->belongsToMany(Offering::class, 'offering_student', 'student_id', 'offering_id')
+        return $this->belongsToMany(Offering::class, 'offering_student', 'student_id', 'offering_id', 'student_id', 'id')
                     ->withTimestamps();
     }
     public function enrollInOffering(Offering $offering)
     {
-        $this->offerings()->detach();
-        $this->offerings()->attach($offering->id);
+        // Check if already enrolled to avoid duplicates
+        if (!$this->offerings()->where('offering_id', $offering->id)->exists()) {
+            $this->offerings()->attach($offering->id, ['enrolled_at' => now()]);
+        }
         return $this;
     }
     public function isEnrolled()
@@ -44,6 +51,21 @@ class Student extends Model
     public function getCurrentOffering()
     {
         return $this->offerings()->first();
+    }
+
+    public function enrollInOfferingByCode()
+    {
+        if ($this->offer_code) {
+            $offering = Offering::where('offer_code', $this->offer_code)->first();
+            if ($offering) {
+                // Check if already enrolled to avoid duplicates
+                if (!$this->offerings()->where('offering_id', $offering->id)->exists()) {
+                    $this->offerings()->attach($offering->id, ['enrolled_at' => now()]);
+                }
+                return $offering;
+            }
+        }
+        return null;
     }
     // Set primary key
     protected $primaryKey = 'student_id';

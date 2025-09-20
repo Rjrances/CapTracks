@@ -16,7 +16,7 @@ class NotificationSeeder extends Seeder
     }
 
     /**
-     * Create test notifications for different roles
+     * Create sample notifications for different roles
      */
     private function createTestNotifications()
     {
@@ -24,7 +24,7 @@ class NotificationSeeder extends Seeder
             // Coordinator notifications
             [
                 'title' => 'New Group Registration',
-                'description' => 'Web Development Team has registered for the current term',
+                'description' => 'Smart Campus Management System has registered for the current term',
                 'role' => 'coordinator',
                 'is_read' => false
             ],
@@ -44,19 +44,19 @@ class NotificationSeeder extends Seeder
             // Adviser notifications
             [
                 'title' => 'Student Task Completed',
-                'description' => 'John Student completed the Project Title task',
+                'description' => 'Alexandra Martinez completed the Project Title task',
                 'role' => 'adviser',
                 'is_read' => false
             ],
             [
                 'title' => 'Group Progress Update',
-                'description' => 'Web Development Team reached 75% completion',
+                'description' => 'Smart Campus Management System reached 75% completion',
                 'role' => 'adviser',
                 'is_read' => false
             ],
             [
                 'title' => 'New Submission Received',
-                'description' => 'Project proposal submitted by Mobile App Team',
+                'description' => 'Project proposal submitted by Mobile Learning Assistant',
                 'role' => 'adviser',
                 'is_read' => true
             ],
@@ -99,6 +99,6 @@ class NotificationSeeder extends Seeder
             ]);
         }
 
-        echo "✅ Created " . count($notifications) . " test notifications for different roles\n";
+        echo "✅ Created " . count($notifications) . " sample notifications for different roles\n";
     }
 }

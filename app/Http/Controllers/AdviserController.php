@@ -27,7 +27,7 @@ class AdviserController extends Controller
             'groupMilestoneTasks.milestoneTask',
             'academicTerm'
         ])
-        ->where('adviser_id', $user->id)
+        ->where('faculty_id', $user->faculty_id)
         ->get()
         ->map(function ($group) {
             $group->progress_percentage = $this->calculateGroupProgress($group);
@@ -199,7 +199,7 @@ class AdviserController extends Controller
             'responded_at' => now(),
         ]);
         if ($request->status === 'accepted') {
-            $invitation->group->update(['adviser_id' => Auth::id()]);
+            $invitation->group->update(['faculty_id' => Auth::user()->faculty_id]);
             $user = Auth::user();
             if ($user->role !== 'adviser') {
                 if ($user->role === 'teacher') {
@@ -233,7 +233,7 @@ class AdviserController extends Controller
             'offering',
             'defenseSchedules'
         ])
-        ->where('adviser_id', $user->id);
+        ->where('faculty_id', $user->faculty_id);
         $allGroups = $groupsQuery->get()->map(function ($group) {
             $group->progress_percentage = $this->calculateGroupProgress($group);
             $group->submissions_count = $this->getSubmissionsCount($group);
@@ -265,7 +265,7 @@ class AdviserController extends Controller
     }
     public function groupDetails(Group $group)
     {
-        if ($group->adviser_id !== Auth::id()) {
+        if ($group->faculty_id !== Auth::user()->faculty_id) {
             abort(403, 'Unauthorized');
         }
         return view('adviser.group-details', compact('group'));
@@ -283,7 +283,7 @@ class AdviserController extends Controller
             'offering',
             'defenseSchedules'
         ])
-        ->where('adviser_id', $user->id)
+        ->where('faculty_id', $user->faculty_id)
         ->get()
         ->map(function ($group) {
             $group->role_type = 'adviser';

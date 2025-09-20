@@ -42,21 +42,30 @@ class RoleController extends Controller
                 'permissions' => ['Submit projects', 'Track milestones', 'Join groups', 'View progress']
             ]
         ];
+        // Get users with their roles
+        $allUsers = User::with('roles')
+            ->select('id', 'name', 'email', 'faculty_id', 'department', 'role')
+            ->orderBy($sortBy, $sortDirection)
+            ->get();
+            
+        // Count users by role (including multiple roles)
         foreach ($roles as $roleKey => &$role) {
             if ($roleKey === 'student') {
                 $role['user_count'] = Student::count();
                 $role['users'] = collect();
                 continue;
             }
-            $role['user_count'] = User::where('role', $roleKey)->count();
-            $role['users'] = User::where('role', $roleKey)
-                ->select('id', 'name', 'email', 'account_id', 'department', 'role')
-                ->orderBy($sortBy, $sortDirection)
-                ->get();
+            
+            // Count users who have this role (either as primary or assigned)
+            $role['user_count'] = $allUsers->filter(function($user) use ($roleKey) {
+                return $user->hasRole($roleKey);
+            })->count();
+            
+            // Get users with this role
+            $role['users'] = $allUsers->filter(function($user) use ($roleKey) {
+                return $user->hasRole($roleKey);
+            });
         }
-        $allUsers = User::select('id', 'name', 'email', 'account_id', 'department', 'role')
-            ->orderBy($sortBy, $sortDirection)
-            ->get();
         return view('chairperson.roles.index', compact('roles', 'allUsers', 'sortBy', 'sortDirection'));
     }
     public function update(Request $request, User $user)
@@ -65,24 +74,27 @@ class RoleController extends Controller
             'roles' => 'required|array',
             'roles.*' => 'in:chairperson,coordinator,teacher,adviser,panelist',
         ]);
+        
         try {
-            $newRole = $request->roles[0] ?? 'teacher';
-            $user->update(['role' => $newRole]);
+            // Use the new assignRoles method
+            $user->assignRoles($request->roles);
+            
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'User role updated successfully.'
+                    'message' => 'User roles updated successfully.',
+                    'user_roles' => $user->all_roles_string
                 ]);
             }
-            return redirect()->back()->with('success', 'User role updated successfully.');
+            return redirect()->back()->with('success', 'User roles updated successfully.');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error updating role: ' . $e->getMessage()
+                    'message' => 'Error updating roles: ' . $e->getMessage()
                 ], 500);
             }
-            return redirect()->back()->with('error', 'Error updating role: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error updating roles: ' . $e->getMessage());
         }
     }
 }

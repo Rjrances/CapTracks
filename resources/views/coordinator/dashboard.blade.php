@@ -49,7 +49,7 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <small class="text-muted">
                                                 <i class="fas fa-users me-1"></i>
-                                                {{ $offering->enrolled_students_count ?? 0 }} students
+                                                {{ $offering->students->count() }} students
                                             </small>
                                             <div class="btn-group btn-group-sm">
                                                 <a href="{{ route('coordinator.groups.index') }}?offering={{ $offering->id }}" 
@@ -124,7 +124,7 @@
                     <div class="card-body text-center">
                         <h5 class="card-title">Total Students</h5>
                         <h3 class="mb-0">{{ $studentCount ?? 0 }}</h3>
-                        <small>enrolled students</small>
+                        <small>total students</small>
                     </div>
                 </div>
             </div>

@@ -2,6 +2,7 @@
 namespace App\Imports;
 use App\Models\Student;
 use App\Models\StudentAccount;
+use App\Services\StudentEnrollmentService;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
@@ -18,9 +19,13 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
 {
     protected $offeringId;
     protected $importedStudentIds = [];
+    protected $enrollmentService;
+    protected $importedStudents = [];
+    
     public function __construct($offeringId = null)
     {
         $this->offeringId = $offeringId;
+        $this->enrollmentService = new StudentEnrollmentService();
     }
     public function map($row): array
     {
@@ -30,6 +35,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             'email' => trim($row['email'] ?? ''),
             'semester' => trim($row['semester'] ?? ''),
             'course' => trim($row['course'] ?? ''),
+            'offer_code' => trim($row['offer_code'] ?? ''),
         ];
     }
     public function model(array $row)
@@ -41,6 +47,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             'email' => $row['email'],
             'semester' => $row['semester'],
             'course' => $row['course'],
+            'offer_code' => $row['offer_code'],
         ]);
         $student->save();
 
@@ -51,8 +58,8 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             'password' => Hash::make('password123'),
         ]);
 
-        // Update student with account_id (same as student_id)
-        $student->update(['account_id' => $student->student_id]);
+        // Store the student for later enrollment processing
+        $this->importedStudents[] = $student;
 
         if ($this->offeringId) {
             $this->importedStudentIds[] = $row['student_id'];
@@ -72,6 +79,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             '*.email' => 'nullable|email|unique:students,email|unique:student_accounts,email',
             '*.semester' => 'required|string|max:50',
             '*.course' => 'required|string|max:255',
+            '*.offer_code' => 'nullable|string|max:20|exists:offerings,offer_code',
         ];
     }
     public function prepareForValidation($data, $index)
@@ -95,6 +103,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             '*.email.unique' => 'Email :input already exists in the system on row :index.',
             '*.semester.required' => 'Semester is required on row :index.',
             '*.course.required' => 'Course is required on row :index.',
+            '*.offer_code.exists' => 'Offer code :input does not exist in the system on row :index.',
         ];
     }
     public function batchSize(): int
@@ -111,8 +120,38 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
     }
     public function afterImport()
     {
-        if ($this->offeringId && !empty($this->importedStudentIds)) {
-            try {
+        try {
+            // Process automatic enrollment based on offer_code
+            if (!empty($this->importedStudents)) {
+                $enrollmentResults = $this->enrollmentService->enrollStudentsByOfferCode(collect($this->importedStudents));
+                $stats = $this->enrollmentService->getEnrollmentStats($enrollmentResults);
+                
+                Log::info("Student import enrollment results:", $stats);
+                
+                // Log successful enrollments
+                if (!empty($enrollmentResults['enrolled'])) {
+                    foreach ($enrollmentResults['enrolled'] as $result) {
+                        Log::info("Student {$result['student']->student_id} enrolled in offering {$result['offering']->subject_code}");
+                    }
+                }
+                
+                // Log failed enrollments
+                if (!empty($enrollmentResults['failed'])) {
+                    foreach ($enrollmentResults['failed'] as $result) {
+                        Log::warning("Failed to enroll student {$result['student']->student_id}: {$result['reason']}");
+                    }
+                }
+                
+                // Log offerings not found
+                if (!empty($enrollmentResults['not_found'])) {
+                    foreach ($enrollmentResults['not_found'] as $result) {
+                        Log::warning("Offering not found for student {$result['student']->student_id} with offer code: {$result['offer_code']}");
+                    }
+                }
+            }
+            
+            // Legacy support for offeringId-based enrollment
+            if ($this->offeringId && !empty($this->importedStudentIds)) {
                 $offering = \App\Models\Offering::find($this->offeringId);
                 if ($offering) {
                     $studentsToEnroll = \App\Models\Student::whereIn('student_id', $this->importedStudentIds)->get();
@@ -120,14 +159,12 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
                         foreach ($studentsToEnroll as $student) {
                             $student->enrollInOffering($offering);
                         }
-                        Log::info("Automatically enrolled {$studentsToEnroll->count()} students in offering {$offering->subject_code}");
-                        Log::info("Enrolled student IDs: " . implode(', ', $this->importedStudentIds));
+                        Log::info("Legacy enrollment: Automatically enrolled {$studentsToEnroll->count()} students in offering {$offering->subject_code}");
                     }
                 }
-            } catch (\Exception $e) {
-                Log::error('Error auto-enrolling students: ' . $e->getMessage());
-                Log::error('Student IDs that failed to enroll: ' . implode(', ', $this->importedStudentIds));
             }
+        } catch (\Exception $e) {
+            Log::error('Error processing student enrollments: ' . $e->getMessage());
         }
     }
     public function registerEvents(): array

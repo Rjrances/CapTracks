@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Add account_id foreign key
-            $table->foreignId('account_id')->nullable()->after('id')->constrained()->onDelete('cascade');
+            // Add faculty_id column if it doesn't exist
+            if (!Schema::hasColumn('users', 'faculty_id')) {
+                $table->string('faculty_id', 20)->unique()->after('id');
+            }
             
             // Remove password fields
             $table->dropColumn(['password', 'must_change_password']);
@@ -38,9 +40,8 @@ return new class extends Migration
             // Add back school_id
             $table->string('school_id')->nullable()->after('email');
             
-            // Remove account_id
-            $table->dropForeign(['account_id']);
-            $table->dropColumn('account_id');
+            // Remove faculty_id
+            $table->dropColumn('faculty_id');
         });
     }
 };

@@ -1,6 +1,6 @@
-student_id,name,email,semester,course
-2024000007,Ana Dela Cruz,ana.dela.cruz@university.edu,1,Bachelor of Science in Computer Science
-2024000008,Mark Santos,mark.santos@university.edu,1,Bachelor of Science in Information Technology
-2024000009,Liza Bautista,liza.bautista@university.edu,1,Bachelor of Science in Software Engineering
-2024000010,Ramon Garcia,ramon.garcia@university.edu,1,Bachelor of Science in Data Science
-2024000011,Ella Hernandez,ella.hernandez@university.edu,1,Bachelor of Science in Computer Science
+student_id,name,email,semester,course,offer_code
+2024000001,Alexandra Martinez,alexandra.martinez@student.university.edu,2024-1,BS Computer Science,11000
+2024000002,David Thompson,david.thompson@student.university.edu,2024-1,BS Computer Science,11000
+2024000003,Emily Rodriguez,emily.rodriguez@student.university.edu,2024-1,BS Computer Science,11001
+2024000004,James Wilson,james.wilson@student.university.edu,2024-1,BS Computer Science,11001
+2024000005,Sophia Kim,sophia.kim@student.university.edu,2024-1,BS Computer Science,11002

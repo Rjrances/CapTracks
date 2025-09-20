@@ -8,7 +8,14 @@
                     <h2 class="mb-0">
                         <i class="fas fa-users me-2"></i>Student Management
                     </h2>
-                    <p class="text-muted mb-0">View and manage all students in the system</p>
+                    <p class="text-muted mb-0">
+                        View and manage students for the active term
+                        @if($activeTerm)
+                            <span class="badge bg-primary ms-2">{{ $activeTerm->school_year }} - {{ $activeTerm->semester }}</span>
+                        @else
+                            <span class="badge bg-warning ms-2">No Active Term</span>
+                        @endif
+                    </p>
                 </div>
                                  <div class="d-flex gap-2">
                      <a href="{{ route('chairperson.upload-form') }}" class="btn btn-success">
@@ -25,30 +32,19 @@
             <div class="card mb-4">
                 <div class="card-body">
                     <form method="GET" action="{{ route('chairperson.students.index') }}" class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="search" class="form-label">Search Students</label>
                             <input type="text" class="form-control" id="search" name="search" 
                                    value="{{ request('search') }}" 
                                    placeholder="Search by name, ID, email, or course...">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label for="course" class="form-label">Course</label>
                             <select class="form-select" id="course" name="course">
                                 <option value="">All Courses</option>
                                 @foreach($courses as $course)
                                     <option value="{{ $course }}" {{ request('course') == $course ? 'selected' : '' }}>
                                         {{ $course }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label for="semester" class="form-label">Semester</label>
-                            <select class="form-select" id="semester" name="semester">
-                                <option value="">All Semesters</option>
-                                @foreach($semesters as $semester)
-                                    <option value="{{ $semester }}" {{ request('semester') == $semester ? 'selected' : '' }}>
-                                        {{ $semester }}
                                     </option>
                                 @endforeach
                             </select>
@@ -61,17 +57,17 @@
                                 </button>
                             </div>
                         </div>
-                                                 <div class="col-md-2">
-                             <label class="form-label">&nbsp;</label>
-                             <div class="d-grid">
-                                 <a href="{{ route('chairperson.students.index') }}" 
-                                    class="btn btn-outline-secondary {{ !request('search') && !request('course') && !request('semester') ? 'd-none' : '' }}">
-                                     <i class="fas fa-times me-2"></i>Clear
-                                 </a>
-                             </div>
-                         </div>
+                        <div class="col-md-1">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <a href="{{ route('chairperson.students.index') }}" 
+                                   class="btn btn-outline-secondary {{ !request('search') && !request('course') ? 'd-none' : '' }}">
+                                    <i class="fas fa-times me-2"></i>Clear
+                                </a>
+                            </div>
+                        </div>
                     </form>
-                    @if(request('search') || request('course') || request('semester'))
+                    @if(request('search') || request('course'))
                         <div class="mt-3">
                             <small class="text-muted">
                                 Showing {{ $students->total() }} students
@@ -81,8 +77,8 @@
                                 @if(request('course'))
                                     in {{ request('course') }}
                                 @endif
-                                @if(request('semester'))
-                                    in {{ request('semester') }}
+                                @if($activeTerm)
+                                    for {{ $activeTerm->school_year }} - {{ $activeTerm->semester }}
                                 @endif
                             </small>
                         </div>
@@ -162,17 +158,6 @@
                                             @endif
                                         </a>
                                     </th>
-                                    <th>
-                                        <a href="{{ route('chairperson.students.index', array_merge(request()->query(), ['sort_by' => 'semester', 'sort_order' => $sortBy === 'semester' && $sortOrder === 'asc' ? 'desc' : 'asc'])) }}" 
-                                           class="text-white text-decoration-none d-flex align-items-center justify-content-between">
-                                            Semester
-                                            @if($sortBy === 'semester')
-                                                <i class="fas fa-sort-{{ $sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
-                                            @else
-                                                <i class="fas fa-sort ms-1 text-muted"></i>
-                                            @endif
-                                        </a>
-                                    </th>
                                     <th>Enrolled Offerings</th>
                                     <th>Group Status</th>
                                     <th>Actions</th>
@@ -200,19 +185,12 @@
                                         <td>
                                             <span class="badge bg-primary">{{ $student->course }}</span>
                                         </td>
-                                        <td>
-                                            <span class="badge bg-info">{{ $student->semester }}</span>
-                                        </td>
                                                                                  <td>
                                              @if($student->offerings->count() > 0)
                                                  @php
                                                      $offering = $student->offerings->first();
                                                  @endphp
-                                                 <div class="d-flex flex-column gap-1">
-                                                     <span class="badge bg-success">{{ $offering->subject_code }}</span>
-                                                     <small class="text-muted">{{ $offering->subject_title }}</small>
-                                                     <small class="text-muted">{{ $offering->academicTerm->name ?? 'N/A' }}</small>
-                                                 </div>
+                                                 <span class="badge bg-success">{{ $offering->subject_title }}</span>
                                              @else
                                                  <span class="badge bg-warning">Not Enrolled</span>
                                              @endif
@@ -243,14 +221,16 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="9" class="text-center py-4">
+                                        <td colspan="8" class="text-center py-4">
                                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
                                             <h6 class="text-muted">No students found</h6>
                                             <p class="text-muted small">
-                                                @if(request('search') || request('course') || request('semester'))
+                                                @if(request('search') || request('course'))
                                                     Try adjusting your search criteria
+                                                @elseif($activeTerm)
+                                                    No students enrolled for {{ $activeTerm->school_year }} - {{ $activeTerm->semester }}
                                                 @else
-                                                    No students have been imported yet
+                                                    No active term selected or no students have been imported yet
                                                 @endif
                                             </p>
                                         </td>

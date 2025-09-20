@@ -28,7 +28,7 @@ class ProjectSubmissionController extends Controller
     private function adviserIndex($user)
     {
         $adviserGroups = Group::with(['members', 'members.submissions'])
-            ->where('adviser_id', $user->id)
+            ->where('faculty_id', $user->faculty_id)
             ->get();
         $panelGroups = Group::with(['members', 'members.submissions'])
             ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
@@ -49,7 +49,7 @@ class ProjectSubmissionController extends Controller
                 return $member->submissions ?? collect();
             });
             $userRole = 'adviser';
-            if ($group->adviser_id !== $user->id) {
+            if ($group->faculty_id !== $user->faculty_id) {
                 $userRole = 'panel';
             }
             return [$group->id => [
@@ -117,7 +117,7 @@ class ProjectSubmissionController extends Controller
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->isTeacher()) {
-                $hasAccess = Group::where('adviser_id', $user->id)
+                $hasAccess = Group::where('faculty_id', $user->faculty_id)
                     ->whereHas('members', function($query) use ($submission) {
                         $query->where('students.student_id', $submission->student_id);
                     })->exists();

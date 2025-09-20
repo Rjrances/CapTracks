@@ -55,19 +55,11 @@
                         <div class="col-md-6">
                             <h5>Enrollment Statistics</h5>
                             <div class="row text-center">
-                                <div class="col-6">
+                                <div class="col-12">
                                     <div class="card bg-primary text-white">
                                         <div class="card-body">
                                             <h3>{{ $offering->students->count() }}</h3>
-                                            <small>Enrolled Students</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="card bg-info text-white">
-                                        <div class="card-body">
-                                            <h3>{{ \App\Models\Student::whereDoesntHave('offerings')->count() }}</h3>
-                                            <small>Available Students</small>
+                                            <small>Total Students</small>
                                         </div>
                                     </div>
                                 </div>
@@ -89,7 +81,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-users me-2"></i>Enrolled Students
+                        <i class="fas fa-users me-2"></i>Total Students
                         <span class="badge bg-primary ms-2">{{ $offering->students->count() }}</span>
                     </h5>
                 </div>

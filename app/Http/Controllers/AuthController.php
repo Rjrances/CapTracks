@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Student;
-use App\Models\FacultyAccount;
+use App\Models\UserAccount;
 use App\Models\StudentAccount;
 use App\Models\Role;
 class AuthController extends Controller
@@ -22,15 +22,15 @@ class AuthController extends Controller
         ]);
         
         // Try to find faculty account by faculty_id
-        $facultyAccount = FacultyAccount::where('faculty_id', $request->school_id)->first();
+        $userAccount = UserAccount::where('faculty_id', $request->school_id)->first();
         
-        if ($facultyAccount) {
-            $user = $facultyAccount->user;
+        if ($userAccount) {
+            $user = $userAccount->user;
             if ($user) {
                 if (empty($request->password)) {
                     return back()->withErrors(['password' => 'Password is required.']);
                 }
-                if (!Hash::check($request->password, $facultyAccount->password)) {
+                if (!Hash::check($request->password, $userAccount->password)) {
                     return back()->withErrors(['password' => 'Incorrect password.']);
                 }
                 Auth::login($user);
@@ -95,7 +95,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:faculty_accounts|unique:student_accounts',
+            'email' => 'required|email|unique:user_accounts|unique:student_accounts',
             'password' => 'required|min:8|confirmed',
             'role' => 'nullable|in:student,coordinator,adviser,panelist,chairperson,teacher',
         ]);
@@ -110,7 +110,6 @@ class AuthController extends Controller
                 'student_id' => now()->timestamp, // Generate unique student ID
                 'name' => $request->name,
                 'email' => $request->email,
-                'account_id' => now()->timestamp, // Set account_id same as student_id
             ]);
             
             // Create student account
@@ -127,15 +126,15 @@ class AuthController extends Controller
                 'birthday' => now()->subYears(25),
                 'department' => 'N/A',
                 'role' => $role,
-                'account_id' => '100' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT), // Generate faculty_id
+                'faculty_id' => '100' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT), // Generate faculty_id
             ]);
             
             // Create faculty account
-            FacultyAccount::create([
-                'faculty_id' => $user->account_id,
-                'user_id' => $user->id,
+            UserAccount::create([
+                'faculty_id' => $user->faculty_id,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'must_change_password' => false,
             ]);
         }
         
@@ -170,7 +169,7 @@ class AuthController extends Controller
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         $user = Auth::user();
-        $account = FacultyAccount::where('user_id', $user->id)->first();
+        $account = UserAccount::where('faculty_id', $user->faculty_id)->first();
         if ($account) {
             $account->password = Hash::make($request->password);
             $account->save();

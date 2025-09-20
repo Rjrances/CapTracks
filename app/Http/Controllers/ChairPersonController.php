@@ -43,23 +43,23 @@ class ChairpersonController extends Controller
     {
         $request->validate([
             'offer_code' => 'required|string|unique:offerings,offer_code',
-            'subject_title' => 'required|in:Capstone 1,Capstone 2,Thesis 1,Thesis 2',
-            'subject_code' => 'required|in:CT1,CT2,T1,T2',
-            'teacher_id' => 'required|exists:users,id',
+            'subject_title' => 'required|in:Capstone Project I,Capstone Project II,Thesis I,Thesis II',
+            'subject_code' => 'required|in:CS-CAP-401,CS-CAP-402,CS-THS-301,CS-THS-302',
+            'faculty_id' => 'required|exists:users,faculty_id',
             'academic_term_id' => 'required|exists:academic_terms,id',
         ], [
-            'offer_code.required' => 'Offer code is required (e.g., 1101, 1102, 1103, 1104).',
+            'offer_code.required' => 'Offer code is required (e.g., 11000, 11001, 11002, 11003, 11004).',
             'offer_code.unique' => 'This offer code is already in use.',
             'subject_title.required' => 'Please select a subject title from the dropdown.',
             'subject_title.in' => 'Please select a valid subject title from the dropdown.',
-            'subject_code.required' => 'Subject code is required (CT1, CT2, T1, T2).',
-            'subject_code.in' => 'Subject code must be one of: CT1, CT2, T1, T2.',
-            'teacher_id.required' => 'Please select a teacher for this offering.',
-            'teacher_id.exists' => 'Selected teacher does not exist.',
+            'subject_code.required' => 'Subject code is required (CS-CAP-401, CS-CAP-402, CS-THS-301, CS-THS-302).',
+            'subject_code.in' => 'Subject code must be one of: CS-CAP-401, CS-CAP-402, CS-THS-301, CS-THS-302.',
+            'faculty_id.required' => 'Please select a teacher for this offering.',
+            'faculty_id.exists' => 'Selected teacher does not exist.',
             'academic_term_id.required' => 'Please select an academic term.',
             'academic_term_id.exists' => 'Selected academic term does not exist.',
         ]);
-        $data = $request->only('offer_code', 'subject_title', 'subject_code', 'teacher_id', 'academic_term_id');
+        $data = $request->only('offer_code', 'subject_title', 'subject_code', 'faculty_id', 'academic_term_id');
         if (empty($data['academic_term_id'])) {
             $activeTerm = $this->getActiveTerm();
             if ($activeTerm) {
@@ -67,7 +67,7 @@ class ChairpersonController extends Controller
             }
         }
         $offering = Offering::create($data);
-        $teacher = User::find($data['teacher_id']);
+        $teacher = User::where('faculty_id', $data['faculty_id'])->first();
         if ($teacher && !$teacher->hasRole('coordinator')) {
             $teacher->role = 'coordinator';
             $teacher->save();
@@ -77,7 +77,7 @@ class ChairpersonController extends Controller
     }
     public function editOffering($id)
     {
-        $offering = Offering::with(['teacher', 'academicTerm', 'students'])->findOrFail($id);
+        $offering = Offering::with(['teacher', 'academicTerm', 'students'])->where('id', $id)->firstOrFail();
         $teachers = User::whereIn('role', ['teacher', 'adviser', 'panelist'])->get();
         $academicTerms = AcademicTerm::notArchived()->get();
         return view('chairperson.offerings.edit', compact('offering', 'teachers', 'academicTerms'));
@@ -86,36 +86,36 @@ class ChairpersonController extends Controller
     {
         $request->validate([
             'offer_code' => 'required|string|unique:offerings,offer_code,' . $id,
-            'subject_title' => 'required|in:Capstone 1,Capstone 2,Thesis 1,Thesis 2',
-            'subject_code' => 'required|in:CT1,CT2,T1,T2',
-            'teacher_id' => 'required|exists:users,id',
+            'subject_title' => 'required|in:Capstone Project I,Capstone Project II,Thesis I,Thesis II',
+            'subject_code' => 'required|in:CS-CAP-401,CS-CAP-402,CS-THS-301,CS-THS-302',
+            'faculty_id' => 'required|exists:users,faculty_id',
             'academic_term_id' => 'required|exists:academic_terms,id',
         ], [
-            'offer_code.required' => 'Offer code is required (e.g., 1101, 1102, 1103, 1104).',
+            'offer_code.required' => 'Offer code is required (e.g., 11000, 11001, 11002, 11003, 11004).',
             'offer_code.unique' => 'This offer code is already in use.',
             'subject_title.required' => 'Please select a subject title from the dropdown.',
             'subject_title.in' => 'Please select a valid subject title from the dropdown.',
-            'subject_code.required' => 'Subject code is required (CT1, CT2, T1, T2).',
-            'subject_code.in' => 'Subject code must be one of: CT1, CT2, T1, T2.',
-            'teacher_id.required' => 'Please select a teacher for this offering.',
-            'teacher_id.exists' => 'Selected teacher does not exist.',
+            'subject_code.required' => 'Subject code is required (CS-CAP-401, CS-CAP-402, CS-THS-301, CS-THS-302).',
+            'subject_code.in' => 'Subject code must be one of: CS-CAP-401, CS-CAP-402, CS-THS-301, CS-THS-302.',
+            'faculty_id.required' => 'Please select a teacher for this offering.',
+            'faculty_id.exists' => 'Selected teacher does not exist.',
             'academic_term_id.required' => 'Please select an academic term.',
             'academic_term_id.exists' => 'Selected academic term does not exist.',
         ]);
-        $offering = Offering::findOrFail($id);
-        $oldTeacherId = $offering->teacher_id;
-        $offering->update($request->only('offer_code', 'subject_title', 'subject_code', 'teacher_id', 'academic_term_id'));
-        $newTeacherId = $request->input('teacher_id');
+        $offering = Offering::where('id', $id)->firstOrFail();
+        $oldTeacherId = $offering->faculty_id;
+        $offering->update($request->only('offer_code', 'subject_title', 'subject_code', 'faculty_id', 'academic_term_id'));
+        $newTeacherId = $request->input('faculty_id');
         if ($newTeacherId != $oldTeacherId) {
             if ($oldTeacherId) {
-                $oldTeacher = User::find($oldTeacherId);
+                $oldTeacher = User::where('faculty_id', $oldTeacherId)->first();
                 if ($oldTeacher && $oldTeacher->offerings()->count() === 0) {
                     $oldTeacher->role = 'teacher';
                     $oldTeacher->save();
                     \Log::info("Removed coordinator role from teacher {$oldTeacher->name} - no more offerings");
                 }
             }
-            $newTeacher = User::find($newTeacherId);
+            $newTeacher = User::where('faculty_id', $newTeacherId)->first();
             if ($newTeacher && !$newTeacher->hasRole('coordinator')) {
                 $newTeacher->role = 'coordinator';
                 $newTeacher->save();
@@ -126,7 +126,7 @@ class ChairpersonController extends Controller
     }
     public function deleteOffering($id)
     {
-        $offering = Offering::with('teacher')->findOrFail($id);
+        $offering = Offering::with('teacher')->where('id', $id)->firstOrFail();
         $teacher = $offering->teacher;
         $offeringCode = $offering->subject_code;
         $offering->delete();
@@ -162,7 +162,7 @@ class ChairpersonController extends Controller
     public function forceUpdateUserRole($userId)
     {
         try {
-            $user = User::findOrFail($userId);
+            $user = User::where('faculty_id', $userId)->firstOrFail();
             $oldRole = $user->role;
             $roleChanged = $user->updateRoleBasedOnOfferings();
             if ($roleChanged) {
@@ -212,12 +212,12 @@ class ChairpersonController extends Controller
     }
     public function showOffering($id)
     {
-        $offering = Offering::with(['teacher', 'academicTerm', 'students'])->findOrFail($id);
+        $offering = Offering::with(['teacher', 'academicTerm', 'students'])->where('id', $id)->firstOrFail();
         return view('chairperson.offerings.show', compact('offering'));
     }
     public function removeStudentFromOffering(Request $request, $offeringId, $studentId)
     {
-        $offering = Offering::findOrFail($offeringId);
+        $offering = Offering::where('id', $offeringId)->firstOrFail();
         $offering->students()->detach($studentId);
         return redirect()->route('chairperson.offerings.show', $offeringId)
             ->with('success', 'Student removed from offering successfully.');
@@ -250,8 +250,8 @@ class ChairpersonController extends Controller
     {
         $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email|unique:faculty_accounts,email',
-            'faculty_id' => 'required|string|max:20|unique:users,account_id|unique:faculty_accounts,faculty_id',
+            'email'    => 'required|email|unique:users,email|unique:user_accounts,email',
+            'faculty_id' => 'required|string|max:20|unique:users,faculty_id|unique:user_accounts,faculty_id',
             'role'     => 'required|in:adviser,panelist',
             'password' => 'required|string|min:8',
         ]);
@@ -264,11 +264,11 @@ class ChairpersonController extends Controller
             'birthday'             => now()->subYears(30),
             'department'           => 'N/A',
             'role'                 => $request->role,
-            'account_id'           => $facultyId,
+            'faculty_id'           => $facultyId,
         ]);
 
         // Create faculty account
-        \App\Models\FacultyAccount::create([
+        \App\Models\UserAccount::create([
             'faculty_id' => $facultyId,
             'user_id' => $user->id,
             'email' => $request->email,
@@ -279,12 +279,12 @@ class ChairpersonController extends Controller
     }
     public function editTeacher($id)
     {
-        $teacher = User::findOrFail($id);
+        $teacher = User::where('faculty_id', $id)->firstOrFail();
         return view('chairperson.teachers.edit', compact('teacher'));
     }
     public function updateTeacher(Request $request, $id)
     {
-        $teacher = User::findOrFail($id);
+        $teacher = User::where('faculty_id', $id)->firstOrFail();
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email,' . $teacher->id,
@@ -302,7 +302,20 @@ class ChairpersonController extends Controller
     }
     public function indexStudents(Request $request)
     {
+        $activeTerm = $this->getActiveTerm();
+        
+        // Filter students by active term through their offerings
         $query = Student::query();
+        
+        if ($activeTerm) {
+            // Show students who are either enrolled in active term offerings OR have no enrollments yet
+            $query->where(function($q) use ($activeTerm) {
+                $q->whereHas('offerings', function($subQ) use ($activeTerm) {
+                    $subQ->where('academic_term_id', $activeTerm->id);
+                })->orWhereDoesntHave('offerings');
+            });
+        }
+        
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function($q) use ($search) {
@@ -315,12 +328,10 @@ class ChairpersonController extends Controller
         if ($request->filled('course')) {
             $query->where('course', $request->get('course'));
         }
-        if ($request->filled('semester')) {
-            $query->where('semester', $request->get('semester'));
-        }
+        
         $sortBy = $request->get('sort_by', 'student_id');
         $sortOrder = $request->get('sort_order', 'asc');
-        $allowedSortFields = ['student_id', 'name', 'email', 'course', 'semester'];
+        $allowedSortFields = ['student_id', 'name', 'email', 'course'];
         if (!in_array($sortBy, $allowedSortFields)) {
             $sortBy = 'student_id';
         }
@@ -328,15 +339,29 @@ class ChairpersonController extends Controller
             $sortOrder = 'asc';
         }
         $query->orderBy($sortBy, $sortOrder);
+        
         $courses = Student::distinct()->pluck('course')->sort();
-        $semesters = Student::distinct()->pluck('semester')->sort();
         $students = $query->with(['offerings', 'groups'])->paginate(20);
         $students->appends($request->all());
-        return view('chairperson.students.index', compact('students', 'courses', 'semesters', 'sortBy', 'sortOrder'));
+        
+        return view('chairperson.students.index', compact('students', 'courses', 'activeTerm', 'sortBy', 'sortOrder'));
     }
     public function exportStudents(Request $request)
     {
+        $activeTerm = $this->getActiveTerm();
+        
+        // Filter students by active term through their offerings
         $query = Student::query();
+        
+        if ($activeTerm) {
+            // Show students who are either enrolled in active term offerings OR have no enrollments yet
+            $query->where(function($q) use ($activeTerm) {
+                $q->whereHas('offerings', function($subQ) use ($activeTerm) {
+                    $subQ->where('academic_term_id', $activeTerm->id);
+                })->orWhereDoesntHave('offerings');
+            });
+        }
+        
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function($q) use ($search) {
@@ -349,12 +374,10 @@ class ChairpersonController extends Controller
         if ($request->filled('course')) {
             $query->where('course', $request->get('course'));
         }
-        if ($request->filled('semester')) {
-            $query->where('semester', $request->get('semester'));
-        }
+        
         $sortBy = $request->get('sort_by', 'student_id');
         $sortOrder = $request->get('sort_order', 'asc');
-        $allowedSortFields = ['student_id', 'name', 'email', 'course', 'semester'];
+        $allowedSortFields = ['student_id', 'name', 'email', 'course'];
         if (!in_array($sortBy, $allowedSortFields)) {
             $sortBy = 'student_id';
         }
@@ -370,7 +393,7 @@ class ChairpersonController extends Controller
         ];
         $callback = function() use ($students) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Student ID', 'Name', 'Email', 'Course', 'Semester', 'Enrolled Offerings', 'Group Status']);
+            fputcsv($file, ['Student ID', 'Name', 'Email', 'Course', 'Enrolled Offerings', 'Group Status']);
             foreach ($students as $student) {
                 $enrolledOfferings = $student->offerings->pluck('subject_title')->implode(', ');
                 $groupStatus = $student->groups->count() > 0 ? 'In Group: ' . $student->groups->first()->name : 'No Group';
@@ -379,7 +402,6 @@ class ChairpersonController extends Controller
                     $student->name,
                     $student->email,
                     $student->course,
-                    $student->semester,
                     $enrolledOfferings ?: 'Not Enrolled',
                     $groupStatus
                 ]);
@@ -433,7 +455,7 @@ class ChairpersonController extends Controller
     }
     public function showUnenrolledStudents($offeringId)
     {
-        $offering = Offering::findOrFail($offeringId);
+        $offering = Offering::where('id', $offeringId)->firstOrFail();
         $unenrolledStudents = Student::whereDoesntHave('offerings')
             ->orderBy('name')
             ->get();
@@ -444,7 +466,7 @@ class ChairpersonController extends Controller
         $request->validate([
             'student_id' => 'required|exists:students,student_id',
         ]);
-        $offering = Offering::findOrFail($offeringId);
+        $offering = Offering::where('id', $offeringId)->firstOrFail();
         $student = Student::findOrFail($request->student_id);
         $student->enrollInOffering($offering);
         return redirect()->route('chairperson.offerings.show', $offeringId)
@@ -461,7 +483,7 @@ class ChairpersonController extends Controller
                 return redirect()->route('chairperson.offerings.show', $offeringId)
                     ->with('error', 'No students selected for enrollment.');
             }
-            $offering = Offering::findOrFail($offeringId);
+            $offering = Offering::where('id', $offeringId)->firstOrFail();
             $enrolledCount = 0;
             $enrolledNames = [];
             $errors = [];
@@ -650,8 +672,8 @@ class ChairpersonController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email|unique:faculty_accounts,email',
-            'faculty_id' => 'required|string|max:20|unique:users,account_id|unique:faculty_accounts,faculty_id',
+            'email' => 'required|email|unique:users,email|unique:user_accounts,email',
+            'faculty_id' => 'required|string|max:20|unique:users,faculty_id|unique:user_accounts,faculty_id',
             'department' => 'nullable|string|max:255',
         ]);
         // Use faculty_id from form input
@@ -662,11 +684,11 @@ class ChairpersonController extends Controller
             'email' => $request->email,
             'department' => $request->department,
             'role' => 'teacher',
-            'account_id' => $facultyId,
+            'faculty_id' => $facultyId,
         ]);
 
         // Create faculty account
-        \App\Models\FacultyAccount::create([
+        \App\Models\UserAccount::create([
             'faculty_id' => $facultyId,
             'user_id' => $user->id,
             'email' => $request->email,
@@ -677,15 +699,15 @@ class ChairpersonController extends Controller
     }
     public function editFaculty($id)
     {
-        $teacher = User::findOrFail($id);
+        $teacher = User::where('faculty_id', $id)->firstOrFail();
         return view('chairperson.teachers.edit', compact('teacher'));
     }
     public function updateFaculty(Request $request, $id)
     {
-        $faculty = User::findOrFail($id);
+        $faculty = User::where('faculty_id', $id)->firstOrFail();
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email|unique:users,email,' . $faculty->id,
             'department' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8',
         ]);
@@ -703,7 +725,7 @@ class ChairpersonController extends Controller
     }
     public function deleteFaculty($id)
     {
-        $faculty = User::findOrFail($id);
+        $faculty = User::where('faculty_id', $id)->firstOrFail();
         $faculty->delete();
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member deleted successfully.');
     }

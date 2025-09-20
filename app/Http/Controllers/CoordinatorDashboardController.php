@@ -22,7 +22,7 @@ class CoordinatorDashboardController extends Controller
             $query->whereIn('name', ['adviser', 'panelist']);
         })->count();
         $submissionCount = ProjectSubmission::count();
-        $groupsWithAdviser = Group::whereNotNull('adviser_id')->count();
+        $groupsWithAdviser = Group::whereNotNull('faculty_id')->count();
         $groupsWithoutAdviser = $groupCount - $groupsWithAdviser;
         $totalGroupMembers = Group::withCount('members')->get()->sum('members_count');
         $pendingSubmissions = ProjectSubmission::where('status', 'pending')->count();

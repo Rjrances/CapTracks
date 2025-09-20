@@ -19,7 +19,7 @@ class GroupSeeder extends Seeder
     }
 
     /**
-     * Create test groups with students and advisers
+     * Create capstone project groups with students and advisers
      */
     private function createTestGroups()
     {
@@ -39,51 +39,69 @@ class GroupSeeder extends Seeder
             return;
         }
 
-        // Group 1: Web Development Team
+        // Group 1: Smart Campus Management System
         $group1 = Group::create([
-            'name' => 'Web Development Team',
-            'description' => 'Building a modern web application for student management',
-            'adviser_id' => $adviser->id,
+            'name' => 'Smart Campus Management System',
+            'description' => 'Developing an integrated web-based platform for campus resource management and student services',
+            'faculty_id' => $adviser->faculty_id,
             'academic_term_id' => $activeTerm->id
         ]);
 
         // Add students to group 1
-        $group1->members()->attach([
-            $students[0]->id => ['role' => 'leader'],
-            $students[1]->id => ['role' => 'member']
-        ]);
+        try {
+            $group1->members()->attach($students[0]->student_id, ['role' => 'leader']);
+        } catch (\Exception $e) {
+            // Ignore duplicate entry errors
+        }
+        try {
+            $group1->members()->attach($students[1]->student_id, ['role' => 'member']);
+        } catch (\Exception $e) {
+            // Ignore duplicate entry errors
+        }
 
-        // Group 2: Mobile App Team
+        // Group 2: Mobile Learning Assistant
         $group2 = Group::create([
-            'name' => 'Mobile App Team',
-            'description' => 'Developing a mobile application for campus navigation',
-            'adviser_id' => $adviser->id,
+            'name' => 'Mobile Learning Assistant',
+            'description' => 'Creating an AI-powered mobile application for personalized learning and academic support',
+            'faculty_id' => $adviser->faculty_id,
             'academic_term_id' => $activeTerm->id
         ]);
 
         // Add students to group 2
-        $group2->members()->attach([
-            $students[2]->id => ['role' => 'leader'],
-            $students[3]->id => ['role' => 'member']
-        ]);
+        try {
+            $group2->members()->attach($students[2]->student_id, ['role' => 'leader']);
+        } catch (\Exception $e) {
+            // Ignore duplicate entry errors
+        }
+        try {
+            $group2->members()->attach($students[3]->student_id, ['role' => 'member']);
+        } catch (\Exception $e) {
+            // Ignore duplicate entry errors
+        }
 
-        // Group 3: AI Research Team
+        // Group 3: Intelligent Data Analytics Platform
         $group3 = Group::create([
-            'name' => 'AI Research Team',
-            'description' => 'Research project on machine learning applications',
-            'adviser_id' => $adviser->id,
+            'name' => 'Intelligent Data Analytics Platform',
+            'description' => 'Building a comprehensive data visualization and analytics platform for educational insights',
+            'faculty_id' => $adviser->faculty_id,
             'academic_term_id' => $activeTerm->id
         ]);
 
         // Add students to group 3
-        $group3->members()->attach([
-            $students[4]->id => ['role' => 'leader'],
-            $students[5]->id => ['role' => 'member']
-        ]);
+        try {
+            $group3->members()->attach($students[4]->student_id, ['role' => 'leader']);
+        } catch (\Exception $e) {
+            // Ignore duplicate entry errors
+        }
+        try {
+            $group3->members()->attach($students[5]->student_id, ['role' => 'member']);
+        } catch (\Exception $e) {
+            // Ignore duplicate entry errors
+        }
 
-        echo "✅ Created 3 test groups with student assignments\n";
-        echo "   - Web Development Team\n";
-        echo "   - Mobile App Team\n";
-        echo "   - AI Research Team\n";
+        echo "✅ Created 3 capstone project groups with student assignments\n";
+        echo "   - Smart Campus Management System\n";
+        echo "   - Mobile Learning Assistant\n";
+        echo "   - Intelligent Data Analytics Platform\n";
     }
 }

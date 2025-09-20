@@ -12,6 +12,7 @@ class StudentAccount extends Authenticatable
         'student_id',
         'email',
         'password',
+        'must_change_password',
     ];
 
     protected $hidden = [
@@ -21,6 +22,7 @@ class StudentAccount extends Authenticatable
 
     protected $casts = [
         'password' => 'hashed',
+        'must_change_password' => 'boolean',
     ];
 
     // Relationships

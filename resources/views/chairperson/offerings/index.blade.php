@@ -58,7 +58,7 @@
                                     <th>Subject Code</th>
                                     <th>Teacher</th>
                                     <th>Academic Term</th>
-                                    <th>Enrolled Students</th>
+                                    <th>Total Students</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -83,7 +83,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge bg-success">{{ $offering->enrolled_students_count }} students</span>
+                                            <span class="badge bg-success">{{ $offering->students->count() }} students</span>
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">

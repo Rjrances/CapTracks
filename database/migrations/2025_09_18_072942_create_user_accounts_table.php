@@ -11,20 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        echo "Creating student_accounts table...\n";
-        
-        Schema::create('student_accounts', function (Blueprint $table) {
+        Schema::create('user_accounts', function (Blueprint $table) {
             $table->id();
-            $table->string('student_id', 20)->unique();
+            $table->string('faculty_id', 20);
             $table->string('email')->unique();
             $table->string('password');
+            $table->boolean('must_change_password')->default(false);
             $table->timestamps();
             
             // Foreign key constraint
-            $table->foreign('student_id')->references('student_id')->on('students')->onDelete('cascade');
+            $table->foreign('faculty_id')->references('faculty_id')->on('users')->onDelete('cascade');
         });
-        
-        echo "student_accounts table created successfully!\n";
     }
 
     /**
@@ -32,10 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        echo "Dropping student_accounts table...\n";
-        
-        Schema::dropIfExists('student_accounts');
-        
-        echo "student_accounts table dropped!\n";
+        Schema::dropIfExists('user_accounts');
     }
 };

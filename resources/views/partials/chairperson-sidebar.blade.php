@@ -74,17 +74,11 @@
         </ul>
     </nav>
     <div class="mt-auto p-3 border-top border-secondary">
-        <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
             <div class="small">
                 <div class="text-muted">{{ $user->name }}</div>
                 <div class="text-muted">Chairperson</div>
             </div>
-            <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                @csrf
-                <button class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </form>
         </div>
     </div>
 </div>

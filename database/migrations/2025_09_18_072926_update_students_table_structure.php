@@ -12,9 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('students', function (Blueprint $table) {
-            // Add account_id foreign key
-            $table->foreignId('account_id')->nullable()->after('id')->constrained()->onDelete('cascade');
-            
             // Remove password fields
             $table->dropColumn(['password', 'must_change_password']);
         });
@@ -29,10 +26,6 @@ return new class extends Migration
             // Add back password fields
             $table->string('password')->after('email');
             $table->boolean('must_change_password')->default(false)->after('password');
-            
-            // Remove account_id
-            $table->dropForeign(['account_id']);
-            $table->dropColumn('account_id');
         });
     }
 };

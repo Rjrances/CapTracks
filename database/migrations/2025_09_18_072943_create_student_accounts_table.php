@@ -11,21 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        echo "Creating faculty_accounts table...\n";
+        echo "Creating student_accounts table...\n";
         
-        Schema::create('faculty_accounts', function (Blueprint $table) {
+        Schema::create('student_accounts', function (Blueprint $table) {
             $table->id();
-            $table->string('faculty_id', 20)->unique();
-            $table->unsignedBigInteger('user_id');
+            $table->string('student_id', 20);
             $table->string('email')->unique();
             $table->string('password');
+            $table->boolean('must_change_password')->default(false);
             $table->timestamps();
             
             // Foreign key constraint
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('student_id')->references('student_id')->on('students')->onDelete('cascade');
         });
         
-        echo "faculty_accounts table created successfully!\n";
+        echo "student_accounts table created successfully!\n";
     }
 
     /**
@@ -33,10 +33,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        echo "Dropping faculty_accounts table...\n";
+        echo "Dropping student_accounts table...\n";
         
-        Schema::dropIfExists('faculty_accounts');
+        Schema::dropIfExists('student_accounts');
         
-        echo "faculty_accounts table dropped!\n";
+        echo "student_accounts table dropped!\n";
     }
 };

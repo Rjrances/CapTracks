@@ -1,6 +1,6 @@
 faculty_id,name,email,role,department
-10001,John Smith,john.smith@university.edu,teacher,Computer Science
-10002,Jane Doe,jane.doe@university.edu,adviser,Information Technology
-10003,Mike Johnson,mike.johnson@university.edu,panelist,Software Engineering
-10004,Sarah Wilson,sarah.wilson@university.edu,teacher,Data Science
-10005,David Brown,david.brown@university.edu,adviser,Computer Science
+10001,Dr. Maria Santos,maria.santos@university.edu,chairperson,Computer Science
+10002,Prof. John Rodriguez,john.rodriguez@university.edu,coordinator,Computer Science
+10003,Dr. Sarah Johnson,sarah.johnson@university.edu,adviser,Computer Science
+10004,Prof. Michael Chen,michael.chen@university.edu,teacher,Computer Science
+10005,Dr. Patricia Williams,patricia.williams@university.edu,adviser,Computer Science

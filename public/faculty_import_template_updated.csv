@@ -1,0 +1,13 @@
+faculty_id,name,email,role,department
+10001,Dr. Maria Santos,maria.santos@university.edu,chairperson,Computer Science
+10002,Prof. John Rodriguez,john.rodriguez@university.edu,coordinator,Computer Science
+10003,Dr. Sarah Johnson,sarah.johnson@university.edu,adviser,Computer Science
+10004,Prof. Michael Chen,michael.chen@university.edu,teacher,Computer Science
+10005,Dr. Patricia Williams,patricia.williams@university.edu,adviser,Computer Science
+10006,Prof. Robert Davis,robert.davis@university.edu,adviser,Computer Science
+10007,Dr. Lisa Anderson,lisa.anderson@university.edu,panelist,Computer Science
+10008,Prof. Jennifer Lee,jennifer.lee@university.edu,teacher,Computer Science
+10009,Dr. Christopher Brown,christopher.brown@university.edu,adviser,Computer Science
+10010,Prof. Amanda Taylor,amanda.taylor@university.edu,panelist,Computer Science
+10011,Dr. Kevin Martinez,kevin.martinez@university.edu,teacher,Computer Science
+10012,Prof. Rachel Green,rachel.green@university.edu,adviser,Computer Science

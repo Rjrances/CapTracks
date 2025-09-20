@@ -63,10 +63,10 @@
             <thead class="table-dark">
                 <tr>
                     <th>
-                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'account_id', 'direction' => request('sort') == 'account_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'faculty_id', 'direction' => request('sort') == 'faculty_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
                            class="text-white text-decoration-none">
                             ID Number
-                            @if(request('sort') == 'account_id')
+                            @if(request('sort') == 'faculty_id')
                                 @if(request('direction') == 'asc')
                                     <i class="fas fa-sort-up"></i>
                                 @else
@@ -143,7 +143,7 @@
             <tbody>
                 @foreach ($teachers as $teacher)
                     <tr>
-                        <td><strong>{{ $teacher->account_id }}</strong></td>
+                        <td><strong>{{ $teacher->faculty_id }}</strong></td>
                         <td>{{ $teacher->name }}</td>
                         <td>{{ $teacher->email }}</td>
                         <td>
@@ -159,17 +159,14 @@
                                 $badgeColor = $roleColors[$teacher->role] ?? 'secondary';
                             @endphp
                             <span class="badge bg-{{ $badgeColor }}">{{ ucfirst($teacher->role ?? 'N/A') }}</span>
-                            @if($teacher->effective_roles_string !== ucfirst($teacher->role))
-                                <br><small class="text-muted">Effective: {{ $teacher->effective_roles_string }}</small>
-                            @endif
                         </td>
                         <td>{{ $teacher->department ?? 'N/A' }}</td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <a href="{{ route('chairperson.teachers.edit', $teacher->id) }}" class="btn btn-primary">
+                                <a href="{{ route('chairperson.teachers.edit', $teacher->faculty_id) }}" class="btn btn-primary">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
-                                <form action="{{ route('chairperson.teachers.delete', $teacher->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this faculty member?');">
+                                <form action="{{ route('chairperson.teachers.delete', $teacher->faculty_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this faculty member?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger">

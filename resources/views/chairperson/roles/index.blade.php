@@ -2,160 +2,235 @@
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">System Roles</h2>
+        <h2 class="mb-0">
+            <i class="fas fa-users-cog me-2"></i>Role Management
+        </h2>
+        <div class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Manage user roles and permissions
+        </div>
     </div>
+    
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
+            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
-    <div class="card mb-4">
-        <div class="card-header">
+    
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <!-- Role Assignment Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-gradient-primary text-white">
             <h5 class="mb-0">
                 <i class="fas fa-user-edit me-2"></i>Assign Multiple Roles to Users
             </h5>
         </div>
-        <div class="card-body">
-            <form action="{{ route('chairperson.roles.update', 0) }}" method="POST" id="roleUpdateForm">
-                @csrf
-                @method('POST')
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>
-                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
-                                       class="text-decoration-none text-dark">
-                                        User
-                                        @if(request('sort') == 'name')
-                                            @if(request('direction') == 'asc')
-                                                <i class="fas fa-sort-up"></i>
-                                            @else
-                                                <i class="fas fa-sort-down"></i>
-                                            @endif
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0">
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                   class="text-decoration-none text-dark d-flex align-items-center">
+                                    <i class="fas fa-user me-2"></i>User
+                                    @if(request('sort') == 'name')
+                                        @if(request('direction') == 'asc')
+                                            <i class="fas fa-sort-up ms-1"></i>
                                         @else
-                                            <i class="fas fa-sort text-muted"></i>
+                                            <i class="fas fa-sort-down ms-1"></i>
                                         @endif
-                                    </a>
-                                </th>
-                                <th>
-                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'email', 'direction' => request('sort') == 'email' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
-                                       class="text-decoration-none text-dark">
-                                        Email
-                                        @if(request('sort') == 'email')
-                                            @if(request('direction') == 'asc')
-                                                <i class="fas fa-sort-up"></i>
-                                            @else
-                                                <i class="fas fa-sort-down"></i>
-                                            @endif
+                                    @else
+                                        <i class="fas fa-sort text-muted ms-1"></i>
+                                    @endif
+                                </a>
+                            </th>
+                            <th class="border-0">
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'email', 'direction' => request('sort') == 'email' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                   class="text-decoration-none text-dark d-flex align-items-center">
+                                    <i class="fas fa-envelope me-2"></i>Email
+                                    @if(request('sort') == 'email')
+                                        @if(request('direction') == 'asc')
+                                            <i class="fas fa-sort-up ms-1"></i>
                                         @else
-                                            <i class="fas fa-sort text-muted"></i>
+                                            <i class="fas fa-sort-down ms-1"></i>
                                         @endif
-                                    </a>
-                                </th>
-                                <th>
-                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'account_id', 'direction' => request('sort') == 'account_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
-                                       class="text-decoration-none text-dark">
-                                        ID Number
-                                        @if(request('sort') == 'account_id')
-                                            @if(request('direction') == 'asc')
-                                                <i class="fas fa-sort-up"></i>
-                                            @else
-                                                <i class="fas fa-sort-down"></i>
-                                            @endif
+                                    @else
+                                        <i class="fas fa-sort text-muted ms-1"></i>
+                                    @endif
+                                </a>
+                            </th>
+                            <th class="border-0">
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'faculty_id', 'direction' => request('sort') == 'faculty_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                   class="text-decoration-none text-dark d-flex align-items-center">
+                                    <i class="fas fa-id-card me-2"></i>ID Number
+                                    @if(request('sort') == 'faculty_id')
+                                        @if(request('direction') == 'asc')
+                                            <i class="fas fa-sort-up ms-1"></i>
                                         @else
-                                            <i class="fas fa-sort text-muted"></i>
+                                            <i class="fas fa-sort-down ms-1"></i>
                                         @endif
-                                    </a>
-                                </th>
-                                <th>
-                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'department', 'direction' => request('sort') == 'department' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
-                                       class="text-decoration-none text-dark">
-                                        Department
-                                        @if(request('sort') == 'department')
-                                            @if(request('direction') == 'asc')
-                                                <i class="fas fa-sort-up"></i>
-                                            @else
-                                                <i class="fas fa-sort-down"></i>
-                                            @endif
+                                    @else
+                                        <i class="fas fa-sort text-muted ms-1"></i>
+                                    @endif
+                                </a>
+                            </th>
+                            <th class="border-0">
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'department', 'direction' => request('sort') == 'department' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                   class="text-decoration-none text-dark d-flex align-items-center">
+                                    <i class="fas fa-building me-2"></i>Department
+                                    @if(request('sort') == 'department')
+                                        @if(request('direction') == 'asc')
+                                            <i class="fas fa-sort-up ms-1"></i>
                                         @else
-                                            <i class="fas fa-sort text-muted"></i>
+                                            <i class="fas fa-sort-down ms-1"></i>
                                         @endif
+                                    @else
+                                        <i class="fas fa-sort text-muted ms-1"></i>
+                                    @endif
+                                </a>
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-user-tag me-2"></i>Current Roles
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-cogs me-2"></i>Assign Roles
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-tools me-2"></i>Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($allUsers as $user)
+                            <tr class="align-middle">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="text-dark">{{ $user->name }}</strong>
+                                            @if($user->faculty_id)
+                                                <br><small class="text-muted">ID: {{ $user->faculty_id }}</small>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="mailto:{{ $user->email }}" class="text-decoration-none">
+                                        <i class="fas fa-envelope me-1"></i>{{ $user->email }}
                                     </a>
-                                </th>
-                                <th>Current Roles</th>
-                                <th>Assign Roles</th>
-                                <th>Actions</th>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">{{ $user->faculty_id ?? 'N/A' }}</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted">{{ $user->department ?? 'N/A' }}</span>
+                                </td>
+                                <td>
+                                    <div id="current-roles-{{ $user->id }}">
+                                        @if($user->all_roles && count($user->all_roles) > 0)
+                                            @foreach($user->all_roles as $role)
+                                                <span class="badge bg-{{ $role === 'chairperson' ? 'danger' : ($role === 'coordinator' ? 'primary' : ($role === 'adviser' ? 'success' : ($role === 'panelist' ? 'warning' : 'secondary'))) }} me-1 mb-1">
+                                                    {{ ucfirst($role) }}
+                                                </span>
+                                            @endforeach
+                                        @else
+                                            <span class="text-muted">
+                                                <i class="fas fa-user-slash me-1"></i>No roles assigned
+                                            </span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="role-assignment-container">
+                                        <div class="row g-2">
+                                            <div class="col-12">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input role-checkbox" type="checkbox" 
+                                                           name="roles[{{ $user->id }}][]" value="chairperson" 
+                                                           id="chairperson-{{ $user->id }}"
+                                                           {{ $user->hasRole('chairperson') ? 'checked' : '' }}>
+                                                    <label class="form-check-label fw-semibold" for="chairperson-{{ $user->id }}">
+                                                        <i class="fas fa-crown me-1 text-danger"></i>Chairperson
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input role-checkbox" type="checkbox" 
+                                                           name="roles[{{ $user->id }}][]" value="coordinator" 
+                                                           id="coordinator-{{ $user->id }}"
+                                                           {{ $user->hasRole('coordinator') ? 'checked' : '' }}>
+                                                    <label class="form-check-label fw-semibold" for="coordinator-{{ $user->id }}">
+                                                        <i class="fas fa-tasks me-1 text-primary"></i>Coordinator
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input role-checkbox" type="checkbox" 
+                                                           name="roles[{{ $user->id }}][]" value="teacher" 
+                                                           id="teacher-{{ $user->id }}"
+                                                           {{ $user->hasRole('teacher') ? 'checked' : '' }}>
+                                                    <label class="form-check-label fw-semibold" for="teacher-{{ $user->id }}">
+                                                        <i class="fas fa-chalkboard-teacher me-1 text-secondary"></i>Teacher
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input role-checkbox" type="checkbox" 
+                                                           name="roles[{{ $user->id }}][]" value="adviser" 
+                                                           id="adviser-{{ $user->id }}"
+                                                           {{ $user->hasRole('adviser') ? 'checked' : '' }}>
+                                                    <label class="form-check-label fw-semibold" for="adviser-{{ $user->id }}">
+                                                        <i class="fas fa-user-graduate me-1 text-success"></i>Adviser
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input role-checkbox" type="checkbox" 
+                                                           name="roles[{{ $user->id }}][]" value="panelist" 
+                                                           id="panelist-{{ $user->id }}"
+                                                           {{ $user->hasRole('panelist') ? 'checked' : '' }}>
+                                                    <label class="form-check-label fw-semibold" for="panelist-{{ $user->id }}">
+                                                        <i class="fas fa-gavel me-1 text-warning"></i>Panelist
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-primary btn-sm update-user-roles" 
+                                            data-user-id="{{ $user->id }}" 
+                                            data-user-name="{{ $user->name }}">
+                                        <i class="fas fa-save me-1"></i>Update
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($allUsers as $user)
-                                <tr>
-                                    <td>
-                                        <strong>{{ $user->name }}</strong>
-                                    </td>
-                                    <td>{{ $user->email }}</td>
-                                    <td>{{ $user->account_id ?? 'N/A' }}</td>
-                                    <td>{{ $user->department ?? 'N/A' }}</td>
-                                    <td>
-                                        @if($user->role)
-                                            <span class="badge bg-primary me-1">{{ ucfirst($user->role) }}</span>
-                                            @if($user->effective_roles_string !== ucfirst($user->role))
-                                                <br><small class="text-muted">Effective: {{ $user->effective_roles_string }}</small>
-                                            @endif
-                                        @else
-                                            <span class="text-muted">No role assigned</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="chairperson" 
-                                                {{ $user->role === 'chairperson' ? 'checked' : '' }}>
-                                            <label class="form-check-label">Chairperson</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="coordinator" 
-                                                {{ $user->role === 'coordinator' ? 'checked' : '' }}>
-                                            <label class="form-check-label">Coordinator</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="teacher" 
-                                                {{ $user->role === 'teacher' ? 'checked' : '' }}>
-                                            <label class="form-check-label">Teacher</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="adviser" 
-                                                {{ $user->role === 'adviser' ? 'checked' : '' }}>
-                                            <label class="form-check-label">Adviser</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="roles[{{ $user->id }}][]" value="panelist" 
-                                                {{ $user->role === 'panelist' ? 'checked' : '' }}>
-                                            <label class="form-check-label">Panelist</label>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-sm btn-primary update-user-roles" 
-                                                data-user-id="{{ $user->id }}" 
-                                                data-user-name="{{ $user->name }}">
-                                            <i class="fas fa-save me-1"></i>Update
-                                        </button>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </form>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
     <div class="row">
         @foreach($roles as $roleKey => $role)
             @if($roleKey !== 'student')
                 <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-header bg-primary text-white">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-header bg-gradient-{{ $roleKey === 'chairperson' ? 'danger' : ($roleKey === 'coordinator' ? 'primary' : ($roleKey === 'adviser' ? 'success' : ($roleKey === 'teacher' ? 'info' : ($roleKey === 'panelist' ? 'warning' : 'secondary')))) }} text-white">
                             <h5 class="mb-0">
                                 <i class="fas fa-user-tag me-2"></i>{{ $role['name'] }}
                             </h5>
@@ -175,9 +250,9 @@
                                                     <small class="text-muted">
                                                         <i class="fas fa-envelope me-1"></i>{{ $user->email }}
                                                     </small>
-                                                    @if($user->account_id)
+                                                    @if($user->faculty_id)
                                                         <br><small class="text-muted">
-                                                            <i class="fas fa-id-card me-1"></i>{{ $user->account_id }}
+                                                            <i class="fas fa-id-card me-1"></i>{{ $user->faculty_id }}
                                                         </small>
                                                     @endif
                                                     @if($user->department || $user->role)
@@ -227,18 +302,22 @@
     </div>
     <div class="row mt-4">
         <div class="col-12">
-            <div class="card bg-light">
-                <div class="card-body">
-                    <h5 class="card-title">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-secondary text-white">
+                    <h5 class="mb-0">
                         <i class="fas fa-chart-pie me-2"></i>Role Distribution Summary
                     </h5>
+                </div>
+                <div class="card-body">
                     <div class="row text-center">
                         @foreach($roles as $roleKey => $role)
                             @if($roleKey !== 'student')
                                 <div class="col-md-2 col-sm-4 col-6 mb-3">
-                                    <div class="border rounded p-3 bg-white">
-                                        <h4 class="text-primary mb-1">{{ $role['user_count'] }}</h4>
-                                        <small class="text-muted">{{ $role['name'] }}</small>
+                                    <div class="card h-100 shadow-sm border-0">
+                                        <div class="card-body">
+                                            <h4 class="text-{{ $roleKey === 'chairperson' ? 'danger' : ($roleKey === 'coordinator' ? 'primary' : ($roleKey === 'adviser' ? 'success' : ($roleKey === 'teacher' ? 'info' : ($roleKey === 'panelist' ? 'warning' : 'secondary')))) }} mb-1">{{ $role['user_count'] }}</h4>
+                                            <small class="text-muted">{{ $role['name'] }}</small>
+                                        </div>
                                     </div>
                                 </div>
                             @endif
@@ -249,23 +328,135 @@
         </div>
     </div>
 </div>
+<style>
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+}
+
+.role-assignment-container {
+    min-width: 200px;
+}
+
+.role-checkbox:checked + label {
+    color: #0d6efd !important;
+}
+
+.role-checkbox:checked + label i {
+    opacity: 1;
+}
+
+.role-checkbox + label i {
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.bg-gradient-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.update-user-roles:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.text-primary { color: #007bff !important; }
+.text-success { color: #28a745 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-info { color: #17a2b8 !important; }
+.text-danger { color: #dc3545 !important; }
+.text-secondary { color: #6c757d !important; }
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Add loading state to buttons
     document.querySelectorAll('.update-user-roles').forEach(button => {
         button.addEventListener('click', function() {
             const userId = this.dataset.userId;
             const userName = this.dataset.userName;
+            const button = this;
+            
+            // Disable button and show loading
+            button.disabled = true;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+            
             const checkedRoles = [];
             const checkboxes = document.querySelectorAll(`input[name="roles[${userId}][]"]:checked`);
             checkboxes.forEach(checkbox => {
                 checkedRoles.push(checkbox.value);
             });
+            
+            if (checkedRoles.length === 0) {
+                alert('Please select at least one role for ' + userName);
+                button.disabled = false;
+                button.innerHTML = originalText;
+                return;
+            }
+            
             const formData = new FormData();
             formData.append('_token', '{{ csrf_token() }}');
             formData.append('_method', 'POST');
             checkedRoles.forEach(role => {
                 formData.append('roles[]', role);
             });
+            
             fetch(`/chairperson/roles/${userId}`, {
                 method: 'POST',
                 body: formData,
@@ -276,18 +467,85 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(`Roles updated successfully for ${userName}`);
-                    location.reload();
+                    // Update the current roles display
+                    updateCurrentRolesDisplay(userId, checkedRoles);
+                    
+                    // Show success message
+                    showNotification('success', `Roles updated successfully for ${userName}`);
                 } else {
-                    alert('Error updating roles: ' + data.message);
+                    showNotification('error', 'Error updating roles: ' + data.message);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error updating roles. Please try again.');
+                showNotification('error', 'Error updating roles. Please try again.');
+            })
+            .finally(() => {
+                // Re-enable button
+                button.disabled = false;
+                button.innerHTML = originalText;
             });
         });
     });
+    
+    // Add visual feedback for checkboxes
+    document.querySelectorAll('.role-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const label = this.nextElementSibling;
+            if (this.checked) {
+                label.classList.add('text-primary');
+            } else {
+                label.classList.remove('text-primary');
+            }
+        });
+    });
 });
+
+function updateCurrentRolesDisplay(userId, roles) {
+    const container = document.getElementById(`current-roles-${userId}`);
+    if (!container) return;
+    
+    const roleColors = {
+        'chairperson': 'danger',
+        'coordinator': 'primary', 
+        'teacher': 'secondary',
+        'adviser': 'success',
+        'panelist': 'warning'
+    };
+    
+    if (roles.length === 0) {
+        container.innerHTML = '<span class="text-muted"><i class="fas fa-user-slash me-1"></i>No roles assigned</span>';
+    } else {
+        const badges = roles.map(role => 
+            `<span class="badge bg-${roleColors[role] || 'secondary'} me-1 mb-1">${role.charAt(0).toUpperCase() + role.slice(1)}</span>`
+        ).join('');
+        container.innerHTML = badges;
+    }
+}
+
+function showNotification(type, message) {
+    // Remove existing notifications
+    const existingAlerts = document.querySelectorAll('.alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    // Create new notification
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at the top of the container
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
 </script>
 @endsection

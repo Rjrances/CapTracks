@@ -13,7 +13,7 @@ class ProgressValidationController extends Controller
     public function dashboard(Request $request)
     {
         $filters = $request->only([
-            'academic_term_id', 'adviser_id', 'search'
+            'academic_term_id', 'faculty_id', 'search'
         ]);
         $readyGroups = $this->progressValidationService->getGroupsReadyFor60PercentDefense();
         $needingAttentionGroups = $this->progressValidationService->getGroupsNeedingAttentionFor60PercentDefense();
@@ -22,7 +22,7 @@ class ProgressValidationController extends Controller
             'total_groups' => $allGroups->count(),
             'ready_for_60_percent' => $readyGroups->count(),
             'needing_attention' => $needingAttentionGroups->count(),
-            'no_adviser' => $allGroups->whereNull('adviser_id')->count(),
+            'no_adviser' => $allGroups->whereNull('faculty_id')->count(),
             'below_40_percent' => $allGroups->filter(fn($g) => $g->overall_progress_percentage < 40)->count()
         ];
         $filterOptions = $this->progressValidationService->getFilterOptions();
@@ -43,7 +43,7 @@ class ProgressValidationController extends Controller
     public function allGroupsStatus(Request $request)
     {
         $filters = $request->only([
-            'academic_term_id', 'adviser_id', 'search'
+            'academic_term_id', 'faculty_id', 'search'
         ]);
         $groups = $this->progressValidationService->getFilteredGroupsForProgressValidation($filters)
             ->map(function ($group) {
@@ -94,7 +94,7 @@ class ProgressValidationController extends Controller
     }
     public function adviserGroupReadiness(Group $group)
     {
-        if (auth()->user()->id !== $group->adviser_id) {
+        if (auth()->user()->faculty_id !== $group->faculty_id) {
             abort(403, 'You are not authorized to view this group\'s readiness report.');
         }
         $report = $this->progressValidationService->get60PercentDefenseReadinessReport($group);
