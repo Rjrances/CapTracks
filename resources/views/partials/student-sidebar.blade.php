@@ -24,7 +24,7 @@
         @if($activeTerm)
             <div class="d-flex align-items-center">
                 <span class="badge bg-success me-2">Active</span>
-                <span class="small">{{ $activeTerm->full_name }}</span>
+                <span class="small">{{ $activeTerm->semester }}</span>
             </div>
         @else
             <div class="text-warning small">
@@ -48,6 +48,28 @@
                     My Group
                 </a>
             </li>
+            @php
+                // Check if student has a group
+                $studentHasGroup = false;
+                if (Auth::guard('student')->check()) {
+                    $studentAccount = Auth::guard('student')->user();
+                    $student = $studentAccount->student;
+                    $studentHasGroup = $student && $student->groups()->exists();
+                } elseif (session('is_student') && session('student_id')) {
+                    $student = \App\Models\Student::find(session('student_id'));
+                    $studentHasGroup = $student && $student->groups()->exists();
+                }
+            @endphp
+            
+            @if(!$studentHasGroup)
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('student.group.invitations') || request()->is('student/group/invitations') ? 'active bg-primary' : '' }}" 
+                   href="{{ route('student.group.invitations') }}">
+                    <i class="fas fa-envelope me-2"></i>
+                    Group Invitations
+                </a>
+            </li>
+            @endif
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('student.project*') || request()->is('student/project*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.project') }}">

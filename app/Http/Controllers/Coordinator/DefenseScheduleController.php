@@ -16,28 +16,29 @@ class DefenseScheduleController extends Controller
     public function index(Request $request)
     {
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+        
         $query = DefenseSchedule::with(['group', 'academicTerm', 'defensePanels.faculty'])
             ->whereHas('group', function($q) use ($coordinatorOfferings) {
                 $q->whereIn('offering_id', $coordinatorOfferings);
             })
             ->orderBy('start_at', 'asc');
-        if ($request->filled('academic_term_id')) {
-            $query->where('academic_term_id', $request->academic_term_id);
-        } else {
-            $activeTerm = AcademicTerm::where('is_active', true)->first();
-            if ($activeTerm) {
-                $query->where('academic_term_id', $activeTerm->id);
-            }
+            
+        // Filter by active semester
+        if ($activeTerm) {
+            $query->where('academic_term_id', $activeTerm->id);
         }
+        
         if ($request->filled('offering')) {
             $query->whereHas('group.offering', function ($q) use ($request, $coordinatorOfferings) {
                 $q->where('id', $request->offering)->whereIn('id', $coordinatorOfferings);
             });
         }
+        
         $defenseSchedules = $query->paginate(15);
         $academicTerms = AcademicTerm::orderBy('school_year', 'desc')->orderBy('semester', 'desc')->get();
         $offerings = Offering::whereIn('id', $coordinatorOfferings)->orderBy('subject_title')->get();
-        $activeTerm = AcademicTerm::where('is_active', true)->first();
+        
         return view('coordinator.defense.index', compact('defenseSchedules', 'academicTerms', 'offerings', 'activeTerm'));
     }
     public function create()

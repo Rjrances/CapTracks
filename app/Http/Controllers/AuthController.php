@@ -42,23 +42,29 @@ class AuthController extends Controller
         // Try to find student account by student_id
         $studentAccount = StudentAccount::where('student_id', $request->school_id)->first();
         if ($studentAccount) {
-            $student = $studentAccount->student;
-            if ($student) {
-                if (empty($request->password)) {
-                    return back()->withErrors(['password' => 'Password is required.']);
-                }
-                if (!Hash::check($request->password, $studentAccount->password)) {
-                    return back()->withErrors(['password' => 'Incorrect password.']);
-                }
-                $request->session()->put('student_id', $student->student_id);
-                $request->session()->put('student_name', $student->name);
-                $request->session()->put('student_email', $student->email);
-                $request->session()->put('student_role', 'student');
-                $request->session()->put('student_school_id', $student->student_id);
-                $request->session()->put('is_student', true);
-                $request->session()->save();
-                return redirect()->route('student.dashboard');
+            // Check if student needs to set password for first time
+            if ($studentAccount->must_change_password && is_null($studentAccount->password)) {
+                // Allow login without password for first-time users
+                Auth::guard('student')->login($studentAccount);
+                $request->session()->regenerate();
+                
+                return redirect()->route('student.change-password')
+                    ->with('info', 'Welcome! Please set your password to continue.');
             }
+            
+            // For students with existing passwords, require password
+            if (empty($request->password)) {
+                return back()->withErrors(['password' => 'Password is required.']);
+            }
+            if (!Hash::check($request->password, $studentAccount->password)) {
+                return back()->withErrors(['password' => 'Incorrect password.']);
+            }
+            
+            // Login the student using Laravel's Auth system
+            Auth::guard('student')->login($studentAccount);
+            $request->session()->regenerate();
+            
+            return redirect()->route('student.dashboard');
         }
         
         return back()->withErrors(['school_id' => 'Invalid School ID.']);
@@ -81,7 +87,10 @@ class AuthController extends Controller
     }
     public function logout(Request $request)
     {
+        // Logout from both guards
         Auth::logout();
+        Auth::guard('student')->logout();
+        
         $request->session()->forget(['student_id', 'student_name', 'student_email', 'student_role', 'is_student', 'must_change_password']);
         $request->session()->invalidate();
         $request->session()->regenerateToken();

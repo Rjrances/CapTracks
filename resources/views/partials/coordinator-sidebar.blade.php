@@ -15,12 +15,12 @@
     <div class="p-3 border-bottom border-secondary">
         <h6 class="text-muted mb-2">Current Term</h6>
         @if($activeTerm)
-            <div class="d-flex align-items-center">
+            <div class="d-flex align-items-center mb-2">
                 <span class="badge bg-success me-2">Active</span>
-                <span class="small">{{ $activeTerm->full_name }}</span>
+                <span class="small">{{ $activeTerm->semester }}</span>
             </div>
         @else
-            <div class="text-warning small">
+            <div class="text-warning small mb-2">
                 <i class="fas fa-exclamation-triangle"></i> No active term
             </div>
         @endif
@@ -103,3 +103,4 @@
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 </style>
+

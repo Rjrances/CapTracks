@@ -80,12 +80,10 @@ class CalendarController extends Controller
     }
     public function studentCalendar()
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-            $student = $user->student;
-            $studentId = $student ? $student->id : null;
-        } elseif (session('is_student') && session('student_id')) {
-            $studentId = session('student_id');
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
+            $studentId = $student ? $student->student_id : null;
         } else {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
@@ -184,7 +182,7 @@ class CalendarController extends Controller
                 break;
             case 'student':
                 $group = Group::whereHas('members', function($query) use ($user) {
-                    $query->where('group_members.student_id', $user->id);
+                    $query->where('group_members.student_id', $user->student_id);
                 })->first();
                 if ($group) {
                     $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])

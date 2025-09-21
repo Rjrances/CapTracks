@@ -73,52 +73,6 @@
         </div>
         @endif
         <div class="row mb-4">
-            <div class="col-12">
-                <div class="card border-primary">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">
-                            <i class="fas fa-calendar-alt me-2"></i>Current Academic Term Context
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        @if($activeTerm ?? null)
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <h4 class="mb-0 me-3">{{ $activeTerm->full_name }}</h4>
-                                        <span class="badge bg-success fs-6">Active</span>
-                                    </div>
-                                    <p class="text-muted mb-0">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Current term for all academic operations and project management
-                                    </p>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <span class="text-muted small">Coordinator View</span>
-                                </div>
-                            </div>
-                        @else
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <h4 class="mb-0 me-3 text-warning">No Active Term</h4>
-                                        <span class="badge bg-warning fs-6">Inactive</span>
-                                    </div>
-                                    <p class="text-muted mb-0">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>
-                                        Please contact the chairperson to set an active academic term
-                                    </p>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <span class="text-muted small">Coordinator View</span>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
                     <div class="card-body text-center">

@@ -5,11 +5,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 class MilestoneTemplateController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+        
         $milestoneTemplates = MilestoneTemplate::with('tasks')->get();
-        $groups = \App\Models\Group::with(['members', 'adviser', 'milestones.template'])->get();
-        return view('coordinator.milestones.index', compact('milestoneTemplates', 'groups'));
+        
+        // Filter groups by active semester
+        $groupsQuery = \App\Models\Group::with(['members', 'adviser', 'milestones.template']);
+        if ($activeTerm) {
+            $groupsQuery->where('academic_term_id', $activeTerm->id);
+        }
+        $groups = $groupsQuery->get();
+        
+        return view('coordinator.milestones.index', compact('milestoneTemplates', 'groups', 'activeTerm'));
     }
     public function create()
     {

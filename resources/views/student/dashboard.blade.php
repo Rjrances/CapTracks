@@ -7,7 +7,7 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
-                        <h1 class="h3 mb-1">Welcome, {{ auth()->check() ? auth()->user()->name : session('student_name') }}!</h1>
+                        <h1 class="h3 mb-1">Welcome, {{ $student->name ?? 'Student' }}!</h1>
                         <p class="text-muted mb-0">Track your capstone project progress</p>
                     </div>
                     <div class="d-flex gap-2">
@@ -84,7 +84,7 @@
                             <div class="row align-items-center">
                                 <div class="col-md-8">
                                     <div class="d-flex align-items-center mb-2">
-                                        <h4 class="mb-0 me-3">{{ $activeTerm->full_name }}</h4>
+                                        <h4 class="mb-0 me-3">{{ $activeTerm->semester }}</h4>
                                         <span class="badge bg-success fs-6">Active</span>
                                     </div>
                                     <p class="text-muted mb-0">

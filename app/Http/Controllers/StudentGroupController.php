@@ -8,14 +8,15 @@ class StudentGroupController extends Controller
 {
     public function show()
     {
-        if (Auth::check()) {
-            $student = Auth::user()->student ?? null;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = \App\Models\Student::find(session('student_id'));
+            $student = null;
         }
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
-            $q->where('group_members.student_id', $student->id);
-        })->with(['adviser', 'members', 'adviserInvitations.faculty'])->first() : null;
+            $q->where('group_members.student_id', $student->student_id);
+        })->with(['adviser', 'members', 'adviserInvitations.faculty', 'offering'])->first() : null;
         $availableFaculty = User::whereIn('role', ['adviser', 'panelist', 'teacher'])
             ->whereDoesntHave('adviserInvitations', function($q) use ($group) {
                 if ($group) {
@@ -27,10 +28,11 @@ class StudentGroupController extends Controller
     }
     public function create()
     {
-        if (Auth::check()) {
-            $student = Auth::user()->student ?? null;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = \App\Models\Student::find(session('student_id'));
+            $student = null;
         }
         
         if (!$student) {
@@ -53,26 +55,27 @@ class StudentGroupController extends Controller
             'description' => 'nullable|string',
             'adviser_id' => 'required|exists:users,id',
             'adviser_message' => 'nullable|string|max:500',
-            'members' => 'nullable|array|max:2', // Max 2 additional members (3 total including leader)
+            'members' => 'nullable|array|max:2', // Max 2 additional members (3 total including leader) - optional
             'members.*' => 'exists:students,student_id',
         ]);
         
         // Get student and validate enrollment
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
             $userInfo = [
-                'user_id' => Auth::id(),
-                'user_email' => Auth::user()->email,
+                'user_id' => $studentAccount->student_id,
+                'user_email' => $studentAccount->email,
                 'student_exists' => $student ? 'yes' : 'no',
-                'student_id' => $student ? $student->id : null
+                'student_id' => $student ? $student->student_id : null
             ];
         } else {
-            $student = \App\Models\Student::find(session('student_id'));
+            $student = null;
             $userInfo = [
-                'user_id' => session('student_id'),
-                'user_email' => session('student_email'),
-                'student_exists' => $student ? 'yes' : 'no',
-                'student_id' => $student ? $student->id : null
+                'user_id' => null,
+                'user_email' => null,
+                'student_exists' => 'no',
+                'student_id' => null
             ];
         }
         \Log::info('User info', $userInfo);
@@ -84,11 +87,15 @@ class StudentGroupController extends Controller
         // Validate that student is enrolled in an offering
         $offering = $student->getCurrentOffering();
         if (!$offering) {
-            \Log::error('Student not enrolled in any offering', ['student_id' => $student->id]);
+            \Log::error('Student not enrolled in any offering', ['student_id' => $student->student_id]);
             return back()->with('error', 'You must be enrolled in a capstone offering before creating a group. Please contact your coordinator to get enrolled.');
         }
+        // Get current active term for adviser validation
+        $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+        
         $adviser = User::where('id', $request->adviser_id)
-                      ->whereIn('role', ['adviser', 'panelist', 'teacher'])
+                      ->where('role', 'adviser')
+                      ->where('semester', $activeTerm ? $activeTerm->semester : null)
                       ->first();
         \Log::info('Adviser verification', [
             'requested_adviser_id' => $request->adviser_id,
@@ -97,13 +104,13 @@ class StudentGroupController extends Controller
         ]);
         if (!$adviser) {
             \Log::error('Invalid adviser selected', ['adviser_id' => $request->adviser_id]);
-            return back()->with('error', 'Selected adviser is not a valid faculty member.');
+            return back()->with('error', 'Selected adviser is not available for the current semester. Please select an adviser from the current term.');
         }
         
         // Validate that all group members are enrolled in the same offering
         if ($request->has('members') && is_array($request->members)) {
             foreach ($request->members as $memberId) {
-                $member = \App\Models\Student::find($memberId);
+                $member = \App\Models\Student::where('student_id', $memberId)->first();
                 if (!$member) {
                     return back()->with('error', "Student with ID {$memberId} not found.");
                 }
@@ -122,16 +129,24 @@ class StudentGroupController extends Controller
                 'academic_term_id' => $offering->academic_term_id,
             ]);
             \Log::info('Group created successfully', ['group_id' => $group->id]);
-            $group->members()->attach($student->id, ['role' => 'leader']);
+            $group->members()->attach($student->student_id, ['role' => 'leader']);
+            
+            // Send invitations to selected members instead of directly adding them
             if ($request->has('members') && is_array($request->members)) {
-                $memberCount = 0;
                 foreach ($request->members as $memberId) {
                     $existingGroup = \App\Models\Group::whereHas('members', function($q) use ($memberId) {
                         $q->where('group_members.student_id', $memberId);
                     })->first();
-                    if (!$existingGroup && $memberCount < 2) {
-                        $group->members()->attach($memberId, ['role' => 'member']);
-                        $memberCount++;
+                    
+                    if (!$existingGroup) {
+                        // Create group invitation
+                        \App\Models\GroupInvitation::create([
+                            'group_id' => $group->id,
+                            'student_id' => $memberId,
+                            'invited_by_student_id' => $student->student_id,
+                            'message' => "You have been invited to join the group '{$group->name}' for {$offering->subject_code} - {$offering->subject_title}.",
+                            'status' => 'pending',
+                        ]);
                     }
                 }
             }
@@ -146,7 +161,14 @@ class StudentGroupController extends Controller
                 \App\Services\NotificationService::newAdviserInvitation($faculty, $group->name);
             }
             \Log::info('Group creation completed successfully', ['group_id' => $group->id]);
-            return redirect()->route('student.group')->with('success', 'Group created successfully! Adviser invitation has been sent.');
+            $invitationCount = count($request->members ?? []);
+            $message = 'Group created successfully! Adviser invitation has been sent.';
+            if ($invitationCount > 0) {
+                $message .= " {$invitationCount} member invitation(s) have been sent.";
+            } else {
+                $message .= " You can invite members later from your group page.";
+            }
+            return redirect()->route('student.group')->with('success', $message);
         } catch (\Exception $e) {
             \Log::error('Error creating group', [
                 'error' => $e->getMessage(),
@@ -157,13 +179,14 @@ class StudentGroupController extends Controller
     }
     public function edit()
     {
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = \App\Models\Student::find(session('student_id'));
+            $student = null;
         }
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
-            $q->where('group_members.student_id', $student->id);
+            $q->where('group_members.student_id', $student->student_id);
         })->with(['adviser', 'members', 'adviserInvitations.faculty'])->first() : null;
         return view('student.group.edit', compact('group'));
     }
@@ -173,13 +196,14 @@ class StudentGroupController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
         ]);
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = \App\Models\Student::find(session('student_id'));
+            $student = null;
         }
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
-            $q->where('group_members.student_id', $student->id);
+            $q->where('group_members.student_id', $student->student_id);
         })->first() : null;
         if (!$group) {
             return back()->with('error', 'Group not found or you do not have permission to edit it.');
@@ -196,7 +220,35 @@ class StudentGroupController extends Controller
     }
     public function index()
     {
-        $groups = \App\Models\Group::with('adviser')->get();
+        // Get the authenticated student
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
+        } else {
+            $student = null;
+        }
+        
+        if (!$student) {
+            return redirect()->route('student.dashboard')->with('error', 'Student not found.');
+        }
+        
+        // Get only the student's group for the current term
+        $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+        $groups = collect();
+        
+        if ($activeTerm) {
+            $studentGroup = \App\Models\Group::whereHas('members', function($q) use ($student) {
+                $q->where('group_members.student_id', $student->student_id);
+            })
+            ->where('academic_term_id', $activeTerm->id)
+            ->with(['adviser', 'members', 'offering'])
+            ->first();
+            
+            if ($studentGroup) {
+                $groups = collect([$studentGroup]);
+            }
+        }
+        
         return view('student.group.index', compact('groups'));
     }
     public function inviteAdviser(Request $request)
@@ -205,13 +257,14 @@ class StudentGroupController extends Controller
             'faculty_id' => 'required|exists:users,id',
             'message' => 'nullable|string|max:500',
         ]);
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = \App\Models\Student::find(session('student_id'));
+            $student = null;
         }
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
-            $q->where('group_members.student_id', $student->id);
+            $q->where('group_members.student_id', $student->student_id);
         })->first() : null;
         if (!$group) {
             return back()->with('error', 'Group not found.');
@@ -235,57 +288,242 @@ class StudentGroupController extends Controller
         }
         return back()->with('success', 'Adviser invitation sent successfully!');
     }
-    public function addMember(Request $request)
+    public function inviteMember(Request $request)
     {
         $request->validate([
             'student_id' => 'required|exists:students,student_id',
+            'message' => 'nullable|string|max:500',
         ]);
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = \App\Models\Student::find(session('student_id'));
+            $student = null;
         }
+        
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
-            $q->where('group_members.student_id', $student->id);
+            $q->where('group_members.student_id', $student->student_id);
         })->with('offering')->first() : null;
+        
         if (!$group) {
             return back()->with('error', 'Group not found.');
         }
+        
         if ($group->members()->count() >= 3) {
             return back()->with('error', 'Group has reached the maximum of 3 members.');
         }
+        
         if ($group->members()->where('group_members.student_id', $request->student_id)->exists()) {
             return back()->with('error', 'Student is already a member of this group.');
         }
         
-        // Validate that the new member is enrolled in the same offering
-        $newMember = \App\Models\Student::find($request->student_id);
-        if (!$newMember) {
+        // Check if invitation already exists
+        $existingInvitation = \App\Models\GroupInvitation::where('group_id', $group->id)
+            ->where('student_id', $request->student_id)
+            ->where('status', 'pending')
+            ->first();
+            
+        if ($existingInvitation) {
+            return back()->with('error', 'An invitation has already been sent to this student.');
+        }
+        
+        // Validate that the invited student is enrolled in the same offering and semester
+        $invitedStudent = \App\Models\Student::where('student_id', $request->student_id)->first();
+        if (!$invitedStudent) {
             return back()->with('error', 'Student not found.');
         }
         
-        $memberOffering = $newMember->getCurrentOffering();
-        if (!$memberOffering || !$group->offering || $memberOffering->id !== $group->offering->id) {
-            return back()->with('error', "Student {$newMember->name} is not enrolled in the same capstone offering as your group. All group members must be enrolled in {$group->offering->offer_code} ({$group->offering->subject_code}).");
+        // Check if student is from the same semester
+        $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+        if ($activeTerm && $invitedStudent->semester !== $activeTerm->semester) {
+            return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the current semester. Only students from {$activeTerm->semester} can be invited.");
         }
         
-        $group->members()->attach($request->student_id, ['role' => 'member']);
-        return back()->with('success', 'Member added successfully!');
+        // Check offering compatibility only if group has an offering
+        if ($group->offering) {
+            $memberOffering = $invitedStudent->getCurrentOffering();
+            if (!$memberOffering || $memberOffering->id !== $group->offering->id) {
+                return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the same capstone offering as your group. All group members must be enrolled in {$group->offering->offer_code} ({$group->offering->subject_code}).");
+            }
+        }
+        
+        // Create invitation
+        \App\Models\GroupInvitation::create([
+            'group_id' => $group->id,
+            'student_id' => $request->student_id,
+            'invited_by_student_id' => $student->student_id,
+            'message' => $request->message,
+            'status' => 'pending',
+        ]);
+        
+        return back()->with('success', 'Invitation sent successfully! The student will be notified and can accept or decline the invitation.');
+    }
+    
+    public function acceptInvitation(Request $request, $invitationId)
+    {
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
+        } else {
+            $student = null;
+        }
+        
+        if (!$student) {
+            return redirect()->route('student.dashboard')->with('error', 'Student not found.');
+        }
+        
+        $invitation = \App\Models\GroupInvitation::where('id', $invitationId)
+            ->where('student_id', $student->student_id)
+            ->first();
+            
+        if (!$invitation) {
+            return back()->with('error', 'Invitation not found.');
+        }
+        
+        if ($invitation->status !== 'pending') {
+            return back()->with('error', 'Invitation has already been processed.');
+        }
+        
+        $group = $invitation->group;
+        
+        // Check if group still has space
+        if ($group->members()->count() >= 3) {
+            $invitation->decline();
+            return back()->with('error', 'Group is now full. Invitation declined.');
+        }
+        
+        // Check if student is already in another group (but not necessarily this one)
+        $existingGroup = Group::whereHas('members', function($q) use ($student) {
+            $q->where('group_members.student_id', $student->student_id);
+        })->first();
+        
+        if ($existingGroup && $existingGroup->id !== $group->id) {
+            $invitation->decline();
+            return back()->with('error', 'You are already a member of another group.');
+        }
+        
+        // If student is already in this group, just accept the invitation without adding again
+        if ($group->members()->where('group_members.student_id', $student->student_id)->exists()) {
+            $invitation->accept();
+            return back()->with('success', 'Invitation accepted! You are already a member of this group.');
+        }
+        
+        try {
+            // Add student to group first, then accept invitation
+            $group->members()->attach($student->student_id, ['role' => 'member']);
+            $invitation->accept();
+            
+            return back()->with('success', 'Invitation accepted! You are now a member of the group.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle duplicate entry error - this should not happen with proper constraint
+            if ($e->getCode() == 23000 && strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                // If we get here, it means the student was added between our checks
+                $invitation->accept();
+                return back()->with('success', 'Invitation accepted! You are now a member of the group.');
+            }
+            
+            // Re-throw other database errors
+            throw $e;
+        }
+    }
+    
+    public function declineInvitation(Request $request, $invitationId)
+    {
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
+        } else {
+            $student = null;
+        }
+        
+        if (!$student) {
+            return redirect()->route('student.dashboard')->with('error', 'Student not found.');
+        }
+        
+        $invitation = \App\Models\GroupInvitation::where('id', $invitationId)
+            ->where('student_id', $student->student_id)
+            ->where('status', 'pending')
+            ->first();
+            
+        if (!$invitation) {
+            return back()->with('error', 'Invitation not found or already processed.');
+        }
+        
+        $invitation->decline();
+        
+        return back()->with('success', 'Invitation declined.');
+    }
+    
+    public function invitations()
+    {
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
+        } else {
+            $student = null;
+        }
+        
+        if (!$student) {
+            return redirect()->route('student.dashboard')->with('error', 'Student not found.');
+        }
+        
+        // Check if student already has a group
+        if ($student->groups()->exists()) {
+            return redirect()->route('student.group')->with('info', 'You are already in a group. Group invitations are only available for students without a group.');
+        }
+        
+        $invitations = \App\Models\GroupInvitation::where('student_id', $student->student_id)
+            ->where('status', 'pending')
+            ->with(['group', 'group.offering', 'invitedBy'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        return view('student.group.invitations', compact('invitations'));
     }
     public function removeMember(Request $request, $memberId)
     {
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = \App\Models\Student::find(session('student_id'));
+            $student = null;
         }
-        $group = $student ? Group::whereHas('members', function($q) use ($student) {
-            $q->where('group_members.student_id', $student->id);
-        })->first() : null;
+        
+        if (!$student) {
+            return redirect()->route('student.dashboard')->with('error', 'Student not found.');
+        }
+        
+        $group = Group::whereHas('members', function($q) use ($student) {
+            $q->where('group_members.student_id', $student->student_id);
+        })->first();
+        
         if (!$group) {
             return back()->with('error', 'Group not found.');
         }
+        
+        // Check if the current student is the group leader
+        $isLeader = $group->members()
+            ->where('group_members.student_id', $student->student_id)
+            ->where('group_members.role', 'leader')
+            ->exists();
+            
+        if (!$isLeader) {
+            return back()->with('error', 'Only the group leader can remove members.');
+        }
+        
+        // Check if trying to remove the leader
+        $memberToRemove = $group->members()
+            ->where('group_members.student_id', $memberId)
+            ->first();
+            
+        if ($memberToRemove && $memberToRemove->pivot->role === 'leader') {
+            return back()->with('error', 'The group leader cannot be removed.');
+        }
+        
+        // Remove the member
         $group->members()->detach($memberId);
+        
         return back()->with('success', 'Member removed successfully!');
     }
     public function requestDefense(Request $request)
@@ -294,13 +532,14 @@ class StudentGroupController extends Controller
             'defense_type' => 'required|in:proposal,60_percent,100_percent',
             'message' => 'nullable|string|max:500',
         ]);
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = \App\Models\Student::find(session('student_id'));
+            $student = null;
         }
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
-            $q->where('group_members.student_id', $student->id);
+            $q->where('group_members.student_id', $student->student_id);
         })->first() : null;
         if (!$group) {
             return back()->with('error', 'Group not found.');
@@ -338,5 +577,37 @@ class StudentGroupController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'An error occurred while submitting your defense request.');
         }
+    }
+
+    public function cancelInvitation(Request $request, $invitationId)
+    {
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
+        } else {
+            $student = null;
+        }
+        
+        if (!$student) {
+            return redirect()->route('student.dashboard')->with('error', 'Student not found.');
+        }
+        
+        // Find the invitation
+        $invitation = \App\Models\GroupInvitation::findOrFail($invitationId);
+        
+        // Check if the student is the one who sent the invitation
+        if ($invitation->invited_by_student_id !== $student->student_id) {
+            return back()->with('error', 'You can only cancel invitations that you sent.');
+        }
+        
+        // Check if the invitation is still pending
+        if ($invitation->status !== 'pending') {
+            return back()->with('error', 'You can only cancel pending invitations.');
+        }
+        
+        // Delete the invitation
+        $invitation->delete();
+        
+        return back()->with('success', 'Invitation cancelled successfully.');
     }
 }

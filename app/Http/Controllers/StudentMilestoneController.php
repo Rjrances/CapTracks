@@ -52,7 +52,7 @@ class StudentMilestoneController extends Controller
         if (!$group) {
             return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
         }
-        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
         if (!$isGroupLeader) {
             return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can create milestones.']);
         }
@@ -73,7 +73,7 @@ class StudentMilestoneController extends Controller
         if (!$group) {
             return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
         }
-        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
         if (!$isGroupLeader) {
             return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can create milestones.']);
         }
@@ -121,7 +121,7 @@ class StudentMilestoneController extends Controller
         }
         $tasks = $this->getMilestoneTasksByStatus($groupMilestone, $student);
         $progress = $this->calculateMilestoneProgress($groupMilestone);
-        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
         return view('student.milestones.show', compact(
             'student',
             'group',
@@ -141,7 +141,7 @@ class StudentMilestoneController extends Controller
         if (!$group) {
             return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
         }
-        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
         if (!$isGroupLeader) {
             return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can edit milestones.']);
         }
@@ -165,7 +165,7 @@ class StudentMilestoneController extends Controller
         if (!$group) {
             return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
         }
-        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
         if (!$isGroupLeader) {
             return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can edit milestones.']);
         }
@@ -196,7 +196,7 @@ class StudentMilestoneController extends Controller
         if (!$group) {
             return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
         }
-        $isGroupLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        $isGroupLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
         if (!$isGroupLeader) {
             return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can delete milestones.']);
         }
@@ -305,7 +305,7 @@ class StudentMilestoneController extends Controller
             'is_completed' => $request->input('is_completed', false),
             'status' => $request->input('is_completed', false) ? 'done' : 'pending',
             'completed_at' => $request->input('is_completed', false) ? now() : null,
-            'completed_by' => $request->input('is_completed', false) ? $student->id : null,
+            'completed_by' => $request->input('is_completed', false) ? $student->student_id : null,
         ]);
         return response()->json([
             'success' => true,
@@ -315,11 +315,9 @@ class StudentMilestoneController extends Controller
     }
     private function getAuthenticatedStudent()
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-            return $user->student;
-        } elseif (session('is_student') && session('student_id')) {
-            return Student::find(session('student_id'));
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            return $studentAccount->student;
         }
         return null;
     }
@@ -336,7 +334,7 @@ class StudentMilestoneController extends Controller
     {
         $assignedTasks = GroupMilestoneTask::whereHas('groupMilestone', function($query) use ($group) {
             $query->where('group_id', $group->id);
-        })->where('assigned_to', $student->id)->get();
+        })->where('assigned_to', $student->student_id)->get();
         if ($assignedTasks->isEmpty()) {
             $assignedTasks = GroupMilestoneTask::whereHas('groupMilestone', function($query) use ($group) {
                 $query->where('group_id', $group->id);
@@ -346,7 +344,7 @@ class StudentMilestoneController extends Controller
     }
     private function getRecentSubmissions($student)
     {
-        return ProjectSubmission::where('student_id', $student->id)
+        return ProjectSubmission::where('student_id', $student->student_id)
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -357,7 +355,7 @@ class StudentMilestoneController extends Controller
             ->with(['milestoneTask', 'assignedStudent'])
             ->get()
             ->map(function($task) use ($student) {
-                $task->is_assigned_to_me = $task->assigned_to == $student->id;
+                $task->is_assigned_to_me = $task->assigned_to == $student->student_id;
                 if (!$task->status) {
                     $task->status = $task->is_completed ? 'done' : 'pending';
                     $task->save();
@@ -376,7 +374,7 @@ class StudentMilestoneController extends Controller
             ->with('milestoneTask')
             ->get()
             ->map(function($task) use ($student) {
-                $task->is_assigned_to_me = $task->assigned_to == $student->id;
+                $task->is_assigned_to_me = $task->assigned_to == $student->student_id;
                 return $task;
             });
     }
@@ -407,12 +405,12 @@ class StudentMilestoneController extends Controller
         $completedTaskIds = $request->input('completed_tasks', []);
         foreach ($tasks as $task) {
             $isCompleted = in_array($task->id, $completedTaskIds);
-            if ($task->assigned_to === null || $task->assigned_to === $student->id) {
+            if ($task->assigned_to === null || $task->assigned_to === $student->student_id) {
                 $task->update([
                     'is_completed' => $isCompleted,
                     'status' => $isCompleted ? 'done' : 'pending',
                     'completed_at' => $isCompleted ? now() : null,
-                    'completed_by' => $isCompleted ? $student->id : null,
+                    'completed_by' => $isCompleted ? $student->student_id : null,
                 ]);
             }
         }
@@ -430,7 +428,7 @@ class StudentMilestoneController extends Controller
         if (!$group) {
             return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
         }
-        $isLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        $isLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
         if (!$isLeader) {
             return redirect()->back()->withErrors(['auth' => 'Only group leaders can assign tasks.']);
         }
@@ -456,7 +454,7 @@ class StudentMilestoneController extends Controller
         if (!$group) {
             return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
         }
-        $isLeader = $group->members()->where('group_members.student_id', $student->id)->where('group_members.role', 'leader')->exists();
+        $isLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
         if (!$isLeader) {
             return redirect()->back()->withErrors(['auth' => 'Only group leaders can unassign tasks.']);
         }

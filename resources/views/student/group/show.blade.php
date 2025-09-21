@@ -63,14 +63,23 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                @if($member->pivot->role !== 'leader')
-                                                    <form action="{{ route('student.group.remove-member', $member->id) }}" method="POST" class="d-inline">
+                                                @php
+                                                    $currentStudent = Auth::guard('student')->check() ? Auth::guard('student')->user()->student : null;
+                                                    $isCurrentStudentLeader = $currentStudent && $group->members()
+                                                        ->where('group_members.student_id', $currentStudent->student_id)
+                                                        ->where('group_members.role', 'leader')
+                                                        ->exists();
+                                                @endphp
+                                                @if($member->pivot->role !== 'leader' && $isCurrentStudentLeader)
+                                                    <form action="{{ route('student.group.remove-member', $member->student_id) }}" method="POST" class="d-inline">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove this member?')">
                                                             <i class="fas fa-user-minus"></i>
                                                         </button>
                                                     </form>
+                                                @elseif($member->pivot->role !== 'leader')
+                                                    <span class="text-muted small">Only leader can remove</span>
                                                 @endif
                                             </td>
                                         </tr>
@@ -81,32 +90,51 @@
                         @if($group->members->count() < 3)
                             <div class="mt-4">
                                 <h6 class="fw-bold mb-3">
-                                    <i class="fas fa-user-plus me-1"></i>Add Member
+                                    <i class="fas fa-user-plus me-1"></i>Invite Member
                                 </h6>
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    You can add {{ 3 - $group->members->count() }} more member(s) to reach the maximum of 3 members.
-                                    <br><strong>Note:</strong> Only students enrolled in the same offering can be added to your group.
+                                    You can invite {{ 3 - $group->members->count() }} more member(s) to reach the maximum of 3 members.
+                                    <br><strong>Note:</strong> Only students enrolled in the same offering can be invited to your group.
                                 </div>
-                                <form action="{{ route('student.group.add-member') }}" method="POST" class="row g-3">
+                                <form action="{{ route('student.group.invite-member') }}" method="POST" class="row g-3">
                                     @csrf
-                                    <div class="col-md-8">
-                                        <select name="student_id" class="form-select" required>
+                                    <div class="col-md-6">
+                                        <input type="text" id="student_search" class="form-control" placeholder="Search for student name..." onkeyup="filterStudents()">
+                                        <select name="student_id" id="student_select" class="form-select mt-2" required>
                                             <option value="">Select a student...</option>
-                                            @foreach(\App\Models\Student::whereNotIn('id', $group->members->pluck('id'))
-                                                ->whereHas('offerings', function($query) use ($group) {
-                                                    if ($group->offering) {
+                                            @php
+                                                $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+                                            @endphp
+                                            @php
+                                                $query = \App\Models\Student::whereNotIn('student_id', $group->members->pluck('student_id'))
+                                                    ->whereNotIn('student_id', $group->groupInvitations()->where('status', 'pending')->pluck('student_id'))
+                                                    ->where('semester', $activeTerm ? $activeTerm->semester : null)
+                                                    ->whereDoesntHave('groups', function($query) use ($activeTerm) {
+                                                        $query->where('academic_term_id', $activeTerm ? $activeTerm->id : null);
+                                                    });
+                                                
+                                                if ($group->offering) {
+                                                    $query->whereHas('offerings', function($query) use ($group) {
                                                         $query->where('offering_id', $group->offering->id);
-                                                    }
-                                                })
-                                                ->get() as $student)
-                                                <option value="{{ $student->student_id }}">{{ $student->name }} ({{ $student->student_id }})</option>
+                                                    });
+                                                }
+                                                
+                                                $availableStudents = $query->get();
+                                            @endphp
+                                            @foreach($availableStudents as $student)
+                                                <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
+                                                    {{ $student->name }} ({{ $student->student_id }})
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
+                                        <textarea name="message" class="form-control" rows="3" placeholder="Optional message for the invitation..."></textarea>
+                                    </div>
+                                    <div class="col-12">
                                         <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-plus"></i> Add Member
+                                            <i class="fas fa-paper-plane"></i> Send Invitation
                                         </button>
                                     </div>
                                 </form>
@@ -116,6 +144,44 @@
                                 <div class="alert alert-warning">
                                     <i class="fas fa-exclamation-triangle me-1"></i>
                                     This group has reached the maximum of 3 members.
+                                </div>
+                            </div>
+                        @endif
+                        
+                        @if($group->groupInvitations()->where('status', 'pending')->count() > 0)
+                            <div class="mt-4">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-clock me-1"></i>Pending Invitations
+                                </h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Student</th>
+                                                <th>Message</th>
+                                                <th>Sent</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($group->groupInvitations()->where('status', 'pending')->with('student')->get() as $invitation)
+                                                <tr>
+                                                    <td>{{ $invitation->student->name }} ({{ $invitation->student->student_id }})</td>
+                                                    <td>{{ $invitation->message ?: 'No message' }}</td>
+                                                    <td>{{ $invitation->created_at->diffForHumans() }}</td>
+                                                    <td>
+                                                        <form action="{{ route('student.group.cancel-invitation', $invitation->id) }}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Cancel this invitation?')">
+                                                                <i class="fas fa-times"></i> Cancel
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         @endif
@@ -420,6 +486,28 @@ function requestDefense(defenseType) {
     document.getElementById('defense_type_display').textContent = defenseTypeLabels[defenseType];
     const modal = new bootstrap.Modal(document.getElementById('defenseRequestModal'));
     modal.show();
+}
+
+function filterStudents() {
+    const searchTerm = document.getElementById('student_search').value.toLowerCase();
+    const select = document.getElementById('student_select');
+    const options = select.getElementsByTagName('option');
+    
+    for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        const studentName = option.getAttribute('data-name') || '';
+        
+        if (option.value === '' || studentName.includes(searchTerm)) {
+            option.style.display = '';
+        } else {
+            option.style.display = 'none';
+        }
+    }
+    
+    // Reset selection if current selection is hidden
+    if (select.value && select.selectedOptions[0].style.display === 'none') {
+        select.value = '';
+    }
 }
 </script>
 @endsection 

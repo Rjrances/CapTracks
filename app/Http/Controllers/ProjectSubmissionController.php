@@ -17,8 +17,9 @@ class ProjectSubmissionController extends Controller
                 return $this->studentIndex($user);
             }
         } else {
-            if (session('is_student') && session('student_id')) {
-                $student = Student::find(session('student_id'));
+            if (Auth::guard('student')->check()) {
+                $studentAccount = Auth::guard('student')->user();
+                $student = $studentAccount->student;
                 return $this->studentIndexFromSession($student);
             } else {
                 return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
@@ -63,12 +64,12 @@ class ProjectSubmissionController extends Controller
     private function studentIndex($user)
     {
         $student = $user->student ?? null;
-        $submissions = $student ? ProjectSubmission::where('student_id', $student->id)->orderBy('submitted_at', 'desc')->get() : [];
+        $submissions = $student ? ProjectSubmission::where('student_id', $student->student_id)->orderBy('submitted_at', 'desc')->get() : [];
         return view('student.project.index', compact('submissions'));
     }
     private function studentIndexFromSession($student)
     {
-        $submissions = $student ? ProjectSubmission::where('student_id', $student->id)->orderBy('submitted_at', 'desc')->get() : [];
+        $submissions = $student ? ProjectSubmission::where('student_id', $student->student_id)->orderBy('submitted_at', 'desc')->get() : [];
         return view('student.project.index', compact('submissions'));
     }
     public function create()
@@ -83,7 +84,12 @@ class ProjectSubmissionController extends Controller
             'description' => 'nullable|string|max:1000',
         ]);
         if (Auth::check()) {
-            $student = Auth::user()->student;
+            if (Auth::guard('student')->check()) {
+                $studentAccount = Auth::guard('student')->user();
+                $student = $studentAccount->student;
+            } else {
+                $student = null;
+            }
         } else {
             $student = Student::find(session('student_id'));
         }
@@ -92,7 +98,7 @@ class ProjectSubmissionController extends Controller
         }
         $path = $request->file('file')->store('submissions', 'public');
         ProjectSubmission::create([
-            'student_id' => $student->id,
+            'student_id' => $student->student_id,
             'file_path' => $path,
             'type' => $request->type,
             'status' => 'pending',
@@ -125,14 +131,15 @@ class ProjectSubmissionController extends Controller
                     abort(403, 'Unauthorized access to this submission.');
                 }
             } else {
-                if ($submission->student_id !== $user->student->id) {
+                if ($submission->student_id !== $user->student->student_id) {
                     abort(403, 'Unauthorized access to this submission.');
                 }
             }
         } else {
-            if (session('is_student') && session('student_id')) {
-                $student = Student::find(session('student_id'));
-                if ($submission->student_id !== $student->id) {
+            if (Auth::guard('student')->check()) {
+                $studentAccount = Auth::guard('student')->user();
+                $student = $studentAccount->student;
+                if ($submission->student_id !== $student->student_id) {
                     abort(403, 'Unauthorized access to this submission.');
                 }
             } else {
@@ -187,14 +194,19 @@ class ProjectSubmissionController extends Controller
     {
         $submission = ProjectSubmission::findOrFail($id);
         if (Auth::check()) {
-            $student = Auth::user()->student;
+            if (Auth::guard('student')->check()) {
+                $studentAccount = Auth::guard('student')->user();
+                $student = $studentAccount->student;
+            } else {
+                $student = null;
+            }
         } else {
             $student = Student::find(session('student_id'));
         }
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
-        if ($submission->student_id !== $student->id) {
+        if ($submission->student_id !== $student->student_id) {
             abort(403, 'Unauthorized to delete this submission.');
         }
         $submission->delete();

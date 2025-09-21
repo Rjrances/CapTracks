@@ -24,6 +24,16 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
+        @if($activeTerm)
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-calendar me-2"></i>
+                        Showing milestone assignments for: <strong>{{ $activeTerm->full_name }}</strong>
+                    </div>
+                </div>
+            </div>
+        @endif
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">

@@ -118,11 +118,9 @@ class StudentDefenseRequestController extends Controller
     }
     private function getAuthenticatedStudent()
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-            return $user->student;
-        } elseif (session('is_student') && session('student_id')) {
-            return \App\Models\Student::find(session('student_id'));
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            return $studentAccount->student;
         }
         return null;
     }

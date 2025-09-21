@@ -27,6 +27,14 @@ class Student extends Model
                     ->withPivot('role')
                     ->withTimestamps();
     }
+    public function groupInvitations()
+    {
+        return $this->hasMany(GroupInvitation::class, 'student_id', 'student_id');
+    }
+    public function sentGroupInvitations()
+    {
+        return $this->hasMany(GroupInvitation::class, 'invited_by_student_id', 'student_id');
+    }
     public function submissions()
     {
         return $this->hasMany(ProjectSubmission::class);
@@ -34,6 +42,7 @@ class Student extends Model
     public function offerings()
     {
         return $this->belongsToMany(Offering::class, 'offering_student', 'student_id', 'offering_id', 'student_id', 'id')
+                    ->withPivot('enrolled_at')
                     ->withTimestamps();
     }
     public function enrollInOffering(Offering $offering)

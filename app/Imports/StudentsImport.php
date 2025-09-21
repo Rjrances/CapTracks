@@ -55,7 +55,8 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
         StudentAccount::create([
             'student_id' => $student->student_id, // Use same ID as student_id
             'email' => $row['email'],
-            'password' => Hash::make('password123'),
+            'password' => null, // No password - must be set on first login
+            'must_change_password' => true, // Force password change on first login
         ]);
 
         // Store the student for later enrollment processing

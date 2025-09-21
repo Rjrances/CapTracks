@@ -16,7 +16,7 @@
         @if($activeTerm)
             <div class="d-flex align-items-center">
                 <span class="badge bg-success me-2">Active</span>
-                <span class="small">{{ $activeTerm->full_name }}</span>
+                <span class="small">{{ $activeTerm->semester }}</span>
             </div>
         @else
             <div class="text-warning small">

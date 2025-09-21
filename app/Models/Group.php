@@ -18,6 +18,10 @@ class Group extends Model
     {
         return $this->hasMany(AdviserInvitation::class);
     }
+    public function groupInvitations()
+    {
+        return $this->hasMany(GroupInvitation::class);
+    }
     public function academicTerm()
     {
         return $this->belongsTo(AcademicTerm::class);

@@ -75,7 +75,11 @@
                                     <select name="adviser_id" id="adviser_id" class="form-select" required>
                                         <option value="">Choose an adviser...</option>
                                         @php
-                                            $availableFaculty = \App\Models\User::whereIn('role', ['adviser', 'panelist', 'teacher'])->get();
+                                            // Get current active term
+                                            $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+                                            $availableFaculty = \App\Models\User::where('role', 'adviser')
+                                                ->where('semester', $activeTerm ? $activeTerm->semester : null)
+                                                ->get();
                                         @endphp
                                         @foreach($availableFaculty as $faculty)
                                             <option value="{{ $faculty->id }}">
@@ -98,45 +102,85 @@
                             </label>
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-1"></i>
-                                You will be automatically added as the group leader. Select up to 2 additional members (3 total members per group).
+                                You will be automatically added as the group leader. You can optionally select up to 2 additional members now, or invite them later after creating the group.
                                 <br><strong>Note:</strong> Only students enrolled in the same capstone offering can be added to your group.
                             </div>
                             <div class="row">
-                                @php
-                                    $availableStudents = \App\Models\Student::whereNotIn('id', function($query) {
-                                        $query->select('student_id')
-                                              ->from('group_members');
-                                    })
-                                    ->whereHas('offerings', function($query) use ($offering) {
-                                        $query->where('offering_id', $offering->id);
-                                    })
-                                    ->get();
-                                @endphp
-                                @foreach($availableStudents as $student)
-                                    @if($student->email !== (Auth::check() ? Auth::user()->email : session('student_email')))
-                                        <div class="col-md-6 mb-2">
-                                            <div class="form-check">
-                                                <input class="form-check-input member-checkbox" type="checkbox" 
-                                                       name="members[]" value="{{ $student->student_id }}" 
-                                                       id="student_{{ $student->student_id }}" 
-                                                       onchange="limitSelections()">
-                                                <label class="form-check-label" for="student_{{ $student->student_id }}">
-                                                    <strong>{{ $student->name }}</strong><br>
-                                                    <small class="text-muted">
-                                                        {{ $student->student_id }} • {{ $student->email }}
-                                                    </small>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    @endif
-                                @endforeach
+                                <div class="col-md-6">
+                                    <label for="student_search" class="form-label fw-semibold">
+                                        <i class="fas fa-search me-2"></i>Search Students
+                                    </label>
+                                    <input type="text" id="student_search" class="form-control" placeholder="Search for student name..." onkeyup="filterStudents()">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="member1" class="form-label fw-semibold">
+                                        <i class="fas fa-user me-2"></i>Select First Member (Optional)
+                                    </label>
+                                    <select name="members[]" id="member1" class="form-select" onchange="updateMember2Options()">
+                                        <option value="">Select a student...</option>
+                                        @php
+                                            $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+                                            $availableStudents = \App\Models\Student::whereNotIn('student_id', function($query) {
+                                                $query->select('student_id')
+                                                      ->from('group_members');
+                                            })
+                                            ->where('semester', $activeTerm ? $activeTerm->semester : null)
+                                            ->whereHas('offerings', function($query) use ($offering) {
+                                                $query->where('offering_id', $offering->id);
+                                            })
+                                            ->whereDoesntHave('groups', function($query) use ($activeTerm) {
+                                                $query->where('academic_term_id', $activeTerm ? $activeTerm->id : null);
+                                            })
+                                            ->get();
+                                        @endphp
+                                        @foreach($availableStudents as $student)
+                                            @if($student->email !== (Auth::check() ? Auth::user()->email : session('student_email')))
+                                                <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
+                                                    {{ $student->name }} ({{ $student->student_id }})
+                                                </option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <label for="member2" class="form-label fw-semibold">
+                                        <i class="fas fa-user me-2"></i>Select Second Member (Optional)
+                                    </label>
+                                    <select name="members[]" id="member2" class="form-select">
+                                        <option value="">Select a student...</option>
+                                        @foreach($availableStudents as $student)
+                                            @if($student->email !== (Auth::check() ? Auth::user()->email : session('student_email')))
+                                                <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
+                                                    {{ $student->name }} ({{ $student->student_id }})
+                                                </option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                             <div class="mt-2">
                                 <small class="text-muted">
-                                    <span id="selection-count">0</span> of 2 additional members selected (3 total including you)
+                                    <span id="selection-count">0</span> of 2 members selected (3 total including you) - <strong>Members are optional, you can invite them later</strong>
                                 </small>
                             </div>
-                            @if($availableStudents->count() <= 1)
+                            @php
+                                $availableStudentsCount = \App\Models\Student::whereNotIn('student_id', function($query) {
+                                    $query->select('student_id')->from('group_members');
+                                })
+                                ->where('semester', $activeTerm ? $activeTerm->semester : null)
+                                ->whereHas('offerings', function($query) use ($offering) {
+                                    $query->where('offering_id', $offering->id);
+                                })
+                                ->whereDoesntHave('groups', function($query) use ($activeTerm) {
+                                    $query->where('academic_term_id', $activeTerm ? $activeTerm->id : null);
+                                })
+                                ->where('email', '!=', Auth::check() ? Auth::user()->email : session('student_email'))
+                                ->count();
+                            @endphp
+                            @if($availableStudentsCount <= 0)
                                 <div class="alert alert-warning">
                                     <i class="fas fa-exclamation-triangle me-1"></i>
                                     No other students available to add to your group.
@@ -158,23 +202,85 @@
     </div>
 </div>
 <script>
-function limitSelections() {
-    const checkboxes = document.querySelectorAll('.member-checkbox:checked');
-    const maxSelections = 2;
-    const countSpan = document.getElementById('selection-count');
-    countSpan.textContent = checkboxes.length;
-    if (checkboxes.length > maxSelections) {
-        checkboxes[checkboxes.length - 1].checked = false;
-        countSpan.textContent = maxSelections;
-    }
-    const allCheckboxes = document.querySelectorAll('.member-checkbox');
-    allCheckboxes.forEach(checkbox => {
-        if (!checkbox.checked && checkboxes.length >= maxSelections) {
-            checkbox.disabled = true;
-        } else {
-            checkbox.disabled = false;
+// Store original options for both dropdowns
+const originalMember1Options = Array.from(document.getElementById('member1').options);
+const originalMember2Options = Array.from(document.getElementById('member2').options);
+
+function filterStudents() {
+    const searchTerm = document.getElementById('student_search').value.toLowerCase();
+    const member1Select = document.getElementById('member1');
+    const member2Select = document.getElementById('member2');
+    
+    // Filter member1 options
+    filterSelectOptions(member1Select, originalMember1Options, searchTerm);
+    
+    // Filter member2 options
+    filterSelectOptions(member2Select, originalMember2Options, searchTerm);
+}
+
+function filterSelectOptions(selectElement, originalOptions, searchTerm) {
+    // Clear current options except the first empty one
+    selectElement.innerHTML = '<option value="">Select a student...</option>';
+    
+    // Add filtered options
+    originalOptions.forEach(option => {
+        if (option.value === '') return; // Skip the empty option
+        
+        const studentName = option.getAttribute('data-name') || '';
+        if (studentName.includes(searchTerm)) {
+            selectElement.appendChild(option.cloneNode(true));
         }
     });
+    
+    // Reset selection if current selection is hidden
+    if (selectElement.value && !Array.from(selectElement.options).some(opt => opt.value === selectElement.value)) {
+        selectElement.value = '';
+    }
 }
+
+function updateMember2Options() {
+    const member1Select = document.getElementById('member1');
+    const member2Select = document.getElementById('member2');
+    const selectedMember1 = member1Select.value;
+    
+    // Clear member2 options
+    member2Select.innerHTML = '<option value="">Select a student...</option>';
+    
+    // Add all original options except the selected member1
+    originalMember2Options.forEach(option => {
+        if (option.value === '') return; // Skip the empty option
+        if (option.value !== selectedMember1) {
+            member2Select.appendChild(option.cloneNode(true));
+        }
+    });
+    
+    // Reset member2 selection if it was the same as member1
+    if (member2Select.value === selectedMember1) {
+        member2Select.value = '';
+    }
+    
+    updateSelectionCount();
+}
+
+function updateSelectionCount() {
+    const member1Select = document.getElementById('member1');
+    const member2Select = document.getElementById('member2');
+    const countSpan = document.getElementById('selection-count');
+    
+    let count = 0;
+    if (member1Select.value) count++;
+    if (member2Select.value) count++;
+    
+    countSpan.textContent = count;
+}
+
+// Initialize selection count
+document.addEventListener('DOMContentLoaded', function() {
+    updateSelectionCount();
+    
+    // Add change listeners
+    document.getElementById('member1').addEventListener('change', updateMember2Options);
+    document.getElementById('member2').addEventListener('change', updateSelectionCount);
+});
 </script>
 @endsection 

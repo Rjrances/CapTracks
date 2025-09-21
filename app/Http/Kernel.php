@@ -39,5 +39,6 @@ class Kernel extends HttpKernel
         'checkrole' => \App\Http\Middleware\CheckRole::class,
         'canRegister' => \App\Http\Middleware\CanRegisterMiddleware::class,
         'studentauth' => \App\Http\Middleware\StudentAuthMiddleware::class,
+        'student.password.change' => \App\Http\Middleware\CheckStudentPasswordChange::class,
     ];
 }

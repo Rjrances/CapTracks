@@ -36,44 +36,38 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-filter me-2"></i>Filters
+                        <i class="fas fa-filter me-2"></i>Filter Defense Schedules
                     </h6>
                 </div>
                 <div class="card-body">
                     <form method="GET" action="{{ route('coordinator.defense.index') }}" id="filterForm">
                         <div class="row">
-                            <div class="col-md-4">
-                                <label for="academic_term_id" class="form-label">Academic Term</label>
-                                <select name="academic_term_id" id="academic_term_id" class="form-select">
-                                    <option value="">All Terms</option>
-                                    @foreach($academicTerms as $term)
-                                        <option value="{{ $term->id }}" {{ request('academic_term_id') == $term->id ? 'selected' : '' }}>
-                                            {{ $term->school_year }} - {{ $term->semester }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="offering" class="form-label">Offering</label>
-                                <select name="offering" id="offering" class="form-select">
+                            <div class="col-md-6">
+                                <label for="offering" class="form-label">Offering:</label>
+                                <select name="offering" id="offering" class="form-select" onchange="this.form.submit()">
                                     <option value="">All Offerings</option>
-                                    @foreach(auth()->user()->getCoordinatedOfferings() as $offering)
+                                    @foreach($offerings as $offering)
                                         <option value="{{ $offering->id }}" {{ request('offering') == $offering->id ? 'selected' : '' }}>
                                             {{ $offering->subject_code }} - {{ $offering->subject_title }}
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary me-2">
-                                    <i class="fas fa-search me-1"></i>Apply Filters
-                                </button>
+                            <div class="col-md-6 d-flex align-items-end">
                                 <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-times me-1"></i>Clear
+                                    <i class="fas fa-times me-1"></i>Clear Filters
                                 </a>
                             </div>
                         </div>
                     </form>
+                    @if($activeTerm)
+                        <div class="mt-3">
+                            <span class="badge bg-info">
+                                <i class="fas fa-calendar me-1"></i>
+                                Showing defense schedules for: {{ $activeTerm->full_name }}
+                            </span>
+                        </div>
+                    @endif
                 </div>
             </div>
             <div class="card">

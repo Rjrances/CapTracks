@@ -90,6 +90,14 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
     // Calendar
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'coordinatorCalendar'])->name('calendar');
     
+    // Academic Terms Management
+    Route::get('/academic-terms', [CoordinatorController::class, 'academicTerms'])->name('academic-terms.index');
+    Route::post('/academic-terms/activate', [CoordinatorController::class, 'activateTerm'])->name('academic-terms.activate');
+    Route::post('/academic-terms/deactivate', [CoordinatorController::class, 'deactivateTerm'])->name('academic-terms.deactivate');
+    
+    // Semester Management (legacy dropdown)
+    Route::post('/change-semester', [CoordinatorController::class, 'changeSemester'])->name('change-semester');
+    
     // Milestone Templates Management
     Route::resource('milestones', MilestoneTemplateController::class);
     Route::patch('milestones/{milestone}/status', [MilestoneTemplateController::class, 'updateStatus'])->name('milestones.updateStatus');
@@ -177,8 +185,12 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 });
 
 // Student dashboard and feature pages
-Route::prefix('student')->name('student.')->group(function () {
+Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\StudentAuthMiddleware::class, \App\Http\Middleware\CheckStudentPasswordChange::class])->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+    
+    // Password change routes (excluded from password change middleware)
+    Route::get('/change-password', [\App\Http\Controllers\StudentPasswordController::class, 'showChangePasswordForm'])->name('change-password')->withoutMiddleware(\App\Http\Middleware\CheckStudentPasswordChange::class);
+    Route::post('/update-password', [\App\Http\Controllers\StudentPasswordController::class, 'updatePassword'])->name('update-password')->withoutMiddleware(\App\Http\Middleware\CheckStudentPasswordChange::class);
     Route::get('/project', [\App\Http\Controllers\ProjectSubmissionController::class, 'index'])->name('project');
     Route::get('/project/create', [\App\Http\Controllers\ProjectSubmissionController::class, 'create'])->name('project.create');
     Route::post('/project', [\App\Http\Controllers\ProjectSubmissionController::class, 'store'])->name('project.store');
@@ -193,8 +205,14 @@ Route::prefix('student')->name('student.')->group(function () {
     
     // Group management routes
     Route::post('/group/invite-adviser', [\App\Http\Controllers\StudentGroupController::class, 'inviteAdviser'])->name('group.invite-adviser');
-    Route::post('/group/add-member', [\App\Http\Controllers\StudentGroupController::class, 'addMember'])->name('group.add-member');
+    Route::post('/group/invite-member', [\App\Http\Controllers\StudentGroupController::class, 'inviteMember'])->name('group.invite-member');
     Route::delete('/group/remove-member/{memberId}', [\App\Http\Controllers\StudentGroupController::class, 'removeMember'])->name('group.remove-member');
+    
+    // Group invitation routes
+    Route::get('/group/invitations', [\App\Http\Controllers\StudentGroupController::class, 'invitations'])->name('group.invitations');
+    Route::post('/group/accept-invitation/{invitationId}', [\App\Http\Controllers\StudentGroupController::class, 'acceptInvitation'])->name('group.accept-invitation');
+    Route::post('/group/decline-invitation/{invitationId}', [\App\Http\Controllers\StudentGroupController::class, 'declineInvitation'])->name('group.decline-invitation');
+    Route::delete('/group/cancel-invitation/{invitationId}', [\App\Http\Controllers\StudentGroupController::class, 'cancelInvitation'])->name('group.cancel-invitation');
     
     Route::get('/proposal', [\App\Http\Controllers\StudentProposalController::class, 'index'])->name('proposal');
     Route::get('/proposal/create', [\App\Http\Controllers\StudentProposalController::class, 'create'])->name('proposal.create');

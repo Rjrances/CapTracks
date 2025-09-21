@@ -20,7 +20,7 @@ class TaskSubmissionController extends Controller
         if (!$group || $task->groupMilestone->group_id !== $group->id) {
             return redirect()->back()->withErrors(['auth' => 'You are not authorized to submit for this task.']);
         }
-        if ($task->assigned_to && $task->assigned_to !== $student->id) {
+        if ($task->assigned_to && $task->assigned_to !== $student->student_id) {
             return redirect()->back()->withErrors(['auth' => 'This task is assigned to another group member.']);
         }
         return view('student.milestones.submit-task', compact('task', 'student'));
@@ -36,7 +36,7 @@ class TaskSubmissionController extends Controller
         if (!$group || $task->groupMilestone->group_id !== $group->id) {
             return redirect()->back()->withErrors(['auth' => 'You are not authorized to submit for this task.']);
         }
-        if ($task->assigned_to && $task->assigned_to !== $student->id) {
+        if ($task->assigned_to && $task->assigned_to !== $student->student_id) {
             return redirect()->back()->withErrors(['auth' => 'This task is assigned to another group member.']);
         }
         $request->validate([
@@ -52,7 +52,7 @@ class TaskSubmissionController extends Controller
         }
         $taskSubmission = TaskSubmission::create([
             'group_milestone_task_id' => $taskId,
-            'student_id' => $student->id,
+            'student_id' => $student->student_id,
             'submission_type' => $request->submission_type,
             'file_path' => $filePath,
             'description' => $request->description,
@@ -62,7 +62,7 @@ class TaskSubmissionController extends Controller
         ]);
         if ($filePath) {
             ProjectSubmission::create([
-                'student_id' => $student->id,
+                'student_id' => $student->student_id,
                 'file_path' => $filePath,
                 'type' => 'other', // Task submissions are categorized as 'other'
                 'status' => 'pending',
@@ -84,7 +84,7 @@ class TaskSubmissionController extends Controller
     {
         $submission = TaskSubmission::with(['groupMilestoneTask.milestoneTask', 'student', 'reviewer'])->findOrFail($submissionId);
         $student = $this->getAuthenticatedStudent();
-        if ($student && $submission->student_id === $student->id) {
+        if ($student && $submission->student_id === $student->student_id) {
             return view('student.milestones.submission-detail', compact('submission'));
         }
         $user = Auth::user();
@@ -127,11 +127,9 @@ class TaskSubmissionController extends Controller
     }
     private function getAuthenticatedStudent()
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-            return $user->student;
-        } elseif (session('is_student') && session('student_id')) {
-            return Student::find(session('student_id'));
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            return $studentAccount->student;
         }
         return null;
     }

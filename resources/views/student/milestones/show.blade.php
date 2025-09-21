@@ -220,8 +220,8 @@
                                 <select class="form-select" id="assigned_to_{{ $task->id }}" name="assigned_to" required>
                                     <option value="">Select a group member</option>
                                     @foreach($group->members as $member)
-                                        <option value="{{ $member->id }}" 
-                                                {{ $task->assigned_to == $member->id ? 'selected' : '' }}>
+                                        <option value="{{ $member->student_id }}" 
+                                                {{ $task->assigned_to == $member->student_id ? 'selected' : '' }}>
                                             {{ $member->name }} ({{ $member->pivot->role }})
                                         </option>
                                     @endforeach

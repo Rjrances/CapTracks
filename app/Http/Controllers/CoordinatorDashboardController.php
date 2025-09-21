@@ -13,20 +13,21 @@ use App\Models\AcademicTerm;
 use Carbon\Carbon;
 class CoordinatorDashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
-        $studentCount = Student::count();
-        $groupCount = Group::count();
-        $facultyCount = User::whereHas('roles', function($query) {
-            $query->whereIn('name', ['adviser', 'panelist']);
-        })->when($activeTerm, function($query) use ($activeTerm) {
-            return $query->where('semester', $activeTerm->semester);
-        })->count();
+        
+        // Filter all data by active term only
+        $studentCount = $activeTerm ? Student::where('semester', $activeTerm->semester)->count() : 0;
+        $groupCount = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->count() : 0;
+        $facultyCount = User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator', 'chairperson'])
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })->count();
         $submissionCount = ProjectSubmission::count();
-        $groupsWithAdviser = Group::whereNotNull('faculty_id')->count();
+        $groupsWithAdviser = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereNotNull('faculty_id')->count() : 0;
         $groupsWithoutAdviser = $groupCount - $groupsWithAdviser;
-        $totalGroupMembers = Group::withCount('members')->get()->sum('members_count');
+        $totalGroupMembers = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->withCount('members')->get()->sum('members_count') : 0;
         $pendingSubmissions = ProjectSubmission::where('status', 'pending')->count();
         $approvedSubmissions = ProjectSubmission::where('status', 'approved')->count();
         $rejectedSubmissions = ProjectSubmission::where('status', 'rejected')->count();
@@ -34,8 +35,8 @@ class CoordinatorDashboardController extends Controller
         $activeMilestones = MilestoneTemplate::where('status', 'active')->count();
         $totalTasks = MilestoneTask::count();
         $completedTasks = MilestoneTask::where('is_completed', true)->count();
-        $recentStudents = Student::latest()->take(5)->get();
-        $recentGroups = Group::with(['adviser', 'members'])->latest()->take(5)->get();
+        $recentStudents = $activeTerm ? Student::where('semester', $activeTerm->semester)->latest()->take(5)->get() : collect();
+        $recentGroups = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->with(['adviser', 'members'])->latest()->take(5)->get() : collect();
         $recentSubmissions = ProjectSubmission::with('student')->latest()->take(5)->get();
         $notifications = Notification::latest()->take(5)->get();
         $pendingInvitations = AdviserInvitation::where('status', 'pending')
@@ -43,7 +44,7 @@ class CoordinatorDashboardController extends Controller
                                               ->latest()
                                               ->take(5)
                                               ->get();
-        $recentActivities = $this->getRecentActivities();
+        $recentActivities = $this->getRecentActivities($activeTerm);
         $upcomingDeadlines = $this->getUpcomingDeadlines();
         $user = auth()->user();
         $coordinatedOfferings = collect();
@@ -81,19 +82,23 @@ class CoordinatorDashboardController extends Controller
             'isTeacherCoordinator'
         ));
     }
-    private function getRecentActivities()
+    private function getRecentActivities($selectedTerm = null)
     {
         $activities = collect();
-        $recentGroups = Group::latest()->take(3)->get();
-        foreach ($recentGroups as $group) {
-            $activities->push((object)[
-                'title' => "New group created: {$group->name}",
-                'description' => "Group with {$group->members->count()} members",
-                'icon' => 'users',
-                'created_at' => $group->created_at,
-                'type' => 'group_created'
-            ]);
+        
+        if ($selectedTerm) {
+            $recentGroups = Group::where('academic_term_id', $selectedTerm->id)->latest()->take(3)->get();
+            foreach ($recentGroups as $group) {
+                $activities->push((object)[
+                    'title' => "New group created: {$group->name}",
+                    'description' => "Group with {$group->members->count()} members",
+                    'icon' => 'users',
+                    'created_at' => $group->created_at,
+                    'type' => 'group_created'
+                ]);
+            }
         }
+        
         $recentSubs = ProjectSubmission::with('student')->latest()->take(3)->get();
         foreach ($recentSubs as $submission) {
             $activities->push((object)[
@@ -104,6 +109,7 @@ class CoordinatorDashboardController extends Controller
                 'type' => 'submission'
             ]);
         }
+        
         $recentInvites = AdviserInvitation::with(['group', 'faculty'])->latest()->take(3)->get();
         foreach ($recentInvites as $invitation) {
             $activities->push((object)[

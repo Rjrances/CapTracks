@@ -18,8 +18,9 @@ class StudentDashboardController extends Controller
             $user = Auth::user();
             $student = $user->student;
         } else {
-            if (session('is_student') && session('student_id')) {
-                $student = Student::find(session('student_id'));
+            if (Auth::guard('student')->check()) {
+                $studentAccount = Auth::guard('student')->user();
+                $student = $studentAccount->student;
             } else {
                 return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
             }
@@ -36,7 +37,7 @@ class StudentDashboardController extends Controller
         $defenseInfo = $this->getDefenseInfo($group);
         $notifications = $this->getNotifications($student);
         $existingProposal = $this->getExistingProposal($student);
-        $offeringInfo = $this->getOfferingInfo($group);
+        $offeringInfo = $this->getOfferingInfo($group, $student);
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         return view('student.dashboard', compact(
             'activeTerm',
@@ -65,7 +66,7 @@ class StudentDashboardController extends Controller
         }
         $totalMilestones = 3; // Proposal, Progress, Final
         $completedMilestones = 0;
-        $submissions = ProjectSubmission::where('student_id', $student->id)->get();
+        $submissions = ProjectSubmission::where('student_id', $student->student_id)->get();
         if ($submissions->where('type', 'proposal')->count() > 0) {
             $completedMilestones++;
         }
@@ -104,7 +105,7 @@ class StudentDashboardController extends Controller
         $completedTasks = MilestoneTask::where('is_completed', true)->count();
         $pendingTasks = $totalTasks - $completedTasks;
         if ($totalTasks === 0) {
-            $submissions = ProjectSubmission::where('student_id', $student->id)->count();
+            $submissions = ProjectSubmission::where('student_id', $student->student_id)->count();
             $totalTasks = 12;
             $completedTasks = min($submissions * 2, 6);
             $pendingTasks = $totalTasks - $completedTasks;
@@ -119,7 +120,7 @@ class StudentDashboardController extends Controller
     private function getSubmissionsCount($student)
     {
         if (!$student) return 0;
-        return ProjectSubmission::where('student_id', $student->id)->count();
+        return ProjectSubmission::where('student_id', $student->student_id)->count();
     }
     private function getCurrentMilestoneInfo($student, $group = null)
     {
@@ -144,7 +145,7 @@ class StudentDashboardController extends Controller
                 ];
             }
         }
-        $submissions = ProjectSubmission::where('student_id', $student->id)->count();
+        $submissions = ProjectSubmission::where('student_id', $student->student_id)->count();
         if ($submissions === 0) {
             return [
                 'name' => 'Proposal Development',
@@ -211,7 +212,7 @@ class StudentDashboardController extends Controller
     {
         if (!$student) return collect();
         $activities = collect();
-        $recentSubmissions = ProjectSubmission::where('student_id', $student->id)
+        $recentSubmissions = ProjectSubmission::where('student_id', $student->student_id)
             ->latest()
             ->take(3)
             ->get();
@@ -322,21 +323,14 @@ class StudentDashboardController extends Controller
     private function getExistingProposal($student)
     {
         if (!$student) return null;
-        return ProjectSubmission::where('student_id', $student->id)
+        return ProjectSubmission::where('student_id', $student->student_id)
             ->where('type', 'proposal')
             ->latest()
             ->first();
     }
-    private function getOfferingInfo($group = null)
+    private function getOfferingInfo($group = null, $student = null)
     {
-        // First check if student is directly enrolled in an offering
-        $student = null;
-        if (Auth::check()) {
-            $student = Auth::user()->student ?? null;
-        } else {
-            $student = \App\Models\Student::find(session('student_id'));
-        }
-        
+        // Use the student passed from the main method
         $offering = $student ? $student->getCurrentOffering() : null;
         
         if (!$offering) {

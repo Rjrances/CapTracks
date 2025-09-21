@@ -78,8 +78,15 @@
                                             {{ ucfirst($member->pivot->role) }}
                                         </span>
                                     </div>
-                                    @if($member->pivot->role !== 'leader')
-                                        <form action="{{ route('student.group.remove-member', $member->id) }}" method="POST" class="d-inline">
+                                    @php
+                                        $currentStudent = Auth::guard('student')->check() ? Auth::guard('student')->user()->student : null;
+                                        $isCurrentStudentLeader = $currentStudent && $group->members()
+                                            ->where('group_members.student_id', $currentStudent->student_id)
+                                            ->where('group_members.role', 'leader')
+                                            ->exists();
+                                    @endphp
+                                    @if($member->pivot->role !== 'leader' && $isCurrentStudentLeader)
+                                        <form action="{{ route('student.group.remove-member', $member->student_id) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger btn-sm" 
@@ -87,6 +94,8 @@
                                                 <i class="fas fa-user-minus"></i>
                                             </button>
                                         </form>
+                                    @elseif($member->pivot->role !== 'leader')
+                                        <span class="text-muted small">Only leader can remove</span>
                                     @endif
                                 </div>
                             @endforeach
@@ -99,7 +108,7 @@
                                     <div class="mb-3">
                                         <select name="student_id" class="form-select @error('student_id') is-invalid @enderror" required>
                                             <option value="">Select a student...</option>
-                                            @foreach(\App\Models\Student::whereNotIn('id', $group->members->pluck('id'))->get() as $student)
+                                            @foreach(\App\Models\Student::whereNotIn('student_id', $group->members->pluck('student_id'))->get() as $student)
                                                 <option value="{{ $student->student_id }}" {{ old('student_id') == $student->student_id ? 'selected' : '' }}>
                                                     {{ $student->name }} ({{ $student->student_id }})
                                                 </option>

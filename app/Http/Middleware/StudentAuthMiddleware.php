@@ -2,18 +2,24 @@
 namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Auth\Middleware\Authenticate as Middleware;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
-class StudentAuthMiddleware extends Middleware
+
+class StudentAuthMiddleware
 {
-    public function handle($request, Closure $next, ...$guards): Response
+    public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check()) {
-            return $next($request);
+        // Check if student is authenticated using the student guard
+        if (!Auth::guard('student')->check()) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
-        if (session('is_student') && session('student_id')) {
-            return $next($request);
+        
+        // Get the authenticated student
+        $student = Auth::guard('student')->user();
+        if (!$student->isStudent()) {
+            return redirect('/login')->withErrors(['auth' => 'Access denied. Student account required.']);
         }
-        return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        
+        return $next($request);
     }
 }

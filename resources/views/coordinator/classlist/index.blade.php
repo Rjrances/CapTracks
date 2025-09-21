@@ -7,22 +7,51 @@
             <h1 class="fw-bold mb-1" style="font-size:2.2rem; margin-bottom:0.1rem;">Class List</h1>
             <div class="text-muted" style="font-size:1.1rem; margin-bottom:0;">View and manage students by semester</div>
         </div>
-        <div class="mb-4 d-flex justify-content-between align-items-center">
-            <form method="GET" action="{{ route('coordinator.classlist.index') }}" class="d-flex align-items-center gap-2">
-                <label for="semester" class="fw-semibold me-2 mb-0">Semester:</label>
-                <select name="semester" id="semester" class="form-select rounded-pill" style="max-width: 200px;" onchange="this.form.submit()">
-                    @foreach ($semesters as $semester)
-                        <option value="{{ $semester }}" {{ $selectedSemester == $semester ? 'selected' : '' }}>
-                            {{ $semester }}
-                        </option>
-                    @endforeach
-                </select>
-                <input type="text" name="search" class="form-control rounded-pill" placeholder="Search students..." style="max-width: 220px;" value="{{ request('search') }}">
-                <button class="btn btn-primary rounded-pill px-4" type="submit">Search</button>
+        @if($activeTerm)
+            <div class="mb-4">
+                <div class="alert alert-info">
+                    <i class="fas fa-calendar me-2"></i>
+                    Showing students for: <strong>{{ $activeTerm->semester }}</strong>
+                </div>
+            </div>
+        @endif
+        
+        <div class="mb-4">
+            <form method="GET" action="{{ route('coordinator.classlist.index') }}" class="row g-3">
+                <div class="col-md-3">
+                    <label for="name" class="form-label">Filter by Name:</label>
+                    <input type="text" name="name" id="name" class="form-control" placeholder="Enter student name..." value="{{ request('name') }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="course" class="form-label">Filter by Course:</label>
+                    <select name="course" id="course" class="form-select">
+                        <option value="">All Courses</option>
+                        @foreach($courses as $course)
+                            <option value="{{ $course }}" {{ request('course') == $course ? 'selected' : '' }}>
+                                {{ $course }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="search" class="form-label">General Search:</label>
+                    <input type="text" name="search" id="search" class="form-control" placeholder="Search by ID, email..." value="{{ request('search') }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="d-flex gap-2 w-100">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search me-1"></i>Filter
+                        </button>
+                        <a href="{{ route('coordinator.classlist.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </a>
+                    </div>
+                </div>
             </form>
         </div>
-        @if ($selectedSemester)
-            <div class="mb-3 fw-semibold" style="font-size:1.1rem;">Students Enrolled in <span class="text-primary">{{ $selectedSemester }}</span></div>
+        
+        @if ($activeTerm)
+            <div class="mb-3 fw-semibold" style="font-size:1.1rem;">Students Enrolled in <span class="text-primary">{{ $activeTerm->semester }}</span></div>
             @if ($students->isEmpty())
                 <div class="text-center text-muted">No students enrolled in this semester.</div>
             @else
@@ -90,6 +119,7 @@
                                         @endif
                                     </a>
                                 </th>
+                                <th>Offer Codes</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -99,6 +129,17 @@
                                     <td>{{ $student->name }}</td>
                                     <td class="text-lowercase">{{ $student->email }}</td>
                                     <td>{{ $student->course }}</td>
+                                    <td>
+                                        @if($student->offerings && $student->offerings->count() > 0)
+                                            <div class="d-flex flex-wrap gap-1">
+                                                @foreach($student->offerings as $offering)
+                                                    <span class="badge bg-primary">{{ $offering->offer_code }}</span>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-muted small">No enrollments</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

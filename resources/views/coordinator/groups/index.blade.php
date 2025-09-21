@@ -64,16 +64,26 @@
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
-                            <i class="fas fa-search me-2"></i>Search & Filter Groups
+                            <i class="fas fa-search me-2"></i>Search Groups
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form class="d-flex" method="GET" action="">
-                            <input type="text" name="search" class="form-control me-2" placeholder="Search groups by name or description..." value="{{ request('search') }}">
+                        <form method="GET" action="{{ route('coordinator.groups.index') }}" class="d-flex">
+                            <input type="text" name="search" class="form-control me-2" 
+                                   placeholder="Search groups by name or description..." 
+                                   value="{{ request('search') }}">
                             <button class="btn btn-primary" type="submit">
                                 <i class="fas fa-search me-2"></i>Search
                             </button>
                         </form>
+                        @if($activeTerm)
+                            <div class="mt-3">
+                                <span class="badge bg-info">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Showing groups for: {{ $activeTerm->full_name }}
+                                </span>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>

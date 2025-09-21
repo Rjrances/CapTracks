@@ -420,7 +420,7 @@ class ChairpersonController extends Controller
     public function deleteStudent($id)
     {
         try {
-            $student = Student::findOrFail($id);
+            $student = Student::where('student_id', $id)->firstOrFail();
             $studentName = $student->name;
             $student->delete();
             return redirect()->route('chairperson.students.index')
@@ -433,12 +433,12 @@ class ChairpersonController extends Controller
     }
     public function editStudent($id)
     {
-        $student = Student::findOrFail($id);
+        $student = Student::where('student_id', $id)->firstOrFail();
         return view('chairperson.students.edit', compact('student'));
     }
     public function updateStudent(Request $request, $id)
     {
-        $student = Student::findOrFail($id);
+        $student = Student::where('student_id', $id)->firstOrFail();
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:students,email,' . $id . ',student_id',
@@ -474,7 +474,7 @@ class ChairpersonController extends Controller
             'student_id' => 'required|exists:students,student_id',
         ]);
         $offering = Offering::where('id', $offeringId)->firstOrFail();
-        $student = Student::findOrFail($request->student_id);
+        $student = Student::where('student_id', $request->student_id)->firstOrFail();
         $student->enrollInOffering($offering);
         return redirect()->route('chairperson.offerings.show', $offeringId)
             ->with('success', "Student '{$student->name}' has been enrolled in {$offering->subject_code}.");
@@ -496,7 +496,7 @@ class ChairpersonController extends Controller
             $errors = [];
             foreach ($studentIds as $studentId) {
                 try {
-                    $student = Student::findOrFail($studentId);
+                    $student = Student::where('student_id', $studentId)->firstOrFail();
                     $student->enrollInOffering($offering);
                     $enrolledCount++;
                     $enrolledNames[] = $student->name;
@@ -532,7 +532,7 @@ class ChairpersonController extends Controller
             $errors = [];
             foreach ($studentIds as $studentId) {
                 try {
-                    $student = Student::findOrFail($studentId);
+                    $student = Student::where('student_id', $studentId)->firstOrFail();
                     $studentName = $student->name;
                     $student->delete();
                     $deletedCount++;

@@ -10,10 +10,11 @@ class StudentProposalController extends Controller
 {
     public function index()
     {
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = Student::find(session('student_id'));
+            $student = null;
         }
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
@@ -22,7 +23,7 @@ class StudentProposalController extends Controller
         if (!$group) {
             return redirect()->route('student.group')->with('error', 'You must be part of a group to submit a proposal.');
         }
-        $existingProposal = ProjectSubmission::where('student_id', $student->id)
+        $existingProposal = ProjectSubmission::where('student_id', $student->student_id)
             ->where('type', 'proposal')
             ->latest()
             ->first();
@@ -31,10 +32,11 @@ class StudentProposalController extends Controller
     }
     public function create()
     {
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = Student::find(session('student_id'));
+            $student = null;
         }
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
@@ -43,7 +45,7 @@ class StudentProposalController extends Controller
         if (!$group) {
             return redirect()->route('student.group')->with('error', 'You must be part of a group to submit a proposal.');
         }
-        $existingProposal = ProjectSubmission::where('student_id', $student->id)
+        $existingProposal = ProjectSubmission::where('student_id', $student->student_id)
             ->where('type', 'proposal')
             ->latest()
             ->first();
@@ -62,10 +64,11 @@ class StudentProposalController extends Controller
             'expected_outcomes' => 'required|string|min:50',
             'file' => 'required|file|mimes:pdf,doc,docx|max:10240', // 10MB max
         ]);
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = Student::find(session('student_id'));
+            $student = null;
         }
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
@@ -76,7 +79,7 @@ class StudentProposalController extends Controller
         }
         $path = $request->file('file')->store('proposals', 'public');
         $proposal = ProjectSubmission::create([
-            'student_id' => $student->id,
+            'student_id' => $student->student_id,
             'file_path' => $path,
             'type' => 'proposal',
             'status' => 'pending',
@@ -91,32 +94,34 @@ class StudentProposalController extends Controller
     }
     public function show($id)
     {
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = Student::find(session('student_id'));
+            $student = null;
         }
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         $proposal = ProjectSubmission::with('student')->findOrFail($id);
-        if ($proposal->student_id !== $student->id) {
+        if ($proposal->student_id !== $student->student_id) {
             return redirect()->route('student.proposal')->with('error', 'You can only view your own proposals.');
         }
         return view('student.proposal.show', compact('proposal'));
     }
     public function edit($id)
     {
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = Student::find(session('student_id'));
+            $student = null;
         }
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         $proposal = ProjectSubmission::findOrFail($id);
-        if ($proposal->student_id !== $student->id) {
+        if ($proposal->student_id !== $student->student_id) {
             return redirect()->route('student.proposal')->with('error', 'You can only edit your own proposals.');
         }
         if ($proposal->status === 'approved') {
@@ -134,16 +139,17 @@ class StudentProposalController extends Controller
             'expected_outcomes' => 'required|string|min:50',
             'file' => 'nullable|file|mimes:pdf,doc,docx|max:10240', // 10MB max
         ]);
-        if (Auth::check()) {
-            $student = Auth::user()->student;
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = Student::find(session('student_id'));
+            $student = null;
         }
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         $proposal = ProjectSubmission::findOrFail($id);
-        if ($proposal->student_id !== $student->id) {
+        if ($proposal->student_id !== $student->student_id) {
             return redirect()->route('student.proposal')->with('error', 'You can only edit your own proposals.');
         }
         if ($proposal->status === 'approved') {
