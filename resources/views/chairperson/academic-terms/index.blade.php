@@ -37,7 +37,20 @@
                                 @forelse($academicTerms as $term)
                                     <tr class="{{ $term->is_archived ? 'table-secondary' : '' }}">
                                         <td>{{ $term->school_year }}</td>
-                                        <td>{{ $term->semester }}</td>
+                                        <td>
+                                            @php
+                                                // Extract semester part from full string (e.g., "2024-2025 First Semester" -> "First Semester")
+                                                $semesterDisplay = $term->semester;
+                                                if (strpos($semesterDisplay, 'First Semester') !== false) {
+                                                    $semesterDisplay = 'First Semester';
+                                                } elseif (strpos($semesterDisplay, 'Second Semester') !== false) {
+                                                    $semesterDisplay = 'Second Semester';
+                                                } elseif (strpos($semesterDisplay, 'Summer') !== false) {
+                                                    $semesterDisplay = 'Summer';
+                                                }
+                                            @endphp
+                                            {{ $semesterDisplay }}
+                                        </td>
                                         <td>
                                             @if($term->is_active)
                                                 <span class="badge bg-success">Active</span>

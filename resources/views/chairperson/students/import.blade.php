@@ -116,7 +116,7 @@
                         <li><strong>student_id</strong> - Student ID number (must be exactly 10 digits)</li>
                         <li><strong>name</strong> - Full name</li>
                         <li><strong>email</strong> - Email address (must be unique)</li>
-                        <li><strong>semester</strong> - Current semester (format: "2024-1", "2024-2", "2024-S")</li>
+                        <li><strong>semester</strong> - Current semester (format: "2024-2025 First Semester", "2024-2025 Second Semester", "2024-2025 Summer")</li>
                         <li><strong>course</strong> - Course/Program (BS Computer Science, BS Information Technology, BS Entertainment and Multimedia Computing)</li>
                         <li><strong>offer_code</strong> - Offering code for automatic enrollment (e.g., "11000", "11001", "11002")</li>
                     </ul>

@@ -26,16 +26,27 @@
                             <select class="form-select @error('semester') is-invalid @enderror" 
                                     id="semester" name="semester" required>
                                 <option value="">Select Semester</option>
+                                @php
+                                    $currentSemester = $academicTerm->semester;
+                                    // Extract semester part from full string (e.g., "2024-2025 First Semester" -> "First Semester")
+                                    if (strpos($currentSemester, 'First Semester') !== false) {
+                                        $currentSemester = 'First Semester';
+                                    } elseif (strpos($currentSemester, 'Second Semester') !== false) {
+                                        $currentSemester = 'Second Semester';
+                                    } elseif (strpos($currentSemester, 'Summer') !== false) {
+                                        $currentSemester = 'Summer';
+                                    }
+                                @endphp
                                 <option value="First Semester" 
-                                    {{ old('semester', $academicTerm->semester) == 'First Semester' ? 'selected' : '' }}>
+                                    {{ old('semester', $currentSemester) == 'First Semester' ? 'selected' : '' }}>
                                     First Semester
                                 </option>
                                 <option value="Second Semester" 
-                                    {{ old('semester', $academicTerm->semester) == 'Second Semester' ? 'selected' : '' }}>
+                                    {{ old('semester', $currentSemester) == 'Second Semester' ? 'selected' : '' }}>
                                     Second Semester
                                 </option>
                                 <option value="Summer" 
-                                    {{ old('semester', $academicTerm->semester) == 'Summer' ? 'selected' : '' }}>
+                                    {{ old('semester', $currentSemester) == 'Summer' ? 'selected' : '' }}>
                                     Summer
                                 </option>
                             </select>

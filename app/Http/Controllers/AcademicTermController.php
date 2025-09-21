@@ -27,7 +27,7 @@ class AcademicTermController extends Controller
         }
         AcademicTerm::create([
             'school_year' => $request->school_year,
-            'semester' => $request->semester,
+            'semester' => $request->school_year . ' ' . $request->semester,
             'is_active' => $request->has('is_active') ? $request->is_active : false,
             'is_archived' => false
         ]);
@@ -55,7 +55,7 @@ class AcademicTermController extends Controller
         }
         $academicTerm->update([
             'school_year' => $request->school_year,
-            'semester' => $request->semester,
+            'semester' => $request->school_year . ' ' . $request->semester,
             'is_active' => $request->has('is_active') ? $request->is_active : false,
             'is_archived' => $request->has('is_archived') ? $request->is_archived : false
         ]);

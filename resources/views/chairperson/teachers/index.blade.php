@@ -6,36 +6,17 @@
             <h2 class="mb-0">
                 <i class="fas fa-chalkboard-teacher me-2"></i>Faculty Management
             </h2>
-            @if($activeTerm)
-                <p class="text-muted mb-0">
-                    <i class="fas fa-calendar-alt me-1"></i>
-                    @if($showAllTerms)
-                        Showing <strong>All Faculty & Staff</strong> (all users except students)
-                        <span class="badge bg-success ms-2">All Faculty & Staff</span>
-                    @else
-                        Showing faculty assigned to offerings in: <strong>Active Term Only</strong> (use "Show All Faculty" to see all faculty & staff)
-                        <span class="badge bg-info ms-2">Active Term Only</span>
-                    @endif
-                </p>
-            @else
-                <p class="text-warning mb-0">
-                    <i class="fas fa-exclamation-triangle me-1"></i>
-                    No active academic term set. Please set an active term to view faculty assignments.
-                </p>
-            @endif
+            <p class="text-muted mb-0">
+                <i class="fas fa-users me-1"></i>
+                @if($activeTerm)
+                    Showing faculty members for {{ $activeTerm->full_name }}
+                    <span class="badge bg-info ms-2">Active Term</span>
+                @else
+                    Showing all faculty members in the system
+                @endif
+            </p>
         </div>
         <div class="d-flex gap-2">
-            @if($activeTerm)
-                @if($showAllTerms)
-                    <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-info">
-                        <i class="fas fa-calendar-alt"></i> Show Active Term Only
-                    </a>
-                @else
-                    <a href="{{ route('chairperson.teachers.index', ['show_all' => true]) }}" class="btn btn-outline-success">
-                        <i class="fas fa-users"></i> Show All Faculty & Staff
-                    </a>
-                @endif
-            @endif
             <a href="{{ route('chairperson.teachers.create-manual') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>Add Teacher
             </a>
@@ -156,9 +137,24 @@
                                     'chairperson' => 'danger',
                                     'admin' => 'dark'
                                 ];
-                                $badgeColor = $roleColors[$teacher->role] ?? 'secondary';
+                                $allRoles = $teacher->all_roles;
                             @endphp
-                            <span class="badge bg-{{ $badgeColor }}">{{ ucfirst($teacher->role ?? 'N/A') }}</span>
+                            @if(count($allRoles) > 1)
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach($allRoles as $role)
+                                        @php
+                                            $badgeColor = $roleColors[$role] ?? 'secondary';
+                                        @endphp
+                                        <span class="badge bg-{{ $badgeColor }}">{{ ucfirst($role) }}</span>
+                                    @endforeach
+                                </div>
+                            @else
+                                @php
+                                    $role = $allRoles[0] ?? 'N/A';
+                                    $badgeColor = $roleColors[$role] ?? 'secondary';
+                                @endphp
+                                <span class="badge bg-{{ $badgeColor }}">{{ ucfirst($role) }}</span>
+                            @endif
                         </td>
                         <td>{{ $teacher->department ?? 'N/A' }}</td>
                         <td>
@@ -179,21 +175,65 @@
                 @endforeach
             </tbody>
         </table>
-        @if($showAllTerms)
-            <div class="mt-3">
-                <div class="alert alert-info">
-                    <h6 class="alert-heading">
-                        <i class="fas fa-info-circle me-1"></i>All Faculty & Staff View
-                    </h6>
-                    <p class="mb-0 small">
-                        This view shows all users in the system except students. 
-                        You can see faculty, staff, administrators, and other roles for complete system management.
-                    </p>
-                </div>
+        
+        {{-- Pagination --}}
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div class="text-muted">
+                Showing {{ $teachers->firstItem() }} to {{ $teachers->lastItem() }} of {{ $teachers->total() }} faculty members
             </div>
-        @endif
+            <div>
+                <nav aria-label="Teacher pagination">
+                    {{ $teachers->appends(request()->query())->links('pagination::bootstrap-5') }}
+                </nav>
+            </div>
+        </div>
     @else
-        <p>No teachers found.</p>
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No Faculty Members Found</h4>
+            <p class="text-muted">
+                @if($activeTerm)
+                    No faculty members found for the active term: <strong>{{ $activeTerm->full_name }}</strong>
+                @else
+                    No faculty members found in the system.
+                @endif
+            </p>
+            <a href="{{ route('chairperson.teachers.create') }}" class="btn btn-primary">
+                <i class="fas fa-upload me-1"></i>Import Faculty
+            </a>
+        </div>
     @endif
 </div>
+
+<style>
+/* Custom pagination styling */
+.pagination {
+    margin-bottom: 0;
+}
+.pagination .page-link {
+    color: #495057;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 0.75rem;
+}
+.pagination .page-link:hover {
+    color: #0056b3;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+/* Ensure proper spacing */
+.pagination .page-item:not(:first-child) .page-link {
+    margin-left: -1px;
+}
+</style>
 @endsection

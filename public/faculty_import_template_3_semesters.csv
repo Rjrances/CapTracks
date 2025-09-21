@@ -1,0 +1,31 @@
+faculty_id,name,email,role,department
+10001,Dr. Sarah Johnson,sarah.johnson@university.edu,chairperson,Computer Science
+10002,Prof. Michael Chen,michael.chen@university.edu,teacher,Computer Science
+10003,Dr. Patricia Williams,patricia.williams@university.edu,adviser,Information Technology
+10004,Prof. Robert Davis,robert.davis@university.edu,panelist,Computer Science
+10005,Dr. Lisa Anderson,lisa.anderson@university.edu,coordinator,Entertainment and Multimedia Computing
+10006,Dr. Maria Santos,maria.santos@university.edu,teacher,Computer Science
+10007,Prof. John Rodriguez,john.rodriguez@university.edu,adviser,Information Technology
+10008,Prof. Jennifer Lee,jennifer.lee@university.edu,panelist,Entertainment and Multimedia Computing
+10009,Dr. Christopher Brown,christopher.brown@university.edu,teacher,Computer Science
+10010,Prof. Amanda Taylor,amanda.taylor@university.edu,adviser,Information Technology
+10011,Dr. Kevin Martinez,kevin.martinez@university.edu,panelist,Computer Science
+10012,Prof. Rachel Green,rachel.green@university.edu,coordinator,Entertainment and Multimedia Computing
+10013,Dr. David Wilson,david.wilson@university.edu,teacher,Computer Science
+10014,Prof. Michelle Garcia,michelle.garcia@university.edu,adviser,Information Technology
+10015,Dr. James Thompson,james.thompson@university.edu,panelist,Entertainment and Multimedia Computing
+10016,Prof. Lisa Martinez,lisa.martinez@university.edu,teacher,Computer Science
+10017,Dr. Robert Johnson,robert.johnson@university.edu,adviser,Information Technology
+10018,Prof. Sarah Davis,sarah.davis@university.edu,panelist,Computer Science
+10019,Dr. Michael Brown,michael.brown@university.edu,coordinator,Entertainment and Multimedia Computing
+10020,Prof. Jennifer Wilson,jennifer.wilson@university.edu,teacher,Computer Science
+10021,Dr. Christopher Garcia,christopher.garcia@university.edu,adviser,Information Technology
+10022,Prof. Amanda Thompson,amanda.thompson@university.edu,panelist,Computer Science
+10023,Dr. Kevin Johnson,kevin.johnson@university.edu,teacher,Entertainment and Multimedia Computing
+10024,Prof. Rachel Martinez,rachel.martinez@university.edu,adviser,Computer Science
+10025,Dr. David Wilson,david.wilson@university.edu,panelist,Information Technology
+10026,Prof. Michelle Brown,michelle.brown@university.edu,coordinator,Entertainment and Multimedia Computing
+10027,Dr. James Garcia,james.garcia@university.edu,teacher,Computer Science
+10028,Prof. Lisa Thompson,lisa.thompson@university.edu,adviser,Information Technology
+10029,Dr. Robert Johnson,robert.johnson@university.edu,panelist,Computer Science
+10030,Prof. Sarah Davis,sarah.davis@university.edu,teacher,Entertainment and Multimedia Computing

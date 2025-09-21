@@ -15,11 +15,158 @@ class GroupSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->createTestGroups();
+        $this->createGroupsForAllSemesters();
     }
 
     /**
-     * Create capstone project groups with students and advisers
+     * Create groups for all semesters with different numbers
+     */
+    private function createGroupsForAllSemesters()
+    {
+        $academicTerms = AcademicTerm::all();
+        
+        foreach ($academicTerms as $term) {
+            $this->createGroupsForSemester($term);
+        }
+    }
+
+    /**
+     * Create groups for a specific semester
+     */
+    private function createGroupsForSemester($term)
+    {
+        // Get students and advisers for this semester
+        $students = Student::where('semester', $term->semester)->get();
+        $advisers = User::where('role', 'adviser')
+            ->where('semester', $term->semester)
+            ->get();
+
+        if ($advisers->isEmpty()) {
+            echo "⚠️ No advisers found for {$term->semester}. Skipping groups.\n";
+            return;
+        }
+
+        if ($students->count() < 2) {
+            echo "⚠️ Not enough students for {$term->semester}. Skipping groups.\n";
+            return;
+        }
+
+        // Determine number of groups based on semester
+        $groupCount = $this->getGroupCountForSemester($term->semester);
+        $adviserIndex = 0;
+
+        echo "Creating {$groupCount} groups for {$term->semester}...\n";
+
+        for ($i = 1; $i <= $groupCount; $i++) {
+            $adviser = $advisers[$adviserIndex % $advisers->count()];
+            $adviserIndex++;
+
+            $group = Group::create([
+                'name' => $this->getGroupName($term->semester, $i),
+                'description' => $this->getGroupDescription($term->semester, $i),
+                'faculty_id' => $adviser->faculty_id,
+                'academic_term_id' => $term->id
+            ]);
+
+            // Add students to group
+            $this->assignStudentsToGroup($group, $students, $i);
+        }
+
+        echo "✅ Created {$groupCount} groups for {$term->semester}\n";
+    }
+
+    /**
+     * Get number of groups for each semester
+     */
+    private function getGroupCountForSemester($semester)
+    {
+        $counts = [
+            '2024-2025 First Semester' => 3,
+            '2024-2025 Second Semester' => 5,
+            '2024-2025 Summer' => 2
+        ];
+
+        return $counts[$semester] ?? 3;
+    }
+
+    /**
+     * Get group name based on semester and index
+     */
+    private function getGroupName($semester, $index)
+    {
+        $names = [
+            '2024-2025 First Semester' => [
+                'Smart Campus Management System',
+                'Mobile Learning Assistant',
+                'Intelligent Data Analytics Platform'
+            ],
+            '2024-2025 Second Semester' => [
+                'E-Learning Platform with AI',
+                'Smart Library Management System',
+                'Student Performance Analytics',
+                'Campus Security Monitoring System',
+                'Digital Assignment Management'
+            ],
+            '2024-2025 Summer' => [
+                'Virtual Reality Learning Environment',
+                'Blockchain-based Certificate System'
+            ]
+        ];
+
+        $semesterNames = $names[$semester] ?? ['Generic Project'];
+        return $semesterNames[$index - 1] ?? "Project Group {$index}";
+    }
+
+    /**
+     * Get group description based on semester and index
+     */
+    private function getGroupDescription($semester, $index)
+    {
+        $descriptions = [
+            '2024-2025 First Semester' => [
+                'Developing an integrated web-based platform for campus resource management and student services',
+                'Creating an AI-powered mobile application for personalized learning and academic support',
+                'Building a comprehensive data visualization and analytics platform for educational insights'
+            ],
+            '2024-2025 Second Semester' => [
+                'An advanced e-learning platform with AI-powered personalized learning paths and real-time assessment',
+                'A comprehensive library management system with RFID integration and automated book tracking',
+                'A data analytics platform for tracking and improving student academic performance',
+                'A campus-wide security monitoring system with facial recognition and emergency response',
+                'A digital platform for assignment submission, grading, and feedback management'
+            ],
+            '2024-2025 Summer' => [
+                'An immersive VR environment for interactive learning experiences in various subjects',
+                'A secure blockchain-based system for issuing and verifying academic certificates'
+            ]
+        ];
+
+        $semesterDescriptions = $descriptions[$semester] ?? ['A capstone project for academic completion'];
+        return $semesterDescriptions[$index - 1] ?? "Description for Project Group {$index}";
+    }
+
+    /**
+     * Assign students to a group
+     */
+    private function assignStudentsToGroup($group, $students, $groupIndex)
+    {
+        $studentsPerGroup = 2;
+        $startIndex = ($groupIndex - 1) * $studentsPerGroup;
+        
+        for ($i = 0; $i < $studentsPerGroup && $startIndex + $i < $students->count(); $i++) {
+            $student = $students[$startIndex + $i];
+            $role = $i === 0 ? 'leader' : 'member';
+            
+            try {
+                $group->members()->attach($student->student_id, ['role' => $role]);
+            } catch (\Exception $e) {
+                // Ignore duplicate entry errors
+            }
+        }
+    }
+
+    /**
+     * Create capstone project groups with students and advisers (legacy method)
      */
     private function createTestGroups()
     {

@@ -16,19 +16,19 @@ class AcademicTermSeeder extends Seeder
         $terms = [
             [
                 'school_year' => '2024-2025',
-                'semester' => 'First Semester',
+                'semester' => '2024-2025 First Semester',
                 'is_active' => true,
                 'is_archived' => false
             ],
             [
                 'school_year' => '2024-2025',
-                'semester' => 'Second Semester',
+                'semester' => '2024-2025 Second Semester',
                 'is_active' => false,
                 'is_archived' => false
             ],
             [
                 'school_year' => '2024-2025',
-                'semester' => 'Summer',
+                'semester' => '2024-2025 Summer',
                 'is_active' => false,
                 'is_archived' => false
             ]

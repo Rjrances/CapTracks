@@ -77,7 +77,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             ],
             '*.name' => 'required|string|max:255',
             '*.email' => 'nullable|email|unique:students,email|unique:student_accounts,email',
-            '*.semester' => 'required|string|max:50',
+            '*.semester' => 'required|string|in:2024-2025 First Semester,2024-2025 Second Semester,2024-2025 Summer',
             '*.course' => 'required|string|max:255',
             '*.offer_code' => 'nullable|string|max:20|exists:offerings,offer_code',
         ];

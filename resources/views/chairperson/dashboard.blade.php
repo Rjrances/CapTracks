@@ -97,7 +97,7 @@
                 </div>
                 <div class="card-body text-center">
                     <h2 class="text-success mb-1">{{ $stats['facultyCount'] ?? 0 }}</h2>
-                    <p class="text-muted mb-0">Active Advisers</p>
+                    <p class="text-muted mb-0">Active Faculty</p>
                 </div>
             </div>
         </div>

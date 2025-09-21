@@ -32,6 +32,8 @@ class CoordinatorController extends Controller
             'groupCount' => Group::count(),
             'facultyCount' => User::whereHas('roles', function($query) {
                 $query->whereIn('name', ['adviser', 'panelist']);
+            })->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
             })->count(),
             'submissionCount' => ProjectSubmission::count(),
             'pendingSubmissions' => ProjectSubmission::where('status', 'pending')->count(),

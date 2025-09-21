@@ -20,6 +20,8 @@ class CoordinatorDashboardController extends Controller
         $groupCount = Group::count();
         $facultyCount = User::whereHas('roles', function($query) {
             $query->whereIn('name', ['adviser', 'panelist']);
+        })->when($activeTerm, function($query) use ($activeTerm) {
+            return $query->where('semester', $activeTerm->semester);
         })->count();
         $submissionCount = ProjectSubmission::count();
         $groupsWithAdviser = Group::whereNotNull('faculty_id')->count();

@@ -22,13 +22,13 @@ class StudentSeeder extends Seeder
      */
     private function createTestStudents()
     {
-        // Students for First Semester (2024-1)
+        // Students for First Semester (2024-2025 First Semester)
         $firstSemesterStudents = [
             [
                 'name' => 'Alexandra Martinez',
                 'email' => 'alexandra.martinez@student.university.edu',
                 'student_id' => '2024000001',
-                'semester' => '2024-1',
+                'semester' => '2024-2025 First Semester',
                 'course' => 'BS Computer Science',
                 'offer_code' => '11000'
             ],
@@ -36,7 +36,7 @@ class StudentSeeder extends Seeder
                 'name' => 'David Thompson',
                 'email' => 'david.thompson@student.university.edu',
                 'student_id' => '2024000002',
-                'semester' => '2024-1',
+                'semester' => '2024-2025 First Semester',
                 'course' => 'BS Computer Science',
                 'offer_code' => '11000'
             ],
@@ -44,7 +44,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Emily Rodriguez',
                 'email' => 'emily.rodriguez@student.university.edu',
                 'student_id' => '2024000003',
-                'semester' => '2024-1',
+                'semester' => '2024-2025 First Semester',
                 'course' => 'BS Information Technology',
                 'offer_code' => '11001'
             ],
@@ -52,7 +52,7 @@ class StudentSeeder extends Seeder
                 'name' => 'James Wilson',
                 'email' => 'james.wilson@student.university.edu',
                 'student_id' => '2024000004',
-                'semester' => '2024-1',
+                'semester' => '2024-2025 First Semester',
                 'course' => 'BS Information Technology',
                 'offer_code' => '11001'
             ],
@@ -60,7 +60,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Sophia Kim',
                 'email' => 'sophia.kim@student.university.edu',
                 'student_id' => '2024000005',
-                'semester' => '2024-1',
+                'semester' => '2024-2025 First Semester',
                 'course' => 'BS Entertainment and Multimedia Computing',
                 'offer_code' => '11002'
             ],
@@ -68,7 +68,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Ryan O\'Connor',
                 'email' => 'ryan.oconnor@student.university.edu',
                 'student_id' => '2024000006',
-                'semester' => '2024-1',
+                'semester' => '2024-2025 First Semester',
                 'course' => 'BS Entertainment and Multimedia Computing',
                 'offer_code' => '11002'
             ],
@@ -76,7 +76,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Isabella Garcia',
                 'email' => 'isabella.garcia@student.university.edu',
                 'student_id' => '2024000007',
-                'semester' => '2024-1',
+                'semester' => '2024-2025 First Semester',
                 'course' => 'BS Computer Science',
                 'offer_code' => '11003'
             ],
@@ -84,7 +84,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Lucas Anderson',
                 'email' => 'lucas.anderson@student.university.edu',
                 'student_id' => '2024000008',
-                'semester' => '2024-1',
+                'semester' => '2024-2025 First Semester',
                 'course' => 'BS Computer Science',
                 'offer_code' => '11003'
             ],
@@ -92,7 +92,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Olivia White',
                 'email' => 'olivia.white@student.university.edu',
                 'student_id' => '2024000009',
-                'semester' => '2024-1',
+                'semester' => '2024-2025 First Semester',
                 'course' => 'BS Information Technology',
                 'offer_code' => '11004'
             ],
@@ -100,19 +100,19 @@ class StudentSeeder extends Seeder
                 'name' => 'Noah Johnson',
                 'email' => 'noah.johnson@student.university.edu',
                 'student_id' => '2024000010',
-                'semester' => '2024-1',
+                'semester' => '2024-2025 First Semester',
                 'course' => 'BS Information Technology',
                 'offer_code' => '11004'
             ]
         ];
 
-        // Students for Second Semester (2024-2)
+        // Students for Second Semester (2024-2025 Second Semester)
         $secondSemesterStudents = [
             [
                 'name' => 'Gabriela Santos',
                 'email' => 'gabriela.santos@student.university.edu',
                 'student_id' => '2024000011',
-                'semester' => '2024-2',
+                'semester' => '2024-2025 Second Semester',
                 'course' => 'BS Computer Science',
                 'offer_code' => '12000'
             ],
@@ -120,7 +120,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Marcus Chen',
                 'email' => 'marcus.chen@student.university.edu',
                 'student_id' => '2024000012',
-                'semester' => '2024-2',
+                'semester' => '2024-2025 Second Semester',
                 'course' => 'BS Computer Science',
                 'offer_code' => '12000'
             ],
@@ -128,7 +128,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Natalie Foster',
                 'email' => 'natalie.foster@student.university.edu',
                 'student_id' => '2024000013',
-                'semester' => '2024-2',
+                'semester' => '2024-2025 Second Semester',
                 'course' => 'BS Information Technology',
                 'offer_code' => '12001'
             ],
@@ -136,7 +136,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Tyler Richardson',
                 'email' => 'tyler.richardson@student.university.edu',
                 'student_id' => '2024000014',
-                'semester' => '2024-2',
+                'semester' => '2024-2025 Second Semester',
                 'course' => 'BS Information Technology',
                 'offer_code' => '12001'
             ],
@@ -144,7 +144,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Zoe Mitchell',
                 'email' => 'zoe.mitchell@student.university.edu',
                 'student_id' => '2024000015',
-                'semester' => '2024-2',
+                'semester' => '2024-2025 Second Semester',
                 'course' => 'BS Entertainment and Multimedia Computing',
                 'offer_code' => '12002'
             ],
@@ -152,7 +152,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Ethan Parker',
                 'email' => 'ethan.parker@student.university.edu',
                 'student_id' => '2024000016',
-                'semester' => '2024-2',
+                'semester' => '2024-2025 Second Semester',
                 'course' => 'BS Entertainment and Multimedia Computing',
                 'offer_code' => '12002'
             ],
@@ -160,7 +160,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Ava Brown',
                 'email' => 'ava.brown@student.university.edu',
                 'student_id' => '2024000017',
-                'semester' => '2024-2',
+                'semester' => '2024-2025 Second Semester',
                 'course' => 'BS Computer Science',
                 'offer_code' => '12003'
             ],
@@ -168,7 +168,7 @@ class StudentSeeder extends Seeder
                 'name' => 'William Davis',
                 'email' => 'william.davis@student.university.edu',
                 'student_id' => '2024000018',
-                'semester' => '2024-2',
+                'semester' => '2024-2025 Second Semester',
                 'course' => 'BS Computer Science',
                 'offer_code' => '12003'
             ],
@@ -176,7 +176,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Mia Taylor',
                 'email' => 'mia.taylor@student.university.edu',
                 'student_id' => '2024000019',
-                'semester' => '2024-2',
+                'semester' => '2024-2025 Second Semester',
                 'course' => 'BS Information Technology',
                 'offer_code' => '12004'
             ],
@@ -184,19 +184,19 @@ class StudentSeeder extends Seeder
                 'name' => 'Benjamin Miller',
                 'email' => 'benjamin.miller@student.university.edu',
                 'student_id' => '2024000020',
-                'semester' => '2024-2',
+                'semester' => '2024-2025 Second Semester',
                 'course' => 'BS Information Technology',
                 'offer_code' => '12004'
             ]
         ];
 
-        // Students for Summer (2024-S)
+        // Students for Summer (2024-2025 Summer)
         $summerStudents = [
             [
                 'name' => 'Priya Patel',
                 'email' => 'priya.patel@student.university.edu',
                 'student_id' => '2024000021',
-                'semester' => '2024-S',
+                'semester' => '2024-2025 Summer',
                 'course' => 'BS Computer Science',
                 'offer_code' => '13000'
             ],
@@ -204,7 +204,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Alexander Torres',
                 'email' => 'alexander.torres@student.university.edu',
                 'student_id' => '2024000022',
-                'semester' => '2024-S',
+                'semester' => '2024-2025 Summer',
                 'course' => 'BS Computer Science',
                 'offer_code' => '13000'
             ],
@@ -212,7 +212,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Luna Zhang',
                 'email' => 'luna.zhang@student.university.edu',
                 'student_id' => '2024000023',
-                'semester' => '2024-S',
+                'semester' => '2024-2025 Summer',
                 'course' => 'BS Information Technology',
                 'offer_code' => '13001'
             ],
@@ -220,7 +220,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Caleb Murphy',
                 'email' => 'caleb.murphy@student.university.edu',
                 'student_id' => '2024000024',
-                'semester' => '2024-S',
+                'semester' => '2024-2025 Summer',
                 'course' => 'BS Information Technology',
                 'offer_code' => '13001'
             ],
@@ -228,7 +228,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Charlotte Wilson',
                 'email' => 'charlotte.wilson@student.university.edu',
                 'student_id' => '2024000025',
-                'semester' => '2024-S',
+                'semester' => '2024-2025 Summer',
                 'course' => 'BS Entertainment and Multimedia Computing',
                 'offer_code' => '13002'
             ],
@@ -236,7 +236,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Henry Moore',
                 'email' => 'henry.moore@student.university.edu',
                 'student_id' => '2024000026',
-                'semester' => '2024-S',
+                'semester' => '2024-2025 Summer',
                 'course' => 'BS Entertainment and Multimedia Computing',
                 'offer_code' => '13002'
             ],
@@ -244,7 +244,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Emma Thompson',
                 'email' => 'emma.thompson@student.university.edu',
                 'student_id' => '2024000027',
-                'semester' => '2024-S',
+                'semester' => '2024-2025 Summer',
                 'course' => 'BS Computer Science',
                 'offer_code' => '13003'
             ],
@@ -252,7 +252,7 @@ class StudentSeeder extends Seeder
                 'name' => 'Daniel Rodriguez',
                 'email' => 'daniel.rodriguez@student.university.edu',
                 'student_id' => '2024000028',
-                'semester' => '2024-S',
+                'semester' => '2024-2025 Summer',
                 'course' => 'BS Computer Science',
                 'offer_code' => '13003'
             ]

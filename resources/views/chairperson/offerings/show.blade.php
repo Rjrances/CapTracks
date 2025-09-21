@@ -31,7 +31,6 @@
                                     <td>
                                         @if($offering->teacher)
                                             <span class="badge bg-info">{{ $offering->teacher->name }}</span>
-                                            <small class="text-muted d-block">{{ ucfirst($offering->teacher->roles->first()->name ?? 'N/A') }}</small>
                                         @else
                                             <span class="text-muted">No teacher assigned</span>
                                         @endif

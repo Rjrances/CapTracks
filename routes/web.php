@@ -112,7 +112,7 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 
         // Roles
         Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
-        Route::post('/roles/{user}', [RoleController::class, 'update'])->name('roles.update');
+        Route::post('/roles/{faculty_id}', [RoleController::class, 'update'])->name('roles.update');
 
         // Offerings
         Route::get('/offerings', [ChairpersonController::class, 'indexOfferings'])->name('offerings.index');

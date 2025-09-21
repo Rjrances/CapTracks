@@ -1,51 +1,51 @@
 student_id,name,email,semester,course,offer_code
-2024000029,John Smith,johnsmith@student.university.edu,2024-1,BS Computer Science,11000
-2024000030,Jane Doe,janedoe@student.university.edu,2024-1,BS Information Technology,11000
-2024000031,Bob Johnson,bobjohnson@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11000
-2024000032,Alice Brown,alicebrown@student.university.edu,2024-1,BS Computer Science,11000
-2024000033,Charlie Wilson,charliewilson@student.university.edu,2024-1,BS Information Technology,11000
-2024000034,Diana Lee,dianalee@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11000
-2024000035,Frank Miller,frankmiller@student.university.edu,2024-1,BS Computer Science,11000
-2024000036,Grace Davis,gracedavis@student.university.edu,2024-1,BS Information Technology,11000
-2024000037,Henry Garcia,henrygarcia@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11000
-2024000038,Ivy Martinez,ivymartinez@student.university.edu,2024-1,BS Computer Science,11000
-2024000039,Jack Anderson,jackanderson@student.university.edu,2024-1,BS Information Technology,11001
-2024000040,Kate Taylor,katetaylor@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11001
-2024000041,Luke Thomas,lukethomas@student.university.edu,2024-1,BS Computer Science,11001
-2024000042,Mary Jackson,maryjackson@student.university.edu,2024-1,BS Information Technology,11001
-2024000043,Nick White,nickwhite@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11001
-2024000044,Olivia Harris,oliviaharris@student.university.edu,2024-1,BS Computer Science,11001
-2024000045,Paul Clark,paulclark@student.university.edu,2024-1,BS Information Technology,11001
-2024000046,Quinn Lewis,quinnlewis@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11001
-2024000047,Rose Walker,rosewalker@student.university.edu,2024-1,BS Computer Science,11001
-2024000048,Sam Hall,samhall@student.university.edu,2024-1,BS Information Technology,11001
-2024000049,Tina Young,tinayoung@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11002
-2024000050,Victor King,victorking@student.university.edu,2024-1,BS Computer Science,11002
-2024000051,Wendy Wright,wendywright@student.university.edu,2024-1,BS Information Technology,11002
-2024000052,Xavier Lopez,xavierlopez@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11002
-2024000053,Yara Hill,yarahill@student.university.edu,2024-1,BS Computer Science,11002
-2024000054,Zoe Scott,zoescott@student.university.edu,2024-1,BS Information Technology,11002
-2024000055,Adam Green,adamgreen@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11002
-2024000056,Bella Adams,bellaadams@student.university.edu,2024-1,BS Computer Science,11002
-2024000057,Chris Baker,chrisbaker@student.university.edu,2024-1,BS Information Technology,11002
-2024000058,Dana Nelson,dananelson@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11002
-2024000059,Eddie Carter,eddiecarter@student.university.edu,2024-1,BS Computer Science,11003
-2024000060,Fiona Mitchell,fionamitchell@student.university.edu,2024-1,BS Information Technology,11003
-2024000061,George Perez,georgeperez@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11003
-2024000062,Helen Roberts,helenroberts@student.university.edu,2024-1,BS Computer Science,11003
-2024000063,Ian Turner,ianturner@student.university.edu,2024-1,BS Information Technology,11003
-2024000064,Joy Phillips,joyphillips@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11003
-2024000065,Kyle Campbell,kylecampbell@student.university.edu,2024-1,BS Computer Science,11003
-2024000066,Lisa Parker,lisaparker@student.university.edu,2024-1,BS Information Technology,11003
-2024000067,Mike Evans,mikeevans@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11003
-2024000068,Nina Edwards,ninaedwards@student.university.edu,2024-1,BS Computer Science,11003
-2024000069,Oscar Collins,oscarcollins@student.university.edu,2024-1,BS Information Technology,11004
-2024000070,Paula Stewart,paulastewart@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11004
-2024000071,Quincy Sanchez,quincysanchez@student.university.edu,2024-1,BS Computer Science,11004
-2024000072,Rita Morris,ritamorris@student.university.edu,2024-1,BS Information Technology,11004
-2024000073,Steve Rivera,steverivera@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11004
-2024000074,Tina Reed,tinareed@student.university.edu,2024-1,BS Computer Science,11004
-2024000075,Ulrich Cook,ulrichcook@student.university.edu,2024-1,BS Information Technology,11004
-2024000076,Vera Morgan,veramorgan@student.university.edu,2024-1,BS Entertainment and Multimedia Computing,11004
-2024000077,Will Bell,willbell@student.university.edu,2024-1,BS Computer Science,11004
-2024000078,Xara Murphy,xaramurphy@student.university.edu,2024-1,BS Information Technology,11004
+2024000029,John Smith,johnsmith@student.university.edu,2024-2025 First Semester,BS Computer Science,11000
+2024000030,Jane Doe,janedoe@student.university.edu,2024-2025 First Semester,BS Information Technology,11000
+2024000031,Bob Johnson,bobjohnson@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11000
+2024000032,Alice Brown,alicebrown@student.university.edu,2024-2025 First Semester,BS Computer Science,11000
+2024000033,Charlie Wilson,charliewilson@student.university.edu,2024-2025 First Semester,BS Information Technology,11000
+2024000034,Diana Lee,dianalee@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11000
+2024000035,Frank Miller,frankmiller@student.university.edu,2024-2025 First Semester,BS Computer Science,11000
+2024000036,Grace Davis,gracedavis@student.university.edu,2024-2025 First Semester,BS Information Technology,11000
+2024000037,Henry Garcia,henrygarcia@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11000
+2024000038,Ivy Martinez,ivymartinez@student.university.edu,2024-2025 First Semester,BS Computer Science,11000
+2024000039,Jack Anderson,jackanderson@student.university.edu,2024-2025 First Semester,BS Information Technology,11001
+2024000040,Kate Taylor,katetaylor@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11001
+2024000041,Luke Thomas,lukethomas@student.university.edu,2024-2025 First Semester,BS Computer Science,11001
+2024000042,Mary Jackson,maryjackson@student.university.edu,2024-2025 First Semester,BS Information Technology,11001
+2024000043,Nick White,nickwhite@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11001
+2024000044,Olivia Harris,oliviaharris@student.university.edu,2024-2025 First Semester,BS Computer Science,11001
+2024000045,Paul Clark,paulclark@student.university.edu,2024-2025 First Semester,BS Information Technology,11001
+2024000046,Quinn Lewis,quinnlewis@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11001
+2024000047,Rose Walker,rosewalker@student.university.edu,2024-2025 First Semester,BS Computer Science,11001
+2024000048,Sam Hall,samhall@student.university.edu,2024-2025 First Semester,BS Information Technology,11001
+2024000049,Tina Young,tinayoung@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11002
+2024000050,Victor King,victorking@student.university.edu,2024-2025 First Semester,BS Computer Science,11002
+2024000051,Wendy Wright,wendywright@student.university.edu,2024-2025 First Semester,BS Information Technology,11002
+2024000052,Xavier Lopez,xavierlopez@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11002
+2024000053,Yara Hill,yarahill@student.university.edu,2024-2025 First Semester,BS Computer Science,11002
+2024000054,Zoe Scott,zoescott@student.university.edu,2024-2025 First Semester,BS Information Technology,11002
+2024000055,Adam Green,adamgreen@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11002
+2024000056,Bella Adams,bellaadams@student.university.edu,2024-2025 First Semester,BS Computer Science,11002
+2024000057,Chris Baker,chrisbaker@student.university.edu,2024-2025 First Semester,BS Information Technology,11002
+2024000058,Dana Nelson,dananelson@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11002
+2024000059,Eddie Carter,eddiecarter@student.university.edu,2024-2025 First Semester,BS Computer Science,11003
+2024000060,Fiona Mitchell,fionamitchell@student.university.edu,2024-2025 First Semester,BS Information Technology,11003
+2024000061,George Perez,georgeperez@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11003
+2024000062,Helen Roberts,helenroberts@student.university.edu,2024-2025 First Semester,BS Computer Science,11003
+2024000063,Ian Turner,ianturner@student.university.edu,2024-2025 First Semester,BS Information Technology,11003
+2024000064,Joy Phillips,joyphillips@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11003
+2024000065,Kyle Campbell,kylecampbell@student.university.edu,2024-2025 First Semester,BS Computer Science,11003
+2024000066,Lisa Parker,lisaparker@student.university.edu,2024-2025 First Semester,BS Information Technology,11003
+2024000067,Mike Evans,mikeevans@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11003
+2024000068,Nina Edwards,ninaedwards@student.university.edu,2024-2025 First Semester,BS Computer Science,11003
+2024000069,Oscar Collins,oscarcollins@student.university.edu,2024-2025 First Semester,BS Information Technology,11004
+2024000070,Paula Stewart,paulastewart@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11004
+2024000071,Quincy Sanchez,quincysanchez@student.university.edu,2024-2025 First Semester,BS Computer Science,11004
+2024000072,Rita Morris,ritamorris@student.university.edu,2024-2025 First Semester,BS Information Technology,11004
+2024000073,Steve Rivera,steverivera@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11004
+2024000074,Tina Reed,tinareed@student.university.edu,2024-2025 First Semester,BS Computer Science,11004
+2024000075,Ulrich Cook,ulrichcook@student.university.edu,2024-2025 First Semester,BS Information Technology,11004
+2024000076,Vera Morgan,veramorgan@student.university.edu,2024-2025 First Semester,BS Entertainment and Multimedia Computing,11004
+2024000077,Will Bell,willbell@student.university.edu,2024-2025 First Semester,BS Computer Science,11004
+2024000078,Xara Murphy,xaramurphy@student.university.edu,2024-2025 First Semester,BS Information Technology,11004

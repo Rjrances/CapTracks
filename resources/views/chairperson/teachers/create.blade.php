@@ -45,6 +45,7 @@
                                 <li><strong>email</strong> (required)</li>
                                 <li><strong>role</strong> (optional)</li>
                                 <li><strong>department</strong> (optional)</li>
+                                <li><strong>semester</strong> (required)</li>
                             </ul>
                         </div>
                         <div class="alert alert-info">
@@ -61,15 +62,17 @@
                                             <th>email</th>
                                             <th>role</th>
                                             <th>department</th>
+                                            <th>semester</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
                                             <td>10001</td>
-                                            <td>John Smith</td>
+                                            <td>Dr. John Smith</td>
                                             <td>john.smith@university.edu</td>
                                             <td>teacher</td>
-                                            <td>Computer Science</td>
+                                            <td>SCS</td>
+                                            <td>2024-2025 First Semester</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -79,7 +82,10 @@
                                 • Faculty ID must be provided in the CSV (e.g., 10001, 10002, etc.)<br>
                                 • Faculty ID must be unique and not already exist in the system<br>
                                 • The role column is optional - if not specified, it will default to "teacher"<br>
-                                • Valid roles: teacher, adviser, panelist<br>
+                                • Valid roles: teacher, adviser, panelist, coordinator, chairperson<br>
+                                • <strong>Semester format:</strong> "2024-2025 First Semester", "2024-2025 Second Semester", "2024-2025 Summer"<br>
+                                • Department should be "SCS" for School of Computer Science<br>
+                                • Faculty names should include appropriate titles (Dr., Prof., etc.)<br>
                             </p>
                         </div>
                         <div class="alert alert-warning">

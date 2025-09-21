@@ -24,8 +24,14 @@ class ChairpersonDashboardController extends Controller
                                      ->take(5)
                                      ->get();
         $stats = [
-            'activeProjects' => Group::whereHas('adviser')->count(),
-            'facultyCount' => User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator', 'chairperson'])->count(),
+            'activeProjects' => Group::whereHas('adviser')
+                ->when($activeTerm, function($query) use ($activeTerm) {
+                    return $query->where('academic_term_id', $activeTerm->id);
+                })->count(),
+            'facultyCount' => User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator', 'chairperson'])
+                ->when($activeTerm, function($query) use ($activeTerm) {
+                    return $query->where('semester', $activeTerm->semester);
+                })->count(),
             'pendingReviews' => DefenseSchedule::where('status', 'scheduled')->count(),
             'offeringsCount' => Offering::when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);

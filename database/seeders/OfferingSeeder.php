@@ -32,7 +32,7 @@ class OfferingSeeder extends Seeder
         foreach ($terms as $term) {
             $offerings = [];
             
-            if ($term->semester === 'First Semester') {
+            if ($term->semester === '2024-2025 First Semester') {
                 $offerings = [
                     [
                         'subject_title' => 'Capstone Project I',
@@ -70,7 +70,7 @@ class OfferingSeeder extends Seeder
                         'academic_term_id' => $term->id,
                     ],
                 ];
-            } elseif ($term->semester === 'Second Semester') {
+            } elseif ($term->semester === '2024-2025 Second Semester') {
                 $offerings = [
                     [
                         'subject_title' => 'Capstone Project I',
@@ -108,7 +108,7 @@ class OfferingSeeder extends Seeder
                         'academic_term_id' => $term->id,
                     ],
                 ];
-            } elseif ($term->semester === 'Summer') {
+            } elseif ($term->semester === '2024-2025 Summer') {
                 $offerings = [
                     [
                         'subject_title' => 'Capstone Project I',

@@ -27,7 +27,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
-                    <form action="{{ route('chairperson.teachers.update', $teacher->id) }}" method="POST">
+                    <form action="{{ route('chairperson.teachers.update', $teacher->faculty_id) }}" method="POST">
                         @csrf
                         @method('PUT')
                         <div class="mb-3">
@@ -88,6 +88,7 @@
                                         <option value="adviser" {{ old('role', $teacher->role) == 'adviser' ? 'selected' : '' }}>Adviser</option>
                                         <option value="panelist" {{ old('role', $teacher->role) == 'panelist' ? 'selected' : '' }}>Panelist</option>
                                         <option value="coordinator" {{ old('role', $teacher->role) == 'coordinator' ? 'selected' : '' }}>Coordinator</option>
+                                        <option value="chairperson" {{ old('role', $teacher->role) == 'chairperson' ? 'selected' : '' }}>Chairperson</option>
                                     </select>
                                     @error('role')
                                         <div class="invalid-feedback">{{ $message }}</div>

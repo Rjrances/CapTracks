@@ -12,12 +12,13 @@ class User extends Authenticatable
         'birthday',
         'department',     // Department instead of course
         'role',           // Role instead of position
+        'semester',       // Semester when faculty was uploaded
     ];
 
     // Set primary key
-    protected $primaryKey = 'faculty_id';
-    public $incrementing = false;
-    protected $keyType = 'string';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
     protected $hidden = [
         'remember_token',
     ];

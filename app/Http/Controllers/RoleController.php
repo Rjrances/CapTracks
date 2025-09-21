@@ -7,8 +7,11 @@ class RoleController extends Controller
 {
     public function index(Request $request)
     {
-        $sortBy = $request->get('sort', 'name');
+        $sortBy = $request->get('sort', 'faculty_id');
         $sortDirection = $request->get('direction', 'asc');
+        
+        // Get active term for filtering
+        $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
         
         $roles = [
             'chairperson' => [
@@ -42,33 +45,37 @@ class RoleController extends Controller
                 'permissions' => ['Submit projects', 'Track milestones', 'Join groups', 'View progress']
             ]
         ];
-        // Get users with their roles
+        
+        // Get users with their roles for role assignment table
         $allUsers = User::with('roles')
             ->select('id', 'name', 'email', 'faculty_id', 'department', 'role')
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
             ->orderBy($sortBy, $sortDirection)
-            ->get();
+            ->paginate(20);
             
-        // Count users by role (including multiple roles)
+        // Count users by role for active semester (excluding students)
         foreach ($roles as $roleKey => &$role) {
             if ($roleKey === 'student') {
-                $role['user_count'] = Student::count();
-                $role['users'] = collect();
+                // Skip student count - only show faculty roles
+                $role['user_count'] = 0;
                 continue;
             }
             
-            // Count users who have this role (either as primary or assigned)
-            $role['user_count'] = $allUsers->filter(function($user) use ($roleKey) {
-                return $user->hasRole($roleKey);
-            })->count();
+            // Count faculty with this role for active semester
+            $query = User::whereIn('role', ['chairperson', 'coordinator', 'adviser', 'panelist', 'teacher']);
             
-            // Get users with this role
-            $role['users'] = $allUsers->filter(function($user) use ($roleKey) {
-                return $user->hasRole($roleKey);
-            });
+            if ($activeTerm) {
+                $query->where('semester', $activeTerm->semester);
+            }
+            
+            $role['user_count'] = $query->where('role', $roleKey)->count();
         }
-        return view('chairperson.roles.index', compact('roles', 'allUsers', 'sortBy', 'sortDirection'));
+        
+        return view('chairperson.roles.index', compact('roles', 'allUsers', 'activeTerm', 'sortBy', 'sortDirection'));
     }
-    public function update(Request $request, User $user)
+    public function update(Request $request, $faculty_id)
     {
         $request->validate([
             'roles' => 'required|array',
@@ -76,6 +83,16 @@ class RoleController extends Controller
         ]);
         
         try {
+            // Get active term for filtering
+            $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+            
+            // Find user by faculty_id and active semester
+            $user = User::where('faculty_id', $faculty_id)
+                ->when($activeTerm, function($query) use ($activeTerm) {
+                    return $query->where('semester', $activeTerm->semester);
+                })
+                ->firstOrFail();
+            
             // Use the new assignRoles method
             $user->assignRoles($request->roles);
             

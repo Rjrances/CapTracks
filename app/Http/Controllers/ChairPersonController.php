@@ -162,7 +162,12 @@ class ChairpersonController extends Controller
     public function forceUpdateUserRole($userId)
     {
         try {
-            $user = User::where('faculty_id', $userId)->firstOrFail();
+            $activeTerm = $this->getActiveTerm();
+            $user = User::where('faculty_id', $userId)
+                ->when($activeTerm, function($query) use ($activeTerm) {
+                    return $query->where('semester', $activeTerm->semester);
+                })
+                ->firstOrFail();
             $oldRole = $user->role;
             $roleChanged = $user->updateRoleBasedOnOfferings();
             if ($roleChanged) {
@@ -225,22 +230,22 @@ class ChairpersonController extends Controller
     public function teachers(Request $request)
     {
         $activeTerm = $this->getActiveTerm();
-        $showAllTerms = $request->get('show_all', false);
-        $sortBy = $request->get('sort', 'name');
+        $sortBy = $request->get('sort', 'faculty_id');
         $sortDirection = $request->get('direction', 'asc');
         
-        $teachers = User::query()
-            ->when($showAllTerms, function($query) {
-                return $query->whereNotIn('role', ['student']);
-            }, function($query) use ($activeTerm) {
-                return $query->whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])
-                    ->whereHas('offerings', function($q) use ($activeTerm) {
-                        $q->where('academic_term_id', $activeTerm->id);
-                    });
-            })
-            ->orderBy($sortBy, $sortDirection)
-            ->get();
-        return view('chairperson.teachers.index', compact('teachers', 'activeTerm', 'showAllTerms', 'sortBy', 'sortDirection'));
+        $query = User::query()
+            ->with('roles')
+            ->whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator', 'chairperson']);
+        
+        // Filter by active semester if available
+        if ($activeTerm) {
+            $query->where('semester', $activeTerm->semester);
+        }
+        
+        $teachers = $query->orderBy($sortBy, $sortDirection)
+            ->paginate(20);
+            
+        return view('chairperson.teachers.index', compact('teachers', 'activeTerm', 'sortBy', 'sortDirection'));
     }
     public function createTeacher()
     {
@@ -279,12 +284,22 @@ class ChairpersonController extends Controller
     }
     public function editTeacher($id)
     {
-        $teacher = User::where('faculty_id', $id)->firstOrFail();
+        $activeTerm = $this->getActiveTerm();
+        $teacher = User::where('faculty_id', $id)
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
+            ->firstOrFail();
         return view('chairperson.teachers.edit', compact('teacher'));
     }
     public function updateTeacher(Request $request, $id)
     {
-        $teacher = User::where('faculty_id', $id)->firstOrFail();
+        $activeTerm = $this->getActiveTerm();
+        $teacher = User::where('faculty_id', $id)
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
+            ->firstOrFail();
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email,' . $teacher->id,
@@ -304,16 +319,12 @@ class ChairpersonController extends Controller
     {
         $activeTerm = $this->getActiveTerm();
         
-        // Filter students by active term through their offerings
+        // Filter students by active term through their semester
         $query = Student::query();
         
         if ($activeTerm) {
-            // Show students who are either enrolled in active term offerings OR have no enrollments yet
-            $query->where(function($q) use ($activeTerm) {
-                $q->whereHas('offerings', function($subQ) use ($activeTerm) {
-                    $subQ->where('academic_term_id', $activeTerm->id);
-                })->orWhereDoesntHave('offerings');
-            });
+            // Show students who belong to the active semester
+            $query->where('semester', $activeTerm->semester);
         }
         
         if ($request->filled('search')) {
@@ -350,16 +361,12 @@ class ChairpersonController extends Controller
     {
         $activeTerm = $this->getActiveTerm();
         
-        // Filter students by active term through their offerings
+        // Filter students by active term through their semester
         $query = Student::query();
         
         if ($activeTerm) {
-            // Show students who are either enrolled in active term offerings OR have no enrollments yet
-            $query->where(function($q) use ($activeTerm) {
-                $q->whereHas('offerings', function($subQ) use ($activeTerm) {
-                    $subQ->where('academic_term_id', $activeTerm->id);
-                })->orWhereDoesntHave('offerings');
-            });
+            // Show students who belong to the active semester
+            $query->where('semester', $activeTerm->semester);
         }
         
         if ($request->filled('search')) {
@@ -434,8 +441,8 @@ class ChairpersonController extends Controller
         $student = Student::findOrFail($id);
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:students,email,student_id,' . $id,
-            'student_id' => 'required|string|unique:students,student_id,' . $id,
+            'email' => 'required|email|unique:students,email,' . $id . ',student_id',
+            'student_id' => 'required|string|unique:students,student_id,' . $id . ',student_id',
             'course' => 'required|string|max:255',
             'semester' => 'required|string|max:255',
             'password' => 'nullable|string|min:8',
@@ -639,13 +646,58 @@ class ChairpersonController extends Controller
     public function uploadFacultyList(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv',
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+        ], [
+            'file.required' => 'Please select a file to upload.',
+            'file.file' => 'The uploaded file is invalid.',
+            'file.mimes' => 'Please upload an Excel file (.xlsx, .xls) or CSV file (.csv).',
+            'file.max' => 'File size must not exceed 10MB.',
         ]);
         try {
-            Excel::import(new FacultyImport, $request->file('file'));
-            return back()->with('success', 'Faculty imported successfully!');
+            \Log::info('Starting faculty import...');
+            $file = $request->file('file');
+            $fileName = $file->getClientOriginalName();
+            $fileSize = number_format($file->getSize() / 1024, 2); // KB
+            
+            if ($file->getSize() === 0) {
+                return back()->with('error', '❌ Import failed: The uploaded file is empty. Please check your file and try again.');
+            }
+            
+            \Log::info("Importing file: {$fileName} (Size: {$fileSize} KB)");
+            $activeTerm = $this->getActiveTerm();
+            $semester = $activeTerm ? $activeTerm->semester : 'Unknown';
+            Excel::import(new FacultyImport($semester), $file);
+            \Log::info('Faculty import completed successfully');
+            
+            $successMessage = "✅ Faculty members imported successfully from '{$fileName}'!";
+            return back()->with('success', $successMessage);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            \Log::error('Faculty import validation failed: ' . $e->getMessage());
+            $errorMessage = "❌ Import failed due to validation errors:\n";
+            $allErrors = [];
+            foreach ($e->failures() as $failure) {
+                foreach ($failure->errors() as $error) {
+                    $allErrors[] = $error;
+                }
+            }
+            $errorMessage .= "• " . implode("\n• ", $allErrors);
+            return back()->with('error', $errorMessage);
         } catch (\Exception $e) {
-            return back()->with('error', 'Error importing faculty: ' . $e->getMessage());
+            \Log::error('Faculty import failed: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            $errorMessage = "❌ Import failed: " . $e->getMessage();
+            if (str_contains(strtolower($e->getMessage()), 'duplicate entry')) {
+                $errorMessage = "❌ Import failed: Some faculty IDs or emails already exist in the system. Please check for duplicates.";
+            } elseif (str_contains(strtolower($e->getMessage()), 'syntax error')) {
+                $errorMessage = "❌ Import failed: The file format is invalid. Please ensure it's a valid Excel or CSV file.";
+            } elseif (str_contains(strtolower($e->getMessage()), 'permission denied')) {
+                $errorMessage = "❌ Import failed: Permission denied. Please check file permissions.";
+            } elseif (str_contains(strtolower($e->getMessage()), 'could not find driver')) {
+                $errorMessage = "❌ Import failed: Database connection issue. Please try again.";
+            } elseif (str_contains(strtolower($e->getMessage()), 'memory limit')) {
+                $errorMessage = "❌ Import failed: File is too large. Please try with a smaller file or contact administrator.";
+            }
+            return back()->with('error', $errorMessage);
         }
     }
     public function createFaculty()
@@ -659,13 +711,58 @@ class ChairpersonController extends Controller
     public function storeFaculty(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv',
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+        ], [
+            'file.required' => 'Please select a file to upload.',
+            'file.file' => 'The uploaded file is invalid.',
+            'file.mimes' => 'Please upload an Excel file (.xlsx, .xls) or CSV file (.csv).',
+            'file.max' => 'File size must not exceed 10MB.',
         ]);
         try {
-            Excel::import(new FacultyImport, $request->file('file'));
-            return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty members imported successfully!');
+            \Log::info('Starting faculty import...');
+            $file = $request->file('file');
+            $fileName = $file->getClientOriginalName();
+            $fileSize = number_format($file->getSize() / 1024, 2); // KB
+            
+            if ($file->getSize() === 0) {
+                return back()->with('error', '❌ Import failed: The uploaded file is empty. Please check your file and try again.');
+            }
+            
+            \Log::info("Importing file: {$fileName} (Size: {$fileSize} KB)");
+            $activeTerm = $this->getActiveTerm();
+            $semester = $activeTerm ? $activeTerm->semester : 'Unknown';
+            Excel::import(new FacultyImport($semester), $file);
+            \Log::info('Faculty import completed successfully');
+            
+            $successMessage = "✅ Faculty members imported successfully from '{$fileName}'!";
+            return redirect()->route('chairperson.teachers.index')->with('success', $successMessage);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            \Log::error('Faculty import validation failed: ' . $e->getMessage());
+            $errorMessage = "❌ Import failed due to validation errors:\n";
+            $allErrors = [];
+            foreach ($e->failures() as $failure) {
+                foreach ($failure->errors() as $error) {
+                    $allErrors[] = $error;
+                }
+            }
+            $errorMessage .= "• " . implode("\n• ", $allErrors);
+            return back()->with('error', $errorMessage);
         } catch (\Exception $e) {
-            return back()->with('error', 'Error importing faculty: ' . $e->getMessage());
+            \Log::error('Faculty import failed: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            $errorMessage = "❌ Import failed: " . $e->getMessage();
+            if (str_contains(strtolower($e->getMessage()), 'duplicate entry')) {
+                $errorMessage = "❌ Import failed: Some faculty IDs or emails already exist in the system. Please check for duplicates.";
+            } elseif (str_contains(strtolower($e->getMessage()), 'syntax error')) {
+                $errorMessage = "❌ Import failed: The file format is invalid. Please ensure it's a valid Excel or CSV file.";
+            } elseif (str_contains(strtolower($e->getMessage()), 'permission denied')) {
+                $errorMessage = "❌ Import failed: Permission denied. Please check file permissions.";
+            } elseif (str_contains(strtolower($e->getMessage()), 'could not find driver')) {
+                $errorMessage = "❌ Import failed: Database connection issue. Please try again.";
+            } elseif (str_contains(strtolower($e->getMessage()), 'memory limit')) {
+                $errorMessage = "❌ Import failed: File is too large. Please try with a smaller file or contact administrator.";
+            }
+            return back()->with('error', $errorMessage);
         }
     }
     public function storeFacultyManual(Request $request)
@@ -699,21 +796,55 @@ class ChairpersonController extends Controller
     }
     public function editFaculty($id)
     {
-        $teacher = User::where('faculty_id', $id)->firstOrFail();
+        $activeTerm = $this->getActiveTerm();
+        $query = User::where('faculty_id', $id);
+        
+        // Filter by active semester if available
+        if ($activeTerm) {
+            $query->where('semester', $activeTerm->semester);
+        }
+        
+        $teacher = $query->firstOrFail();
         return view('chairperson.teachers.edit', compact('teacher'));
     }
     public function updateFaculty(Request $request, $id)
     {
-        $faculty = User::where('faculty_id', $id)->firstOrFail();
+        $activeTerm = $this->getActiveTerm();
+        $query = User::where('faculty_id', $id);
+        
+        // Filter by active semester if available
+        if ($activeTerm) {
+            $query->where('semester', $activeTerm->semester);
+        }
+        
+        $faculty = $query->firstOrFail();
+        
+        // Custom validation for email to handle multiple users with same email across semesters
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $faculty->id,
+            'email' => [
+                'required',
+                'email',
+                function ($attribute, $value, $fail) use ($faculty) {
+                    // Check if email exists for a different user in the same semester
+                    $existingUser = User::where('email', $value)
+                        ->where('id', '!=', $faculty->id)
+                        ->where('semester', $faculty->semester)
+                        ->first();
+                    
+                    if ($existingUser) {
+                        $fail('The email has already been taken by another user in this semester.');
+                    }
+                }
+            ],
+            'role' => 'required|in:teacher,adviser,panelist,coordinator,chairperson',
             'department' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8',
         ]);
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
+            'role' => $request->role,
             'department' => $request->department,
         ];
         if ($request->filled('password')) {
@@ -725,7 +856,12 @@ class ChairpersonController extends Controller
     }
     public function deleteFaculty($id)
     {
-        $faculty = User::where('faculty_id', $id)->firstOrFail();
+        $activeTerm = $this->getActiveTerm();
+        $faculty = User::where('faculty_id', $id)
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
+            ->firstOrFail();
         $faculty->delete();
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member deleted successfully.');
     }

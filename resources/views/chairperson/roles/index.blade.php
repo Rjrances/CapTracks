@@ -2,12 +2,22 @@
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">
-            <i class="fas fa-users-cog me-2"></i>Role Management
-        </h2>
-        <div class="text-muted">
-            <i class="fas fa-info-circle me-1"></i>
-            Manage user roles and permissions
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-users-cog me-2"></i>Role Management
+            </h2>
+            @if($activeTerm)
+                <p class="text-muted mb-0">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    Showing role assignments for: <strong>{{ $activeTerm->full_name }}</strong>
+                    <span class="badge bg-success ms-2">Active Term</span>
+                </p>
+            @else
+                <p class="text-warning mb-0">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    No active academic term set. Please set an active term to manage roles.
+                </p>
+            @endif
         </div>
     </div>
     
@@ -38,6 +48,21 @@
                     <thead class="table-light">
                         <tr>
                             <th class="border-0">
+                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'faculty_id', 'direction' => request('sort') == 'faculty_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
+                                   class="text-decoration-none text-dark d-flex align-items-center">
+                                    <i class="fas fa-id-card me-2"></i>ID Number
+                                    @if(request('sort') == 'faculty_id')
+                                        @if(request('direction') == 'asc')
+                                            <i class="fas fa-sort-up ms-1"></i>
+                                        @else
+                                            <i class="fas fa-sort-down ms-1"></i>
+                                        @endif
+                                    @else
+                                        <i class="fas fa-sort text-muted ms-1"></i>
+                                    @endif
+                                </a>
+                            </th>
+                            <th class="border-0">
                                 <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
                                    class="text-decoration-none text-dark d-flex align-items-center">
                                     <i class="fas fa-user me-2"></i>User
@@ -57,21 +82,6 @@
                                    class="text-decoration-none text-dark d-flex align-items-center">
                                     <i class="fas fa-envelope me-2"></i>Email
                                     @if(request('sort') == 'email')
-                                        @if(request('direction') == 'asc')
-                                            <i class="fas fa-sort-up ms-1"></i>
-                                        @else
-                                            <i class="fas fa-sort-down ms-1"></i>
-                                        @endif
-                                    @else
-                                        <i class="fas fa-sort text-muted ms-1"></i>
-                                    @endif
-                                </a>
-                            </th>
-                            <th class="border-0">
-                                <a href="{{ request()->fullUrlWithQuery(['sort' => 'faculty_id', 'direction' => request('sort') == 'faculty_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
-                                   class="text-decoration-none text-dark d-flex align-items-center">
-                                    <i class="fas fa-id-card me-2"></i>ID Number
-                                    @if(request('sort') == 'faculty_id')
                                         @if(request('direction') == 'asc')
                                             <i class="fas fa-sort-up ms-1"></i>
                                         @else
@@ -112,15 +122,15 @@
                         @foreach($allUsers as $user)
                             <tr class="align-middle">
                                 <td>
+                                    <span class="badge bg-primary text-white">{{ $user->faculty_id ?? 'N/A' }}</span>
+                                </td>
+                                <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                        <div class="avatar-sm bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
                                             <i class="fas fa-user"></i>
                                         </div>
                                         <div>
                                             <strong class="text-dark">{{ $user->name }}</strong>
-                                            @if($user->faculty_id)
-                                                <br><small class="text-muted">ID: {{ $user->faculty_id }}</small>
-                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -128,9 +138,6 @@
                                     <a href="mailto:{{ $user->email }}" class="text-decoration-none">
                                         <i class="fas fa-envelope me-1"></i>{{ $user->email }}
                                     </a>
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-dark border">{{ $user->faculty_id ?? 'N/A' }}</span>
                                 </td>
                                 <td>
                                     <span class="text-muted">{{ $user->department ?? 'N/A' }}</span>
@@ -156,7 +163,7 @@
                                             <div class="col-12">
                                                 <div class="form-check form-check-inline">
                                                     <input class="form-check-input role-checkbox" type="checkbox" 
-                                                           name="roles[{{ $user->id }}][]" value="chairperson" 
+                                                           name="roles[{{ $user->faculty_id }}][]" value="chairperson" 
                                                            id="chairperson-{{ $user->id }}"
                                                            {{ $user->hasRole('chairperson') ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-semibold" for="chairperson-{{ $user->id }}">
@@ -167,7 +174,7 @@
                                             <div class="col-12">
                                                 <div class="form-check form-check-inline">
                                                     <input class="form-check-input role-checkbox" type="checkbox" 
-                                                           name="roles[{{ $user->id }}][]" value="coordinator" 
+                                                           name="roles[{{ $user->faculty_id }}][]" value="coordinator" 
                                                            id="coordinator-{{ $user->id }}"
                                                            {{ $user->hasRole('coordinator') ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-semibold" for="coordinator-{{ $user->id }}">
@@ -178,7 +185,7 @@
                                             <div class="col-12">
                                                 <div class="form-check form-check-inline">
                                                     <input class="form-check-input role-checkbox" type="checkbox" 
-                                                           name="roles[{{ $user->id }}][]" value="teacher" 
+                                                           name="roles[{{ $user->faculty_id }}][]" value="teacher" 
                                                            id="teacher-{{ $user->id }}"
                                                            {{ $user->hasRole('teacher') ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-semibold" for="teacher-{{ $user->id }}">
@@ -189,7 +196,7 @@
                                             <div class="col-12">
                                                 <div class="form-check form-check-inline">
                                                     <input class="form-check-input role-checkbox" type="checkbox" 
-                                                           name="roles[{{ $user->id }}][]" value="adviser" 
+                                                           name="roles[{{ $user->faculty_id }}][]" value="adviser" 
                                                            id="adviser-{{ $user->id }}"
                                                            {{ $user->hasRole('adviser') ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-semibold" for="adviser-{{ $user->id }}">
@@ -200,7 +207,7 @@
                                             <div class="col-12">
                                                 <div class="form-check form-check-inline">
                                                     <input class="form-check-input role-checkbox" type="checkbox" 
-                                                           name="roles[{{ $user->id }}][]" value="panelist" 
+                                                           name="roles[{{ $user->faculty_id }}][]" value="panelist" 
                                                            id="panelist-{{ $user->id }}"
                                                            {{ $user->hasRole('panelist') ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-semibold" for="panelist-{{ $user->id }}">
@@ -213,7 +220,7 @@
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-primary btn-sm update-user-roles" 
-                                            data-user-id="{{ $user->id }}" 
+                                            data-user-id="{{ $user->faculty_id }}" 
                                             data-user-name="{{ $user->name }}">
                                         <i class="fas fa-save me-1"></i>Update
                                     </button>
@@ -225,81 +232,16 @@
             </div>
         </div>
     </div>
-    <div class="row">
-        @foreach($roles as $roleKey => $role)
-            @if($roleKey !== 'student')
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="card-header bg-gradient-{{ $roleKey === 'chairperson' ? 'danger' : ($roleKey === 'coordinator' ? 'primary' : ($roleKey === 'adviser' ? 'success' : ($roleKey === 'teacher' ? 'info' : ($roleKey === 'panelist' ? 'warning' : 'secondary')))) }} text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-user-tag me-2"></i>{{ $role['name'] }}
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted mb-3">{{ $role['description'] }}</p>
-                            <div class="mb-3">
-                                <h6 class="fw-semibold text-primary">
-                                    <i class="fas fa-users me-1"></i>Users with this role ({{ $role['user_count'] }}):
-                                </h6>
-                                @if($role['users']->count() > 0)
-                                    <div class="list-group list-group-flush">
-                                        @foreach($role['users'] as $user)
-                                            <div class="list-group-item d-flex justify-content-between align-items-start p-2">
-                                                <div class="ms-2 me-auto">
-                                                    <div class="fw-semibold">{{ $user->name }}</div>
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-envelope me-1"></i>{{ $user->email }}
-                                                    </small>
-                                                    @if($user->faculty_id)
-                                                        <br><small class="text-muted">
-                                                            <i class="fas fa-id-card me-1"></i>{{ $user->faculty_id }}
-                                                        </small>
-                                                    @endif
-                                                    @if($user->department || $user->role)
-                                                        <br><small class="text-muted">
-                                                            <i class="fas fa-building me-1"></i>
-                                                            {{ $user->department ?? 'N/A' }}
-                                                            @if($user->role)
-                                                                • {{ ucfirst($user->role) }}
-                                                            @endif
-                                                        </small>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <div class="text-center text-muted py-3">
-                                        <i class="fas fa-user-slash fa-2x mb-2"></i>
-                                        <p class="mb-0">No users assigned</p>
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="mb-3">
-                                <h6 class="fw-semibold text-success">
-                                    <i class="fas fa-key me-1"></i>Permissions:
-                                </h6>
-                                <ul class="list-unstyled mb-0">
-                                    @foreach($role['permissions'] as $permission)
-                                        <li class="mb-1">
-                                            <i class="fas fa-check text-success me-2"></i>
-                                            <small>{{ $permission }}</small>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-light">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Role ID: <code>{{ $roleKey }}</code>
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            @endif
-        @endforeach
-    </div>
+    
+    <!-- Pagination -->
+    @if($allUsers->hasPages())
+        <div class="d-flex justify-content-center mt-4">
+            <nav aria-label="Role pagination">
+                {{ $allUsers->appends(request()->query())->links('pagination::bootstrap-5') }}
+            </nav>
+        </div>
+    @endif
+    
     <div class="row mt-4">
         <div class="col-12">
             <div class="card shadow-sm border-0">
@@ -421,6 +363,36 @@
 .text-info { color: #17a2b8 !important; }
 .text-danger { color: #dc3545 !important; }
 .text-secondary { color: #6c757d !important; }
+
+/* Custom pagination styling */
+.pagination {
+    margin-bottom: 0;
+}
+.pagination .page-link {
+    color: #495057;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 0.75rem;
+}
+.pagination .page-link:hover {
+    color: #0056b3;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+/* Ensure proper spacing */
+.pagination .page-item:not(:first-child) .page-link {
+    margin-left: -1px;
+}
 </style>
 
 <script>

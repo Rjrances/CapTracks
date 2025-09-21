@@ -4,7 +4,7 @@ This directory contains CSV templates for importing data into the CapTrack syste
 
 ## Available Templates
 
-### 1. Student Import Template (`student_import_template_final.csv`)
+### 1. Student Import Template (`student_import_template_2024_2025.csv`)
 
 **Purpose:** Import students with their enrollment information for all academic terms.
 
@@ -12,7 +12,7 @@ This directory contains CSV templates for importing data into the CapTrack syste
 - `student_id` (string, 10 digits): Unique student identifier (e.g., "2024000001")
 - `name` (string): Full student name
 - `email` (string): Student email address (must be unique)
-- `semester` (string): Academic semester format (e.g., "2024-1", "2024-2", "2024-S")
+- `semester` (string): Academic semester format (e.g., "2024-2025 First Semester", "2024-2025 Second Semester", "2024-2025 Summer")
 - `course` (string): Course program (e.g., "BS Computer Science", "BS Information Technology", "BS Entertainment and Multimedia Computing")
 - `offer_code` (string): Code of the offering to enroll in (e.g., "11000", "11001", "11002", "11003", "11004")
 
@@ -22,7 +22,9 @@ This directory contains CSV templates for importing data into the CapTrack syste
 - All three courses represented: BS Computer Science, BS Information Technology, BS Entertainment and Multimedia Computing
 - All students have valid offer codes that correspond to existing offerings
 
-### 2. Faculty Import Template (`faculty_import_template_updated.csv`)
+### 2. Faculty Import Templates
+
+#### 2a. Basic Faculty Template (`faculty_import_template_updated.csv`)
 
 **Purpose:** Import faculty members with their roles and department information.
 
@@ -37,6 +39,48 @@ This directory contains CSV templates for importing data into the CapTrack syste
 - 12 faculty members with diverse roles
 - Professional names with appropriate titles
 - All faculty have unique 5-digit IDs
+
+#### 2b. Comprehensive Faculty Template (`faculty_import_template_comprehensive.csv`)
+
+**Purpose:** Import a large number of faculty members for all academic terms.
+
+**Required Fields:** Same as basic template
+
+**Sample Data:**
+- 30 faculty members (10 for each semester)
+- Diverse roles across all departments
+- Faculty IDs from 10001 to 10030
+- Mixed departments: Computer Science, Information Technology, Entertainment and Multimedia Computing
+
+#### 2c. Three Semesters Faculty Template (`faculty_import_template_3_semesters.csv`)
+
+**Purpose:** Import faculty members specifically organized for the 3 academic terms.
+
+**Required Fields:** Same as basic template
+
+**Sample Data:**
+- 30 faculty members distributed across 3 semesters
+- 10 faculty members per semester
+- All major roles represented: chairperson, coordinator, teacher, adviser, panelist
+- Professional names with appropriate academic titles
+
+#### 2d. Semester-Specific Faculty Templates
+
+**Purpose:** Import faculty members for specific academic terms (similar to student templates).
+
+**Files:**
+- `import_first-sem_faculty.csv` - First Semester faculty (10 members, IDs: 10013-10022)
+- `import_second-sem_faculty.csv` - Second Semester faculty (10 members, IDs: 10023-10032)
+- `import_summer_faculty.csv` - Summer faculty (10 members, IDs: 10033-10042)
+- `faculty_import_template_2024_2025.csv` - All semesters with new format (36 members, IDs: 10001-10012)
+
+**Required Fields:** Same as basic template
+
+**Sample Data:**
+- 10 faculty members per semester file
+- All departments set to "SCS" (School of Computer Science)
+- Faculty IDs starting from 10013
+- Diverse roles across all faculty types
 
 ### 3. Offering Import Template (`offering_import_template.csv`)
 
@@ -62,18 +106,25 @@ This directory contains CSV templates for importing data into the CapTrack syste
 1. **Academic Terms** (via seeder or manual creation)
 2. **Faculty Members** (`faculty_import_template_updated.csv`)
 3. **Course Offerings** (`offering_import_template.csv`)
-4. **Students** (`student_import_template_final.csv`)
+4. **Students** (`student_import_template_2024_2025.csv`)
 
 ## Usage Instructions
 
 ### For Students:
-1. Download `student_import_template_final.csv`
+1. Download `student_import_template_2024_2025.csv`
 2. Modify the data as needed (keep the header row)
 3. Ensure all offer codes exist in the offerings table
 4. Use the import functionality in the Chairperson section
 
 ### For Faculty:
-1. Download `faculty_import_template_updated.csv`
+1. Download one of the faculty templates:
+   - `faculty_import_template_updated.csv` (basic, 12 faculty)
+   - `faculty_import_template_comprehensive.csv` (comprehensive, 30 faculty)
+   - `faculty_import_template_3_semesters.csv` (organized by semesters, 30 faculty)
+   - **Semester-specific files:**
+     - `import_first-sem_faculty.csv` (First Semester, 10 faculty, IDs: 10013-10022)
+     - `import_second-sem_faculty.csv` (Second Semester, 10 faculty, IDs: 10023-10032)
+     - `import_summer_faculty.csv` (Summer, 10 faculty, IDs: 10033-10042)
 2. Modify the data as needed (keep the header row)
 3. Ensure faculty IDs are unique and 5 digits
 4. Use the import functionality in the Chairperson section
@@ -90,7 +141,7 @@ This directory contains CSV templates for importing data into the CapTrack syste
 - Student IDs must be exactly 10 digits (e.g., "2024000001")
 - Emails must be unique and valid format
 - Offer codes must exist in offerings table
-- Semester format: YYYY-S (e.g., "2024-1", "2024-2", "2024-S")
+- Semester format: YYYY-YYYY Semester Name (e.g., "2024-2025 First Semester", "2024-2025 Second Semester", "2024-2025 Summer")
 - Course must be one of: "BS Computer Science", "BS Information Technology", "BS Entertainment and Multimedia Computing"
 - Students are automatically enrolled in their specified offering based on offer_code
 
