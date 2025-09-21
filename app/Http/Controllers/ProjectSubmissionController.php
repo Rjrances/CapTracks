@@ -41,8 +41,7 @@ class ProjectSubmissionController extends Controller
         foreach ($allGroups as $group) {
             $memberIds = $memberIds->merge($group->members->pluck('id'));
         }
-        $submissions = ProjectSubmission::with(['student'])
-            ->whereIn('student_id', $memberIds)
+        $submissions = ProjectSubmission::whereIn('student_id', $memberIds)
             ->orderBy('submitted_at', 'desc')
             ->get();
         $submissionsByGroup = $allGroups->mapWithKeys(function ($group) use ($user) {
@@ -119,7 +118,7 @@ class ProjectSubmissionController extends Controller
     }
     public function show($id)
     {
-        $submission = ProjectSubmission::with('student')->findOrFail($id);
+        $submission = ProjectSubmission::findOrFail($id);
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->isTeacher()) {
@@ -150,7 +149,7 @@ class ProjectSubmissionController extends Controller
     }
     public function edit($id)
     {
-        $submission = ProjectSubmission::with('student')->findOrFail($id);
+        $submission = ProjectSubmission::findOrFail($id);
         $user = Auth::user();
         if ($user->isTeacher()) {
             $hasAccess = Group::where('adviser_id', $user->id)

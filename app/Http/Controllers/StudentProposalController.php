@@ -103,7 +103,7 @@ class StudentProposalController extends Controller
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
-        $proposal = ProjectSubmission::with('student')->findOrFail($id);
+        $proposal = ProjectSubmission::findOrFail($id);
         if ($proposal->student_id !== $student->student_id) {
             return redirect()->route('student.proposal')->with('error', 'You can only view your own proposals.');
         }

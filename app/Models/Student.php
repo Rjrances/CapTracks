@@ -37,7 +37,7 @@ class Student extends Model
     }
     public function submissions()
     {
-        return $this->hasMany(ProjectSubmission::class);
+        return $this->hasMany(ProjectSubmission::class, 'student_id', 'student_id');
     }
     public function offerings()
     {

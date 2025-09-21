@@ -37,7 +37,7 @@ class CoordinatorDashboardController extends Controller
         $completedTasks = MilestoneTask::where('is_completed', true)->count();
         $recentStudents = $activeTerm ? Student::where('semester', $activeTerm->semester)->latest()->take(5)->get() : collect();
         $recentGroups = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->with(['adviser', 'members'])->latest()->take(5)->get() : collect();
-        $recentSubmissions = ProjectSubmission::with('student')->latest()->take(5)->get();
+        $recentSubmissions = ProjectSubmission::latest()->take(5)->get();
         $notifications = Notification::latest()->take(5)->get();
         $pendingInvitations = AdviserInvitation::where('status', 'pending')
                                               ->with(['group', 'faculty'])
@@ -99,11 +99,12 @@ class CoordinatorDashboardController extends Controller
             }
         }
         
-        $recentSubs = ProjectSubmission::with('student')->latest()->take(3)->get();
+        $recentSubs = ProjectSubmission::latest()->take(3)->get();
         foreach ($recentSubs as $submission) {
+            $student = $submission->getStudentData();
             $activities->push((object)[
                 'title' => "New submission: {$submission->type}",
-                'description' => "Submitted by {$submission->student->name}",
+                'description' => "Submitted by " . ($student ? $student->name : 'Unknown'),
                 'icon' => 'file-alt',
                 'created_at' => $submission->created_at,
                 'type' => 'submission'

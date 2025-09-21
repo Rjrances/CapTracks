@@ -1,0 +1,39 @@
+# Faculty Role Distribution Based on New System
+# 
+# COORDINATORS: Handle Capstone Project I & II (CS-CAP-401, CS-CAP-402)
+# - Can approve/reject student proposals
+# - Manage capstone project workflow
+# - Access to Proposal Review section
+#
+# TEACHERS: Handle Thesis I & II (CS-THS-301, CS-THS-302) + General Teaching
+# - Focus on thesis guidance and mentoring
+# - Cannot approve proposals
+# - No access to Proposal Review section
+#
+# ADVISERS: Guide student groups through implementation
+# - Review milestone submissions
+# - Provide feedback on project progress
+# - Cannot approve proposals (only coordinators can)
+#
+# PANELISTS: Serve on defense panels
+# - Evaluate final project presentations
+# - Provide assessment during defense sessions
+#
+# CHAIRPERSON: Overall system administration
+# - Manage academic terms
+# - Assign faculty to offerings
+# - System-wide oversight
+
+faculty_id,name,email,role,department,semester,notes
+10001,Dr. Maria Santos,maria.santos@university.edu,chairperson,SCS,2024-2025 First Semester,System Administrator
+10002,Prof. John Rodriguez,john.rodriguez@university.edu,coordinator,SCS,2024-2025 First Semester,Capstone Project Manager
+10003,Dr. Sarah Johnson,sarah.johnson@university.edu,adviser,SCS,2024-2025 First Semester,Student Group Adviser
+10004,Prof. Michael Chen,michael.chen@university.edu,teacher,SCS,2024-2025 First Semester,Thesis & General Teaching
+10005,Dr. Patricia Williams,patricia.williams@university.edu,adviser,SCS,2024-2025 First Semester,Student Group Adviser
+10006,Prof. Robert Davis,robert.davis@university.edu,adviser,SCS,2024-2025 First Semester,Student Group Adviser
+10007,Dr. Lisa Anderson,lisa.anderson@university.edu,panelist,SCS,2024-2025 First Semester,Defense Panel Member
+10008,Prof. Jennifer Lee,jennifer.lee@university.edu,teacher,SCS,2024-2025 First Semester,Thesis & General Teaching
+10009,Dr. Christopher Brown,christopher.brown@university.edu,adviser,SCS,2024-2025 First Semester,Student Group Adviser
+10010,Prof. Amanda Taylor,amanda.taylor@university.edu,panelist,SCS,2024-2025 First Semester,Defense Panel Member
+10011,Dr. Kevin Martinez,kevin.martinez@university.edu,teacher,SCS,2024-2025 First Semester,Thesis & General Teaching
+10012,Prof. Rachel Green,rachel.green@university.edu,adviser,SCS,2024-2025 First Semester,Student Group Adviser

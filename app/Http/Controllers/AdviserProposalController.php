@@ -11,7 +11,7 @@ class AdviserProposalController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $groups = Group::where('adviser_id', $user->id)
+        $groups = Group::where('faculty_id', $user->faculty_id)
             ->with(['members', 'members.submissions' => function($query) {
                 $query->where('type', 'proposal')->latest();
             }])
@@ -36,9 +36,10 @@ class AdviserProposalController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $proposal = ProjectSubmission::with(['student', 'student.groups'])->findOrFail($id);
-        $studentGroup = $proposal->student->groups()->first();
-        if (!$studentGroup || $studentGroup->adviser_id !== $user->id) {
+        $proposal = ProjectSubmission::findOrFail($id);
+        $student = $proposal->getStudentData();
+        $studentGroup = $student ? $student->groups()->first() : null;
+        if (!$studentGroup || $studentGroup->faculty_id !== $user->faculty_id) {
             return redirect()->route('adviser.proposal.index')->with('error', 'You can only review proposals from your assigned groups.');
         }
         return view('adviser.proposal.show', compact('proposal', 'studentGroup'));
@@ -46,9 +47,10 @@ class AdviserProposalController extends Controller
     public function edit($id)
     {
         $user = Auth::user();
-        $proposal = ProjectSubmission::with(['student', 'student.groups'])->findOrFail($id);
-        $studentGroup = $proposal->student->groups()->first();
-        if (!$studentGroup || $studentGroup->adviser_id !== $user->id) {
+        $proposal = ProjectSubmission::findOrFail($id);
+        $student = $proposal->getStudentData();
+        $studentGroup = $student ? $student->groups()->first() : null;
+        if (!$studentGroup || $studentGroup->faculty_id !== $user->faculty_id) {
             return redirect()->route('adviser.proposal.index')->with('error', 'You can only review proposals from your assigned groups.');
         }
         return view('adviser.proposal.edit', compact('proposal', 'studentGroup'));
@@ -60,9 +62,10 @@ class AdviserProposalController extends Controller
             'teacher_comment' => 'required|string|min:10',
         ]);
         $user = Auth::user();
-        $proposal = ProjectSubmission::with(['student', 'student.groups'])->findOrFail($id);
-        $studentGroup = $proposal->student->groups()->first();
-        if (!$studentGroup || $studentGroup->adviser_id !== $user->id) {
+        $proposal = ProjectSubmission::findOrFail($id);
+        $student = $proposal->getStudentData();
+        $studentGroup = $student ? $student->groups()->first() : null;
+        if (!$studentGroup || $studentGroup->faculty_id !== $user->faculty_id) {
             return redirect()->route('adviser.proposal.index')->with('error', 'You can only review proposals from your assigned groups.');
         }
         $proposal->update([
@@ -71,13 +74,13 @@ class AdviserProposalController extends Controller
         ]);
         if ($request->status === 'approved') {
             NotificationService::proposalApproved(
-                $proposal->student,
+                $proposal->getStudentData(),
                 $studentGroup->name,
                 $proposal->title ?? 'Project Proposal'
             );
         } else {
             NotificationService::proposalRejected(
-                $proposal->student,
+                $proposal->getStudentData(),
                 $studentGroup->name,
                 $proposal->title ?? 'Project Proposal',
                 $request->teacher_comment
@@ -95,11 +98,13 @@ class AdviserProposalController extends Controller
             'approved' => 0,
             'rejected' => 0,
         ];
-        $groups = Group::where('adviser_id', $user->id)->pluck('id');
+        $groups = Group::where('faculty_id', $user->faculty_id)->pluck('id');
         if ($groups->isNotEmpty()) {
             $proposals = ProjectSubmission::where('type', 'proposal')
-                ->whereHas('student.groups', function($query) use ($groups) {
-                    $query->whereIn('group_id', $groups);
+                ->whereIn('student_id', function($query) use ($groups) {
+                    $query->select('student_id')
+                          ->from('group_members')
+                          ->whereIn('group_id', $groups);
                 })
                 ->get();
             $stats['total_proposals'] = $proposals->count();
@@ -120,22 +125,23 @@ class AdviserProposalController extends Controller
         $user = Auth::user();
         $updatedCount = 0;
         foreach ($request->proposal_ids as $proposalId) {
-            $proposal = ProjectSubmission::with(['student', 'student.groups'])->find($proposalId);
-            $studentGroup = $proposal->student->groups()->first();
-            if ($studentGroup && $studentGroup->adviser_id === $user->id) {
+            $proposal = ProjectSubmission::find($proposalId);
+            $student = $proposal->getStudentData();
+        $studentGroup = $student ? $student->groups()->first() : null;
+            if ($studentGroup && $studentGroup->faculty_id === $user->faculty_id) {
                 $proposal->update([
                     'status' => $request->status,
                     'teacher_comment' => $request->teacher_comment,
                 ]);
                 if ($request->status === 'approved') {
                     NotificationService::proposalApproved(
-                        $proposal->student,
+                        $proposal->getStudentData(),
                         $studentGroup->name,
                         $proposal->title ?? 'Project Proposal'
                     );
                 } else {
                     NotificationService::proposalRejected(
-                        $proposal->student,
+                        $proposal->getStudentData(),
                         $studentGroup->name,
                         $proposal->title ?? 'Project Proposal',
                         $request->teacher_comment

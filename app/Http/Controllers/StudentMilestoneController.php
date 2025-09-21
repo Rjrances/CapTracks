@@ -115,7 +115,7 @@ class StudentMilestoneController extends Controller
         if (!$group) {
             return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
         }
-        $groupMilestone = $group->groupMilestones()->with(['milestoneTemplate.tasks', 'groupTasks.submissions.student'])->find($milestoneId);
+        $groupMilestone = $group->groupMilestones()->with(['milestoneTemplate.tasks', 'groupTasks.submissions'])->find($milestoneId);
         if (!$groupMilestone) {
             return redirect()->route('student.milestones')->withErrors(['milestone' => 'Milestone not found.']);
         }

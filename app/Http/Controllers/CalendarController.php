@@ -47,7 +47,7 @@ class CalendarController extends Controller
         $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
             ->whereIn('status', ['scheduled'])
             ->whereHas('group', function($query) use ($user) {
-                $query->where('adviser_id', $user->id);
+                $query->where('faculty_id', $user->faculty_id);
             })
             ->orderBy('start_at')
             ->get();
@@ -176,7 +176,7 @@ class CalendarController extends Controller
                 $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
                     ->whereIn('status', ['scheduled'])
                     ->whereHas('group', function($query) use ($user) {
-                        $query->where('adviser_id', $user->id);
+                        $query->where('faculty_id', $user->faculty_id);
                     })
                     ->get();
                 break;

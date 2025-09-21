@@ -6,6 +6,24 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 class StudentGroupController extends Controller
 {
+    /**
+     * Get available students for group invitation based on offering and semester
+     * This method ensures consistent filtering for both create and existing groups
+     */
+    private function getAvailableStudentsForInvitation($offering, $excludeStudentIds = [], $excludePendingInvitations = [])
+    {
+        $query = \App\Models\Student::whereNotIn('student_id', $excludeStudentIds)
+            ->whereNotIn('student_id', $excludePendingInvitations)
+            ->where('semester', $offering->academicTerm->semester)
+            ->whereHas('offerings', function($query) use ($offering) {
+                $query->where('offering_id', $offering->id);
+            })
+            ->whereDoesntHave('groups', function($query) use ($offering) {
+                $query->where('academic_term_id', $offering->academic_term_id);
+            });
+        
+        return $query->get();
+    }
     public function show()
     {
         if (Auth::guard('student')->check()) {
@@ -17,6 +35,7 @@ class StudentGroupController extends Controller
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->student_id);
         })->with(['adviser', 'members', 'adviserInvitations.faculty', 'offering'])->first() : null;
+        
         $availableFaculty = User::whereIn('role', ['adviser', 'panelist', 'teacher'])
             ->whereDoesntHave('adviserInvitations', function($q) use ($group) {
                 if ($group) {
@@ -24,7 +43,20 @@ class StudentGroupController extends Controller
                 }
             })
             ->get();
-        return view('student.group.show', compact('group', 'availableFaculty'));
+        
+        // Get available students for invitation using consistent filtering
+        $availableStudents = collect();
+        if ($group && $group->offering) {
+            $excludeStudentIds = $group->members->pluck('student_id')->toArray();
+            $excludePendingInvitations = $group->groupInvitations()->where('status', 'pending')->pluck('student_id')->toArray();
+            $availableStudents = $this->getAvailableStudentsForInvitation(
+                $group->offering, 
+                $excludeStudentIds, 
+                $excludePendingInvitations
+            );
+        }
+        
+        return view('student.group.show', compact('group', 'availableFaculty', 'availableStudents'));
     }
     public function create()
     {
@@ -45,7 +77,14 @@ class StudentGroupController extends Controller
             return redirect()->route('student.dashboard')->with('error', 'You must be enrolled in a capstone offering before creating a group. Please contact your coordinator to get enrolled.');
         }
         
-        return view('student.group.create', compact('offering'));
+        // Get available students for invitation using consistent filtering
+        $availableStudents = $this->getAvailableStudentsForInvitation(
+            $offering, 
+            [$student->student_id], // Exclude the current student (group leader)
+            [] // No pending invitations to exclude for new groups
+        );
+        
+        return view('student.group.create', compact('offering', 'availableStudents'));
     }
     public function store(Request $request)
     {
@@ -56,8 +95,14 @@ class StudentGroupController extends Controller
             'adviser_id' => 'required|exists:users,id',
             'adviser_message' => 'nullable|string|max:500',
             'members' => 'nullable|array|max:2', // Max 2 additional members (3 total including leader) - optional
-            'members.*' => 'exists:students,student_id',
         ]);
+        
+        // Validate members only if they are provided and not empty
+        if ($request->has('members') && is_array($request->members) && !empty(array_filter($request->members))) {
+            $request->validate([
+                'members.*' => 'required|exists:students,student_id',
+            ]);
+        }
         
         // Get student and validate enrollment
         if (Auth::guard('student')->check()) {
@@ -108,8 +153,10 @@ class StudentGroupController extends Controller
         }
         
         // Validate that all group members are enrolled in the same offering
-        if ($request->has('members') && is_array($request->members)) {
+        if ($request->has('members') && is_array($request->members) && !empty(array_filter($request->members))) {
             foreach ($request->members as $memberId) {
+                if (empty($memberId)) continue; // Skip empty values
+                
                 $member = \App\Models\Student::where('student_id', $memberId)->first();
                 if (!$member) {
                     return back()->with('error', "Student with ID {$memberId} not found.");
@@ -132,8 +179,10 @@ class StudentGroupController extends Controller
             $group->members()->attach($student->student_id, ['role' => 'leader']);
             
             // Send invitations to selected members instead of directly adding them
-            if ($request->has('members') && is_array($request->members)) {
+            if ($request->has('members') && is_array($request->members) && !empty(array_filter($request->members))) {
                 foreach ($request->members as $memberId) {
+                    if (empty($memberId)) continue; // Skip empty values
+                    
                     $existingGroup = \App\Models\Group::whereHas('members', function($q) use ($memberId) {
                         $q->where('group_members.student_id', $memberId);
                     })->first();
@@ -187,8 +236,21 @@ class StudentGroupController extends Controller
         }
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->student_id);
-        })->with(['adviser', 'members', 'adviserInvitations.faculty'])->first() : null;
-        return view('student.group.edit', compact('group'));
+        })->with(['adviser', 'members', 'adviserInvitations.faculty', 'offering'])->first() : null;
+        
+        // Get available students for invitation using consistent filtering
+        $availableStudents = collect();
+        if ($group && $group->offering) {
+            $excludeStudentIds = $group->members->pluck('student_id')->toArray();
+            $excludePendingInvitations = $group->groupInvitations()->where('status', 'pending')->pluck('student_id')->toArray();
+            $availableStudents = $this->getAvailableStudentsForInvitation(
+                $group->offering, 
+                $excludeStudentIds, 
+                $excludePendingInvitations
+            );
+        }
+        
+        return view('student.group.edit', compact('group', 'availableStudents'));
     }
     public function update(Request $request)
     {
@@ -232,22 +294,14 @@ class StudentGroupController extends Controller
             return redirect()->route('student.dashboard')->with('error', 'Student not found.');
         }
         
-        // Get only the student's group for the current term
-        $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
-        $groups = collect();
+        // Get the student's group (any term)
+        $studentGroup = \App\Models\Group::whereHas('members', function($q) use ($student) {
+            $q->where('group_members.student_id', $student->student_id);
+        })
+        ->with(['adviser', 'members', 'offering'])
+        ->first();
         
-        if ($activeTerm) {
-            $studentGroup = \App\Models\Group::whereHas('members', function($q) use ($student) {
-                $q->where('group_members.student_id', $student->student_id);
-            })
-            ->where('academic_term_id', $activeTerm->id)
-            ->with(['adviser', 'members', 'offering'])
-            ->first();
-            
-            if ($studentGroup) {
-                $groups = collect([$studentGroup]);
-            }
-        }
+        $groups = $studentGroup ? collect([$studentGroup]) : collect();
         
         return view('student.group.index', compact('groups'));
     }
@@ -328,24 +382,34 @@ class StudentGroupController extends Controller
             return back()->with('error', 'An invitation has already been sent to this student.');
         }
         
-        // Validate that the invited student is enrolled in the same offering and semester
+        // Validate that the invited student is eligible using consistent filtering
         $invitedStudent = \App\Models\Student::where('student_id', $request->student_id)->first();
         if (!$invitedStudent) {
             return back()->with('error', 'Student not found.');
         }
         
-        // Check if student is from the same semester
-        $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
-        if ($activeTerm && $invitedStudent->semester !== $activeTerm->semester) {
-            return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the current semester. Only students from {$activeTerm->semester} can be invited.");
+        // Use the same validation logic as the filtering method
+        if (!$group->offering) {
+            return back()->with('error', 'Group does not have an offering assigned. Please contact your coordinator.');
         }
         
-        // Check offering compatibility only if group has an offering
-        if ($group->offering) {
-            $memberOffering = $invitedStudent->getCurrentOffering();
-            if (!$memberOffering || $memberOffering->id !== $group->offering->id) {
-                return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the same capstone offering as your group. All group members must be enrolled in {$group->offering->offer_code} ({$group->offering->subject_code}).");
-            }
+        // Check if student is from the same semester and offering as the group
+        if ($invitedStudent->semester !== $group->offering->academicTerm->semester) {
+            return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the same semester as your group. Only students from {$group->offering->academicTerm->semester} can be invited.");
+        }
+        
+        $memberOffering = $invitedStudent->getCurrentOffering();
+        if (!$memberOffering || $memberOffering->id !== $group->offering->id) {
+            return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the same capstone offering as your group. All group members must be enrolled in {$group->offering->offer_code} ({$group->offering->subject_code}).");
+        }
+        
+        // Check if student already has a group in the same term
+        $existingGroup = \App\Models\Group::whereHas('members', function($q) use ($invitedStudent) {
+            $q->where('group_members.student_id', $invitedStudent->student_id);
+        })->where('academic_term_id', $group->offering->academic_term_id)->first();
+        
+        if ($existingGroup) {
+            return back()->with('error', "Student {$invitedStudent->name} is already a member of another group in {$group->offering->academicTerm->semester}.");
         }
         
         // Create invitation

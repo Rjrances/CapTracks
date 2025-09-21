@@ -49,6 +49,13 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('coordinator.proposals.*') ? 'active bg-primary' : '' }}" 
+                   href="{{ route('coordinator.proposals.index') }}">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Proposal Review
+                </a>
+            </li>
+            <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('coordinator.defense.*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('coordinator.defense.index') }}">
                     <i class="fas fa-gavel me-2"></i>

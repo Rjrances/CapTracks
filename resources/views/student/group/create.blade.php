@@ -118,21 +118,7 @@
                                     </label>
                                     <select name="members[]" id="member1" class="form-select" onchange="updateMember2Options()">
                                         <option value="">Select a student...</option>
-                                        @php
-                                            $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
-                                            $availableStudents = \App\Models\Student::whereNotIn('student_id', function($query) {
-                                                $query->select('student_id')
-                                                      ->from('group_members');
-                                            })
-                                            ->where('semester', $activeTerm ? $activeTerm->semester : null)
-                                            ->whereHas('offerings', function($query) use ($offering) {
-                                                $query->where('offering_id', $offering->id);
-                                            })
-                                            ->whereDoesntHave('groups', function($query) use ($activeTerm) {
-                                                $query->where('academic_term_id', $activeTerm ? $activeTerm->id : null);
-                                            })
-                                            ->get();
-                                        @endphp
+                                        {{-- Available students are now passed from the controller with consistent filtering --}}
                                         @foreach($availableStudents as $student)
                                             @if($student->email !== (Auth::check() ? Auth::user()->email : session('student_email')))
                                                 <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
@@ -167,18 +153,8 @@
                                 </small>
                             </div>
                             @php
-                                $availableStudentsCount = \App\Models\Student::whereNotIn('student_id', function($query) {
-                                    $query->select('student_id')->from('group_members');
-                                })
-                                ->where('semester', $activeTerm ? $activeTerm->semester : null)
-                                ->whereHas('offerings', function($query) use ($offering) {
-                                    $query->where('offering_id', $offering->id);
-                                })
-                                ->whereDoesntHave('groups', function($query) use ($activeTerm) {
-                                    $query->where('academic_term_id', $activeTerm ? $activeTerm->id : null);
-                                })
-                                ->where('email', '!=', Auth::check() ? Auth::user()->email : session('student_email'))
-                                ->count();
+                                // Use the count from the controller's filtered students
+                                $availableStudentsCount = $availableStudents->count();
                             @endphp
                             @if($availableStudentsCount <= 0)
                                 <div class="alert alert-warning">

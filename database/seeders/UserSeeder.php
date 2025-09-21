@@ -32,6 +32,8 @@ class UserSeeder extends Seeder
         $emailSuffix = '@university.edu';
 
         // Define faculty members with same faculty_id across all semesters
+        // Note: Coordinators are specifically for Capstone project management
+        // Teachers handle Thesis offerings and general teaching
         $facultyMembers = [
             [
                 'faculty_id' => '10001',
@@ -41,7 +43,7 @@ class UserSeeder extends Seeder
             [
                 'faculty_id' => '10002',
                 'name' => 'Prof. John Rodriguez',
-                'role' => 'coordinator'
+                'role' => 'coordinator'  // Will handle Capstone Project I & II
             ],
             [
                 'faculty_id' => '10003',
@@ -51,7 +53,7 @@ class UserSeeder extends Seeder
             [
                 'faculty_id' => '10004',
                 'name' => 'Prof. Michael Chen',
-                'role' => 'teacher'
+                'role' => 'teacher'  // Will handle Thesis I & II
             ],
             [
                 'faculty_id' => '10005',
@@ -71,7 +73,7 @@ class UserSeeder extends Seeder
             [
                 'faculty_id' => '10008',
                 'name' => 'Prof. Jennifer Lee',
-                'role' => 'teacher'
+                'role' => 'teacher'  // Will handle Thesis I & II
             ],
             [
                 'faculty_id' => '10009',
@@ -86,7 +88,7 @@ class UserSeeder extends Seeder
             [
                 'faculty_id' => '10011',
                 'name' => 'Dr. Kevin Martinez',
-                'role' => 'teacher'
+                'role' => 'teacher'  // Will handle Thesis I & II
             ],
             [
                 'faculty_id' => '10012',

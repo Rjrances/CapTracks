@@ -23,7 +23,7 @@ class StudentDefenseRequestController extends Controller
             ->get();
         return view('student.defense-requests.index', compact('defenseRequests', 'group'));
     }
-    public function create()
+    public function create(Request $request)
     {
         $student = $this->getAuthenticatedStudent();
         if (!$student) {
@@ -33,7 +33,7 @@ class StudentDefenseRequestController extends Controller
         if (!$group) {
             return redirect()->route('student.group')->withErrors(['group' => 'You must be part of a group to request defenses.']);
         }
-        if (!$group->adviser_id) {
+        if (!$group->faculty_id) {
             return redirect()->route('student.group')->withErrors(['adviser' => 'Your group must have an adviser before requesting a defense.']);
         }
         $milestoneTemplates = MilestoneTemplate::where('status', 'active')->get();
@@ -44,7 +44,11 @@ class StudentDefenseRequestController extends Controller
             return redirect()->route('student.defense-requests.index')
                 ->withErrors(['pending' => 'You already have a pending defense request. Please wait for coordinator response.']);
         }
-        return view('student.defense-requests.create', compact('group', 'milestoneTemplates'));
+        
+        // Get defense type from URL parameter
+        $defenseType = $request->get('defense_type', 'proposal');
+        
+        return view('student.defense-requests.create', compact('group', 'milestoneTemplates', 'defenseType'));
     }
     public function store(Request $request)
     {

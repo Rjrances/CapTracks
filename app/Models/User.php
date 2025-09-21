@@ -26,6 +26,17 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'birthday' => 'date',
     ];
+
+    // Authentication methods
+    public function getAuthPassword()
+    {
+        return $this->account ? $this->account->password : null;
+    }
+
+    public function getAuthIdentifierName()
+    {
+        return 'faculty_id';
+    }
     public function account()
     {
         return $this->hasOne(UserAccount::class, 'faculty_id', 'faculty_id');
@@ -117,22 +128,27 @@ class User extends Authenticatable
     }
     public function updateRoleBasedOnOfferings()
     {
-        $hasOfferings = $this->offerings()->exists();
+        $hasCapstoneOfferings = $this->offerings()->where(function($query) {
+            $query->whereIn('subject_title', ['Capstone Project I', 'Capstone Project II'])
+                  ->orWhereIn('subject_code', ['CS-CAP-401', 'CS-CAP-402']);
+        })->exists();
+        
         $currentRole = $this->role;
-        \Log::info("Checking role for user {$this->name} (ID: {$this->id}): current role = '{$currentRole}', has offerings = " . ($hasOfferings ? 'true' : 'false'));
-        if ($hasOfferings && $this->role !== 'coordinator') {
+        \Log::info("Checking role for user {$this->name} (ID: {$this->id}): current role = '{$currentRole}', has Capstone offerings = " . ($hasCapstoneOfferings ? 'true' : 'false'));
+        
+        if ($hasCapstoneOfferings && $this->role !== 'coordinator') {
             $oldRole = $this->role;
             $this->role = 'coordinator';
             $this->save();
-            \Log::info("User {$this->name} (ID: {$this->id}) role updated from '{$oldRole}' to 'coordinator' - has offerings");
+            \Log::info("User {$this->name} (ID: {$this->id}) role updated from '{$oldRole}' to 'coordinator' - has Capstone offerings");
             return true;
-        } elseif (!$hasOfferings && $this->role === 'coordinator') {
+        } elseif (!$hasCapstoneOfferings && $this->role === 'coordinator') {
             $this->role = 'teacher';
             $this->save();
-            \Log::info("User {$this->name} (ID: {$this->id}) role reverted from 'coordinator' to 'teacher' - no offerings");
+            \Log::info("User {$this->name} (ID: {$this->id}) role reverted from 'coordinator' to 'teacher' - no Capstone offerings");
             return true;
         }
-        \Log::info("User {$this->name} (ID: {$this->id}) no role change needed: current role = '{$currentRole}', has offerings = " . ($hasOfferings ? 'true' : 'false'));
+        \Log::info("User {$this->name} (ID: {$this->id}) no role change needed: current role = '{$currentRole}', has Capstone offerings = " . ($hasCapstoneOfferings ? 'true' : 'false'));
         return false; // No change needed
     }
     public function updateRoleBasedOnAdviserAssignments()

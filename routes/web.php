@@ -95,6 +95,14 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
     Route::post('/academic-terms/activate', [CoordinatorController::class, 'activateTerm'])->name('academic-terms.activate');
     Route::post('/academic-terms/deactivate', [CoordinatorController::class, 'deactivateTerm'])->name('academic-terms.deactivate');
     
+    // Proposal Review (for coordinators to approve proposals from their offerings)
+    Route::get('/proposals', [\App\Http\Controllers\CoordinatorProposalController::class, 'index'])->name('proposals.index');
+    Route::get('/proposals/{id}', [\App\Http\Controllers\CoordinatorProposalController::class, 'show'])->name('proposals.show');
+    Route::get('/proposals/{id}/edit', [\App\Http\Controllers\CoordinatorProposalController::class, 'edit'])->name('proposals.edit');
+    Route::put('/proposals/{id}', [\App\Http\Controllers\CoordinatorProposalController::class, 'update'])->name('proposals.update');
+    Route::post('/proposals/bulk-update', [\App\Http\Controllers\CoordinatorProposalController::class, 'bulkUpdate'])->name('proposals.bulk-update');
+    Route::get('/proposals/stats', [\App\Http\Controllers\CoordinatorProposalController::class, 'getStats'])->name('proposals.stats');
+    
     // Semester Management (legacy dropdown)
     Route::post('/change-semester', [CoordinatorController::class, 'changeSemester'])->name('change-semester');
     

@@ -17,7 +17,7 @@ class AdviserController extends Controller
         $user = Auth::user();
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         $pendingInvitations = AdviserInvitation::with(['group', 'group.members'])
-            ->where('faculty_id', $user->id)
+            ->where('faculty_id', $user->faculty_id)
             ->pending()
             ->get();
         $adviserGroups = Group::with([
@@ -38,7 +38,7 @@ class AdviserController extends Controller
         });
         $panelGroups = Group::with(['academicTerm', 'defenseSchedules.defensePanels'])
             ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-                $query->where('faculty_id', $user->id);
+                $query->where('faculty_id', $user->faculty_id);
             })
             ->get();
         $summaryStats = [
@@ -79,9 +79,8 @@ class AdviserController extends Controller
     }
     private function getSubmissionsCount($group)
     {
-        return ProjectSubmission::whereHas('student', function($query) use ($group) {
-            $query->whereIn('id', $group->members->pluck('id'));
-        })->count();
+        $studentIds = $group->members->pluck('student_id')->toArray();
+        return ProjectSubmission::whereIn('student_id', $studentIds)->count();
     }
     private function getMilestoneProgress($group)
     {
@@ -144,12 +143,12 @@ class AdviserController extends Controller
     private function getGroupRecentActivities($group)
     {
         $activities = collect();
-        $recentSubmissions = ProjectSubmission::whereHas('student', function($query) use ($group) {
-            $query->whereIn('id', $group->members->pluck('id'));
-        })->latest()->take(3)->get();
+        $studentIds = $group->members->pluck('student_id')->toArray();
+        $recentSubmissions = ProjectSubmission::whereIn('student_id', $studentIds)->latest()->take(3)->get();
         foreach ($recentSubmissions as $submission) {
+            $student = $submission->getStudentData();
             $activities->push((object)[
-                'title' => 'New submission from ' . $submission->student->name,
+                'title' => 'New submission from ' . ($student ? $student->name : 'Unknown'),
                 'description' => $submission->title,
                 'icon' => 'file-alt',
                 'created_at' => $submission->created_at,
@@ -176,7 +175,7 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
         $invitations = AdviserInvitation::with(['group', 'group.members'])
-            ->where('faculty_id', $user->id)
+            ->where('faculty_id', $user->faculty_id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         return view('adviser.invitations', compact('invitations'));
@@ -244,7 +243,7 @@ class AdviserController extends Controller
             return $group;
         });
         $panelGroupsCount = Group::whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->id);
+            $query->where('faculty_id', $user->faculty_id);
         })->count();
         $workspaceStats = [
             'total_adviser_groups' => $allGroups->count(),
@@ -275,7 +274,6 @@ class AdviserController extends Controller
         $user = Auth::user();
         $adviserGroups = Group::with([
             'members', 
-            'members.submissions',
             'adviserInvitations', 
             'groupMilestones.milestoneTemplate',
             'groupMilestoneTasks.milestoneTask',
@@ -297,18 +295,17 @@ class AdviserController extends Controller
         });
         $panelGroups = Group::with([
             'members', 
-            'members.submissions',
             'academicTerm', 
             'defenseSchedules.defensePanels'
         ])
         ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->id);
+            $query->where('faculty_id', $user->faculty_id);
         })
         ->get()
         ->map(function ($group) use ($user) {
             $group->role_type = 'panel';
             $panelAssignment = $group->defenseSchedules->first()
-                ->defensePanels->where('faculty_id', $user->id)->first();
+                ->defensePanels->where('faculty_id', $user->faculty_id)->first();
             $group->panel_role = $panelAssignment->role ?? 'member';
             $group->defense_schedule = $group->defenseSchedules->first();
             $group->recent_activities = $this->getGroupRecentActivities($group);
@@ -317,10 +314,9 @@ class AdviserController extends Controller
         $allGroups = $adviserGroups->concat($panelGroups)->sortByDesc('created_at');
         $memberIds = collect();
         foreach ($allGroups as $group) {
-            $memberIds = $memberIds->merge($group->members->pluck('id'));
+            $memberIds = $memberIds->merge($group->members->pluck('student_id'));
         }
-        $submissions = ProjectSubmission::with(['student'])
-            ->whereIn('student_id', $memberIds)
+        $submissions = ProjectSubmission::whereIn('student_id', $memberIds)
             ->orderBy('submitted_at', 'desc')
             ->get();
         $submissionsByGroup = $allGroups->mapWithKeys(function ($group) {
@@ -347,28 +343,26 @@ class AdviserController extends Controller
         $user = Auth::user();
         $panelGroups = Group::with([
             'members', 
-            'members.submissions',
             'academicTerm', 
             'defenseSchedules.defensePanels'
         ])
         ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->id);
+            $query->where('faculty_id', $user->faculty_id);
         })
         ->get()
         ->map(function ($group) use ($user) {
             $group->role_type = 'panel';
             $panelAssignment = $group->defenseSchedules->first()
-                ->defensePanels->where('faculty_id', $user->id)->first();
+                ->defensePanels->where('faculty_id', $user->faculty_id)->first();
             $group->panel_role = $panelAssignment->role ?? 'member';
             $group->defense_schedule = $group->defenseSchedules->first();
             return $group;
         });
         $memberIds = collect();
         foreach ($panelGroups as $group) {
-            $memberIds = $memberIds->merge($group->members->pluck('id'));
+            $memberIds = $memberIds->merge($group->members->pluck('student_id'));
         }
-        $submissions = ProjectSubmission::with(['student'])
-            ->whereIn('student_id', $memberIds)
+        $submissions = ProjectSubmission::whereIn('student_id', $memberIds)
             ->orderBy('submitted_at', 'desc')
             ->get();
         $submissionsByGroup = $panelGroups->mapWithKeys(function ($group) {

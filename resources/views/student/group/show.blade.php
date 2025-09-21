@@ -103,31 +103,19 @@
                                         <input type="text" id="student_search" class="form-control" placeholder="Search for student name..." onkeyup="filterStudents()">
                                         <select name="student_id" id="student_select" class="form-select mt-2" required>
                                             <option value="">Select a student...</option>
-                                            @php
-                                                $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
-                                            @endphp
-                                            @php
-                                                $query = \App\Models\Student::whereNotIn('student_id', $group->members->pluck('student_id'))
-                                                    ->whereNotIn('student_id', $group->groupInvitations()->where('status', 'pending')->pluck('student_id'))
-                                                    ->where('semester', $activeTerm ? $activeTerm->semester : null)
-                                                    ->whereDoesntHave('groups', function($query) use ($activeTerm) {
-                                                        $query->where('academic_term_id', $activeTerm ? $activeTerm->id : null);
-                                                    });
-                                                
-                                                if ($group->offering) {
-                                                    $query->whereHas('offerings', function($query) use ($group) {
-                                                        $query->where('offering_id', $group->offering->id);
-                                                    });
-                                                }
-                                                
-                                                $availableStudents = $query->get();
-                                            @endphp
+                                            {{-- Available students are now passed from the controller with consistent filtering --}}
                                             @foreach($availableStudents as $student)
                                                 <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
                                                     {{ $student->name }} ({{ $student->student_id }})
                                                 </option>
                                             @endforeach
                                         </select>
+                                        @if($availableStudents->isEmpty())
+                                            <div class="form-text text-info">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                No other students available with the same offer code{{ $group->offering ? ' (' . $group->offering->offer_code . ')' : '' }}.
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="col-md-6">
                                         <textarea name="message" class="form-control" rows="3" placeholder="Optional message for the invitation..."></textarea>
@@ -484,6 +472,11 @@ function requestDefense(defenseType) {
         '100_percent': '🏆 100% Final Defense'
     };
     document.getElementById('defense_type_display').textContent = defenseTypeLabels[defenseType];
+    
+    // Update the redirect link to include the defense type
+    const redirectLink = document.getElementById('defense_request_redirect');
+    redirectLink.href = "{{ route('student.defense-requests.create') }}?defense_type=" + defenseType;
+    
     const modal = new bootstrap.Modal(document.getElementById('defenseRequestModal'));
     modal.show();
 }

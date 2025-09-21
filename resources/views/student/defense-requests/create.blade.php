@@ -55,13 +55,13 @@
                             </div>
                             <select name="defense_type" id="defense_type" class="form-select" required>
                                 <option value="">Choose defense type...</option>
-                                <option value="proposal" {{ old('defense_type') == 'proposal' ? 'selected' : '' }}>
+                                <option value="proposal" {{ (old('defense_type', $defenseType ?? '') == 'proposal') ? 'selected' : '' }}>
                                     Proposal Defense
                                 </option>
-                                <option value="60_percent" {{ old('defense_type') == '60_percent' ? 'selected' : '' }}>
+                                <option value="60_percent" {{ (old('defense_type', $defenseType ?? '') == '60_percent') ? 'selected' : '' }}>
                                     60% Progress Defense
                                 </option>
-                                <option value="100_percent" {{ old('defense_type') == '100_percent' ? 'selected' : '' }}>
+                                <option value="100_percent" {{ (old('defense_type', $defenseType ?? '') == '100_percent') ? 'selected' : '' }}>
                                     100% Final Defense
                                 </option>
                             </select>

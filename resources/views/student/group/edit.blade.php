@@ -103,17 +103,24 @@
                         @if($group->members->count() < 3)
                             <div class="border-top pt-3">
                                 <h6 class="fw-bold mb-2">Add New Member:</h6>
-                                <form action="{{ route('student.group.add-member') }}" method="POST">
+                                <form action="{{ route('student.group.invite-member') }}" method="POST">
                                     @csrf
                                     <div class="mb-3">
                                         <select name="student_id" class="form-select @error('student_id') is-invalid @enderror" required>
                                             <option value="">Select a student...</option>
-                                            @foreach(\App\Models\Student::whereNotIn('student_id', $group->members->pluck('student_id'))->get() as $student)
+                                            {{-- Available students are now passed from the controller with consistent filtering --}}
+                                            @foreach($availableStudents as $student)
                                                 <option value="{{ $student->student_id }}" {{ old('student_id') == $student->student_id ? 'selected' : '' }}>
                                                     {{ $student->name }} ({{ $student->student_id }})
                                                 </option>
                                             @endforeach
                                         </select>
+                                        @if($availableStudents->isEmpty())
+                                            <div class="form-text text-info">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                No other students available with the same offer code{{ $group->offering ? ' (' . $group->offering->offer_code . ')' : '' }}.
+                                            </div>
+                                        @endif
                                         @error('student_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror

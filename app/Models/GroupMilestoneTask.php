@@ -31,11 +31,11 @@ class GroupMilestoneTask extends Model
     }
     public function assignedStudent()
     {
-        return $this->belongsTo(Student::class, 'assigned_to');
+        return $this->belongsTo(Student::class, 'assigned_to', 'student_id');
     }
     public function completedByStudent()
     {
-        return $this->belongsTo(Student::class, 'completed_by');
+        return $this->belongsTo(Student::class, 'completed_by', 'student_id');
     }
     public function submissions()
     {

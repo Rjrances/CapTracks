@@ -46,8 +46,7 @@ class CoordinatorController extends Controller
             ->latest()
             ->take(5)
             ->get();
-        $recentSubmissions = ProjectSubmission::with('student')
-            ->latest()
+        $recentSubmissions = ProjectSubmission::latest()
             ->take(5)
             ->get();
         $pendingInvitations = AdviserInvitation::with(['faculty', 'group'])

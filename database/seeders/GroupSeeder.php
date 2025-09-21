@@ -70,6 +70,9 @@ class GroupSeeder extends Seeder
 
             // Add students to group
             $this->assignStudentsToGroup($group, $students, $i);
+            
+            // Assign offering based on group leader's enrollment
+            $this->assignOfferingToGroup($group);
         }
 
         echo "✅ Created {$groupCount} groups for {$term->semester}\n";
@@ -166,6 +169,35 @@ class GroupSeeder extends Seeder
     }
 
     /**
+     * Assign offering to group based on group leader's enrollment
+     */
+    private function assignOfferingToGroup($group)
+    {
+        // Get the group leader
+        $leader = $group->members()->where('group_members.role', 'leader')->first();
+        
+        if (!$leader) {
+            echo "⚠️  No leader found for group {$group->name}, skipping offering assignment\n";
+            return;
+        }
+        
+        // Get the leader's current offering
+        $leaderOffering = $leader->offerings()->first();
+        
+        if (!$leaderOffering) {
+            echo "⚠️  Leader {$leader->name} not enrolled in any offering, skipping offering assignment\n";
+            return;
+        }
+        
+        // Update group with offering
+        $group->update([
+            'offering_id' => $leaderOffering->id
+        ]);
+        
+        echo "✅ Assigned offering {$leaderOffering->offer_code} to group {$group->name}\n";
+    }
+
+    /**
      * Create capstone project groups with students and advisers (legacy method)
      */
     private function createTestGroups()
@@ -245,6 +277,11 @@ class GroupSeeder extends Seeder
         } catch (\Exception $e) {
             // Ignore duplicate entry errors
         }
+
+        // Assign offerings to test groups
+        $this->assignOfferingToGroup($group1);
+        $this->assignOfferingToGroup($group2);
+        $this->assignOfferingToGroup($group3);
 
         echo "✅ Created 3 capstone project groups with student assignments\n";
         echo "   - Smart Campus Management System\n";

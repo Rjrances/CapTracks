@@ -82,7 +82,7 @@ class TaskSubmissionController extends Controller
     }
     public function show($submissionId)
     {
-        $submission = TaskSubmission::with(['groupMilestoneTask.milestoneTask', 'student', 'reviewer'])->findOrFail($submissionId);
+        $submission = TaskSubmission::with(['groupMilestoneTask.milestoneTask', 'reviewer'])->findOrFail($submissionId);
         $student = $this->getAuthenticatedStudent();
         if ($student && $submission->student_id === $student->student_id) {
             return view('student.milestones.submission-detail', compact('submission'));
