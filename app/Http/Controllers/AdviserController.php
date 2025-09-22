@@ -175,7 +175,7 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
         $invitations = AdviserInvitation::with(['group', 'group.members'])
-            ->where('faculty_id', $user->faculty_id)
+            ->where('faculty_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         return view('adviser.invitations', compact('invitations'));
@@ -186,6 +186,7 @@ class AdviserController extends Controller
             'status' => 'required|in:accepted,declined',
             'response_message' => 'nullable|string|max:500',
         ]);
+        
         if ($invitation->faculty_id !== Auth::id()) {
             abort(403, 'Unauthorized');
         }
@@ -203,7 +204,6 @@ class AdviserController extends Controller
             if ($user->role !== 'adviser') {
                 if ($user->role === 'teacher') {
                     $user->update(['role' => 'adviser']);
-                    \Log::info("User {$user->name} role updated from 'teacher' to 'adviser' after accepting adviser invitation");
                 }
             }
             Notification::create([

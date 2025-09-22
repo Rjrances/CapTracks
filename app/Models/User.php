@@ -35,7 +35,7 @@ class User extends Authenticatable
 
     public function getAuthIdentifierName()
     {
-        return 'faculty_id';
+        return 'id';
     }
     public function account()
     {
