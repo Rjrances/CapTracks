@@ -132,27 +132,18 @@
 <script>
 const offeringSubjectCode = "{{ $offering->subject_code }}";
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing bulk selection...');
     initializeBulkSelection();
 });
 function initializeBulkSelection() {
-    console.log('Initializing bulk selection...');
     const selectAllCheckbox = document.getElementById('selectAll');
     const studentCheckboxes = document.querySelectorAll('.student-checkbox');
     const addSelectedBtn = document.getElementById('addSelectedBtn');
     const selectedCountSpan = document.getElementById('selectedCount');
-    console.log('Elements found:', {
-        selectAll: selectAllCheckbox,
-        studentCheckboxes: studentCheckboxes.length,
-        addSelectedBtn: addSelectedBtn,
-        selectedCountSpan: selectedCountSpan
-    });
     if (!selectAllCheckbox || !addSelectedBtn) {
         console.error('Required elements not found');
         return;
     }
     selectAllCheckbox.addEventListener('change', function() {
-        console.log('Select all changed to:', this.checked);
         const isChecked = this.checked;
         studentCheckboxes.forEach(checkbox => {
             checkbox.checked = isChecked;
@@ -161,7 +152,6 @@ function initializeBulkSelection() {
     });
     studentCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            console.log('Individual checkbox changed:', this.value, this.checked);
             updateSelectAllState();
             updateBulkAddButton();
         });
@@ -169,7 +159,6 @@ function initializeBulkSelection() {
     function updateSelectAllState() {
         const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
         const totalCount = studentCheckboxes.length;
-        console.log('Updating select all state:', checkedCount, 'of', totalCount);
         if (checkedCount === 0) {
             selectAllCheckbox.indeterminate = false;
             selectAllCheckbox.checked = false;
@@ -183,7 +172,6 @@ function initializeBulkSelection() {
     }
     function updateBulkAddButton() {
         const checkedCount = document.querySelectorAll('.student-checkbox:checked').length;
-        console.log('Updating bulk add button:', checkedCount, 'checked');
         if (checkedCount > 0) {
             addSelectedBtn.style.display = 'inline-block';
             selectedCountSpan.textContent = checkedCount;
@@ -192,11 +180,9 @@ function initializeBulkSelection() {
         }
     }
     addSelectedBtn.addEventListener('click', function() {
-        console.log('Bulk add button clicked');
         const checkedCheckboxes = document.querySelectorAll('.student-checkbox:checked');
         const studentIds = Array.from(checkedCheckboxes).map(cb => cb.value);
         const studentNames = Array.from(checkedCheckboxes).map(cb => cb.dataset.studentName);
-        console.log('Selected students:', studentIds, studentNames);
         if (studentIds.length === 0) {
             alert('Please select at least one student to add.');
             return;
@@ -209,7 +195,6 @@ function initializeBulkSelection() {
             const input = document.getElementById('bulkAddStudentIds');
             if (form && input) {
                 input.value = JSON.stringify(studentIds);
-                console.log('Submitting form with:', input.value);
                 form.submit();
             } else {
                 alert('Error: Form not found. Please refresh the page and try again.');
@@ -217,7 +202,6 @@ function initializeBulkSelection() {
         }
     });
     updateBulkAddButton();
-    console.log('Bulk selection initialized successfully');
 }
 </script>
 @endsection

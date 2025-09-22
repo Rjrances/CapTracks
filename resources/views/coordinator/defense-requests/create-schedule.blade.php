@@ -172,37 +172,29 @@
 </div>
 @push('scripts')
 <script>
-// Adviser and coordinator are pre-assigned, no auto-selection needed
 function autoSelectPanelMembers() {
-    console.log('Adviser and coordinator are pre-assigned by the chairperson');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Set minimum date to tomorrow
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     document.getElementById('scheduled_date').min = tomorrow.toISOString().split('T')[0];
     
-    // Set default values only if not already set by the form
     const dateInput = document.getElementById('scheduled_date');
     const timeInput = document.getElementById('scheduled_time');
     
     if (!dateInput.value) {
-        // Set default date to next week (7 days from now) if no preferred date
         const nextWeek = new Date();
         nextWeek.setDate(nextWeek.getDate() + 7);
         dateInput.value = nextWeek.toISOString().split('T')[0];
     }
     
     if (!timeInput.value) {
-        // Set default time to 9:00 AM if no preferred time
         timeInput.value = '09:00';
     }
     
-    // Set default room suggestion
     document.getElementById('room').placeholder = 'e.g., Room 101, Computer Lab, Conference Room A';
     
-    // Auto-select panel members (with multiple attempts)
     autoSelectPanelMembers();
     setTimeout(autoSelectPanelMembers, 100);
     setTimeout(autoSelectPanelMembers, 500);

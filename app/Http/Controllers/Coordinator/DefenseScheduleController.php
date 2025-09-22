@@ -19,7 +19,6 @@ class DefenseScheduleController extends Controller
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         
-        // Get defense requests
         $requestFilters = $request->only(['status', 'defense_type', 'search']);
         $requestFilters = array_merge([
             'status' => '',
@@ -47,14 +46,12 @@ class DefenseScheduleController extends Controller
         
         $defenseRequests = $defenseRequestsQuery->get();
         
-        // Get defense schedules
         $scheduleQuery = DefenseSchedule::with(['group', 'academicTerm', 'defensePanels.faculty'])
             ->whereHas('group', function($q) use ($coordinatorOfferings) {
                 $q->whereIn('offering_id', $coordinatorOfferings);
             })
             ->orderBy('start_at', 'asc');
             
-        // Filter by active semester
         if ($activeTerm) {
             $scheduleQuery->where('academic_term_id', $activeTerm->id);
         }
@@ -67,7 +64,6 @@ class DefenseScheduleController extends Controller
         
         $defenseSchedules = $scheduleQuery->get();
         
-        // Get quick stats
         $stats = [
             'pending_requests' => $defenseRequests->where('status', 'pending')->count(),
             'approved_requests' => $defenseRequests->where('status', 'approved')->count(),
@@ -147,7 +143,6 @@ class DefenseScheduleController extends Controller
                 ]);
             }
             if ($schedule->group->faculty_id) {
-                // Find the user ID that corresponds to this faculty_id
                 $adviserUser = User::where('faculty_id', $schedule->group->faculty_id)->first();
                 if ($adviserUser) {
                     DefensePanel::create([
@@ -158,7 +153,6 @@ class DefenseScheduleController extends Controller
                 }
             }
             if ($schedule->group->offering && $schedule->group->offering->faculty_id) {
-                // Find the user ID that corresponds to this faculty_id
                 $coordinatorUser = User::where('faculty_id', $schedule->group->offering->faculty_id)->first();
                 if ($coordinatorUser) {
                     DefensePanel::create([
@@ -173,7 +167,6 @@ class DefenseScheduleController extends Controller
             return redirect()->route('coordinator.defense.index')->with('success', 'Defense schedule created successfully. All parties have been notified.');
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Defense schedule creation failed: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to create defense schedule.'])->withInput();
         }
     }
@@ -196,13 +189,10 @@ class DefenseScheduleController extends Controller
         $groups = Group::with(['members', 'adviser', 'offering'])
             ->whereIn('offering_id', $coordinatorOfferings)
             ->get();
-        // Get faculty for panel selection - include existing panelists and available faculty
         $existingPanelistIds = $defenseSchedule->defensePanels->pluck('faculty_id')->toArray();
         
         $faculty = User::where(function ($query) use ($defenseSchedule, $existingPanelistIds) {
-                // Include existing panelists (regardless of role)
                 $query->whereIn('id', $existingPanelistIds)
-                    // Or include available faculty (exclude adviser and offering coordinator)
                     ->orWhere(function ($subQuery) use ($defenseSchedule) {
                         $subQuery->whereIn('role', ['teacher', 'coordinator', 'chairperson'])
                             ->where('id', '!=', $defenseSchedule->group->faculty_id)
@@ -257,7 +247,6 @@ class DefenseScheduleController extends Controller
                 ]);
             }
             if ($schedule->group->faculty_id) {
-                // Find the user ID that corresponds to this faculty_id
                 $adviserUser = User::where('faculty_id', $schedule->group->faculty_id)->first();
                 if ($adviserUser) {
                     DefensePanel::create([
@@ -268,7 +257,6 @@ class DefenseScheduleController extends Controller
                 }
             }
             if ($schedule->group->offering && $schedule->group->offering->faculty_id) {
-                // Find the user ID that corresponds to this faculty_id
                 $coordinatorUser = User::where('faculty_id', $schedule->group->offering->faculty_id)->first();
                 if ($coordinatorUser) {
                     DefensePanel::create([
@@ -282,9 +270,7 @@ class DefenseScheduleController extends Controller
             return redirect()->route('coordinator.defense.index')->with('success', 'Defense schedule updated successfully.');
         } catch (\Exception $e) {
             DB::rollback();
-            \Log::error('Defense schedule update failed: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            return back()->withErrors(['error' => 'Failed to update defense schedule: ' . $e->getMessage()])->withInput();
+            return back()->withErrors(['error' => 'Failed to update defense schedule.'])->withInput();
         }
     }
     public function destroy($id)

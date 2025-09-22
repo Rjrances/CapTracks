@@ -506,7 +506,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabButtons = document.querySelectorAll('#groupTabs button[data-bs-toggle="pill"]');
     tabButtons.forEach(button => {
         button.addEventListener('shown.bs.tab', function(event) {
-            console.log('Switched to tab:', event.target.getAttribute('data-bs-target'));
         });
     });
 });
