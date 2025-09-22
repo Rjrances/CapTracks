@@ -4,8 +4,8 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-1">Upload Project Submission</h2>
-            <p class="text-muted mb-0">Submit important project documents outside of milestone tasks</p>
+            <h2 class="mb-1">Quick File Uploads</h2>
+            <p class="text-muted mb-0">Upload supplementary project documents quickly and easily</p>
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('student.milestones') }}" class="btn btn-outline-info">
@@ -16,17 +16,26 @@
             </a>
         </div>
     </div>
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card border-primary">
-                <div class="card-body text-center">
-                    <i class="fas fa-file-alt fa-2x text-primary mb-3"></i>
-                    <h5 class="card-title">Project Proposal</h5>
-                    <p class="card-text small">Initial project proposal and concept document</p>
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-start">
+            <i class="fas fa-info-circle fa-2x me-3 mt-1"></i>
+            <div>
+                <h5 class="alert-heading mb-2">Quick File Uploads</h5>
+                <p class="mb-2">This section is for uploading supplementary project documents quickly. For formal project proposals, please use the <strong>Project Proposals</strong> section instead.</p>
+                <div class="d-flex gap-3">
+                    <a href="{{ route('student.proposal') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-file-contract me-1"></i>Go to Project Proposals
+                    </a>
+                    <a href="{{ route('student.milestones') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-tasks me-1"></i>View Milestone Tasks
+                    </a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
             <div class="card border-success">
                 <div class="card-body text-center">
                     <i class="fas fa-flag-checkered fa-2x text-success mb-3"></i>
@@ -35,7 +44,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card border-info">
                 <div class="card-body text-center">
                     <i class="fas fa-paperclip fa-2x text-info mb-3"></i>
@@ -62,7 +71,6 @@
                             </label>
                             <select name="type" id="type" class="form-select" required>
                                 <option value="">Select submission type...</option>
-                                <option value="proposal">📋 Project Proposal</option>
                                 <option value="final">🏁 Final Report</option>
                                 <option value="other">📎 Additional Files</option>
                             </select>
@@ -85,11 +93,9 @@
                     </label>
                     <textarea name="description" id="description" class="form-control" rows="3" placeholder="Brief description of what this document contains..."></textarea>
                 </div>
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Note:</strong> For milestone-specific tasks, please use the 
-                    <a href="{{ route('student.milestones') }}" class="alert-link">Milestones section</a> 
-                    instead. This form is for general project documents.
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Important:</strong> This is for supplementary documents only. For formal project proposals, milestone tasks, or other structured submissions, please use the appropriate sections in the navigation menu.
                 </div>
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-success">
@@ -109,7 +115,7 @@
                 <i class="fas fa-tasks me-1"></i>Milestone Tasks
             </a>
             <a href="{{ route('student.proposal') }}" class="btn btn-outline-info btn-sm">
-                <i class="fas fa-file-alt me-1"></i>Proposal & Endorsement
+                <i class="fas fa-file-contract me-1"></i>Project Proposals
             </a>
             <a href="{{ route('student.defense-requests.index') }}" class="btn btn-outline-warning btn-sm">
                 <i class="fas fa-gavel me-1"></i>Defense Requests

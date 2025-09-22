@@ -137,43 +137,49 @@
                                     <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
                                     You only need to add additional panel members below.
                                 </div>
-                                @if($defenseSchedule->group->adviser || ($defenseSchedule->group->offering && $defenseSchedule->group->offering->teacher))
+                                @if($defenseSchedule->group->adviser || ($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id))
                                     <div class="alert alert-success mb-3">
                                         <strong>Automatically Included:</strong>
                                         <ul class="mb-0 mt-2">
                                             @if($defenseSchedule->group->adviser)
                                                 <li><strong>{{ $defenseSchedule->group->adviser->name }}</strong> - Adviser</li>
                                             @endif
-                                            @if($defenseSchedule->group->offering && $defenseSchedule->group->offering->teacher)
-                                                <li><strong>{{ $defenseSchedule->group->offering->teacher->name }}</strong> - Offering Coordinator</li>
+                                            @if($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id)
+                                                <li><strong>{{ $defenseSchedule->group->offering->faculty->name ?? 'Unknown' }}</strong> - Offering Coordinator</li>
                                             @endif
                                         </ul>
                                     </div>
                                 @endif
                                 <div id="panel-members-container">
-                                    @foreach($defenseSchedule->defensePanels as $index => $panel)
-                                        @if($panel->faculty_id != $defenseSchedule->group->adviser_id && 
-                                             (!($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id == $panel->faculty_id)))
+                                    @php $memberIndex = 0; @endphp
+                                    @foreach($defenseSchedule->defensePanels as $panel)
+                                        @if($panel->role == 'member' || $panel->role == 'chair')
                                             <div class="panel-member-row mb-2">
                                                 <div class="row">
                                                     <div class="col-md-5">
-                                                        <select name="panel_members[{{ $index }}][faculty_id]" class="form-control faculty-select" required>
+                                                        <select name="panel_members[{{ $memberIndex }}][faculty_id]" class="form-control faculty-select" required>
                                                             <option value="">Select Faculty</option>
+                                                            @foreach($faculty as $facultyMember)
+                                                                <option value="{{ $facultyMember->id }}" {{ $panel->faculty_id == $facultyMember->id ? 'selected' : '' }}>
+                                                                    {{ $facultyMember->name }}
+                                                                </option>
+                                                            @endforeach
                                                         </select>
+                                                        <input type="hidden" name="panel_members[{{ $memberIndex }}][id]" value="{{ $panel->id }}">
                                                     </div>
                                                     <div class="col-md-5">
-                                                        <select name="panel_members[{{ $index }}][role]" class="form-control" required>
+                                                        <select name="panel_members[{{ $memberIndex }}][role]" class="form-control" required>
                                                             <option value="">Select Role</option>
                                                             <option value="chair" {{ $panel->role == 'chair' ? 'selected' : '' }}>Chair</option>
                                                             <option value="member" {{ $panel->role == 'member' ? 'selected' : '' }}>Member</option>
-                                                            <option value="adviser" {{ $panel->role == 'adviser' ? 'selected' : '' }}>Adviser</option>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-2">
-                                                        <button type="button" class="btn btn-danger btn-sm remove-panel-member" {{ $index == 0 ? 'style=display:none' : '' }}>Remove</button>
+                                                        <button type="button" class="btn btn-danger btn-sm remove-panel-member">Remove</button>
                                                     </div>
                                                 </div>
                                             </div>
+                                            @php $memberIndex++; @endphp
                                         @endif
                                     @endforeach
                                 </div>
@@ -198,64 +204,20 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let panelCount = {{ $defenseSchedule->defensePanels->where('faculty_id', '!=', $defenseSchedule->group->adviser_id)->where('faculty_id', '!=', $defenseSchedule->group->offering->faculty_id ?? 0)->count() }};
-    document.getElementById('group_id').addEventListener('change', function() {
-        const groupId = this.value;
-        if (groupId) {
-            loadFacultyForGroup(groupId);
-        } else {
-            clearFacultyOptions();
-        }
-    });
-    function loadFacultyForGroup(groupId) {
-        fetch('{{ route("coordinator.defense.available-faculty") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                group_id: groupId,
-                date: document.getElementById('date').value || '',
-                start_time: document.getElementById('start_time').value || '',
-                end_time: document.getElementById('end_time').value || '',
-                room: document.getElementById('room').value || ''
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            updateFacultyOptions(data.availableFaculty);
-        })
-        .catch(error => {
-            console.error('Error loading faculty:', error);
-        });
-    }
-    function updateFacultyOptions(faculty) {
+    let panelCount = {{ $defenseSchedule->defensePanels->where('role', 'member')->count() }};
+    // Initialize faculty options for existing panel members
+    function initializeFacultyOptions() {
         const facultySelects = document.querySelectorAll('.faculty-select');
         facultySelects.forEach(select => {
-            const currentValue = select.value;
-            select.innerHTML = '<option value="">Select Faculty</option>';
-            faculty.forEach(member => {
-                const option = document.createElement('option');
-                option.value = member.id;
-                option.textContent = `${member.name} (${member.school_id})`;
-                select.appendChild(option);
-            });
-            if (currentValue && faculty.some(f => f.id == currentValue)) {
-                select.value = currentValue;
-            }
+            // Faculty options should already be populated by Blade template
+            // This function is just for any additional dynamic loading if needed
         });
     }
-    function clearFacultyOptions() {
-        const facultySelects = document.querySelectorAll('.faculty-select');
-        facultySelects.forEach(select => {
-            select.innerHTML = '<option value="">Select Faculty</option>';
-        });
-    }
-    const groupId = document.getElementById('group_id').value;
-    if (groupId) {
-        loadFacultyForGroup(groupId);
-    }
+    
+    // Initialize on page load
+    initializeFacultyOptions();
+    // Faculty options are pre-populated by Blade template
+    // No need for dynamic loading since we have all the data
     document.getElementById('add-panel-member').addEventListener('click', function() {
         const panelMembersContainer = document.getElementById('panel-members-container');
         const newPanelRow = document.createElement('div');
@@ -265,6 +227,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="col-md-5">
                     <select name="panel_members[${panelCount}][faculty_id]" class="form-control faculty-select" required>
                         <option value="">Select Faculty</option>
+                        @foreach($faculty as $facultyMember)
+                            <option value="{{ $facultyMember->id }}">{{ $facultyMember->name }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-5">
@@ -272,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <option value="">Select Role</option>
                         <option value="chair">Chair</option>
                         <option value="member">Member</option>
-                        <option value="adviser">Adviser</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -309,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
                     date: date,

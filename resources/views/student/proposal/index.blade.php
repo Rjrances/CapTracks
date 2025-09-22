@@ -4,8 +4,8 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0">Proposal & Endorsement</h2>
-            <p class="text-muted mb-0">Submit and track your project proposal for approval</p>
+            <h2 class="mb-1">Project Proposals</h2>
+            <p class="text-muted mb-0">Submit and track your formal project proposal for approval</p>
         </div>
         <div>
             @if(!$existingProposal || $existingProposal->status === 'rejected')

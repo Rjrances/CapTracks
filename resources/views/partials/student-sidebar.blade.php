@@ -73,15 +73,15 @@
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('student.project*') || request()->is('student/project*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.project') }}">
-                    <i class="fas fa-project-diagram me-2"></i>
-                    Project Submissions
+                    <i class="fas fa-upload me-2"></i>
+                    Quick File Uploads
                 </a>
             </li>
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('student.proposal*') || request()->is('student/proposal*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.proposal') }}">
-                    <i class="fas fa-file-alt me-2"></i>
-                    Proposal & Endorsement
+                    <i class="fas fa-file-contract me-2"></i>
+                    Project Proposals
                 </a>
             </li>
             <li class="nav-item mb-2">

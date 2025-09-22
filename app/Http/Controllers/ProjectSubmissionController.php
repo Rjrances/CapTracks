@@ -82,16 +82,14 @@ class ProjectSubmissionController extends Controller
             'type' => 'required|in:proposal,final,other',
             'description' => 'nullable|string|max:1000',
         ]);
-        if (Auth::check()) {
-            if (Auth::guard('student')->check()) {
-                $studentAccount = Auth::guard('student')->user();
-                $student = $studentAccount->student;
-            } else {
-                $student = null;
-            }
+        
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = Student::find(session('student_id'));
+            $student = null;
         }
+        
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
@@ -152,7 +150,7 @@ class ProjectSubmissionController extends Controller
         $submission = ProjectSubmission::findOrFail($id);
         $user = Auth::user();
         if ($user->isTeacher()) {
-            $hasAccess = Group::where('adviser_id', $user->id)
+            $hasAccess = Group::where('faculty_id', $user->faculty_id)
                 ->whereHas('members', function($query) use ($submission) {
                     $query->where('students.student_id', $submission->student_id);
                 })->exists();
@@ -169,7 +167,7 @@ class ProjectSubmissionController extends Controller
         $submission = ProjectSubmission::findOrFail($id);
         $user = Auth::user();
         if ($user->isTeacher()) {
-            $hasAccess = Group::where('adviser_id', $user->id)
+            $hasAccess = Group::where('faculty_id', $user->faculty_id)
                 ->whereHas('members', function($query) use ($submission) {
                     $query->where('students.student_id', $submission->student_id);
                 })->exists();
@@ -192,16 +190,14 @@ class ProjectSubmissionController extends Controller
     public function destroy($id)
     {
         $submission = ProjectSubmission::findOrFail($id);
-        if (Auth::check()) {
-            if (Auth::guard('student')->check()) {
-                $studentAccount = Auth::guard('student')->user();
-                $student = $studentAccount->student;
-            } else {
-                $student = null;
-            }
+        
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
         } else {
-            $student = Student::find(session('student_id'));
+            $student = null;
         }
+        
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }

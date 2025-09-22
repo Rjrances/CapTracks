@@ -3,17 +3,33 @@
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">My Project Submissions</h2>
+        <div>
+            <h2 class="mb-1">Quick File Uploads</h2>
+            <p class="text-muted mb-0">Supplementary project documents and files</p>
+        </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('student.milestones') }}" class="btn btn-outline-info">
-                <i class="fas fa-tasks me-2"></i>View Milestones
+            <a href="{{ route('student.proposal') }}" class="btn btn-outline-info">
+                <i class="fas fa-file-contract me-2"></i>Project Proposals
             </a>
-            <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>Return to Dashboard
+            <a href="{{ route('student.milestones') }}" class="btn btn-outline-primary">
+                <i class="fas fa-tasks me-2"></i>View Milestones
             </a>
         </div>
     </div>
-    <a href="{{ route('student.project.create') }}" class="btn btn-success mb-3">Upload New Submission</a>
+    
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-start">
+            <i class="fas fa-info-circle me-3 mt-1"></i>
+            <div>
+                <h6 class="alert-heading mb-2">Quick File Uploads</h6>
+                <p class="mb-0">This section is for uploading supplementary documents like final reports, presentations, and additional materials. For formal project proposals, please use the <strong>Project Proposals</strong> section.</p>
+            </div>
+        </div>
+    </div>
+    
+    <a href="{{ route('student.project.create') }}" class="btn btn-success mb-3">
+        <i class="fas fa-upload me-2"></i>Upload New File
+    </a>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif

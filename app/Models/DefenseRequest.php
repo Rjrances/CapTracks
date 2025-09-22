@@ -10,11 +10,15 @@ class DefenseRequest extends Model
         'defense_type',
         'status',
         'student_message',
+        'preferred_date',
+        'preferred_time',
         'coordinator_notes',
         'requested_at',
         'responded_at'
     ];
     protected $casts = [
+        'preferred_date' => 'date',
+        'preferred_time' => 'datetime:H:i',
         'requested_at' => 'datetime',
         'responded_at' => 'datetime',
     ];

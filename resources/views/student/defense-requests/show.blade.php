@@ -128,18 +128,34 @@
                             <div class="col-md-6">
                                 <h6>Scheduled Date</h6>
                                 <p class="mb-0">
-                                    {{ $defenseRequest->defenseSchedule->scheduled_date ? 
-                                       \Carbon\Carbon::parse($defenseRequest->defenseSchedule->scheduled_date)->format('F d, Y') : 'N/A' }}
+                                    {{ $defenseRequest->defenseSchedule->start_at ? 
+                                       \Carbon\Carbon::parse($defenseRequest->defenseSchedule->start_at)->format('F d, Y') : 'N/A' }}
                                 </p>
                             </div>
                             <div class="col-md-6">
                                 <h6>Scheduled Time</h6>
                                 <p class="mb-0">
-                                    {{ $defenseRequest->defenseSchedule->scheduled_time ? 
-                                       \Carbon\Carbon::parse($defenseRequest->defenseSchedule->scheduled_time)->format('h:i A') : 'N/A' }}
+                                    {{ $defenseRequest->defenseSchedule->start_at ? 
+                                       \Carbon\Carbon::parse($defenseRequest->defenseSchedule->start_at)->format('h:i A') : 'N/A' }}
                                 </p>
                             </div>
                         </div>
+                        @if($defenseRequest->defenseSchedule->end_at)
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>End Time</h6>
+                                    <p class="mb-0">
+                                        {{ \Carbon\Carbon::parse($defenseRequest->defenseSchedule->end_at)->format('h:i A') }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Duration</h6>
+                                    <p class="mb-0">
+                                        {{ \Carbon\Carbon::parse($defenseRequest->defenseSchedule->start_at)->diffForHumans(\Carbon\Carbon::parse($defenseRequest->defenseSchedule->end_at), true) }}
+                                    </p>
+                                </div>
+                            </div>
+                        @endif
                         @if($defenseRequest->defenseSchedule->room)
                             <hr>
                             <div class="row">
@@ -156,6 +172,45 @@
                                     <h6>Schedule Notes</h6>
                                     <div class="alert alert-info">
                                         {{ $defenseRequest->defenseSchedule->coordinator_notes }}
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                        @if($defenseRequest->defenseSchedule->defensePanels && $defenseRequest->defenseSchedule->defensePanels->count() > 0)
+                            <hr>
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6>Defense Panel Members</h6>
+                                    <div class="row">
+                                        @foreach($defenseRequest->defenseSchedule->defensePanels as $panel)
+                                            <div class="col-md-6 mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-2">
+                                                        @switch($panel->role)
+                                                            @case('adviser')
+                                                                <i class="fas fa-user-tie text-primary"></i>
+                                                                @break
+                                                            @case('coordinator')
+                                                                <i class="fas fa-user-cog text-success"></i>
+                                                                @break
+                                                            @case('member')
+                                                                <i class="fas fa-user text-info"></i>
+                                                                @break
+                                                            @case('chair')
+                                                                <i class="fas fa-crown text-warning"></i>
+                                                                @break
+                                                            @default
+                                                                <i class="fas fa-user text-secondary"></i>
+                                                        @endswitch
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ $panel->faculty->name ?? 'Unknown' }}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{ ucfirst($panel->role) }}</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             </div>

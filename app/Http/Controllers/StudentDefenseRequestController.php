@@ -18,7 +18,7 @@ class StudentDefenseRequestController extends Controller
             return redirect()->route('student.group')->withErrors(['group' => 'You must be part of a group to request defenses.']);
         }
         $defenseRequests = DefenseRequest::where('group_id', $group->id)
-            ->with(['group', 'defenseSchedule'])
+            ->with(['group', 'defenseSchedule.defensePanels.faculty'])
             ->orderBy('created_at', 'desc')
             ->get();
         return view('student.defense-requests.index', compact('defenseRequests', 'group'));
@@ -97,6 +97,7 @@ class StudentDefenseRequestController extends Controller
         if (!$group || $defenseRequest->group_id !== $group->id) {
             abort(403, 'Unauthorized access to this defense request.');
         }
+        $defenseRequest->load(['defenseSchedule.defensePanels.faculty']);
         return view('student.defense-requests.show', compact('defenseRequest'));
     }
     public function cancel(DefenseRequest $defenseRequest)

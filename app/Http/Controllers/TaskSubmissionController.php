@@ -90,7 +90,7 @@ class TaskSubmissionController extends Controller
         $user = Auth::user();
         if ($user && $user->hasRole('adviser')) {
             $group = $submission->groupMilestoneTask->groupMilestone->group;
-            if ($group->adviser_id === $user->id) {
+            if ($group->faculty_id === $user->faculty_id) {
                 return view('adviser.task-submission-detail', compact('submission'));
             }
         }
@@ -103,7 +103,7 @@ class TaskSubmissionController extends Controller
             return redirect()->back()->withErrors(['auth' => 'Only advisers can review submissions.']);
         }
         $submission = TaskSubmission::with(['groupMilestoneTask.groupMilestone.group'])->findOrFail($submissionId);
-        if ($submission->groupMilestoneTask->groupMilestone->group->adviser_id !== $user->id) {
+        if ($submission->groupMilestoneTask->groupMilestone->group->faculty_id !== $user->faculty_id) {
             return redirect()->back()->withErrors(['auth' => 'You are not the adviser for this group.']);
         }
         $request->validate([

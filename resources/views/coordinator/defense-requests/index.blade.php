@@ -137,6 +137,17 @@
                                                     <i class="fas fa-times"></i> Reject
                                                 </button>
                                             </div>
+                                        @elseif($request->status === 'approved')
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{{ route('coordinator.defense-requests.create-schedule', $request) }}" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="fas fa-calendar-plus"></i> Create Schedule
+                                                </a>
+                                                <button type="button" class="btn btn-danger btn-sm" 
+                                                        onclick="rejectRequest({{ $request->id }})">
+                                                    <i class="fas fa-times"></i> Reject
+                                                </button>
+                                            </div>
                                         @elseif($request->status === 'scheduled')
                                             <span class="badge bg-success">Scheduled</span>
                                             @if($request->defenseSchedule)
@@ -146,6 +157,8 @@
                                                     at {{ $request->defenseSchedule->scheduled_time->format('h:i A') }}
                                                 </small>
                                             @endif
+                                        @elseif($request->status === 'rejected')
+                                            <span class="badge bg-danger">Rejected</span>
                                         @else
                                             <span class="text-muted">No actions available</span>
                                         @endif

@@ -14,7 +14,7 @@ class UpdateAdviserRoles extends Command
             ->whereExists(function ($query) {
                 $query->select(\DB::raw(1))
                       ->from('groups')
-                      ->whereColumn('groups.adviser_id', 'users.id');
+                      ->whereColumn('groups.faculty_id', 'users.faculty_id');
             })
             ->get();
         if ($usersToUpdate->isEmpty()) {

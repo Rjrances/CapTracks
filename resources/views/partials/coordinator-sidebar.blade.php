@@ -56,10 +56,16 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('coordinator.defense.*') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white {{ request()->routeIs('coordinator.defense.*') || request()->routeIs('coordinator.defense-requests.*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('coordinator.defense.index') }}">
                     <i class="fas fa-gavel me-2"></i>
-                    Defense Schedules
+                    Defense Management
+                    @php
+                        $pendingRequests = \App\Models\DefenseRequest::where('status', 'pending')->count();
+                    @endphp
+                    @if($pendingRequests > 0)
+                        <span class="badge bg-warning text-dark ms-2">{{ $pendingRequests }}</span>
+                    @endif
                 </a>
             </li>
             <li class="nav-item mb-2">

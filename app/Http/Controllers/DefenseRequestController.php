@@ -12,15 +12,23 @@ class DefenseRequestController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only(['status', 'defense_type', 'search']);
+        
+        // Ensure all filter keys exist with default values
+        $filters = array_merge([
+            'status' => '',
+            'defense_type' => '',
+            'search' => ''
+        ], $filters);
+        
         $query = DefenseRequest::with(['group.members', 'group.adviser'])
             ->orderBy('created_at', 'desc');
-        if (isset($filters['status']) && $filters['status']) {
+        if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
-        if (isset($filters['defense_type']) && $filters['defense_type']) {
+        if (!empty($filters['defense_type'])) {
             $query->where('defense_type', $filters['defense_type']);
         }
-        if (isset($filters['search']) && $filters['search']) {
+        if (!empty($filters['search'])) {
             $query->whereHas('group', function($q) use ($filters) {
                 $q->where('name', 'like', '%' . $filters['search'] . '%');
             });
@@ -30,11 +38,11 @@ class DefenseRequestController extends Controller
             'statuses' => ['pending', 'approved', 'rejected', 'scheduled'],
             'defense_types' => ['proposal', '60_percent', '100_percent']
         ];
-        return view('coordinator.defense-requests.index', compact('defenseRequests', 'filters', 'filterOptions'));
+        return view('coordinator.defense.index', compact('defenseRequests', 'filters', 'filterOptions'));
     }
     public function createSchedule(DefenseRequest $defenseRequest)
     {
-        if (!$defenseRequest->isPending()) {
+        if (!$defenseRequest->isPending() && !$defenseRequest->isApproved()) {
             return back()->with('error', 'This defense request cannot be scheduled.');
         }
         $availableFaculty = User::whereHas('roles', function($query) {
@@ -72,7 +80,7 @@ class DefenseRequestController extends Controller
                 'responded_at' => now(),
             ]);
             $this->sendPanelNotifications($defenseSchedule);
-            return redirect()->route('coordinator.defense-requests.index')
+            return redirect()->route('coordinator.defense.index')
                 ->with('success', 'Defense scheduled successfully! Faculty panelists have been notified.');
         } catch (\Exception $e) {
             return back()->with('error', 'An error occurred while scheduling the defense.');
@@ -100,7 +108,7 @@ class DefenseRequestController extends Controller
                 'room' => $request->room,
                 'coordinator_notes' => $request->coordinator_notes,
             ]);
-            return redirect()->route('coordinator.defense-requests.index')
+            return redirect()->route('coordinator.defense.index')
                 ->with('success', 'Defense schedule updated successfully!');
         } catch (\Exception $e) {
             return back()->with('error', 'An error occurred while updating the defense schedule.');
@@ -157,7 +165,7 @@ class DefenseRequestController extends Controller
                 'title' => 'Defense Panel Assignment',
                 'description' => 'You have been assigned to a defense panel for ' . $defenseSchedule->group->name,
                 'role' => 'panelist',
-                'redirect_url' => route('coordinator.defense-requests.index'),
+                'redirect_url' => route('coordinator.defense.index'),
             ]);
         }
     }

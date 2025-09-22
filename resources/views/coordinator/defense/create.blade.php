@@ -155,7 +155,7 @@
                                                 <select name="panel_members[0][faculty_id]" class="form-control faculty-select" required>
                                                     <option value="">Select Faculty</option>
                                                     @foreach($faculty as $member)
-                                                        <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->school_id }})</option>
+                                                        <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->faculty_id ?? 'N/A' }})</option>
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
             faculty.forEach(member => {
                 const option = document.createElement('option');
                 option.value = member.id;
-                option.textContent = `${member.name} (${member.school_id})`;
+                option.textContent = `${member.name} (${member.faculty_id || 'N/A'})`;
                 select.appendChild(option);
             });
             if (currentValue && faculty.some(f => f.id == currentValue)) {
@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <select name="panel_members[${panelCount}][faculty_id]" class="form-control faculty-select" required>
                         <option value="">Select Faculty</option>
                         @foreach($faculty as $member)
-                            <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->school_id }})</option>
+                            <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->faculty_id ?? 'N/A' }})</option>
                         @endforeach
                     </select>
                 </div>

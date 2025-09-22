@@ -608,7 +608,7 @@ class StudentGroupController extends Controller
         if (!$group) {
             return back()->with('error', 'Group not found.');
         }
-        if (!$group->adviser_id) {
+        if (!$group->faculty_id) {
             return back()->with('error', 'Your group must have an assigned adviser before requesting a defense.');
         }
         if ($request->defense_type === '60_percent' && $group->overall_progress_percentage < 60) {
@@ -632,10 +632,11 @@ class StudentGroupController extends Controller
                 'student_message' => $request->message,
                 'requested_at' => now(),
             ]);
-            \App\Services\NotificationService::notifyCoordinators(
+            \App\Services\NotificationService::createSimpleNotification(
                 'New Defense Request',
                 'Group ' . $group->name . ' has requested a ' . $request->defense_type . ' defense',
-                route('coordinator.defense-requests.index')
+                'coordinator',
+                route('coordinator.defense.index')
             );
             return back()->with('success', 'Defense request submitted successfully! Coordinator will review and schedule your defense.');
         } catch (\Exception $e) {

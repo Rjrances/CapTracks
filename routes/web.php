@@ -299,13 +299,12 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
 
 // Coordinator Defense Request Routes
 Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->name('coordinator.')->group(function () {
-    Route::get('/defense-requests', [\App\Http\Controllers\DefenseRequestController::class, 'index'])->name('defense-requests.index');
-    Route::get('/defense-requests/{defenseRequest}/create-schedule', [\App\Http\Controllers\DefenseRequestController::class, 'createSchedule'])->name('defense-requests.create-schedule');
-    Route::post('/defense-requests/{defenseRequest}/store-schedule', [\App\Http\Controllers\DefenseRequestController::class, 'storeSchedule'])->name('defense-requests.store-schedule');
-    Route::get('/defense-requests/{defenseSchedule}/edit-schedule', [\App\Http\Controllers\DefenseRequestController::class, 'editSchedule'])->name('defense-requests.edit-schedule');
-    Route::put('/defense-requests/{defenseSchedule}/update-schedule', [\App\Http\Controllers\DefenseRequestController::class, 'updateSchedule'])->name('defense-requests.update-schedule');
-    Route::post('/defense-requests/{defenseRequest}/approve', [\App\Http\Controllers\DefenseRequestController::class, 'approve'])->name('defense-requests.approve');
-    Route::post('/defense-requests/{defenseRequest}/reject', [\App\Http\Controllers\DefenseRequestController::class, 'reject'])->name('defense-requests.reject');
+    Route::get('/defense-requests/{defenseRequest}/create-schedule', [\App\Http\Controllers\Coordinator\DefenseScheduleController::class, 'createSchedule'])->name('defense-requests.create-schedule');
+    Route::post('/defense-requests/{defenseRequest}/store-schedule', [\App\Http\Controllers\Coordinator\DefenseScheduleController::class, 'storeSchedule'])->name('defense-requests.store-schedule');
+    Route::get('/defense-requests/{defenseSchedule}/edit-schedule', [\App\Http\Controllers\Coordinator\DefenseScheduleController::class, 'editSchedule'])->name('defense-requests.edit-schedule');
+    Route::put('/defense-requests/{defenseSchedule}/update-schedule', [\App\Http\Controllers\Coordinator\DefenseScheduleController::class, 'updateSchedule'])->name('defense-requests.update-schedule');
+    Route::post('/defense-requests/{defenseRequest}/approve', [\App\Http\Controllers\Coordinator\DefenseScheduleController::class, 'approve'])->name('defense-requests.approve');
+    Route::post('/defense-requests/{defenseRequest}/reject', [\App\Http\Controllers\Coordinator\DefenseScheduleController::class, 'reject'])->name('defense-requests.reject');
     
     // Enhanced Scheduling (Defense Schedules) - Moved from Chairperson
     Route::resource('scheduling', \App\Http\Controllers\Chairperson\DefenseScheduleController::class)->parameters(['scheduling' => 'defenseSchedule']);
