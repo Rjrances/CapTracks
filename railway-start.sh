@@ -2,11 +2,7 @@
 
 echo "🚀 Starting CapTrack on Railway..."
 
-# Generate APP_KEY if not set
-echo "🔑 Generating application key..."
-php artisan key:generate --force
-
-# Clear and cache configuration
+# Clear and cache configuration (APP_KEY is already set in env vars)
 echo "⚡ Caching configuration..."
 php artisan config:clear
 php artisan config:cache
