@@ -57,7 +57,7 @@ class MilestoneSeeder extends Seeder
 
         $this->createDesignTasks($design);
 
-        echo "✅ Created 4 milestone templates with tasks\n";
+        echo "Created 4 milestone templates with tasks\n";
     }
 
     /**

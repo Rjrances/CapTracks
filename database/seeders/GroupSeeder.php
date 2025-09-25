@@ -42,12 +42,12 @@ class GroupSeeder extends Seeder
             ->get();
 
         if ($advisers->isEmpty()) {
-            echo "⚠️ No advisers found for {$term->semester}. Skipping groups.\n";
+            echo "No advisers found for {$term->semester}. Skipping groups.\n";
             return;
         }
 
         if ($students->count() < 2) {
-            echo "⚠️ Not enough students for {$term->semester}. Skipping groups.\n";
+            echo "Not enough students for {$term->semester}. Skipping groups.\n";
             return;
         }
 
@@ -80,7 +80,7 @@ class GroupSeeder extends Seeder
             $this->assignOfferingToGroup($group);
         }
 
-        echo "✅ Created {$groupCount} groups for {$term->semester}\n";
+        echo "Created {$groupCount} groups for {$term->semester}\n";
     }
 
     /**
@@ -182,7 +182,7 @@ class GroupSeeder extends Seeder
         $leader = $group->members()->where('group_members.role', 'leader')->first();
         
         if (!$leader) {
-            echo "⚠️  No leader found for group {$group->name}, skipping offering assignment\n";
+            echo "No leader found for group {$group->name}, skipping offering assignment\n";
             return;
         }
         
@@ -190,7 +190,7 @@ class GroupSeeder extends Seeder
         $leaderOffering = $leader->offerings()->first();
         
         if (!$leaderOffering) {
-            echo "⚠️  Leader {$leader->name} not enrolled in any offering, skipping offering assignment\n";
+            echo "Leader {$leader->name} not enrolled in any offering, skipping offering assignment\n";
             return;
         }
         
@@ -199,7 +199,7 @@ class GroupSeeder extends Seeder
             'offering_id' => $leaderOffering->id
         ]);
         
-        echo "✅ Assigned offering {$leaderOffering->offer_code} to group {$group->name}\n";
+        echo "Assigned offering {$leaderOffering->offer_code} to group {$group->name}\n";
     }
 
     /**
@@ -214,12 +214,12 @@ class GroupSeeder extends Seeder
         $activeTerm = AcademicTerm::where('is_active', true)->first();
 
         if (!$adviser) {
-            echo "⚠️ No adviser found. Please run UserSeeder first.\n";
+            echo "No adviser found. Please run UserSeeder first.\n";
             return;
         }
 
         if (!$activeTerm) {
-            echo "⚠️ No active academic term found. Please run AcademicTermSeeder first.\n";
+            echo "No active academic term found. Please run AcademicTermSeeder first.\n";
             return;
         }
 
@@ -298,7 +298,7 @@ class GroupSeeder extends Seeder
         $this->assignOfferingToGroup($group2);
         $this->assignOfferingToGroup($group3);
 
-        echo "✅ Created 3 capstone project groups with student assignments\n";
+        echo "Created 3 capstone project groups with student assignments\n";
         echo "   - Smart Campus Management System\n";
         echo "   - Mobile Learning Assistant\n";
         echo "   - Intelligent Data Analytics Platform\n";

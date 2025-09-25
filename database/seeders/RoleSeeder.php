@@ -26,6 +26,6 @@ class RoleSeeder extends Seeder
             Role::firstOrCreate($roleData);
         }
 
-        echo "✅ Created " . count($roles) . " roles\n";
+        echo "Created " . count($roles) . " roles\n";
     }
 }

@@ -52,14 +52,14 @@ class StudentEnrollmentSeeder extends Seeder
         }
 
         if (!empty($results['failed'])) {
-            echo "\n❌ Failed enrollments:\n";
+            echo "\n Failed enrollments:\n";
             foreach ($results['failed'] as $result) {
                 echo "   - {$result['student']->name} ({$result['student']->student_id}): {$result['reason']}\n";
             }
         }
 
         if (!empty($results['not_found'])) {
-            echo "\n⚠️  Offerings not found:\n";
+            echo "\nOfferings not found:\n";
             foreach ($results['not_found'] as $result) {
                 echo "   - {$result['student']->name} ({$result['student']->student_id}) with offer code: {$result['offer_code']}\n";
             }
