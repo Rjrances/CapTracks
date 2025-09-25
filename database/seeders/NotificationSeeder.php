@@ -91,12 +91,16 @@ class NotificationSeeder extends Seeder
         ];
 
         foreach ($notifications as $notificationData) {
-            Notification::create([
-                'title' => $notificationData['title'],
-                'description' => $notificationData['description'],
-                'role' => $notificationData['role'],
-                'is_read' => $notificationData['is_read']
-            ]);
+            Notification::firstOrCreate(
+                [
+                    'title' => $notificationData['title'],
+                    'role' => $notificationData['role']
+                ],
+                [
+                    'description' => $notificationData['description'],
+                    'is_read' => $notificationData['is_read']
+                ]
+            );
         }
 
         echo "✅ Created " . count($notifications) . " sample notifications for different roles\n";

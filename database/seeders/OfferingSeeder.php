@@ -142,7 +142,13 @@ class OfferingSeeder extends Seeder
             }
 
             foreach ($offerings as $offeringData) {
-                Offering::create($offeringData);
+                Offering::firstOrCreate(
+                    [
+                        'offer_code' => $offeringData['offer_code'],
+                        'academic_term_id' => $offeringData['academic_term_id']
+                    ],
+                    $offeringData
+                );
                 $totalOfferings++;
             }
         }

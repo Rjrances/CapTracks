@@ -61,12 +61,17 @@ class GroupSeeder extends Seeder
             $adviser = $advisers[$adviserIndex % $advisers->count()];
             $adviserIndex++;
 
-            $group = Group::create([
-                'name' => $this->getGroupName($term->semester, $i),
-                'description' => $this->getGroupDescription($term->semester, $i),
-                'faculty_id' => $adviser->faculty_id,
-                'academic_term_id' => $term->id
-            ]);
+            $group = Group::firstOrCreate(
+                [
+                    'name' => $this->getGroupName($term->semester, $i),
+                    'academic_term_id' => $term->id
+                ],
+                [
+                    'description' => $this->getGroupDescription($term->semester, $i),
+                    'faculty_id' => $adviser->faculty_id,
+                    'academic_term_id' => $term->id
+                ]
+            );
 
             // Add students to group
             $this->assignStudentsToGroup($group, $students, $i);
@@ -219,12 +224,17 @@ class GroupSeeder extends Seeder
         }
 
         // Group 1: Smart Campus Management System
-        $group1 = Group::create([
-            'name' => 'Smart Campus Management System',
-            'description' => 'Developing an integrated web-based platform for campus resource management and student services',
-            'faculty_id' => $adviser->faculty_id,
-            'academic_term_id' => $activeTerm->id
-        ]);
+        $group1 = Group::firstOrCreate(
+            [
+                'name' => 'Smart Campus Management System',
+                'academic_term_id' => $activeTerm->id
+            ],
+            [
+                'description' => 'Developing an integrated web-based platform for campus resource management and student services',
+                'faculty_id' => $adviser->faculty_id,
+                'academic_term_id' => $activeTerm->id
+            ]
+        );
 
         // Add students to group 1
         try {
@@ -239,12 +249,17 @@ class GroupSeeder extends Seeder
         }
 
         // Group 2: Mobile Learning Assistant
-        $group2 = Group::create([
-            'name' => 'Mobile Learning Assistant',
-            'description' => 'Creating an AI-powered mobile application for personalized learning and academic support',
-            'faculty_id' => $adviser->faculty_id,
-            'academic_term_id' => $activeTerm->id
-        ]);
+        $group2 = Group::firstOrCreate(
+            [
+                'name' => 'Mobile Learning Assistant',
+                'academic_term_id' => $activeTerm->id
+            ],
+            [
+                'description' => 'Creating an AI-powered mobile application for personalized learning and academic support',
+                'faculty_id' => $adviser->faculty_id,
+                'academic_term_id' => $activeTerm->id
+            ]
+        );
 
         // Add students to group 2
         try {
