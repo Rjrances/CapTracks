@@ -1,6 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
+// Health check route for Railway
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+        'timestamp' => now(),
+        'app' => config('app.name'),
+        'env' => config('app.env')
+    ]);
+});
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\CoordinatorController;

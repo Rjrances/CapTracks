@@ -103,6 +103,6 @@ class NotificationSeeder extends Seeder
             );
         }
 
-        echo "✅ Created " . count($notifications) . " sample notifications for different roles\n";
+        echo "Created " . count($notifications) . " sample notifications for different roles\n";
     }
 }

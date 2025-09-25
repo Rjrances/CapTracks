@@ -153,6 +153,6 @@ class OfferingSeeder extends Seeder
             }
         }
         
-        echo "✅ Created {$totalOfferings} offerings with offer codes for all 3 terms (First: 5, Second: 5, Summer: 4)\n";
+        echo "Created {$totalOfferings} offerings with offer codes for all 3 terms (First: 5, Second: 5, Summer: 4)\n";
     }
 }
