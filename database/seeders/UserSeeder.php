@@ -101,22 +101,29 @@ class UserSeeder extends Seeder
             // Create email with same format across semesters
             $email = strtolower(str_replace([' ', '.'], ['', '.'], $member['name'])) . $emailSuffix;
             
-            $user = User::create([
-                'faculty_id' => $member['faculty_id'],
-                'name' => $member['name'],
-                'email' => $email,
-                'department' => 'SCS',
-                'role' => $member['role'],
-                'semester' => $semester
-            ]);
+            $user = User::firstOrCreate(
+                [
+                    'faculty_id' => $member['faculty_id'],
+                    'semester' => $semester
+                ],
+                [
+                    'name' => $member['name'],
+                    'email' => $email,
+                    'department' => 'SCS',
+                    'role' => $member['role'],
+                    'semester' => $semester
+                ]
+            );
 
-            // Create UserAccount
-            UserAccount::create([
-                'faculty_id' => $user->faculty_id,
-                'email' => $email,
-                'password' => Hash::make('password'),
-                'must_change_password' => false,
-            ]);
+            // Create UserAccount (if not exists)
+            UserAccount::firstOrCreate(
+                ['faculty_id' => $user->faculty_id],
+                [
+                    'email' => $email,
+                    'password' => Hash::make('password'),
+                    'must_change_password' => false,
+                ]
+            );
         }
 
         echo "Created " . count($facultyMembers) . " faculty users for {$semester}\n";

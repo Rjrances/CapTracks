@@ -261,22 +261,25 @@ class StudentSeeder extends Seeder
         $allStudents = array_merge($firstSemesterStudents, $secondSemesterStudents, $summerStudents);
 
         foreach ($allStudents as $studentData) {
-            // Create student
-            $student = Student::create([
-                'name' => $studentData['name'],
-                'email' => $studentData['email'],
-                'student_id' => $studentData['student_id'],
-                'semester' => $studentData['semester'],
-                'course' => $studentData['course'],
-                'offer_code' => $studentData['offer_code']
-            ]);
+            // Create student (if not exists)
+            $student = Student::firstOrCreate(
+                ['student_id' => $studentData['student_id']],
+                [
+                    'name' => $studentData['name'],
+                    'email' => $studentData['email'],
+                    'semester' => $studentData['semester'],
+                    'course' => $studentData['course'],
+                    'offer_code' => $studentData['offer_code']
+                ]
+            );
 
-            // Create student account
-            StudentAccount::create([
-                'student_id' => $student->student_id,
-                'email' => $studentData['email'],
-                'password' => Hash::make('password'),
-                'must_change_password' => false,
+            // Create student account (if not exists)
+            StudentAccount::firstOrCreate(
+                ['student_id' => $student->student_id],
+                [
+                    'email' => $studentData['email'],
+                    'password' => Hash::make('password'),
+                    'must_change_password' => false,
             ]);
 
             // Enroll student in offering based on offer_code
