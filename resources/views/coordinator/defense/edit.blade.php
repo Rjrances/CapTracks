@@ -210,7 +210,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const facultySelects = document.querySelectorAll('.faculty-select');
         facultySelects.forEach(select => {
             // Faculty options should already be populated by Blade template
-            // This function is just for any additional dynamic loading if needed
         });
     }
     

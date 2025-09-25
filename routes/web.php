@@ -306,10 +306,6 @@ Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->nam
     Route::post('/defense-requests/{defenseRequest}/approve', [\App\Http\Controllers\Coordinator\DefenseScheduleController::class, 'approve'])->name('defense-requests.approve');
     Route::post('/defense-requests/{defenseRequest}/reject', [\App\Http\Controllers\Coordinator\DefenseScheduleController::class, 'reject'])->name('defense-requests.reject');
     
-    // Enhanced Scheduling (Defense Schedules) - Moved from Chairperson
-    Route::resource('scheduling', \App\Http\Controllers\Chairperson\DefenseScheduleController::class)->parameters(['scheduling' => 'defenseSchedule']);
-    Route::patch('/scheduling/{defenseSchedule}/status', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'updateStatus'])->name('scheduling.update-status');
-    Route::get('/scheduling/available-faculty', [\App\Http\Controllers\Chairperson\DefenseScheduleController::class, 'getAvailableFaculty'])->name('scheduling.available-faculty');
 });
 
 // General notification routes (for coordinators and other authenticated users)

@@ -104,7 +104,6 @@ class StudentGroupController extends Controller
             ]);
         }
         
-        // Get student and validate enrollment
         if (Auth::guard('student')->check()) {
             $studentAccount = Auth::guard('student')->user();
             $student = $studentAccount->student;

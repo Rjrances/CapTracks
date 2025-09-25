@@ -80,16 +80,14 @@ class User extends Authenticatable
     }
     public function hasRole($role): bool
     {
-        // Check both the single role field and the many-to-many relationship
-        return $this->role === $role || $this->roles()->where('name', $role)->exists();
+        return $this->role === $role;
     }
     public function hasAnyRole($roles): bool
     {
         if (is_string($roles)) {
             $roles = explode(',', $roles);
         }
-        // Check both the single role field and the many-to-many relationship
-        return in_array($this->role, $roles) || $this->roles()->whereIn('name', $roles)->exists();
+        return in_array($this->role, $roles);
     }
     public function isChairperson(): bool
     {

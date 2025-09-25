@@ -12,7 +12,7 @@ class NotificationController extends Controller
             $userRole = null;
             if (auth()->check()) {
                 $userRole = auth()->user()->getPrimaryRoleAttribute();
-            } elseif (session('is_student') && session('student_id')) {
+            } elseif (Auth::guard('student')->check()) {
                 $userRole = 'student';
             } else {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
@@ -20,8 +20,8 @@ class NotificationController extends Controller
             $userId = null;
             if (auth()->check()) {
                 $userId = auth()->user()->id;
-            } elseif (session('is_student') && session('student_id')) {
-                $userId = session('student_id');
+            } elseif (Auth::guard('student')->check()) {
+                $userId = Auth::guard('student')->id();
             }
             if ($notification->role !== $userRole && $notification->user_id !== $userId) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
@@ -70,7 +70,7 @@ class NotificationController extends Controller
                 $user = auth()->user();
                 $userRole = $user->getPrimaryRoleAttribute();
                 $userId = $user->id;
-            } elseif (session('is_student') && session('student_id')) {
+            } elseif (Auth::guard('student')->check()) {
                 $userRole = 'student';
                 $userId = session('student_id');
             } else {

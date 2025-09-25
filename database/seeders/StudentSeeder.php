@@ -283,6 +283,6 @@ class StudentSeeder extends Seeder
             $student->enrollInOfferingByCode();
         }
 
-        echo "✅ Created " . count($allStudents) . " students with accounts and offer codes for all 3 terms (First: 10, Second: 10, Summer: 8)\n";
+        echo "Created " . count($allStudents) . " students with accounts and offer codes for all 3 terms (First: 10, Second: 10, Summer: 8)\n";
     }
 }

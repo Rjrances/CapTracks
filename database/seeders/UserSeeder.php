@@ -119,6 +119,6 @@ class UserSeeder extends Seeder
             ]);
         }
 
-        echo "✅ Created " . count($facultyMembers) . " faculty users for {$semester}\n";
+        echo "Created " . count($facultyMembers) . " faculty users for {$semester}\n";
     }
 }

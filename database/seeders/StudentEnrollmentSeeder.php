@@ -27,7 +27,7 @@ class StudentEnrollmentSeeder extends Seeder
         $students = Student::whereNotNull('offer_code')->get();
         
         if ($students->isEmpty()) {
-            echo "⚠️  No students with offer codes found for enrollment\n";
+            echo "Warning: No students with offer codes found for enrollment\n";
             return;
         }
 
@@ -36,7 +36,7 @@ class StudentEnrollmentSeeder extends Seeder
         $stats = $enrollmentService->getEnrollmentStats($results);
 
         // Display results
-        echo "📊 Student Enrollment Results:\n";
+        echo "Student Enrollment Results:\n";
         echo "   Total processed: {$stats['total_processed']}\n";
         echo "   Successfully enrolled: {$stats['successfully_enrolled']}\n";
         echo "   Failed enrollments: {$stats['failed_enrollments']}\n";
@@ -45,7 +45,7 @@ class StudentEnrollmentSeeder extends Seeder
 
         // Log detailed results
         if (!empty($results['enrolled'])) {
-            echo "\n✅ Successfully enrolled students:\n";
+            echo "\nSuccessfully enrolled students:\n";
             foreach ($results['enrolled'] as $result) {
                 echo "   - {$result['student']->name} ({$result['student']->student_id}) in {$result['offering']->subject_code}\n";
             }
