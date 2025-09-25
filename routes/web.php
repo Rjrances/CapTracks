@@ -11,6 +11,11 @@ Route::get('/health', function () {
         'env' => config('app.env')
     ]);
 });
+
+// Simple test route
+Route::get('/test', function () {
+    return 'CapTrack is working!';
+});
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\CoordinatorController;
