@@ -43,7 +43,7 @@ class Offering extends Model
 
     public function students()
     {
-        return $this->belongsToMany(Student::class, 'offering_student', 'offering_id', 'student_id', 'id', 'student_id')
+        return $this->belongsToMany(Student::class, 'offering_student', 'offering_id', 'student_id')
                     ->withPivot('enrolled_at')
                     ->withTimestamps();
     }
