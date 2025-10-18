@@ -1,11 +1,10 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "php artisan migrate:fresh --seed"
+    "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=8001",
+    "startCommand": "chmod +x start.sh && ./start.sh",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }
