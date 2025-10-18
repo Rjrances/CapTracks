@@ -35,7 +35,11 @@ class AcademicTermSeeder extends Seeder
         ];
 
         foreach ($terms as $term) {
-            AcademicTerm::create($term);
+            // Check if term already exists to avoid duplicates
+            AcademicTerm::firstOrCreate(
+                ['semester' => $term['semester']], // Search criteria
+                $term // Data to create if not found
+            );
         }
     }
 }
