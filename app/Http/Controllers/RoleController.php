@@ -47,13 +47,24 @@ class RoleController extends Controller
         ];
         
         // Get users with their roles for role assignment table
-        $allUsers = User::with('roles')
-            ->select('id', 'name', 'email', 'faculty_id', 'department', 'role')
-            ->when($activeTerm, function($query) use ($activeTerm) {
-                return $query->where('semester', $activeTerm->semester);
-            })
-            ->orderBy($sortBy, $sortDirection)
-            ->paginate(20);
+        // Try to load roles relationship, but don't fail if it doesn't work
+        try {
+            $allUsers = User::with('roles')
+                ->select('id', 'name', 'email', 'faculty_id', 'department', 'role')
+                ->when($activeTerm, function($query) use ($activeTerm) {
+                    return $query->where('semester', $activeTerm->semester);
+                })
+                ->orderBy($sortBy, $sortDirection)
+                ->paginate(20);
+        } catch (\Exception $e) {
+            \Log::warning('Roles relationship failed in RoleController: ' . $e->getMessage());
+            $allUsers = User::select('id', 'name', 'email', 'faculty_id', 'department', 'role')
+                ->when($activeTerm, function($query) use ($activeTerm) {
+                    return $query->where('semester', $activeTerm->semester);
+                })
+                ->orderBy($sortBy, $sortDirection)
+                ->paginate(20);
+        }
             
         // Count users by role for active semester (excluding students)
         foreach ($roles as $roleKey => &$role) {
