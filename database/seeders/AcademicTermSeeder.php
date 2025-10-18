@@ -13,6 +13,12 @@ class AcademicTermSeeder extends Seeder
      */
     public function run(): void
     {
+        // Only create terms if none exist to avoid deployment conflicts
+        if (AcademicTerm::count() > 0) {
+            $this->command->info('Academic terms already exist, skipping seeder.');
+            return;
+        }
+
         $terms = [
             [
                 'school_year' => '2024-2025',
@@ -35,11 +41,7 @@ class AcademicTermSeeder extends Seeder
         ];
 
         foreach ($terms as $term) {
-            // Check if term already exists to avoid duplicates
-            AcademicTerm::firstOrCreate(
-                ['semester' => $term['semester']], // Search criteria
-                $term // Data to create if not found
-            );
+            AcademicTerm::create($term);
         }
     }
 }
