@@ -13,12 +13,6 @@ class AcademicTermSeeder extends Seeder
      */
     public function run(): void
     {
-        // Only create terms if none exist to avoid deployment conflicts
-        if (AcademicTerm::count() > 0) {
-            $this->command->info('Academic terms already exist, skipping seeder.');
-            return;
-        }
-
         $terms = [
             [
                 'school_year' => '2024-2025',

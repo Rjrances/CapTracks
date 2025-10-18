@@ -175,8 +175,8 @@
                                                 </small>
                                             </td>
                                             <td>
-                                                <span class="badge bg-{{ $defense->defense_type == '60_percent' ? 'warning' : ($defense->defense_type == '100_percent' ? 'danger' : 'info') }}">
-                                                    {{ $defense->defense_type_label }}
+                                                <span class="badge bg-{{ $defense->stage == '60' ? 'warning' : ($defense->stage == '100' ? 'danger' : 'info') }}">
+                                                    {{ $defense->stage_label }}
                                                 </span>
                                             </td>
                                             <td>
