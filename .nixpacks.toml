@@ -1,0 +1,19 @@
+[phases.setup]
+nixPkgs = ["php", "nginx", "libmysqlclient", "phpPackages.composer", "nodejs_18", "npm-9_x"]
+
+[phases.install]
+cmds = [
+    "mkdir -p /var/log/nginx && mkdir -p /var/cache/nginx",
+    "composer install --ignore-platform-reqs --no-dev --optimize-autoloader",
+    "npm ci --only=production"
+]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "php artisan migrate:fresh --seed && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=8001"
+
+[variables]
+NIXPACKS_PHP_VERSION = "8.2"
+NIXPACKS_NODE_VERSION = "18"
