@@ -282,7 +282,6 @@ class ChairpersonController extends Controller
         $sortDirection = $request->get('direction', 'asc');
         
         $query = User::query()
-            ->with('roles')
             ->whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator', 'chairperson']);
         
         // Filter by active semester if available
