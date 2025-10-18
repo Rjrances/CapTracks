@@ -21,12 +21,15 @@
                             <i class="fas fa-bell fa-lg text-muted"></i>
                             @php
                                 $user = auth()->user();
-                                $notificationCount = \App\Models\Notification::where(function($query) use ($user) {
-                                    $query->where('role', 'chairperson')
-                                          ->orWhere('user_id', $user->id);
-                                })
-                                ->where('is_read', false)
-                                ->count();
+                                $notificationCount = 0;
+                                if ($user) {
+                                    $notificationCount = \App\Models\Notification::where(function($query) use ($user) {
+                                        $query->where('role', 'chairperson')
+                                              ->orWhere('user_id', $user->id);
+                                    })
+                                    ->where('is_read', false)
+                                    ->count();
+                                }
                             @endphp
                             @if($notificationCount > 0)
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -42,13 +45,16 @@
                             <div class="dropdown-divider"></div>
                             @php
                                 $user = auth()->user();
-                                $recentNotifications = \App\Models\Notification::where(function($query) use ($user) {
-                                    $query->where('role', 'chairperson')
-                                          ->orWhere('user_id', $user->id);
-                                })
-                                ->latest()
-                                ->take(10)
-                                ->get();
+                                $recentNotifications = collect();
+                                if ($user) {
+                                    $recentNotifications = \App\Models\Notification::where(function($query) use ($user) {
+                                        $query->where('role', 'chairperson')
+                                              ->orWhere('user_id', $user->id);
+                                    })
+                                    ->latest()
+                                    ->take(10)
+                                    ->get();
+                                }
                             @endphp
                             @if($recentNotifications->count() > 0)
                                 @foreach($recentNotifications as $notification)
@@ -81,7 +87,7 @@
                     </div>
                     <div class="nav-item dropdown ms-3">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user-circle me-2"></i>{{ auth()->user()->name }}
+                            <i class="fas fa-user-circle me-2"></i>{{ auth()->user() ? auth()->user()->name : 'User' }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>

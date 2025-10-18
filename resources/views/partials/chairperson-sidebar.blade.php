@@ -76,7 +76,7 @@
     <div class="mt-auto p-3 border-top border-secondary">
         <div class="d-flex align-items-center">
             <div class="small">
-                <div class="text-muted">{{ $user->name }}</div>
+                <div class="text-muted">{{ $user ? $user->name : 'User' }}</div>
                 <div class="text-muted">Chairperson</div>
             </div>
         </div>
