@@ -23,7 +23,7 @@ class OfferingSeeder extends Seeder
         $teachers = User::whereIn('role', ['adviser', 'panelist', 'teacher'])->get();
         
         if ($teachers->isEmpty()) {
-            echo "❌ No teachers found. Please run UserSeeder first.\n";
+            echo "No teachers found. Please run UserSeeder first.\n";
             return;
         }
         

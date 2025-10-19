@@ -618,7 +618,7 @@ class ChairpersonController extends Controller
             $fileName = $file->getClientOriginalName();
             $fileSize = number_format($file->getSize() / 1024, 2); // KB
             if ($file->getSize() === 0) {
-                return back()->with('error', '❌ Import failed: The uploaded file is empty. Please check your file and try again.');
+                return back()->with('error', 'Import failed: The uploaded file is empty. Please check your file and try again.');
             }
             \Log::info("Importing file: {$fileName} (Size: {$fileSize} KB)");
             $offeringId = $request->get('offering_id');
@@ -642,7 +642,7 @@ class ChairpersonController extends Controller
                     \Log::error('Fallback enrollment failed: ' . $e->getMessage());
                 }
             }
-            $successMessage = "✅ Students imported successfully from '{$fileName}'!";
+            $successMessage = "Students imported successfully from '{$fileName}'!";
             if ($request->has('offering_id')) {
                 $offeringId = $request->get('offering_id');
                 $offering = \App\Models\Offering::find($offeringId);
@@ -659,7 +659,7 @@ class ChairpersonController extends Controller
             return back()->with('success', $successMessage);
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             \Log::error('Student import validation failed: ' . $e->getMessage());
-            $errorMessage = "❌ Import failed due to validation errors:\n";
+            $errorMessage = "Import failed due to validation errors:\n";
             $allErrors = [];
             foreach ($e->failures() as $failure) {
                 foreach ($failure->errors() as $error) {
@@ -671,17 +671,17 @@ class ChairpersonController extends Controller
         } catch (\Exception $e) {
             \Log::error('Student import failed: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            $errorMessage = "❌ Import failed: " . $e->getMessage();
+            $errorMessage = "Import failed: " . $e->getMessage();
             if (str_contains(strtolower($e->getMessage()), 'duplicate entry')) {
-                $errorMessage = "❌ Import failed: Some student IDs or emails already exist in the system. Please check for duplicates.";
+                $errorMessage = "Import failed: Some student IDs or emails already exist in the system. Please check for duplicates.";
             } elseif (str_contains(strtolower($e->getMessage()), 'syntax error')) {
-                $errorMessage = "❌ Import failed: The file format is invalid. Please ensure it's a valid Excel or CSV file.";
+                $errorMessage = "Import failed: The file format is invalid. Please ensure it's a valid Excel or CSV file.";
             } elseif (str_contains(strtolower($e->getMessage()), 'permission denied')) {
-                $errorMessage = "❌ Import failed: Permission denied. Please check file permissions.";
+                $errorMessage = "Import failed: Permission denied. Please check file permissions.";
             } elseif (str_contains(strtolower($e->getMessage()), 'could not find driver')) {
-                $errorMessage = "❌ Import failed: Database connection issue. Please try again.";
+                $errorMessage = "Import failed: Database connection issue. Please try again.";
             } elseif (str_contains(strtolower($e->getMessage()), 'memory limit')) {
-                $errorMessage = "❌ Import failed: File is too large. Please try with a smaller file or contact administrator.";
+                $errorMessage = "Import failed: File is too large. Please try with a smaller file or contact administrator.";
             }
             return back()->with('error', $errorMessage);
         }
@@ -708,7 +708,7 @@ class ChairpersonController extends Controller
             $fileSize = number_format($file->getSize() / 1024, 2); // KB
             
             if ($file->getSize() === 0) {
-                return back()->with('error', '❌ Import failed: The uploaded file is empty. Please check your file and try again.');
+                return back()->with('error', 'Import failed: The uploaded file is empty. Please check your file and try again.');
             }
             
             \Log::info("Importing file: {$fileName} (Size: {$fileSize} KB)");
@@ -717,11 +717,11 @@ class ChairpersonController extends Controller
             Excel::import(new FacultyImport($semester), $file);
             \Log::info('Faculty import completed successfully');
             
-            $successMessage = "✅ Faculty members imported successfully from '{$fileName}'!";
+            $successMessage = "Faculty members imported successfully from '{$fileName}'!";
             return back()->with('success', $successMessage);
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             \Log::error('Faculty import validation failed: ' . $e->getMessage());
-            $errorMessage = "❌ Import failed due to validation errors:\n";
+            $errorMessage = "Import failed due to validation errors:\n";
             $allErrors = [];
             foreach ($e->failures() as $failure) {
                 foreach ($failure->errors() as $error) {
@@ -733,17 +733,17 @@ class ChairpersonController extends Controller
         } catch (\Exception $e) {
             \Log::error('Faculty import failed: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            $errorMessage = "❌ Import failed: " . $e->getMessage();
+            $errorMessage = "Import failed: " . $e->getMessage();
             if (str_contains(strtolower($e->getMessage()), 'duplicate entry')) {
-                $errorMessage = "❌ Import failed: Some faculty IDs or emails already exist in the system. Please check for duplicates.";
+                $errorMessage = "Import failed: Some faculty IDs or emails already exist in the system. Please check for duplicates.";
             } elseif (str_contains(strtolower($e->getMessage()), 'syntax error')) {
-                $errorMessage = "❌ Import failed: The file format is invalid. Please ensure it's a valid Excel or CSV file.";
+                $errorMessage = "Import failed: The file format is invalid. Please ensure it's a valid Excel or CSV file.";
             } elseif (str_contains(strtolower($e->getMessage()), 'permission denied')) {
-                $errorMessage = "❌ Import failed: Permission denied. Please check file permissions.";
+                $errorMessage = "Import failed: Permission denied. Please check file permissions.";
             } elseif (str_contains(strtolower($e->getMessage()), 'could not find driver')) {
-                $errorMessage = "❌ Import failed: Database connection issue. Please try again.";
+                $errorMessage = "Import failed: Database connection issue. Please try again.";
             } elseif (str_contains(strtolower($e->getMessage()), 'memory limit')) {
-                $errorMessage = "❌ Import failed: File is too large. Please try with a smaller file or contact administrator.";
+                $errorMessage = "Import failed: File is too large. Please try with a smaller file or contact administrator.";
             }
             return back()->with('error', $errorMessage);
         }
@@ -773,7 +773,7 @@ class ChairpersonController extends Controller
             $fileSize = number_format($file->getSize() / 1024, 2); // KB
             
             if ($file->getSize() === 0) {
-                return back()->with('error', '❌ Import failed: The uploaded file is empty. Please check your file and try again.');
+                return back()->with('error', 'Import failed: The uploaded file is empty. Please check your file and try again.');
             }
             
             \Log::info("Importing file: {$fileName} (Size: {$fileSize} KB)");
@@ -782,11 +782,11 @@ class ChairpersonController extends Controller
             Excel::import(new FacultyImport($semester), $file);
             \Log::info('Faculty import completed successfully');
             
-            $successMessage = "✅ Faculty members imported successfully from '{$fileName}'!";
+            $successMessage = "Faculty members imported successfully from '{$fileName}'!";
             return redirect()->route('chairperson.teachers.index')->with('success', $successMessage);
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             \Log::error('Faculty import validation failed: ' . $e->getMessage());
-            $errorMessage = "❌ Import failed due to validation errors:\n";
+            $errorMessage = "Import failed due to validation errors:\n";
             $allErrors = [];
             foreach ($e->failures() as $failure) {
                 foreach ($failure->errors() as $error) {
@@ -798,17 +798,17 @@ class ChairpersonController extends Controller
         } catch (\Exception $e) {
             \Log::error('Faculty import failed: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            $errorMessage = "❌ Import failed: " . $e->getMessage();
+            $errorMessage = "Import failed: " . $e->getMessage();
             if (str_contains(strtolower($e->getMessage()), 'duplicate entry')) {
-                $errorMessage = "❌ Import failed: Some faculty IDs or emails already exist in the system. Please check for duplicates.";
+                $errorMessage = "Import failed: Some faculty IDs or emails already exist in the system. Please check for duplicates.";
             } elseif (str_contains(strtolower($e->getMessage()), 'syntax error')) {
-                $errorMessage = "❌ Import failed: The file format is invalid. Please ensure it's a valid Excel or CSV file.";
+                $errorMessage = "Import failed: The file format is invalid. Please ensure it's a valid Excel or CSV file.";
             } elseif (str_contains(strtolower($e->getMessage()), 'permission denied')) {
-                $errorMessage = "❌ Import failed: Permission denied. Please check file permissions.";
+                $errorMessage = "Import failed: Permission denied. Please check file permissions.";
             } elseif (str_contains(strtolower($e->getMessage()), 'could not find driver')) {
-                $errorMessage = "❌ Import failed: Database connection issue. Please try again.";
+                $errorMessage = "Import failed: Database connection issue. Please try again.";
             } elseif (str_contains(strtolower($e->getMessage()), 'memory limit')) {
-                $errorMessage = "❌ Import failed: File is too large. Please try with a smaller file or contact administrator.";
+                $errorMessage = "Import failed: File is too large. Please try with a smaller file or contact administrator.";
             }
             return back()->with('error', $errorMessage);
         }
