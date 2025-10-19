@@ -128,6 +128,9 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
             ]);
         } else {
+            // Get active term for semester
+            $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+            
             // Create faculty user
             $user = User::create([
                 'name' => $request->name,
@@ -136,6 +139,7 @@ class AuthController extends Controller
                 'department' => 'N/A',
                 'role' => $role,
                 'faculty_id' => '100' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT), // Generate faculty_id
+                'semester' => $activeTerm ? $activeTerm->semester : 'Unknown',
             ]);
             
             // Create faculty account

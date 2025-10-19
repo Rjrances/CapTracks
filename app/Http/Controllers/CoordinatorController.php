@@ -163,11 +163,15 @@ class CoordinatorController extends Controller
     public function assignAdviser($id)
     {
         $group = Group::with(['adviser', 'members', 'offering'])->findOrFail($id);
-        $availableFaculty = User::whereIn('role', ['teacher', 'adviser', 'panelist'])->where(function($query) use ($group) {
-            $query->whereDoesntHave('offerings', function($q) use ($group) {
-                $q->where('id', $group->offering_id);
-            });
-        })->get();
+        $availableFaculty = User::whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])
+            ->where('semester', $group->academicTerm->semester)
+            ->where(function($query) use ($group) {
+                $query->whereDoesntHave('offerings', function($q) use ($group) {
+                    $q->where('id', $group->offering_id);
+                });
+            })
+            ->orderBy('name')
+            ->get();
         return view('coordinator.groups.assign_adviser', compact('group', 'availableFaculty'));
     }
     public function update(Request $request, $id)

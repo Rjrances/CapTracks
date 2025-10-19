@@ -36,12 +36,16 @@ class StudentGroupController extends Controller
             $q->where('group_members.student_id', $student->student_id);
         })->with(['adviser', 'members', 'adviserInvitations.faculty', 'offering'])->first() : null;
         
-        $availableFaculty = User::whereIn('role', ['adviser', 'panelist', 'teacher'])
+        $availableFaculty = User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator'])
+            ->when($group && $group->academicTerm, function($query) use ($group) {
+                return $query->where('semester', $group->academicTerm->semester);
+            })
             ->whereDoesntHave('adviserInvitations', function($q) use ($group) {
                 if ($group) {
                     $q->where('group_id', $group->id)->where('status', 'pending');
                 }
             })
+            ->orderBy('name')
             ->get();
         
         // Get available students for invitation using consistent filtering
@@ -249,7 +253,12 @@ class StudentGroupController extends Controller
             );
         }
         
-        return view('student.group.edit', compact('group', 'availableStudents'));
+        $availableFaculty = User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator'])
+            ->where('semester', $group->academicTerm->semester)
+            ->orderBy('name')
+            ->get();
+        
+        return view('student.group.edit', compact('group', 'availableStudents', 'availableFaculty'));
     }
     public function update(Request $request)
     {

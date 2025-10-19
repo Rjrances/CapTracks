@@ -410,7 +410,7 @@
                         <label for="faculty_id" class="form-label">Select Faculty Member</label>
                         <select name="faculty_id" id="faculty_id" class="form-select" required>
                             <option value="">Choose a faculty member...</option>
-                            @foreach(\App\Models\User::whereIn('role', ['adviser', 'panelist', 'teacher'])->get() as $faculty)
+                            @foreach($availableFaculty as $faculty)
                                 <option value="{{ $faculty->id }}">
                                     {{ $faculty->name }} 
                                     <span class="text-muted">({{ ucfirst($faculty->roles->first()->name ?? 'N/A') }}{{ $faculty->department ? ' - ' . $faculty->department : '' }})</span>

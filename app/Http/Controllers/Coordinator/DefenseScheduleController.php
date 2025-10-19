@@ -87,12 +87,17 @@ class DefenseScheduleController extends Controller
     }
     public function create()
     {
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
         $groups = Group::with(['members', 'adviser', 'offering'])
             ->whereIn('offering_id', $coordinatorOfferings)
             ->get();
-        $faculty = User::whereIn('role', ['teacher', 'chairperson'])->get();
-        $activeTerm = AcademicTerm::where('is_active', true)->first();
+        $faculty = User::whereIn('role', ['teacher', 'chairperson', 'coordinator', 'adviser', 'panelist'])
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
+            ->orderBy('name')
+            ->get();
         return view('coordinator.defense.create', compact('groups', 'faculty', 'activeTerm'));
     }
     public function store(Request $request)

@@ -36,7 +36,12 @@ class ChairpersonController extends Controller
     public function createOffering()
     {
         $activeTerm = $this->getActiveTerm();
-        $teachers = User::whereIn('role', ['teacher', 'adviser', 'panelist'])->get();
+        $teachers = User::whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
+            ->orderBy('name')
+            ->get();
         $academicTerms = AcademicTerm::notArchived()->get();
         return view('chairperson.offerings.create', compact('teachers', 'academicTerms', 'activeTerm'));
     }
@@ -81,7 +86,12 @@ class ChairpersonController extends Controller
     public function editOffering($id)
     {
         $offering = Offering::with(['teacher', 'academicTerm', 'students'])->where('id', $id)->firstOrFail();
-        $teachers = User::whereIn('role', ['teacher', 'adviser', 'panelist'])->get();
+        $teachers = User::whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])
+            ->when($offering->academicTerm, function($query) use ($offering) {
+                return $query->where('semester', $offering->academicTerm->semester);
+            })
+            ->orderBy('name')
+            ->get();
         $academicTerms = AcademicTerm::notArchived()->get();
         return view('chairperson.offerings.edit', compact('offering', 'teachers', 'academicTerms'));
     }
@@ -127,7 +137,6 @@ class ChairpersonController extends Controller
         $offering = Offering::with('teacher')->where('id', $id)->firstOrFail();
         $teacher = $offering->teacher;
         $offeringCode = $offering->subject_code;
-        $isCapstone = $this->isCapstoneOffering($offering);
         $offering->delete();
         
         $message = "Offering '{$offeringCode}' deleted successfully.";
@@ -171,13 +180,45 @@ class ChairpersonController extends Controller
     }
     public function storeTeacher(Request $request)
     {
+        $activeTerm = $this->getActiveTerm();
+        
         $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email|unique:user_accounts,email',
-            'faculty_id' => 'required|string|max:20|unique:users,faculty_id|unique:user_accounts,faculty_id',
+            'email'    => 'required|email',
+            'faculty_id' => 'required|string|max:20',
             'role'     => 'required|in:adviser,panelist',
             'password' => 'required|string|min:8',
+        ], [
+            'email.required' => 'Email is required.',
+            'email.email' => 'Please enter a valid email address.',
+            'faculty_id.required' => 'Faculty ID is required.',
+            'faculty_id.string' => 'Faculty ID must be a string.',
+            'faculty_id.max' => 'Faculty ID must not exceed 20 characters.',
+            'role.required' => 'Role is required.',
+            'role.in' => 'Role must be either adviser or panelist.',
+            'password.required' => 'Password is required.',
+            'password.min' => 'Password must be at least 8 characters.',
         ]);
+        
+        // Check if email exists for the same semester
+        if ($activeTerm) {
+            $existingEmail = User::where('email', $request->email)
+                ->where('semester', $activeTerm->semester)
+                ->first();
+            
+            if ($existingEmail) {
+                return back()->withErrors(['email' => 'The email has already been taken by another user in this semester.']);
+            }
+            
+            $existingFacultyId = User::where('faculty_id', $request->faculty_id)
+                ->where('semester', $activeTerm->semester)
+                ->first();
+            
+            if ($existingFacultyId) {
+                return back()->withErrors(['faculty_id' => 'The faculty ID has already been taken by another user in this semester.']);
+            }
+        }
+        
         // Use faculty_id from form input
         $facultyId = $request->faculty_id;
         
@@ -188,6 +229,7 @@ class ChairpersonController extends Controller
             'department'           => 'N/A',
             'role'                 => $request->role,
             'faculty_id'           => $facultyId,
+            'semester'             => $activeTerm ? $activeTerm->semester : 'Unknown',
         ]);
 
         // Create faculty account
@@ -558,8 +600,14 @@ class ChairpersonController extends Controller
     }
     public function facultyManagement()
     {
-        $faculty = User::whereIn('role', ['teacher', 'adviser', 'panelist'])->get();
-        return view('chairperson.teachers.index', compact('faculty'));
+        $activeTerm = $this->getActiveTerm();
+        $faculty = User::whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
+            ->orderBy('name')
+            ->get();
+        return view('chairperson.teachers.index', compact('faculty', 'activeTerm'));
     }
     public function uploadFacultyList(Request $request)
     {
@@ -685,12 +733,40 @@ class ChairpersonController extends Controller
     }
     public function storeFacultyManual(Request $request)
     {
+        $activeTerm = $this->getActiveTerm();
+        
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email|unique:user_accounts,email',
-            'faculty_id' => 'required|string|max:20|unique:users,faculty_id|unique:user_accounts,faculty_id',
+            'email' => 'required|email',
+            'faculty_id' => 'required|string|max:20',
             'department' => 'nullable|string|max:255',
+        ], [
+            'email.required' => 'Email is required.',
+            'email.email' => 'Please enter a valid email address.',
+            'faculty_id.required' => 'Faculty ID is required.',
+            'faculty_id.string' => 'Faculty ID must be a string.',
+            'faculty_id.max' => 'Faculty ID must not exceed 20 characters.',
         ]);
+        
+        // Check if email exists for the same semester
+        if ($activeTerm) {
+            $existingEmail = User::where('email', $request->email)
+                ->where('semester', $activeTerm->semester)
+                ->first();
+            
+            if ($existingEmail) {
+                return back()->withErrors(['email' => 'The email has already been taken by another user in this semester.']);
+            }
+            
+            $existingFacultyId = User::where('faculty_id', $request->faculty_id)
+                ->where('semester', $activeTerm->semester)
+                ->first();
+            
+            if ($existingFacultyId) {
+                return back()->withErrors(['faculty_id' => 'The faculty ID has already been taken by another user in this semester.']);
+            }
+        }
+        
         // Use faculty_id from form input
         $facultyId = $request->faculty_id;
         
@@ -700,6 +776,7 @@ class ChairpersonController extends Controller
             'department' => $request->department,
             'role' => 'teacher',
             'faculty_id' => $facultyId,
+            'semester' => $activeTerm ? $activeTerm->semester : 'Unknown',
         ]);
 
         // Create faculty account

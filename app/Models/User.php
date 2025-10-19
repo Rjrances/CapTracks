@@ -139,26 +139,6 @@ class User extends Authenticatable
         
         return false; // No change needed
     }
-    public function updateRoleBasedOnAdviserAssignments()
-    {
-        $hasAdviserGroups = \App\Models\Group::where('faculty_id', $this->faculty_id)->exists();
-        $currentRole = $this->role;
-        \Log::info("Checking adviser role for user {$this->name} (ID: {$this->id}): current role = '{$currentRole}', has adviser groups = " . ($hasAdviserGroups ? 'true' : 'false'));
-        if ($hasAdviserGroups && $this->role === 'teacher') {
-            $oldRole = $this->role;
-            $this->role = 'adviser';
-            $this->save();
-            \Log::info("User {$this->name} (ID: {$this->id}) role updated from '{$oldRole}' to 'adviser' - has adviser groups");
-            return true;
-        } elseif (!$hasAdviserGroups && $this->role === 'adviser') {
-            $this->role = 'teacher';
-            $this->save();
-            \Log::info("User {$this->name} (ID: {$this->id}) role reverted from 'adviser' to 'teacher' - no adviser groups");
-            return true;
-        }
-        \Log::info("User {$this->name} (ID: {$this->id}) no adviser role change needed: current role = '{$currentRole}', has adviser groups = " . ($hasAdviserGroups ? 'true' : 'false'));
-        return false; // No change needed
-    }
     public function getRoleDisplayNameAttribute()
     {
         return ucfirst($this->role);
