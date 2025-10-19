@@ -9,7 +9,7 @@
             <p class="text-muted mb-0">
                 <i class="fas fa-users me-1"></i>
                 @if($activeTerm)
-                    Showing faculty members for {{ $activeTerm->full_name }}
+                    Showing faculty members for {{ $activeTerm->semester }}
                     <span class="badge bg-info ms-2">Active Term</span>
                 @else
                     Showing all faculty members in the system
@@ -193,7 +193,7 @@
             <h4 class="text-muted">No Faculty Members Found</h4>
             <p class="text-muted">
                 @if($activeTerm)
-                    No faculty members found for the active term: <strong>{{ $activeTerm->full_name }}</strong>
+                    No faculty members found for the active term: <strong>{{ $activeTerm->semester }}</strong>
                 @else
                     No faculty members found in the system.
                 @endif

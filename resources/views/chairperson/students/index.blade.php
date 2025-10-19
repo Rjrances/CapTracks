@@ -11,7 +11,7 @@
                     <p class="text-muted mb-0">
                         View and manage students for the active term
                         @if($activeTerm)
-                            <span class="badge bg-primary ms-2">{{ $activeTerm->school_year }} - {{ $activeTerm->semester }}</span>
+                            <span class="badge bg-primary ms-2">{{ $activeTerm->semester }}</span>
                         @else
                             <span class="badge bg-warning ms-2">No Active Term</span>
                         @endif
@@ -78,7 +78,7 @@
                                     in {{ request('course') }}
                                 @endif
                                 @if($activeTerm)
-                                    for {{ $activeTerm->school_year }} - {{ $activeTerm->semester }}
+                                    for {{ $activeTerm->semester }}
                                 @endif
                             </small>
                         </div>
@@ -228,7 +228,7 @@
                                                 @if(request('search') || request('course'))
                                                     Try adjusting your search criteria
                                                 @elseif($activeTerm)
-                                                    No students enrolled for {{ $activeTerm->school_year }} - {{ $activeTerm->semester }}
+                                                    No students enrolled for {{ $activeTerm->semester }}
                                                 @else
                                                     No active term selected or no students have been imported yet
                                                 @endif

@@ -41,7 +41,7 @@
 }
 </style>
 <div class="container mt-5">
-    <h2 class="mb-4 text-center">📥 Import Student List</h2>
+    <h2 class="mb-4 text-center">Import Student List</h2>
     @if(request('offering_id'))
         @php
             $offering = \App\Models\Offering::find(request('offering_id'));

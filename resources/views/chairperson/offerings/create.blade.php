@@ -9,7 +9,7 @@
                     @if($activeTerm)
                         <small class="text-muted">
                             <i class="fas fa-info-circle me-1"></i>
-                            New offerings will be assigned to the current active term: <strong>{{ $activeTerm->full_name }}</strong>
+                            New offerings will be assigned to the current active term: <strong>{{ $activeTerm->semester }}</strong>
                         </small>
                     @endif
                 </div>
@@ -27,14 +27,10 @@
                         @csrf
                         <div class="mb-3">
                             <label for="subject_title" class="form-label">Subject Title</label>
-                            <select name="subject_title" id="subject_title" 
-                                    class="form-select @error('subject_title') is-invalid @enderror" required>
-                                <option value="">Select Subject Title</option>
-                                <option value="Capstone Project I" {{ old('subject_title') == 'Capstone Project I' ? 'selected' : '' }}>Capstone Project I</option>
-                                <option value="Capstone Project II" {{ old('subject_title') == 'Capstone Project II' ? 'selected' : '' }}>Capstone Project II</option>
-                                <option value="Thesis I" {{ old('subject_title') == 'Thesis I' ? 'selected' : '' }}>Thesis I</option>
-                                <option value="Thesis II" {{ old('subject_title') == 'Thesis II' ? 'selected' : '' }}>Thesis II</option>
-                            </select>
+                            <input type="text" name="subject_title" id="subject_title" 
+                                   class="form-control @error('subject_title') is-invalid @enderror" 
+                                   value="{{ old('subject_title') }}" 
+                                   placeholder="Enter subject title (e.g., Capstone Project I, Thesis II, etc.)" required>
                             @error('subject_title')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -44,14 +40,13 @@
                             <input type="text" name="subject_code" id="subject_code" 
                                    class="form-control @error('subject_code') is-invalid @enderror" 
                                    value="{{ old('subject_code') }}" 
-                                   placeholder="Will be auto-filled based on subject title" 
-                                   readonly required>
+                                   placeholder="Enter subject code (e.g., CS-CAP-401, CS-THS-301, etc.)" required>
                             @error('subject_code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                             <div class="form-text">
                                 <i class="fas fa-info-circle me-1"></i>
-                                Subject code will be automatically set based on the selected subject title.
+                                Enter any subject code for this offering.
                             </div>
                         </div>
                         <div class="mb-3">
@@ -87,7 +82,7 @@
                                 @foreach($academicTerms as $term)
                                     <option value="{{ $term->id }}" 
                                         {{ old('academic_term_id', $activeTerm ? $activeTerm->id : '') == $term->id ? 'selected' : '' }}>
-                                        {{ $term->full_name }}
+                                        {{ $term->semester }}
                                         @if($term->is_active)
                                             <span class="text-success">(Active)</span>
                                         @endif
@@ -113,35 +108,4 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const subjectTitleSelect = document.getElementById('subject_title');
-    const subjectCodeInput = document.getElementById('subject_code');
-    
-    // Mapping of subject titles to subject codes
-    const subjectCodeMapping = {
-        'Capstone Project I': 'CS-CAP-401',
-        'Capstone Project II': 'CS-CAP-402',
-        'Thesis I': 'CS-THS-301',
-        'Thesis II': 'CS-THS-302'
-    };
-    
-    // Handle subject title change
-    subjectTitleSelect.addEventListener('change', function() {
-        const selectedTitle = this.value;
-        
-        if (selectedTitle && subjectCodeMapping[selectedTitle]) {
-            subjectCodeInput.value = subjectCodeMapping[selectedTitle];
-        } else {
-            subjectCodeInput.value = '';
-        }
-    });
-    
-    // Set initial value if form has old input (for validation errors)
-    const initialTitle = subjectTitleSelect.value;
-    if (initialTitle && subjectCodeMapping[initialTitle]) {
-        subjectCodeInput.value = subjectCodeMapping[initialTitle];
-    }
-});
-</script>
 @endsection

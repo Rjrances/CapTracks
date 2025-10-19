@@ -40,7 +40,7 @@
                                     <td><strong>Academic Term:</strong></td>
                                     <td>
                                         @if($offering->academicTerm)
-                                            <span class="badge bg-secondary">{{ $offering->academicTerm->full_name }}</span>
+                                            <span class="badge bg-secondary">{{ $offering->academicTerm->semester }}</span>
                                             @if($offering->academicTerm->is_active)
                                                 <span class="badge bg-success ms-1">Active</span>
                                             @endif

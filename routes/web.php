@@ -68,7 +68,7 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
     // Route::resource('milestones', MilestoneTemplateController::class);
     // Route::patch('milestones/{milestone}/status', [MilestoneTemplateController::class, 'updateStatus'])->name('milestones.updateStatus');
 
-// ✅ Milestone Tasks - REMOVED for Coordinator (only Chairperson can manage)
+// Milestone Tasks - REMOVED for Coordinator (only Chairperson can manage)
 // Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () {
 //     Route::get('tasks', [MilestoneTaskController::class, 'index'])->name('tasks.index');
 //     Route::post('tasks', [MilestoneTaskController::class, 'store'])->name('tasks.store');
@@ -158,9 +158,6 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
         Route::delete('/offerings/{offeringId}/students/{studentId}', [ChairpersonController::class, 'removeStudentFromOffering'])->name('offerings.remove-student');
 
         // Role Management
-        Route::post('/fix-roles', [ChairpersonController::class, 'fixRoleInconsistencies'])->name('fix-roles');
-        Route::post('/users/{userId}/update-role', [ChairpersonController::class, 'forceUpdateUserRole'])->name('users.update-role');
-        Route::post('/force-update-all-roles', [ChairpersonController::class, 'forceUpdateAllRoles'])->name('force-update-all-roles');
 
         // Teachers/Faculty Management
         Route::get('/teachers', [ChairpersonController::class, 'teachers'])->name('teachers.index');
@@ -260,7 +257,7 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::delete('/task/{groupMilestoneTask}/unassign', [\App\Http\Controllers\StudentMilestoneController::class, 'unassignTask'])->name('milestones.unassign-task');
     Route::patch('/task/{groupMilestoneTask}', [\App\Http\Controllers\StudentMilestoneController::class, 'updateTask'])->name('milestones.update-task');
     
-    // ✅ NEW: Kanban functionality routes
+    // NEW: Kanban functionality routes
     Route::patch('/milestones/tasks/{taskId}/move', [\App\Http\Controllers\StudentMilestoneController::class, 'moveTask'])->name('milestones.move-task');
     Route::patch('/milestones/{milestoneId}/bulk-update', [\App\Http\Controllers\StudentMilestoneController::class, 'bulkUpdateTasks'])->name('milestones.bulk-update');
     Route::post('/milestones/{milestoneId}/recompute-progress', [\App\Http\Controllers\StudentMilestoneController::class, 'recomputeProgress'])->name('milestones.recompute-progress');

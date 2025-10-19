@@ -9,7 +9,7 @@
             @if($activeTerm)
                 <p class="text-muted mb-0">
                     <i class="fas fa-calendar-alt me-1"></i>
-                    Showing role assignments for: <strong>{{ $activeTerm->full_name }}</strong>
+                    Showing role assignments for: <strong>{{ $activeTerm->semester }}</strong>
                     <span class="badge bg-success ms-2">Active Term</span>
                 </p>
             @else
@@ -165,7 +165,7 @@
                                                     <input class="form-check-input role-checkbox" type="checkbox" 
                                                            name="roles[{{ $user->faculty_id }}][]" value="chairperson" 
                                                            id="chairperson-{{ $user->id }}"
-                                                           {{ $user->hasRole('chairperson') ? 'checked' : '' }}>
+                                                           {{ in_array('chairperson', $user->all_roles) ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-semibold" for="chairperson-{{ $user->id }}">
                                                         <i class="fas fa-crown me-1 text-danger"></i>Chairperson
                                                     </label>
@@ -176,7 +176,7 @@
                                                     <input class="form-check-input role-checkbox" type="checkbox" 
                                                            name="roles[{{ $user->faculty_id }}][]" value="coordinator" 
                                                            id="coordinator-{{ $user->id }}"
-                                                           {{ $user->hasRole('coordinator') ? 'checked' : '' }}>
+                                                           {{ in_array('coordinator', $user->all_roles) ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-semibold" for="coordinator-{{ $user->id }}">
                                                         <i class="fas fa-tasks me-1 text-primary"></i>Coordinator
                                                     </label>
@@ -187,7 +187,7 @@
                                                     <input class="form-check-input role-checkbox" type="checkbox" 
                                                            name="roles[{{ $user->faculty_id }}][]" value="teacher" 
                                                            id="teacher-{{ $user->id }}"
-                                                           {{ $user->hasRole('teacher') ? 'checked' : '' }}>
+                                                           {{ in_array('teacher', $user->all_roles) ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-semibold" for="teacher-{{ $user->id }}">
                                                         <i class="fas fa-chalkboard-teacher me-1 text-secondary"></i>Teacher
                                                     </label>
@@ -198,7 +198,7 @@
                                                     <input class="form-check-input role-checkbox" type="checkbox" 
                                                            name="roles[{{ $user->faculty_id }}][]" value="adviser" 
                                                            id="adviser-{{ $user->id }}"
-                                                           {{ $user->hasRole('adviser') ? 'checked' : '' }}>
+                                                           {{ in_array('adviser', $user->all_roles) ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-semibold" for="adviser-{{ $user->id }}">
                                                         <i class="fas fa-user-graduate me-1 text-success"></i>Adviser
                                                     </label>
@@ -209,7 +209,7 @@
                                                     <input class="form-check-input role-checkbox" type="checkbox" 
                                                            name="roles[{{ $user->faculty_id }}][]" value="panelist" 
                                                            id="panelist-{{ $user->id }}"
-                                                           {{ $user->hasRole('panelist') ? 'checked' : '' }}>
+                                                           {{ in_array('panelist', $user->all_roles) ? 'checked' : '' }}>
                                                     <label class="form-check-label fw-semibold" for="panelist-{{ $user->id }}">
                                                         <i class="fas fa-gavel me-1 text-warning"></i>Panelist
                                                     </label>
@@ -439,8 +439,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update the current roles display
-                    updateCurrentRolesDisplay(userId, checkedRoles);
+                    // Update the current roles display with all currently checked roles
+                    updateCurrentRolesDisplay(userId);
                     
                     // Show success message
                     showNotification('success', `Roles updated successfully for ${userName}`);
@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Add visual feedback for checkboxes
+    // Add visual feedback for checkboxes and update current roles display
     document.querySelectorAll('.role-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const label = this.nextElementSibling;
@@ -469,13 +469,24 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 label.classList.remove('text-primary');
             }
+            
+            // Update current roles display in real-time
+            const userId = this.name.match(/roles\[(.*?)\]/)[1];
+            updateCurrentRolesDisplay(userId);
         });
     });
 });
 
-function updateCurrentRolesDisplay(userId, roles) {
+function updateCurrentRolesDisplay(userId) {
     const container = document.getElementById(`current-roles-${userId}`);
     if (!container) return;
+    
+    // Get all currently checked roles for this user
+    const checkedRoles = [];
+    const checkboxes = document.querySelectorAll(`input[name="roles[${userId}][]"]:checked`);
+    checkboxes.forEach(checkbox => {
+        checkedRoles.push(checkbox.value);
+    });
     
     const roleColors = {
         'chairperson': 'danger',
@@ -485,10 +496,10 @@ function updateCurrentRolesDisplay(userId, roles) {
         'panelist': 'warning'
     };
     
-    if (roles.length === 0) {
+    if (checkedRoles.length === 0) {
         container.innerHTML = '<span class="text-muted"><i class="fas fa-user-slash me-1"></i>No roles assigned</span>';
     } else {
-        const badges = roles.map(role => 
+        const badges = checkedRoles.map(role => 
             `<span class="badge bg-${roleColors[role] || 'secondary'} me-1 mb-1">${role.charAt(0).toUpperCase() + role.slice(1)}</span>`
         ).join('');
         container.innerHTML = badges;

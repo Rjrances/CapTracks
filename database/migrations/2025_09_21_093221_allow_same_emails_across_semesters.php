@@ -23,7 +23,7 @@ return new class extends Migration
         
         // Now emails can be the same across semesters
         // We only keep the composite unique constraints for faculty_id and student_id
-        echo "✅ Removed email uniqueness constraints - same emails now allowed across semesters\n";
+        echo "Removed email uniqueness constraints - same emails now allowed across semesters\n";
     }
 
     /**

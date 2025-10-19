@@ -21,7 +21,7 @@ return new class extends Migration
             $table->dropUnique('student_accounts_email_unique');
         });
         
-        echo "✅ Removed email uniqueness constraints from account tables\n";
+        echo "Removed email uniqueness constraints from account tables\n";
     }
 
     /**

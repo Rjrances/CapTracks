@@ -126,27 +126,17 @@ class User extends Authenticatable
     }
     public function updateRoleBasedOnOfferings()
     {
-        $hasCapstoneOfferings = $this->offerings()->where(function($query) {
-            $query->whereIn('subject_title', ['Capstone Project I', 'Capstone Project II'])
-                  ->orWhereIn('subject_code', ['CS-CAP-401', 'CS-CAP-402']);
-        })->exists();
-        
+        $hasOfferings = $this->offerings()->exists();
         $currentRole = $this->role;
-        \Log::info("Checking role for user {$this->name} (ID: {$this->id}): current role = '{$currentRole}', has Capstone offerings = " . ($hasCapstoneOfferings ? 'true' : 'false'));
         
-        if ($hasCapstoneOfferings && $this->role !== 'coordinator') {
+        if ($hasOfferings && $this->role !== 'coordinator') {
             $oldRole = $this->role;
             $this->role = 'coordinator';
             $this->save();
-            \Log::info("User {$this->name} (ID: {$this->id}) role updated from '{$oldRole}' to 'coordinator' - has Capstone offerings");
-            return true;
-        } elseif (!$hasCapstoneOfferings && $this->role === 'coordinator') {
-            $this->role = 'teacher';
-            $this->save();
-            \Log::info("User {$this->name} (ID: {$this->id}) role reverted from 'coordinator' to 'teacher' - no Capstone offerings");
+            \Log::info("User {$this->name} (ID: {$this->id}) role updated from '{$oldRole}' to 'coordinator' - has offerings");
             return true;
         }
-        \Log::info("User {$this->name} (ID: {$this->id}) no role change needed: current role = '{$currentRole}', has Capstone offerings = " . ($hasCapstoneOfferings ? 'true' : 'false'));
+        
         return false; // No change needed
     }
     public function updateRoleBasedOnAdviserAssignments()
@@ -171,21 +161,11 @@ class User extends Authenticatable
     }
     public function getRoleDisplayNameAttribute()
     {
-        if ($this->role === 'coordinator' && $this->offerings()->exists()) {
-            return 'Coordinator';
-        }
         return ucfirst($this->role);
     }
     public function getEffectiveRolesAttribute()
     {
-        $roles = [$this->role];
-        if ($this->offerings()->exists() && !in_array('coordinator', $roles)) {
-            $roles[] = 'coordinator';
-        }
-        if (\App\Models\Group::where('faculty_id', $this->faculty_id)->exists() && !in_array('adviser', $roles)) {
-            $roles[] = 'adviser';
-        }
-        return array_unique($roles);
+        return [$this->role];
     }
     public function getEffectiveRolesStringAttribute()
     {

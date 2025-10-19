@@ -13,7 +13,7 @@
                                 Showing offerings for: <strong>All Terms</strong>
                                 <span class="badge bg-info ms-2">All Terms</span>
                             @else
-                                Showing offerings for: <strong>{{ $activeTerm->full_name }}</strong>
+                                Showing offerings for: <strong>{{ $activeTerm->semester }}</strong>
                                 <span class="badge bg-success ms-2">Active Term</span>
                             @endif
                         </p>
@@ -77,7 +77,7 @@
                                         </td>
                                         <td>
                                             @if($offering->academicTerm)
-                                                <span class="badge bg-secondary">{{ $offering->academicTerm->full_name }}</span>
+                                                <span class="badge bg-secondary">{{ $offering->academicTerm->semester }}</span>
                                             @else
                                                 <span class="text-muted">No term assigned</span>
                                             @endif

@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('semester', 50)->change();
         });
         
-        echo "✅ Updated semester column size to 50 characters in all tables\n";
+        echo "Updated semester column size to 50 characters in all tables\n";
     }
 
     /**

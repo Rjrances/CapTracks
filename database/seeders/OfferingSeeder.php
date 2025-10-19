@@ -19,11 +19,12 @@ class OfferingSeeder extends Seeder
         // Get all academic terms
         $terms = AcademicTerm::all();
         
-        // Get teachers (users with adviser, panelist, or teacher roles)
-        $teachers = User::whereIn('role', ['adviser', 'panelist', 'teacher'])->get();
+        // Get coordinators (only coordinators handle subjects)
+        // Note: Only coordinators are assigned to handle subjects
+        $coordinators = User::where('role', 'coordinator')->get();
         
-        if ($teachers->isEmpty()) {
-            echo "No teachers found. Please run UserSeeder first.\n";
+        if ($coordinators->isEmpty()) {
+            echo "No coordinators found. Please run UserSeeder first.\n";
             return;
         }
         
@@ -38,35 +39,35 @@ class OfferingSeeder extends Seeder
                         'subject_title' => 'Capstone Project I',
                         'subject_code' => 'CS-CAP-401',
                         'offer_code' => '11000',
-                        'faculty_id' => $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Capstone Project I',
                         'subject_code' => 'CS-CAP-401',
                         'offer_code' => '11001',
-                        'faculty_id' => $teachers[1]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[1]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Capstone Project II',
                         'subject_code' => 'CS-CAP-402',
                         'offer_code' => '11002',
-                        'faculty_id' => $teachers[2]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[2]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Thesis I',
                         'subject_code' => 'CS-THS-301',
                         'offer_code' => '11003',
-                        'faculty_id' => $teachers[3]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[3]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Thesis II',
                         'subject_code' => 'CS-THS-302',
                         'offer_code' => '11004',
-                        'faculty_id' => $teachers[4]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[4]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                 ];
@@ -76,35 +77,35 @@ class OfferingSeeder extends Seeder
                         'subject_title' => 'Capstone Project I',
                         'subject_code' => 'CS-CAP-401',
                         'offer_code' => '12000',
-                        'faculty_id' => $teachers[4]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[4]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Capstone Project I',
                         'subject_code' => 'CS-CAP-401',
                         'offer_code' => '12001',
-                        'faculty_id' => $teachers[5]->faculty_id ?? $teachers[1]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[5]->faculty_id ?? $coordinators[1]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Capstone Project II',
                         'subject_code' => 'CS-CAP-402',
                         'offer_code' => '12002',
-                        'faculty_id' => $teachers[6]->faculty_id ?? $teachers[2]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[6]->faculty_id ?? $coordinators[2]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Thesis I',
                         'subject_code' => 'CS-THS-301',
                         'offer_code' => '12003',
-                        'faculty_id' => $teachers[7]->faculty_id ?? $teachers[3]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[7]->faculty_id ?? $coordinators[3]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Thesis II',
                         'subject_code' => 'CS-THS-302',
                         'offer_code' => '12004',
-                        'faculty_id' => $teachers[8]->faculty_id ?? $teachers[4]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[8]->faculty_id ?? $coordinators[4]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                 ];
@@ -114,28 +115,28 @@ class OfferingSeeder extends Seeder
                         'subject_title' => 'Capstone Project I',
                         'subject_code' => 'CS-CAP-401',
                         'offer_code' => '13000',
-                        'faculty_id' => $teachers[8]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[8]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Capstone Project I',
                         'subject_code' => 'CS-CAP-401',
                         'offer_code' => '13001',
-                        'faculty_id' => $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Thesis I',
                         'subject_code' => 'CS-THS-301',
                         'offer_code' => '13002',
-                        'faculty_id' => $teachers[1]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[1]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                     [
                         'subject_title' => 'Thesis II',
                         'subject_code' => 'CS-THS-302',
                         'offer_code' => '13003',
-                        'faculty_id' => $teachers[2]->faculty_id ?? $teachers[0]->faculty_id,
+                        'faculty_id' => $coordinators[2]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
                 ];

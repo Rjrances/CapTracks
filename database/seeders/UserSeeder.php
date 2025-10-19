@@ -32,8 +32,8 @@ class UserSeeder extends Seeder
         $emailSuffix = '@university.edu';
 
         // Define faculty members with same faculty_id across all semesters
-        // Note: Coordinators are specifically for Capstone project management
-        // Teachers handle Thesis offerings and general teaching
+        // Note: Only coordinators will be assigned to handle subjects
+        // Teachers, advisers, and panelists remain without subject assignments
         $facultyMembers = [
             [
                 'faculty_id' => '10001',
@@ -43,7 +43,7 @@ class UserSeeder extends Seeder
             [
                 'faculty_id' => '10002',
                 'name' => 'Prof. John Rodriguez',
-                'role' => 'coordinator'  // Will handle Capstone Project I & II
+                'role' => 'coordinator'  // Will handle subjects
             ],
             [
                 'faculty_id' => '10003',
@@ -53,7 +53,7 @@ class UserSeeder extends Seeder
             [
                 'faculty_id' => '10004',
                 'name' => 'Prof. Michael Chen',
-                'role' => 'teacher'  // Will handle Thesis I & II
+                'role' => 'coordinator'  // Will handle subjects
             ],
             [
                 'faculty_id' => '10005',
@@ -73,7 +73,7 @@ class UserSeeder extends Seeder
             [
                 'faculty_id' => '10008',
                 'name' => 'Prof. Jennifer Lee',
-                'role' => 'teacher'  // Will handle Thesis I & II
+                'role' => 'teacher'
             ],
             [
                 'faculty_id' => '10009',
@@ -88,7 +88,7 @@ class UserSeeder extends Seeder
             [
                 'faculty_id' => '10011',
                 'name' => 'Dr. Kevin Martinez',
-                'role' => 'teacher'  // Will handle Thesis I & II
+                'role' => 'teacher'
             ],
             [
                 'faculty_id' => '10012',
@@ -100,7 +100,6 @@ class UserSeeder extends Seeder
         foreach ($facultyMembers as $member) {
             // Create email with same format across semesters
             $email = strtolower(str_replace([' ', '.'], ['', '.'], $member['name'])) . $emailSuffix;
-            dd($email);
             $user = User::create([
                 'faculty_id' => $member['faculty_id'],
                 'name' => $member['name'],

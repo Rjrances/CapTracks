@@ -21,17 +21,6 @@ class ChairpersonController extends Controller
         return AcademicTerm::where('is_active', true)->first();
     }
     
-    /**
-     * Check if an offering is a Capstone offering (not Thesis)
-     */
-    private function isCapstoneOffering($offering)
-    {
-        $capstoneSubjects = ['Capstone Project I', 'Capstone Project II'];
-        $capstoneCodes = ['CS-CAP-401', 'CS-CAP-402'];
-        
-        return in_array($offering->subject_title, $capstoneSubjects) || 
-               in_array($offering->subject_code, $capstoneCodes);
-    }
     public function indexOfferings(Request $request)
     {
         $activeTerm = $this->getActiveTerm();
@@ -55,17 +44,15 @@ class ChairpersonController extends Controller
     {
         $request->validate([
             'offer_code' => 'required|string|unique:offerings,offer_code',
-            'subject_title' => 'required|in:Capstone Project I,Capstone Project II,Thesis I,Thesis II',
-            'subject_code' => 'required|in:CS-CAP-401,CS-CAP-402,CS-THS-301,CS-THS-302',
+            'subject_title' => 'required|string|max:255',
+            'subject_code' => 'required|string|max:255',
             'faculty_id' => 'required|exists:users,faculty_id',
             'academic_term_id' => 'required|exists:academic_terms,id',
         ], [
             'offer_code.required' => 'Offer code is required (e.g., 11000, 11001, 11002, 11003, 11004).',
             'offer_code.unique' => 'This offer code is already in use.',
-            'subject_title.required' => 'Please select a subject title from the dropdown.',
-            'subject_title.in' => 'Please select a valid subject title from the dropdown.',
-            'subject_code.required' => 'Subject code is required (CS-CAP-401, CS-CAP-402, CS-THS-301, CS-THS-302).',
-            'subject_code.in' => 'Subject code must be one of: CS-CAP-401, CS-CAP-402, CS-THS-301, CS-THS-302.',
+            'subject_title.required' => 'Please enter a subject title.',
+            'subject_code.required' => 'Subject code is required.',
             'faculty_id.required' => 'Please select a teacher for this offering.',
             'faculty_id.exists' => 'Selected teacher does not exist.',
             'academic_term_id.required' => 'Please select an academic term.',
@@ -81,18 +68,13 @@ class ChairpersonController extends Controller
         $offering = Offering::create($data);
         $teacher = User::where('faculty_id', $data['faculty_id'])->first();
         
-        // Only assign coordinator role for Capstone offerings
-        if ($teacher && $this->isCapstoneOffering($offering)) {
-            if (!$teacher->hasRole('coordinator')) {
-                $teacher->role = 'coordinator';
-                $teacher->save();
-                \Log::info("Automatically assigned coordinator role to teacher {$teacher->name} for Capstone offering {$offering->subject_code}");
-            }
-            $message = 'Offering added successfully. Teacher automatically assigned as coordinator for Capstone project management.';
-        } else {
-            \Log::info("Teacher {$teacher->name} assigned to Thesis offering {$offering->subject_code} - remains as teacher role");
-            $message = 'Offering added successfully. Teacher assigned to Thesis offering (teacher role maintained).';
+        // Automatically assign coordinator role for all offerings
+        if ($teacher && !$teacher->hasRole('coordinator')) {
+            $teacher->role = 'coordinator';
+            $teacher->save();
+            \Log::info("Automatically assigned coordinator role to teacher {$teacher->name} for offering {$offering->subject_code}");
         }
+        $message = 'Offering added successfully. Teacher automatically assigned as coordinator.';
         
         return redirect()->route('chairperson.offerings.index')->with('success', $message);
     }
@@ -107,17 +89,15 @@ class ChairpersonController extends Controller
     {
         $request->validate([
             'offer_code' => 'required|string|unique:offerings,offer_code,' . $id,
-            'subject_title' => 'required|in:Capstone Project I,Capstone Project II,Thesis I,Thesis II',
-            'subject_code' => 'required|in:CS-CAP-401,CS-CAP-402,CS-THS-301,CS-THS-302',
+            'subject_title' => 'required|string|max:255',
+            'subject_code' => 'required|string|max:255',
             'faculty_id' => 'required|exists:users,faculty_id',
             'academic_term_id' => 'required|exists:academic_terms,id',
         ], [
             'offer_code.required' => 'Offer code is required (e.g., 11000, 11001, 11002, 11003, 11004).',
             'offer_code.unique' => 'This offer code is already in use.',
-            'subject_title.required' => 'Please select a subject title from the dropdown.',
-            'subject_title.in' => 'Please select a valid subject title from the dropdown.',
-            'subject_code.required' => 'Subject code is required (CS-CAP-401, CS-CAP-402, CS-THS-301, CS-THS-302).',
-            'subject_code.in' => 'Subject code must be one of: CS-CAP-401, CS-CAP-402, CS-THS-301, CS-THS-302.',
+            'subject_title.required' => 'Please enter a subject title.',
+            'subject_code.required' => 'Subject code is required.',
             'faculty_id.required' => 'Please select a teacher for this offering.',
             'faculty_id.exists' => 'Selected teacher does not exist.',
             'academic_term_id.required' => 'Please select an academic term.',
@@ -128,44 +108,17 @@ class ChairpersonController extends Controller
         $offering->update($request->only('offer_code', 'subject_title', 'subject_code', 'faculty_id', 'academic_term_id'));
         $newTeacherId = $request->input('faculty_id');
         
-        // Handle role changes based on offering type
+        // Handle role changes for new teacher
         if ($newTeacherId != $oldTeacherId) {
-            // Handle old teacher role
-            if ($oldTeacherId) {
-                $oldTeacher = User::where('faculty_id', $oldTeacherId)->first();
-                if ($oldTeacher) {
-                    // Check if old teacher has any Capstone offerings left
-                    $hasCapstoneOfferings = $oldTeacher->offerings()->where(function($query) {
-                        $query->whereIn('subject_title', ['Capstone Project I', 'Capstone Project II'])
-                              ->orWhereIn('subject_code', ['CS-CAP-401', 'CS-CAP-402']);
-                    })->exists();
-                    
-                    if (!$hasCapstoneOfferings && $oldTeacher->hasRole('coordinator')) {
-                        $oldTeacher->role = 'teacher';
-                        $oldTeacher->save();
-                        \Log::info("Removed coordinator role from teacher {$oldTeacher->name} - no more Capstone offerings");
-                    }
-                }
-            }
-            
-            // Handle new teacher role
             $newTeacher = User::where('faculty_id', $newTeacherId)->first();
-            if ($newTeacher) {
-                if ($this->isCapstoneOffering($offering)) {
-                    if (!$newTeacher->hasRole('coordinator')) {
-                        $newTeacher->role = 'coordinator';
-                        $newTeacher->save();
-                        \Log::info("Automatically assigned coordinator role to teacher {$newTeacher->name} for Capstone offering {$offering->subject_code}");
-                    }
-                } else {
-                    \Log::info("Teacher {$newTeacher->name} assigned to Thesis offering {$offering->subject_code} - remains as teacher role");
-                }
+            if ($newTeacher && !$newTeacher->hasRole('coordinator')) {
+                $newTeacher->role = 'coordinator';
+                $newTeacher->save();
+                \Log::info("Automatically assigned coordinator role to teacher {$newTeacher->name} for offering {$offering->subject_code}");
             }
         }
         
-        $message = $this->isCapstoneOffering($offering) 
-            ? 'Offering updated successfully. Coordinator role updated for Capstone project management.'
-            : 'Offering updated successfully. Teacher role maintained for Thesis offering.';
+        $message = 'Offering updated successfully. Coordinator role assigned automatically.';
             
         return redirect()->route('chairperson.offerings.index')->with('success', $message);
     }
@@ -177,91 +130,8 @@ class ChairpersonController extends Controller
         $isCapstone = $this->isCapstoneOffering($offering);
         $offering->delete();
         
-        if ($teacher && $teacher->hasRole('coordinator') && $isCapstone) {
-            \DB::afterCommit(function() use ($teacher) {
-                $this->manageTeacherRoleTransition($teacher);
-            });
-        }
-        
         $message = "Offering '{$offeringCode}' deleted successfully.";
-        if ($teacher && $isCapstone) {
-            $message .= " Coordinator role will be updated if no more Capstone offerings remain.";
-        }
         return redirect()->route('chairperson.offerings.index')->with('success', $message);
-    }
-    public function forceUpdateAllRoles()
-    {
-        try {
-            $usersUpdated = 0;
-            $users = User::whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])->get();
-            foreach ($users as $user) {
-                if ($user->updateRoleBasedOnOfferings()) {
-                    $usersUpdated++;
-                }
-            }
-            $message = "Role consistency check completed. {$usersUpdated} users had their roles updated.";
-            \Log::info($message);
-            return redirect()->back()->with('success', $message);
-        } catch (\Exception $e) {
-            \Log::error('Error updating all user roles: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Error updating user roles. Please check logs.');
-        }
-    }
-    public function forceUpdateUserRole($userId)
-    {
-        try {
-            $activeTerm = $this->getActiveTerm();
-            $user = User::where('faculty_id', $userId)
-                ->when($activeTerm, function($query) use ($activeTerm) {
-                    return $query->where('semester', $activeTerm->semester);
-                })
-                ->firstOrFail();
-            $oldRole = $user->role;
-            $roleChanged = $user->updateRoleBasedOnOfferings();
-            if ($roleChanged) {
-                $message = "User {$user->name} role updated from '{$oldRole}' to '{$user->role}'";
-                \Log::info($message);
-                return redirect()->back()->with('success', $message);
-            } else {
-                $message = "User {$user->name} role is already correct: '{$user->role}'";
-                return redirect()->back()->with('info', $message);
-            }
-        } catch (\Exception $e) {
-            \Log::error('Error updating user role: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Error updating user role. Please check logs.');
-        }
-    }
-    public function fixRoleInconsistencies()
-    {
-        try {
-            $usersUpdated = 0;
-            $users = User::whereIn('role', ['teacher', 'coordinator', 'adviser', 'panelist'])->get();
-            foreach ($users as $user) {
-                if ($user->updateRoleBasedOnOfferings()) {
-                    $usersUpdated++;
-                }
-            }
-            $message = "Role consistency check completed. {$usersUpdated} users had their roles updated.";
-            \Log::info($message);
-            return redirect()->route('chairperson.offerings.index')->with('success', $message);
-        } catch (\Exception $e) {
-            \Log::error('Error fixing role inconsistencies: ' . $e->getMessage());
-            return redirect()->route('chairperson.offerings.index')->with('error', 'Error fixing role inconsistencies. Please check logs.');
-        }
-    }
-    private function manageTeacherRoleTransition(User $teacher)
-    {
-        try {
-            $teacher->refresh();
-            $roleChanged = $teacher->updateRoleBasedOnOfferings();
-            if ($roleChanged) {
-                \Log::info("Role transition completed for teacher {$teacher->name} (ID: {$teacher->id})");
-            } else {
-                \Log::info("No role transition needed for teacher {$teacher->name} (ID: {$teacher->id})");
-            }
-        } catch (\Exception $e) {
-            \Log::error("Error managing role transition for teacher {$teacher->id}: " . $e->getMessage());
-        }
     }
     public function showOffering($id)
     {

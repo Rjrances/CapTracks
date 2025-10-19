@@ -78,9 +78,7 @@ return new class extends Migration
             try {
                 $table = $this->getTableNameFromForeignKey($fk);
                 DB::statement("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$fk}`");
-                echo "Dropped foreign key: {$fk}\n";
             } catch (\Exception $e) {
-                echo "Could not drop {$fk}: " . $e->getMessage() . "\n";
             }
         }
     }
@@ -121,9 +119,7 @@ return new class extends Migration
                 $table->dropUnique('users_faculty_id_unique');
                 $table->dropUnique('users_email_unique');
             });
-            echo "Dropped users unique constraints\n";
         } catch (\Exception $e) {
-            echo "Could not drop users constraints: " . $e->getMessage() . "\n";
         }
         
         try {
@@ -131,18 +127,14 @@ return new class extends Migration
                 $table->dropUnique('students_student_id_unique');
                 $table->dropUnique('students_email_unique');
             });
-            echo "Dropped students unique constraints\n";
         } catch (\Exception $e) {
-            echo "Could not drop students constraints: " . $e->getMessage() . "\n";
         }
         
         try {
             Schema::table('offerings', function (Blueprint $table) {
                 $table->dropUnique('offerings_offer_code_unique');
             });
-            echo "Dropped offerings unique constraints\n";
         } catch (\Exception $e) {
-            echo "Could not drop offerings constraints: " . $e->getMessage() . "\n";
         }
     }
     
@@ -153,20 +145,17 @@ return new class extends Migration
             $table->unique(['faculty_id', 'semester'], 'users_faculty_id_semester_unique');
             $table->unique(['email', 'semester'], 'users_email_semester_unique');
         });
-        echo "Added users composite unique constraints\n";
         
         // Add composite unique constraints for students
         Schema::table('students', function (Blueprint $table) {
             $table->unique(['student_id', 'semester'], 'students_student_id_semester_unique');
             $table->unique(['email', 'semester'], 'students_email_semester_unique');
         });
-        echo "Added students composite unique constraints\n";
         
         // Add composite unique constraints for offerings
         Schema::table('offerings', function (Blueprint $table) {
             $table->unique(['offer_code', 'academic_term_id'], 'offerings_offer_code_term_unique');
         });
-        echo "Added offerings composite unique constraints\n";
     }
     
     private function dropCompositeUniqueConstraints()
@@ -229,12 +218,9 @@ return new class extends Migration
     
     private function recreateAllForeignKeys()
     {
-        // Recreate foreign key constraints
+        // Recreate foreign key constraints (only those that reference unique columns)
         $foreignKeys = [
-            // Users table foreign keys
-            ['table' => 'user_accounts', 'column' => 'faculty_id', 'ref_table' => 'users', 'ref_column' => 'faculty_id', 'name' => 'user_accounts_faculty_id_foreign'],
-            ['table' => 'offerings', 'column' => 'faculty_id', 'ref_table' => 'users', 'ref_column' => 'faculty_id', 'name' => 'offerings_faculty_id_foreign'],
-            ['table' => 'groups', 'column' => 'faculty_id', 'ref_table' => 'users', 'ref_column' => 'faculty_id', 'name' => 'groups_faculty_id_foreign'],
+            // Users table foreign keys - only those that reference users.id (which is unique)
             ['table' => 'adviser_invitations', 'column' => 'faculty_id', 'ref_table' => 'users', 'ref_column' => 'id', 'name' => 'adviser_invitations_faculty_id_foreign'],
             ['table' => 'defense_panels', 'column' => 'faculty_id', 'ref_table' => 'users', 'ref_column' => 'id', 'name' => 'defense_panels_faculty_id_foreign'],
             ['table' => 'faculty_roles', 'column' => 'user_id', 'ref_table' => 'users', 'ref_column' => 'id', 'name' => 'faculty_roles_user_id_foreign'],
@@ -243,28 +229,16 @@ return new class extends Migration
             ['table' => 'task_submissions', 'column' => 'reviewed_by', 'ref_table' => 'users', 'ref_column' => 'id', 'name' => 'task_submissions_reviewed_by_foreign'],
             ['table' => 'user_roles', 'column' => 'user_id', 'ref_table' => 'users', 'ref_column' => 'id', 'name' => 'user_roles_user_id_foreign'],
             
-            // Students table foreign keys
-            ['table' => 'enrollments', 'column' => 'student_id', 'ref_table' => 'students', 'ref_column' => 'student_id', 'name' => 'enrollments_student_id_foreign'],
-            ['table' => 'group_milestone_tasks', 'column' => 'assigned_to', 'ref_table' => 'students', 'ref_column' => 'student_id', 'name' => 'group_milestone_tasks_assigned_to_foreign'],
-            ['table' => 'group_milestone_tasks', 'column' => 'completed_by', 'ref_table' => 'students', 'ref_column' => 'student_id', 'name' => 'group_milestone_tasks_completed_by_foreign'],
-            ['table' => 'project_submissions', 'column' => 'student_id', 'ref_table' => 'students', 'ref_column' => 'student_id', 'name' => 'project_submissions_student_id_foreign'],
-            ['table' => 'student_accounts', 'column' => 'student_id', 'ref_table' => 'students', 'ref_column' => 'student_id', 'name' => 'student_accounts_student_id_foreign'],
-            ['table' => 'task_submissions', 'column' => 'student_id', 'ref_table' => 'students', 'ref_column' => 'student_id', 'name' => 'task_submissions_student_id_foreign'],
-            ['table' => 'offering_student', 'column' => 'student_id', 'ref_table' => 'students', 'ref_column' => 'student_id', 'name' => 'offering_student_student_id_foreign'],
-            ['table' => 'group_members', 'column' => 'student_id', 'ref_table' => 'students', 'ref_column' => 'student_id', 'name' => 'group_members_student_id_foreign'],
-            ['table' => 'students', 'column' => 'offer_code', 'ref_table' => 'offerings', 'ref_column' => 'offer_code', 'name' => 'students_offer_code_foreign'],
-            
-            // Offerings table foreign keys
+            // Offerings table foreign keys - only those that reference unique columns
             ['table' => 'groups', 'column' => 'offering_id', 'ref_table' => 'offerings', 'ref_column' => 'id', 'name' => 'groups_offering_id_foreign'],
             ['table' => 'offering_student', 'column' => 'offering_id', 'ref_table' => 'offerings', 'ref_column' => 'id', 'name' => 'offering_student_offering_id_foreign']
         ];
         
+        
         foreach ($foreignKeys as $fk) {
             try {
                 DB::statement("ALTER TABLE `{$fk['table']}` ADD CONSTRAINT `{$fk['name']}` FOREIGN KEY (`{$fk['column']}`) REFERENCES `{$fk['ref_table']}`(`{$fk['ref_column']}`)");
-                echo "Recreated foreign key: {$fk['name']}\n";
             } catch (\Exception $e) {
-                echo "Could not recreate {$fk['name']}: " . $e->getMessage() . "\n";
             }
         }
     }

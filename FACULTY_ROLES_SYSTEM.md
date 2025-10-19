@@ -1,38 +1,36 @@
 # Faculty Roles System - CapTrack
 
 ## Overview
-The CapTrack system now implements a subject-type based role assignment system that differentiates between Capstone and Thesis offerings.
+The CapTrack system implements a simplified role assignment system where any faculty member who handles a subject automatically becomes a coordinator.
 
 ## Role Definitions
 
 ### 🎯 **COORDINATORS**
-**Purpose**: Manage Capstone Project offerings and approve student proposals
+**Purpose**: Manage all subject offerings and approve student proposals
 
 **Responsibilities**:
-- Handle **Capstone Project I** (CS-CAP-401) and **Capstone Project II** (CS-CAP-402)
+- Handle all subject offerings (Capstone Projects, Thesis, etc.)
 - Review and approve/reject student project proposals
-- Manage capstone project workflow and milestones
+- Manage project workflow and milestones
 - Access to **Proposal Review** section in coordinator dashboard
-- Oversee capstone project implementation
+- Oversee project implementation
 
 **Access Rights**:
 - ✅ Proposal Review Dashboard
 - ✅ Approve/Reject Proposals
-- ✅ Capstone Project Management
-- ✅ Group Management for Capstone Projects
+- ✅ Project Management
+- ✅ Group Management
 - ❌ Cannot be advisers for their own coordinated offerings
 
 ### 👨‍🏫 **TEACHERS**
-**Purpose**: Handle Thesis offerings and general teaching responsibilities
+**Purpose**: General teaching responsibilities (without offerings)
 
 **Responsibilities**:
-- Handle **Thesis I** (CS-THS-301) and **Thesis II** (CS-THS-302)
-- Provide thesis guidance and academic mentoring
+- Provide academic mentoring
 - General teaching and course instruction
 - Focus on research methodology and academic writing
 
 **Access Rights**:
-- ✅ Thesis Guidance and Mentoring
 - ✅ General Teaching Functions
 - ✅ Student Academic Support
 - ❌ Cannot approve proposals
@@ -89,96 +87,69 @@ The CapTrack system now implements a subject-type based role assignment system t
 ## Automatic Role Assignment
 
 ### When Creating Offerings:
-- **Capstone Project I/II** → Teacher automatically becomes **Coordinator**
-- **Thesis I/II** → Teacher remains **Teacher**
+- **Any Subject** → Teacher automatically becomes **Coordinator**
 
 ### When Updating Offerings:
-- **Capstone → Capstone**: No role change
-- **Thesis → Thesis**: No role change
-- **Capstone → Thesis**: Coordinator becomes Teacher
-- **Thesis → Capstone**: Teacher becomes Coordinator
+- **Any Subject** → Teacher automatically becomes **Coordinator** (if not already)
 
 ### When Deleting Offerings:
-- **Capstone Deleted**: Coordinator becomes Teacher (if no other Capstone offerings)
-- **Thesis Deleted**: No role change
+- **Any Subject Deleted**: No automatic role change (coordinator remains coordinator)
 
 ## Workflow Examples
 
-### Capstone Project Workflow:
+### General Project Workflow:
 1. **Student** submits proposal
 2. **Coordinator** reviews and approves/rejects proposal
 3. **Adviser** guides implementation
 4. **Panelist** evaluates final presentation
 
-### Thesis Workflow:
-1. **Student** works on thesis
-2. **Teacher** provides guidance and mentoring
-3. **Adviser** (if assigned) provides additional support
-4. **Panelist** evaluates final presentation
-
 ## Database Schema
-
-### Subject Codes:
-- **CS-CAP-401**: Capstone Project I
-- **CS-CAP-402**: Capstone Project II
-- **CS-THS-301**: Thesis I
-- **CS-THS-302**: Thesis II
 
 ### Role Assignment Logic:
 ```php
-// Only Capstone offerings get coordinator role
-private function isCapstoneOffering($offering)
-{
-    $capstoneSubjects = ['Capstone Project I', 'Capstone Project II'];
-    $capstoneCodes = ['CS-CAP-401', 'CS-CAP-402'];
-    
-    return in_array($offering->subject_title, $capstoneSubjects) || 
-           in_array($offering->subject_code, $capstoneCodes);
+// All offerings automatically assign coordinator role
+if ($teacher && !$teacher->hasRole('coordinator')) {
+    $teacher->role = 'coordinator';
+    $teacher->save();
 }
 ```
 
 ## Benefits
 
-### ✅ Clear Separation of Responsibilities:
-- **Coordinators**: Focus on Capstone project management and proposal approval
-- **Teachers**: Focus on Thesis guidance and general teaching
+### ✅ Simplified Role Management:
+- **Coordinators**: Handle all subjects and proposal approval
+- **Teachers**: General teaching without subject assignments
 - **Advisers**: Focus on implementation guidance
 - **Panelists**: Focus on final evaluation
 
-### ✅ Logical Workflow:
-- Capstone projects require proposal approval (coordinator responsibility)
-- Thesis projects focus on research guidance (teacher responsibility)
-- Clear distinction between project types
+### ✅ Simplified Workflow:
+- All subjects treated equally
+- Any faculty with subjects becomes coordinator
+- No complex role transitions
 
 ### ✅ Automatic Management:
 - No manual role assignment needed
-- Roles automatically adjust based on offering assignments
-- Clean role transitions when offerings change
+- Simple rule: faculty with subjects = coordinator
+- No complex role consistency checks
 
 ### ✅ System Integrity:
-- Only Capstone coordinators can access proposal review
-- Thesis teachers cannot accidentally access proposal approval
-- Clear audit trail of role changes
+- All coordinators can access proposal review
+- Clear, predictable role assignment
+- Reduced complexity and maintenance
 
 ## Migration Notes
 
 ### Existing Data:
 - Current coordinators will remain coordinators
-- Role transitions will occur when offerings are updated
-- Use `forceUpdateAllRoles()` command to update existing assignments
+- Faculty with any offerings will become coordinators
+- No complex role transitions needed
 
 ### New Assignments:
-- Assign Capstone offerings to coordinators
-- Assign Thesis offerings to teachers
-- System will automatically manage role assignments
+- Assign any subject to faculty
+- Faculty automatically becomes coordinator
+- Simple, predictable system
 
 ## Commands
-
-### Update All Roles:
-```bash
-php artisan tinker
->>> (new App\Http\Controllers\ChairPersonController)->forceUpdateAllRoles()
-```
 
 ### Check Role Assignments:
 ```bash
@@ -186,4 +157,4 @@ php artisan tinker
 >>> User::with('offerings')->whereIn('role', ['coordinator', 'teacher'])->get()
 ```
 
-This system ensures that only coordinators (who handle Capstone offerings) can approve proposals, while teachers (who handle Thesis offerings) focus on guidance and mentoring without proposal approval responsibilities.
+This simplified system ensures that any faculty member who handles subjects becomes a coordinator with full access to proposal approval and management functions.
