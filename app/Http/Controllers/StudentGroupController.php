@@ -99,14 +99,8 @@ class StudentGroupController extends Controller
             'adviser_id' => 'required|exists:users,id',
             'adviser_message' => 'nullable|string|max:500',
             'members' => 'nullable|array|max:2', // Max 2 additional members (3 total including leader) - optional
+            'members.*' => 'nullable|exists:students,student_id', // Each member is optional
         ]);
-        
-        // Validate members only if they are provided and not empty
-        if ($request->has('members') && is_array($request->members) && !empty(array_filter($request->members))) {
-            $request->validate([
-                'members.*' => 'required|exists:students,student_id',
-            ]);
-        }
         
         if (Auth::guard('student')->check()) {
             $studentAccount = Auth::guard('student')->user();

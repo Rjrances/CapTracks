@@ -29,7 +29,7 @@
                 <div class="col-12">
                     <div class="alert alert-info">
                         <i class="fas fa-calendar me-2"></i>
-                        Showing milestone assignments for: <strong>{{ $activeTerm->full_name }}</strong>
+                        Showing milestone assignments for: <strong>{{ $activeTerm->semester }}</strong>
                     </div>
                 </div>
             </div>

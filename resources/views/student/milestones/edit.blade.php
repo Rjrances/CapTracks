@@ -111,7 +111,7 @@
                                         </div>
                                         <div class="mb-0">
                                             <strong>Created:</strong><br>
-                                            <span class="text-muted">{{ $groupMilestone->created_at->format('M d, Y') }}</span>
+                                            <span class="text-muted">{{ $groupMilestone->created_at ? $groupMilestone->created_at->format('M d, Y') : 'Recently' }}</span>
                                         </div>
                                     </div>
                                 </div>

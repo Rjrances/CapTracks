@@ -160,7 +160,7 @@
                     @if($groupMilestone->target_date)
                         <br><small class="text-muted mt-2 d-block">
                             <i class="fas fa-calendar me-1"></i>
-                            Target Date: {{ \Carbon\Carbon::parse($groupMilestone->target_date)->format('M d, Y') }}
+                            Target Date: {{ $groupMilestone->target_date ? \Carbon\Carbon::parse($groupMilestone->target_date)->format('M d, Y') : 'TBA' }}
                         </small>
                     @endif
                 </div>
@@ -171,10 +171,10 @@
                         @foreach($group->defenseSchedules->where('status', 'scheduled')->take(1) as $defense)
                             <br><small class="text-muted mt-2 d-block">
                                 <i class="fas fa-calendar me-1"></i>
-                                {{ $defense->scheduled_date->format('M d, Y') }}
+                                {{ $defense->start_at ? $defense->start_at->format('M d, Y') : 'TBA' }}
                                 <br>
                                 <i class="fas fa-clock me-1"></i>
-                                {{ $defense->scheduled_time }}
+                                {{ $defense->start_at ? $defense->start_at->format('h:i A') : 'TBA' }}
                             </small>
                         @endforeach
                     @elseif($group->defenseRequests->where('status', 'pending')->count() > 0)

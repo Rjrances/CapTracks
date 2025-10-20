@@ -103,60 +103,6 @@
         </div>
         <div class="row mt-4">
             <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fas fa-tasks me-2"></i>Template Tasks
-                            </h5>
-                            <a href="{{ route('coordinator.milestones.tasks.index', $milestone->id) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-plus me-1"></i>Manage Tasks
-                            </a>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        @if($milestone->tasks->count() > 0)
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Order</th>
-                                            <th>Task Name</th>
-                                            <th>Description</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($milestone->tasks->sortBy('order') as $task)
-                                            <tr>
-                                                <td>
-                                                    <span class="badge bg-secondary">{{ $task->order }}</span>
-                                                </td>
-                                                <td>
-                                                    <strong>{{ $task->name }}</strong>
-                                                </td>
-                                                <td>
-                                                    <small class="text-muted">{{ Str::limit($task->description, 100) }}</small>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <div class="text-center py-3">
-                                <i class="fas fa-tasks fa-2x text-muted mb-2"></i>
-                                <p class="text-muted mb-0">No tasks defined for this template yet.</p>
-                                <a href="{{ route('coordinator.milestones.tasks.index', $milestone->id) }}" class="btn btn-sm btn-primary mt-2">
-                                    <i class="fas fa-plus me-1"></i>Add Tasks
-                                </a>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row mt-4">
-            <div class="col-12">
                 <div class="card bg-light">
                     <div class="card-body">
                         <h6 class="card-title">
@@ -164,9 +110,6 @@
                         </h6>
                         <p class="card-text mb-2">
                             <strong>Template Details:</strong> Update the name, description, and status of your milestone template.
-                        </p>
-                        <p class="card-text mb-2">
-                            <strong>Tasks:</strong> Click "Manage Tasks" to add, edit, or reorder the specific tasks that make up this milestone template.
                         </p>
                         <p class="card-text mb-0">
                             <strong>Status:</strong> Only "Active" templates will be available for groups to use when creating their milestones.

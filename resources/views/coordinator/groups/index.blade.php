@@ -80,7 +80,7 @@
                             <div class="mt-3">
                                 <span class="badge bg-info">
                                     <i class="fas fa-calendar me-1"></i>
-                                    Showing groups for: {{ $activeTerm->full_name }}
+                                    Showing groups for: {{ $activeTerm->semester }}
                                 </span>
                             </div>
                         @endif

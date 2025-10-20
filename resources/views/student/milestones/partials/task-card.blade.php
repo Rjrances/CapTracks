@@ -32,7 +32,7 @@
                     @if($task->deadline)
                         <div class="task-deadline {{ $task->is_overdue ? 'overdue' : '' }}">
                             <i class="fas fa-calendar me-1"></i>
-                            {{ \Carbon\Carbon::parse($task->deadline)->format('M d, Y') }}
+                            {{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('M d, Y') : 'TBA' }}
                             @if($task->is_overdue)
                                 <span class="text-danger ms-1">(Overdue)</span>
                             @endif
@@ -42,7 +42,7 @@
                         <div class="task-meta">
                             <small class="text-success">
                                 <i class="fas fa-check-circle me-1"></i>
-                                Completed {{ \Carbon\Carbon::parse($task->completed_at)->format('M d, Y') }}
+                                Completed {{ $task->completed_at ? \Carbon\Carbon::parse($task->completed_at)->format('M d, Y') : 'Recently' }}
                             </small>
                         </div>
                     @endif

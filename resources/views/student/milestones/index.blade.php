@@ -100,7 +100,7 @@
                                                 {{ $invitation->faculty->name }}
                                                 <br>
                                                 <i class="fas fa-clock me-1"></i>
-                                                {{ $invitation->created_at->diffForHumans() }}
+                                                {{ $invitation->created_at ? $invitation->created_at->diffForHumans() : 'Recently' }}
                                             </small>
                                         </div>
                                     @endforeach
@@ -136,13 +136,13 @@
                                 <div class="border rounded p-3 mb-2">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h6 class="mb-1">{{ ucfirst(str_replace('_', ' ', $defense->defense_type)) }} Defense</h6>
+                                            <h6 class="mb-1">{{ $defense->stage_label ?? 'Defense' }}</h6>
                                             <small class="text-muted">
                                                 <i class="fas fa-calendar me-1"></i>
-                                                {{ $defense->scheduled_date->format('M d, Y') }}
+                                                {{ $defense->start_at ? $defense->start_at->format('M d, Y') : 'TBA' }}
                                                 <br>
                                                 <i class="fas fa-clock me-1"></i>
-                                                {{ $defense->scheduled_time }}
+                                                {{ $defense->start_at ? $defense->start_at->format('h:i A') : 'TBA' }}
                                             </small>
                                         </div>
                                         <span class="badge bg-success">Scheduled</span>
@@ -158,10 +158,10 @@
                                 <div class="border rounded p-3 mb-2">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h6 class="mb-1">{{ ucfirst(str_replace('_', ' ', $request->defense_type)) }} Defense</h6>
+                                            <h6 class="mb-1">{{ $request->defense_type_label ?? 'Defense Request' }}</h6>
                                             <small class="text-muted">
                                                 <i class="fas fa-clock me-1"></i>
-                                                Requested {{ $request->created_at->diffForHumans() }}
+                                                Requested {{ $request->created_at ? $request->created_at->diffForHumans() : 'Recently' }}
                                             </small>
                                         </div>
                                         <span class="badge bg-warning">Pending</span>
@@ -357,7 +357,7 @@
                                 @foreach($recentSubmissions->take(3) as $submission)
                                 <div class="list-group-item px-0">
                                     <h6 class="mb-1">{{ ucfirst($submission->type) }}</h6>
-                                    <small class="text-muted">{{ $submission->created_at->diffForHumans() }}</small>
+                                    <small class="text-muted">{{ $submission->created_at ? $submission->created_at->diffForHumans() : 'Recently' }}</small>
                                     <br>
                                     <span class="badge bg-{{ $submission->status === 'approved' ? 'success' : ($submission->status === 'rejected' ? 'danger' : 'warning') }}">
                                         {{ ucfirst($submission->status) }}
