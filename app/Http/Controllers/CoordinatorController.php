@@ -55,7 +55,7 @@ class CoordinatorController extends Controller
             ->take(5)
             ->get();
         $upcomingDeadlines = collect();
-        return view('coordinator.dashboard', compact(
+        return view('dashboards.coordinator', compact(
             'activeTerm',
             'notifications',
             'stats',

@@ -55,7 +55,7 @@ class CoordinatorDashboardController extends Controller
         }
         $coordinatedOfferings = $coordinatedOfferings ?? collect();
         $isTeacherCoordinator = $isTeacherCoordinator ?? false;
-        return view('coordinator.dashboard', compact(
+        return view('dashboards.coordinator', compact(
             'activeTerm',
             'studentCount',
             'groupCount',
