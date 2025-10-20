@@ -39,7 +39,7 @@ class ChairpersonDashboardController extends Controller
             'totalDefenses' => DefenseSchedule::count(),
             'completedDefenses' => DefenseSchedule::where('status', 'completed')->count(),
         ];
-        return view('chairperson.dashboard', compact(
+        return view('dashboards.chairperson', compact(
             'activeTerm',
             'upcomingDefenses',
             'notifications',

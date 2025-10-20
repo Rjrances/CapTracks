@@ -14,7 +14,7 @@ class ChairpersonController extends Controller
 {
     public function index()
     {
-        return view('chairperson.dashboard');
+        return view('dashboards.chairperson');
     }
     private function getActiveTerm()
     {
