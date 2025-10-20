@@ -36,7 +36,7 @@ class AssignUserRoles extends Command
                     $role = Role::where('name', $roleName)->first();
                     if ($role) {
                         $user->roles()->attach($role->id);
-                        $this->info("  ✓ Assigned role: {$roleName}");
+                        $this->info("  SUCCESS: Assigned role: {$roleName}");
                     }
                 }
             }
