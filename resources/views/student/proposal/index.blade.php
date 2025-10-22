@@ -90,7 +90,7 @@
                         @if($existingProposal->status === 'approved')
                             <div class="mb-3">
                                 <h6 class="text-success mb-2">
-                                    <i class="fas fa-check-circle me-2"></i>Step 1: Proposal Approved ✅
+                                    <i class="fas fa-check-circle me-2"></i>Step 1: Proposal Approved
                                 </h6>
                                 <small class="text-muted">Your project proposal has been approved by your adviser.</small>
                             </div>

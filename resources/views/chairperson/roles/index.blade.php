@@ -35,7 +35,6 @@
         </div>
     @endif
 
-    <!-- Role Assignment Section -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-gradient-primary text-white">
             <h5 class="mb-0">
@@ -233,7 +232,6 @@
         </div>
     </div>
     
-    <!-- Pagination -->
     @if($allUsers->hasPages())
         <div class="d-flex justify-content-center mt-4">
             <nav aria-label="Role pagination">
@@ -336,7 +334,6 @@
 .text-danger { color: #dc3545 !important; }
 .text-secondary { color: #6c757d !important; }
 
-/* Custom pagination styling */
 .pagination {
     margin-bottom: 0;
 }
@@ -361,7 +358,6 @@
     background-color: #fff;
     border-color: #dee2e6;
 }
-/* Ensure proper spacing */
 .pagination .page-item:not(:first-child) .page-link {
     margin-left: -1px;
 }
@@ -369,14 +365,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Add loading state to buttons
     document.querySelectorAll('.update-user-roles').forEach(button => {
         button.addEventListener('click', function() {
             const userId = this.dataset.userId;
             const userName = this.dataset.userName;
             const button = this;
-            
-            // Disable button and show loading
             button.disabled = true;
             const originalText = button.innerHTML;
             button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
@@ -411,10 +404,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update the current roles display with all currently checked roles
                     updateCurrentRolesDisplay(userId);
-                    
-                    // Show success message
+
                     showNotification('success', `Roles updated successfully for ${userName}`);
                 } else {
                     showNotification('error', 'Error updating roles: ' + data.message);
@@ -425,14 +416,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification('error', 'Error updating roles. Please try again.');
             })
             .finally(() => {
-                // Re-enable button
                 button.disabled = false;
                 button.innerHTML = originalText;
             });
         });
     });
-    
-    // Add visual feedback for checkboxes and update current roles display
     document.querySelectorAll('.role-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const label = this.nextElementSibling;
@@ -441,8 +429,6 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 label.classList.remove('text-primary');
             }
-            
-            // Update current roles display in real-time
             const userId = this.name.match(/roles\[(.*?)\]/)[1];
             updateCurrentRolesDisplay(userId);
         });
@@ -452,8 +438,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function updateCurrentRolesDisplay(userId) {
     const container = document.getElementById(`current-roles-${userId}`);
     if (!container) return;
-    
-    // Get all currently checked roles for this user
     const checkedRoles = [];
     const checkboxes = document.querySelectorAll(`input[name="roles[${userId}][]"]:checked`);
     checkboxes.forEach(checkbox => {
@@ -479,23 +463,16 @@ function updateCurrentRolesDisplay(userId) {
 }
 
 function showNotification(type, message) {
-    // Remove existing notifications
     const existingAlerts = document.querySelectorAll('.alert');
     existingAlerts.forEach(alert => alert.remove());
-    
-    // Create new notification
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
     alertDiv.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
-    
-    // Insert at the top of the container
     const container = document.querySelector('.container');
     container.insertBefore(alertDiv, container.firstChild);
-    
-    // Auto-dismiss after 5 seconds
     setTimeout(() => {
         if (alertDiv.parentNode) {
             alertDiv.remove();

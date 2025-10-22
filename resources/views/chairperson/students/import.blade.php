@@ -1,7 +1,6 @@
 @extends('layouts.chairperson')
 @section('content')
 <style>
-/* Import form styling */
 .btn-loading {
     display: inline-block;
 }
@@ -13,7 +12,6 @@
     font-size: 0.875rem;
     color: #6c757d;
 }
-/* Alert styling */
 .alert {
     border-radius: 0.5rem;
     border: none;
@@ -161,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('fileInput');
     fileInput.addEventListener('change', function() {
         const file = this.files[0];
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        const maxSize = 10 * 1024 * 1024; 
         if (file && file.size > maxSize) {
             alert('File size exceeds 10MB limit. Please choose a smaller file.');
             this.value = '';

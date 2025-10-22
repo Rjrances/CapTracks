@@ -131,14 +131,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-focus on appropriate field
     @if($isFirstTime)
         document.getElementById('new_password').focus();
     @else
         document.getElementById('current_password').focus();
     @endif
-    
-    // Password strength indicator (optional)
+
     const newPassword = document.getElementById('new_password');
     const confirmPassword = document.getElementById('new_password_confirmation');
     

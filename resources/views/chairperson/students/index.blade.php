@@ -252,7 +252,6 @@
     </div>
 </div>
 <style>
-/* Custom pagination styling */
 .pagination {
     margin-bottom: 0;
 }
@@ -277,11 +276,9 @@
     background-color: #fff;
     border-color: #dee2e6;
 }
-/* Ensure proper spacing */
 .pagination .page-item:not(:first-child) .page-link {
     margin-left: -1px;
 }
-/* Sortable header styling */
 .table-dark th a {
     transition: all 0.2s ease;
 }
@@ -292,7 +289,6 @@
 .table-dark th a:active {
     transform: scale(0.98);
 }
-/* Delete button styling */
 .btn-outline-danger:hover {
     background-color: #dc3545;
     border-color: #dc3545;
@@ -301,7 +297,6 @@
 .btn-outline-danger:active {
     transform: scale(0.95);
 }
-/* Checkbox styling */
 .form-check-input {
     cursor: pointer;
     transition: all 0.2s ease;
@@ -317,7 +312,6 @@
     cursor: pointer;
     user-select: none;
 }
-/* Bulk delete button styling */
 #deleteSelectedBtn {
     transition: all 0.2s ease;
 }

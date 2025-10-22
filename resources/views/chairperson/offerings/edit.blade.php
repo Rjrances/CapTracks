@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const subjectTitleSelect = document.getElementById('subject_title');
     const subjectCodeInput = document.getElementById('subject_code');
     
-    // Mapping of subject titles to subject codes
+
     const subjectCodeMapping = {
         'Capstone Project I': 'CS-CAP-401',
         'Capstone Project II': 'CS-CAP-402',
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'Thesis II': 'CS-THS-302'
     };
     
-    // Handle subject title change
+
     subjectTitleSelect.addEventListener('change', function() {
         const selectedTitle = this.value;
         
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Set initial value based on current offering data
+
     const initialTitle = subjectTitleSelect.value;
     if (initialTitle && subjectCodeMapping[initialTitle]) {
         subjectCodeInput.value = subjectCodeMapping[initialTitle];

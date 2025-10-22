@@ -27,7 +27,7 @@
                 <div class="flex justify-between items-center h-16">
                     <div class="flex items-center space-x-4">
                         <img src="{{ asset('images/Logo.png') }}" alt="CapTrack Logo" class="w-10 h-10" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                        <div class="text-2xl font-bold text-usjr-dark" style="display: none;">📊</div>
+                        <div class="text-2xl font-bold text-usjr-dark" style="display: none;"></div>
                         <div>
                                                     <h1 class="text-xl font-bold text-captrack-dark">CapTrack</h1>
                         <p class="text-xs text-gray-600">Capstone Project Management</p>
@@ -81,7 +81,7 @@
                     <div class="relative">
                         <div class="bg-white rounded-2xl p-8 shadow-2xl">
                             <img src="{{ asset('images/Logo.png') }}" alt="CapTrack Dashboard Preview" class="w-full h-64 object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                            <div class="w-full h-64 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-4xl font-bold" style="display: none;">📊</div>
+                            <div class="w-full h-64 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-4xl font-bold" style="display: none;"></div>
                             <p class="text-center text-black mt-4">CapTrack Dashboard Preview</p>
                         </div>
                     </div>
@@ -100,7 +100,7 @@
                     <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-2xl border border-blue-200">
                         <div class="flex items-center mb-6">
                             <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mr-4">
-                                <span class="text-2xl text-white">👨‍🎓</span>
+                                <span class="text-2xl text-white"></span>
                             </div>
                             <div>
                                 <h3 class="text-2xl font-bold text-captrack-dark">Students</h3>
@@ -133,7 +133,7 @@
                     <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl border border-green-200">
                         <div class="flex items-center mb-6">
                             <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mr-4">
-                                <span class="text-2xl text-white">👨‍🏫</span>
+                                <span class="text-2xl text-white"></span>
                             </div>
                             <div>
                                 <h3 class="text-2xl font-bold text-captrack-dark">Advisers</h3>
@@ -166,7 +166,7 @@
                     <div class="bg-gradient-to-br from-purple-50 to-violet-50 p-8 rounded-2xl border border-purple-200">
                         <div class="flex items-center mb-6">
                             <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mr-4">
-                                <span class="text-2xl text-white">👨‍💼</span>
+                                <span class="text-2xl text-white"></span>
                             </div>
                             <div>
                                 <h3 class="text-2xl font-bold text-captrack-dark">Coordinators</h3>
@@ -199,7 +199,7 @@
                     <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-8 rounded-2xl border border-orange-200">
                         <div class="flex items-center mb-6">
                             <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mr-4">
-                                <span class="text-2xl text-white">👨‍🎓</span>
+                                <span class="text-2xl text-white"></span>
                             </div>
                             <div>
                                 <h3 class="text-2xl font-bold text-captrack-dark">Chairperson</h3>
@@ -237,7 +237,7 @@
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
-                            <span class="text-2xl text-white">📋</span>
+                            <span class="text-2xl text-white"></span>
                         </div>
                         <h3 class="text-xl font-bold text-captrack-dark mb-4">Project Tracking</h3>
                         <p class="text-gray-600">
@@ -246,7 +246,7 @@
                     </div>
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
-                            <span class="text-2xl text-white">👥</span>
+                            <span class="text-2xl text-white"></span>
                         </div>
                         <h3 class="text-xl font-bold text-captrack-dark mb-4">Team Collaboration</h3>
                         <p class="text-gray-600">
@@ -255,7 +255,7 @@
                     </div>
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
-                            <span class="text-2xl text-white">📊</span>
+                            <span class="text-2xl text-white"></span>
                         </div>
                         <h3 class="text-xl font-bold text-captrack-dark mb-4">Progress Analytics</h3>
                         <p class="text-gray-600">
@@ -264,7 +264,7 @@
                     </div>
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
-                            <span class="text-2xl text-white">📅</span>
+                            <span class="text-2xl text-white"></span>
                         </div>
                         <h3 class="text-xl font-bold text-captrack-dark mb-4">Schedule Management</h3>
                         <p class="text-gray-600">
@@ -273,7 +273,7 @@
                     </div>
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
-                            <span class="text-2xl text-white">📁</span>
+                            <span class="text-2xl text-white"></span>
                         </div>
                         <h3 class="text-xl font-bold text-captrack-dark mb-4">Document Management</h3>
                         <p class="text-gray-600">
@@ -282,7 +282,7 @@
                     </div>
                     <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
                         <div class="w-16 h-16 bg-captrack-blue rounded-full flex items-center justify-center mb-6">
-                            <span class="text-2xl text-white">🔔</span>
+                            <span class="text-2xl text-white"></span>
                         </div>
                         <h3 class="text-xl font-bold text-captrack-dark mb-4">Smart Notifications</h3>
                         <p class="text-gray-600">
@@ -366,7 +366,7 @@
                     <div class="md:col-span-2">
                         <div class="flex items-center space-x-4 mb-4">
                             <img src="{{ asset('images/Logo.png') }}" alt="CapTrack Logo" class="w-10 h-10" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                            <div class="text-2xl font-bold" style="display: none;">📊</div>
+                            <div class="text-2xl font-bold" style="display: none;"></div>
                             <h3 class="text-xl font-bold">CapTrack</h3>
                         </div>
                         <p class="text-gray-400 mb-4">

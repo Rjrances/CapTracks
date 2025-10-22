@@ -68,7 +68,6 @@
                     @endforeach
                 </div>
 
-                <!-- Pagination -->
                 <div class="d-flex justify-content-center mt-4">
                     {{ $notifications->links() }}
                 </div>
@@ -86,15 +85,12 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Mark single notification as read
     document.querySelectorAll('.mark-read-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const notificationId = this.dataset.notificationId;
             markNotificationAsRead(notificationId);
         });
     });
-
-    // Mark all notifications as read
     const markAllReadBtn = document.getElementById('markAllReadBtn');
     if (markAllReadBtn) {
         markAllReadBtn.addEventListener('click', function() {
@@ -102,7 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Delete notification
     document.querySelectorAll('.delete-notification-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             if (confirm('Are you sure you want to delete this notification?')) {
@@ -170,8 +165,7 @@ function deleteNotification(notificationId) {
             const notificationItem = document.querySelector(`[data-notification-id="${notificationId}"]`);
             notificationItem.remove();
             showAlert('Notification deleted', 'success');
-            
-            // Check if there are no more notifications
+
             if (document.querySelectorAll('.notification-item').length === 0) {
                 setTimeout(() => location.reload(), 1000);
             }

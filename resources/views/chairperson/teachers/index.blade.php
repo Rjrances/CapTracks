@@ -206,7 +206,6 @@
 </div>
 
 <style>
-/* Custom pagination styling */
 .pagination {
     margin-bottom: 0;
 }
@@ -231,7 +230,6 @@
     background-color: #fff;
     border-color: #dee2e6;
 }
-/* Ensure proper spacing */
 .pagination .page-item:not(:first-child) .page-link {
     margin-left: -1px;
 }
