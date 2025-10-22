@@ -134,10 +134,10 @@
                                     <select name="status" id="status" class="form-select" required>
                                         <option value="">Select Decision</option>
                                         <option value="approved" {{ $proposal->status === 'approved' ? 'selected' : '' }}>
-                                            ✅ Approve Proposal
+                                            Approve Proposal
                                         </option>
                                         <option value="rejected" {{ $proposal->status === 'rejected' ? 'selected' : '' }}>
-                                            ❌ Reject Proposal
+                                            Reject Proposal
                                         </option>
                                     </select>
                                 </div>
@@ -211,7 +211,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusSelect = document.getElementById('status');
     const commentTextarea = document.getElementById('teacher_comment');
     
-    // Update button text based on selection
     statusSelect.addEventListener('change', function() {
         const submitButton = document.querySelector('button[type="submit"]');
         if (this.value === 'approved') {
@@ -226,7 +225,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Character count for comments
     commentTextarea.addEventListener('input', function() {
         const length = this.value.length;
         const minLength = 10;
@@ -241,7 +239,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Initial check
     commentTextarea.dispatchEvent(new Event('input'));
 });
 </script>

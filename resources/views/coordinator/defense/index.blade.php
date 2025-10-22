@@ -31,7 +31,6 @@
                 </div>
             @endif
 
-            <!-- Quick Stats Cards -->
             <div class="row mb-4">
                 <div class="col-md-3">
                     <div class="card bg-warning text-white">
@@ -95,7 +94,6 @@
                 </div>
             </div>
 
-            <!-- Filters -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h6 class="mb-0">
@@ -145,7 +143,6 @@
                 </div>
             </div>
 
-            <!-- Defense Requests Section -->
             @if($defenseRequests->count() > 0)
                 <div class="card mb-4">
                     <div class="card-header">
@@ -258,7 +255,6 @@
                 </div>
             @endif
 
-            <!-- Defense Schedules Section -->
             <div class="card">
                 <div class="card-header">
                     <h6 class="mb-0">
@@ -346,7 +342,6 @@
     </div>
 </div>
 
-<!-- Reject Request Modal -->
 <div class="modal fade" id="rejectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">

@@ -111,7 +111,6 @@
 @endsection
 @push('styles')
 <style>
-/* Google Calendar-inspired Design */
 .calendar-container {
     background: white;
     border-radius: 12px;
@@ -270,7 +269,6 @@
 .calendar-event.pending:hover {
     background: #80868b;
 }
-/* Responsive Design */
 @media (max-width: 768px) {
     .calendar-header {
         flex-direction: column;
@@ -308,7 +306,6 @@
         height: 32px;
     }
 }
-/* Animation for calendar events */
 @keyframes fadeInUp {
     from {
         opacity: 0;

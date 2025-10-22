@@ -234,14 +234,14 @@
             <div class="card-body">
                 <div class="row align-items-center mb-3">
                     <div class="col-md-8">
-                        <h6 class="mb-1">📋 Proposal Defense</h6>
+                        <h6 class="mb-1">Proposal Defense</h6>
                         <small class="text-muted">
                             @if($group->defenseRequests->where('defense_type', 'proposal')->where('status', 'scheduled')->first())
-                                ✅ Scheduled • Ready to proceed
+                                 Scheduled • Ready to proceed
                             @elseif($group->defenseRequests->where('defense_type', 'proposal')->where('status', 'pending')->first())
-                                ⏳ Request pending • Waiting for coordinator response
+                                 Request pending • Waiting for coordinator response
                             @else
-                                🟢 Ready to request • All requirements met
+                                 Ready to request • All requirements met
                             @endif
                         </small>
                     </div>
@@ -263,16 +263,16 @@
                 </div>
                 <div class="row align-items-center mb-3">
                     <div class="col-md-8">
-                        <h6 class="mb-1">📈 60% Progress Defense</h6>
+                        <h6 class="mb-1">60% Progress Defense</h6>
                         <small class="text-muted">
                             @if($group->defenseRequests->where('defense_type', '60_percent')->where('status', 'scheduled')->first())
-                                ✅ Scheduled • Ready to proceed
+                                 Scheduled • Ready to proceed
                             @elseif($group->defenseRequests->where('defense_type', '60_percent')->where('status', 'pending')->first())
-                                ⏳ Request pending • Waiting for coordinator response
+                                 Request pending • Waiting for coordinator response
                             @elseif($group->overall_progress_percentage < 60)
-                                🔴 Not ready • Progress: {{ $group->overall_progress_percentage }}%
+                                 Not ready • Progress: {{ $group->overall_progress_percentage }}%
                             @else
-                                🟢 Ready to request • Progress: {{ $group->overall_progress_percentage }}%
+                                 Ready to request • Progress: {{ $group->overall_progress_percentage }}%
                             @endif
                         </small>
                     </div>
@@ -298,16 +298,16 @@
                 </div>
                 <div class="row align-items-center">
                     <div class="col-md-8">
-                        <h6 class="mb-1">🏆 100% Final Defense</h6>
+                        <h6 class="mb-1">100% Final Defense</h6>
                         <small class="text-muted">
                             @if($group->defenseRequests->where('defense_type', '100_percent')->where('status', 'scheduled')->first())
-                                ✅ Scheduled • Ready to proceed
+                                 Scheduled • Ready to proceed
                             @elseif($group->defenseRequests->where('defense_type', '100_percent')->where('status', 'pending')->first())
-                                ⏳ Request pending • Waiting for coordinator response
+                                 Request pending • Waiting for coordinator response
                             @elseif($group->overall_progress_percentage < 100)
-                                🔴 Not ready • Progress: {{ $group->overall_progress_percentage }}%
+                                 Not ready • Progress: {{ $group->overall_progress_percentage }}%
                             @else
-                                🟢 Ready to request • Progress: {{ $group->overall_progress_percentage }}%
+                                 Ready to request • Progress: {{ $group->overall_progress_percentage }}%
                             @endif
                         </small>
                     </div>
@@ -467,13 +467,12 @@
 <script>
 function requestDefense(defenseType) {
     const defenseTypeLabels = {
-        'proposal': '📋 Proposal Defense',
-        '60_percent': '📈 60% Progress Defense',
-        '100_percent': '🏆 100% Final Defense'
+        'proposal': 'Proposal Defense',
+        '60_percent': '60% Progress Defense',
+        '100_percent': '100% Final Defense'
     };
     document.getElementById('defense_type_display').textContent = defenseTypeLabels[defenseType];
     
-    // Update the redirect link to include the defense type
     const redirectLink = document.getElementById('defense_request_redirect');
     redirectLink.href = "{{ route('student.defense-requests.create') }}?defense_type=" + defenseType;
     
@@ -497,7 +496,6 @@ function filterStudents() {
         }
     }
     
-    // Reset selection if current selection is hidden
     if (select.value && select.selectedOptions[0].style.display === 'none') {
         select.value = '';
     }

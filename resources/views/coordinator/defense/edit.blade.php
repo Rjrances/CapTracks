@@ -205,18 +205,13 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let panelCount = {{ $defenseSchedule->defensePanels->where('role', 'member')->count() }};
-    // Initialize faculty options for existing panel members
     function initializeFacultyOptions() {
         const facultySelects = document.querySelectorAll('.faculty-select');
         facultySelects.forEach(select => {
-            // Faculty options should already be populated by Blade template
         });
     }
     
-    // Initialize on page load
     initializeFacultyOptions();
-    // Faculty options are pre-populated by Blade template
-    // No need for dynamic loading since we have all the data
     document.getElementById('add-panel-member').addEventListener('click', function() {
         const panelMembersContainer = document.getElementById('panel-members-container');
         const newPanelRow = document.createElement('div');

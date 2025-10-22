@@ -178,7 +178,6 @@
     </div>
 </div>
 <script>
-// Store original options for both dropdowns
 const originalMember1Options = Array.from(document.getElementById('member1').options);
 const originalMember2Options = Array.from(document.getElementById('member2').options);
 
@@ -187,20 +186,16 @@ function filterStudents() {
     const member1Select = document.getElementById('member1');
     const member2Select = document.getElementById('member2');
     
-    // Filter member1 options
     filterSelectOptions(member1Select, originalMember1Options, searchTerm);
     
-    // Filter member2 options
     filterSelectOptions(member2Select, originalMember2Options, searchTerm);
 }
 
 function filterSelectOptions(selectElement, originalOptions, searchTerm) {
-    // Clear current options except the first empty one
     selectElement.innerHTML = '<option value="">Select a student...</option>';
     
-    // Add filtered options
     originalOptions.forEach(option => {
-        if (option.value === '') return; // Skip the empty option
+        if (option.value === '') return;
         
         const studentName = option.getAttribute('data-name') || '';
         if (studentName.includes(searchTerm)) {
@@ -208,7 +203,6 @@ function filterSelectOptions(selectElement, originalOptions, searchTerm) {
         }
     });
     
-    // Reset selection if current selection is hidden
     if (selectElement.value && !Array.from(selectElement.options).some(opt => opt.value === selectElement.value)) {
         selectElement.value = '';
     }
@@ -219,18 +213,15 @@ function updateMember2Options() {
     const member2Select = document.getElementById('member2');
     const selectedMember1 = member1Select.value;
     
-    // Clear member2 options
     member2Select.innerHTML = '<option value="">Select a student...</option>';
     
-    // Add all original options except the selected member1
     originalMember2Options.forEach(option => {
-        if (option.value === '') return; // Skip the empty option
+        if (option.value === '') return;
         if (option.value !== selectedMember1) {
             member2Select.appendChild(option.cloneNode(true));
         }
     });
     
-    // Reset member2 selection if it was the same as member1
     if (member2Select.value === selectedMember1) {
         member2Select.value = '';
     }
@@ -250,11 +241,9 @@ function updateSelectionCount() {
     countSpan.textContent = count;
 }
 
-// Initialize selection count
 document.addEventListener('DOMContentLoaded', function() {
     updateSelectionCount();
     
-    // Add change listeners
     document.getElementById('member1').addEventListener('change', updateMember2Options);
     document.getElementById('member2').addEventListener('change', updateSelectionCount);
 });
