@@ -233,8 +233,8 @@
                                 <div class="list-group-item">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="flex-grow-1">
-                                            <h6 class="mb-1">{{ $groupMilestone->milestoneTemplate->name }}</h6>
-                                            <p class="text-muted mb-2">{{ Str::limit($groupMilestone->milestoneTemplate->description ?? '', 100) }}</p>
+                                            <h6 class="mb-1">{{ $groupMilestone->title ?? $groupMilestone->milestoneTemplate->name }}</h6>
+                                            <p class="text-muted mb-2">{{ Str::limit($groupMilestone->description ?? $groupMilestone->milestoneTemplate->description ?? '', 100) }}</p>
                                             <div class="progress" style="height: 15px;">
                                                 <div class="progress-bar {{ $groupMilestone->progress_percentage >= 80 ? 'bg-success' : ($groupMilestone->progress_percentage >= 50 ? 'bg-warning' : 'bg-danger') }}" 
                                                      role="progressbar" 

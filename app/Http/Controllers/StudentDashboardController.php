@@ -25,6 +25,12 @@ class StudentDashboardController extends Controller
                 return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
             }
         }
+
+        // Check if student exists
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Student record not found. Please contact administrator.']);
+        }
+
         $group = $student->groups()->with(['adviser', 'adviserInvitations.faculty', 'defenseRequests', 'defenseSchedules', 'offering.teacher'])->first();
         $overallProgress = $this->calculateOverallProgress($student, $group);
         $taskStats = $this->getTaskStatistics($student, $group);

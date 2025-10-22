@@ -4,7 +4,7 @@
 <div class="container-fluid mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h2 mb-1">{{ $groupMilestone->milestoneTemplate->name }}</h1>
+            <h1 class="h2 mb-1">{{ $groupMilestone->title ?? $groupMilestone->milestoneTemplate->name }}</h1>
             <p class="text-muted mb-0">Kanban board for milestone tasks</p>
         </div>
         <div class="d-flex gap-2">
@@ -32,7 +32,7 @@
                     <h5 class="mb-0">
                         <i class="fas fa-flag me-2"></i>Milestone Information
                     </h5>
-                    <small>{{ $groupMilestone->milestoneTemplate->description ?? 'No description provided' }}</small>
+                    <small>{{ $groupMilestone->description ?? $groupMilestone->milestoneTemplate->description ?? 'No description provided' }}</small>
                 </div>
                 <div class="col-md-4 text-end">
                     <div class="d-flex align-items-center justify-content-end">
