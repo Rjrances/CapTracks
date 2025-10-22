@@ -8,9 +8,12 @@ class GroupMilestone extends Model
     protected $fillable = [
         'group_id',
         'milestone_template_id',
+        'title',
+        'description',
         'progress_percentage',
         'start_date',
         'target_date',
+        'due_date',
         'completed_date',
         'status',
         'notes'
@@ -18,6 +21,7 @@ class GroupMilestone extends Model
     protected $casts = [
         'start_date' => 'date',
         'target_date' => 'date',
+        'due_date' => 'date',
         'completed_date' => 'date',
         'progress_percentage' => 'integer'
     ];

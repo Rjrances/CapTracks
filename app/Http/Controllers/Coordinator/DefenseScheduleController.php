@@ -462,14 +462,18 @@ class DefenseScheduleController extends Controller
         $request->validate([
             'coordinator_notes' => 'required|string|max:1000',
         ]);
-        if (!$defenseRequest->isPending()) {
+        
+        // Can reject if pending or approved (but not yet scheduled)
+        if ($defenseRequest->isScheduled() || $defenseRequest->isRejected()) {
             return back()->with('error', 'This defense request cannot be rejected.');
         }
+        
         $defenseRequest->update([
             'status' => 'rejected',
             'coordinator_notes' => $request->coordinator_notes,
             'responded_at' => now(),
         ]);
+        
         return back()->with('success', 'Defense request rejected successfully!');
     }
 

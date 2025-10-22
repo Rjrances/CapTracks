@@ -1,8 +1,8 @@
 @extends('layouts.coordinator')
 @section('title', 'Milestones - Coordinator Dashboard')
 @section('content')
-<div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
-    <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
+<div class="container-fluid">
+    <div class="bg-white rounded-4 shadow-sm pt-3 px-4 pb-5">
         <div class="row">
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -113,7 +113,7 @@
             </div>
         </div>
         <div class="row mb-4">
-            <div class="col-md-8">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
@@ -126,79 +126,89 @@
                     <div class="card-body">
                         @if($groups->count() > 0)
                             <div class="table-responsive">
-                                <table class="table table-hover">
+                                <table class="table table-hover align-middle">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Group</th>
-                                            <th>Members</th>
-                                            <th>Adviser</th>
-                                            <th>Assigned Milestones</th>
-                                            <th>Progress</th>
-                                            <th>Actions</th>
+                                            <th style="width: 20%;">Group</th>
+                                            <th style="width: 20%;">Members</th>
+                                            <th style="width: 15%;">Adviser</th>
+                                            <th style="width: 25%;">Assigned Milestones</th>
+                                            <th style="width: 10%;">Progress</th>
+                                            <th style="width: 10%;">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach($groups as $group)
                                             <tr>
                                                 <td>
-                                                    <div class="fw-semibold">{{ $group->name }}</div>
-                                                    <small class="text-muted">{{ Str::limit($group->description, 50) ?? 'No description' }}</small>
+                                                    <div class="fw-semibold text-truncate" style="max-width: 200px;" title="{{ $group->name }}">
+                                                        {{ $group->name }}
+                                                    </div>
+                                                    <small class="text-muted d-block text-truncate" style="max-width: 200px;" title="{{ $group->description }}">
+                                                        {{ $group->description ?? 'No description' }}
+                                                    </small>
                                                 </td>
                                                 <td>
                                                     @if($group->members->count() > 0)
-                                                        @foreach($group->members->take(3) as $member)
-                                                            <span class="badge bg-light text-dark me-1">
-                                                                {{ $member->name }}
-                                                            </span>
-                                                        @endforeach
-                                                        @if($group->members->count() > 3)
-                                                            <span class="badge bg-secondary">+{{ $group->members->count() - 3 }} more</span>
-                                                        @endif
+                                                        <div class="d-flex flex-column gap-1">
+                                                            @foreach($group->members->take(2) as $member)
+                                                                <span class="text-truncate" style="max-width: 150px;" title="{{ $member->name }}">
+                                                                    {{ $member->name }}
+                                                                </span>
+                                                            @endforeach
+                                                            @if($group->members->count() > 2)
+                                                                <small class="text-muted">+{{ $group->members->count() - 2 }} more</small>
+                                                            @endif
+                                                        </div>
                                                     @else
                                                         <span class="text-muted">No members</span>
                                                     @endif
                                                 </td>
                                                 <td>
                                                     @if($group->adviser)
-                                                        <span class="badge bg-primary">{{ $group->adviser->name }}</span>
+                                                        <span class="badge bg-primary text-truncate d-inline-block" style="max-width: 150px;" title="{{ $group->adviser->name }}">
+                                                            {{ $group->adviser->name }}
+                                                        </span>
                                                     @else
                                                         <span class="badge bg-warning">No adviser</span>
                                                     @endif
                                                 </td>
                                                 <td>
                                                     @if($group->milestones->count() > 0)
-                                                        @foreach($group->milestones as $milestone)
-                                                            <div class="mb-1">
-                                                                <span class="badge bg-info me-1">
-                                                                    {{ $milestone->template ? $milestone->template->name : 'Unknown Template' }}
-                                                                </span>
-                                                                <small class="text-muted">
-                                                                    Due: {{ $milestone->target_date ? \Carbon\Carbon::parse($milestone->target_date)->format('M d, Y') : 'Not set' }}
-                                                                </small>
-                                                            </div>
-                                                        @endforeach
+                                                        <div class="d-flex flex-column gap-1">
+                                                            @foreach($group->milestones as $milestone)
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <span class="badge bg-info text-truncate" style="max-width: 180px;" title="{{ $milestone->template ? $milestone->template->name : 'Unknown Template' }}">
+                                                                        {{ $milestone->template ? $milestone->template->name : 'Unknown' }}
+                                                                    </span>
+                                                                    <small class="text-muted text-nowrap">
+                                                                        Due: {{ $milestone->target_date ? \Carbon\Carbon::parse($milestone->target_date)->format('M d') : 'Not set' }}
+                                                                    </small>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
                                                     @else
                                                         <span class="text-muted">No milestones assigned</span>
                                                     @endif
                                                 </td>
                                                 <td>
                                                     @if($group->overall_progress_percentage !== null)
-                                                        <div class="progress" style="height: 20px;">
+                                                        <div class="progress" style="height: 20px; min-width: 60px;">
                                                             <div class="progress-bar" role="progressbar" 
                                                                  style="width: {{ $group->overall_progress_percentage }}%"
                                                                  aria-valuenow="{{ $group->overall_progress_percentage }}" 
                                                                  aria-valuemin="0" aria-valuemax="100">
-                                                                {{ $group->overall_progress_percentage }}%
+                                                                <small>{{ $group->overall_progress_percentage }}%</small>
                                                             </div>
                                                         </div>
                                                     @else
-                                                        <span class="text-muted">No progress data</span>
+                                                        <span class="text-muted">-</span>
                                                     @endif
                                                 </td>
                                                 <td>
                                                     <a href="{{ route('coordinator.groups.milestones', $group->id) }}" 
-                                                       class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-eye me-1"></i>View Details
+                                                       class="btn btn-sm btn-outline-primary text-nowrap">
+                                                        <i class="fas fa-eye"></i> Details
                                                     </a>
                                                 </td>
                                             </tr>
@@ -215,7 +225,10 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -224,21 +237,24 @@
                     </div>
                     <div class="card-body">
                         <div class="row text-center">
-                            <div class="col-6">
-                                <div class="border-end">
-                                    <h4 class="text-primary mb-0">{{ $milestoneTemplates->count() }}</h4>
-                                    <small class="text-muted">Templates</small>
+                            <div class="col-md-4">
+                                <div class="p-3">
+                                    <h2 class="text-primary mb-1">{{ $milestoneTemplates->count() }}</h2>
+                                    <p class="text-muted mb-0">Total Templates</p>
                                 </div>
                             </div>
-                            <div class="col-6">
-                                <h4 class="text-success mb-0">{{ $groups->filter(function($group) { return $group->milestones->count() > 0; })->count() }}</h4>
-                                <small class="text-muted">Groups with Milestones</small>
+                            <div class="col-md-4 border-start border-end">
+                                <div class="p-3">
+                                    <h2 class="text-success mb-1">{{ $groups->filter(function($group) { return $group->milestones->count() > 0; })->count() }}</h2>
+                                    <p class="text-muted mb-0">Groups with Milestones</p>
+                                </div>
                             </div>
-                        </div>
-                        <hr>
-                        <div class="text-center">
-                            <h6 class="text-muted">Total Milestone Assignments</h6>
-                            <h3 class="text-info">{{ $groups->sum(function($group) { return $group->milestones->count(); }) }}</h3>
+                            <div class="col-md-4">
+                                <div class="p-3">
+                                    <h2 class="text-info mb-1">{{ $groups->sum(function($group) { return $group->milestones->count(); }) }}</h2>
+                                    <p class="text-muted mb-0">Total Milestone Assignments</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
