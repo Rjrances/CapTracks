@@ -129,93 +129,8 @@
         </div>
     </div>
     <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-gradient-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-gavel me-2"></i>Upcoming Defense Schedules
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    @if($upcomingDefenses->count() > 0)
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="border-0">
-                                            <i class="fas fa-users me-2"></i>Group
-                                        </th>
-                                        <th class="border-0">
-                                            <i class="fas fa-layer-group me-2"></i>Stage
-                                        </th>
-                                        <th class="border-0">
-                                            <i class="fas fa-calendar-alt me-2"></i>Date & Time
-                                        </th>
-                                        <th class="border-0">
-                                            <i class="fas fa-door-open me-2"></i>Room
-                                        </th>
-                                        <th class="border-0">
-                                            <i class="fas fa-info-circle me-2"></i>Status
-                                        </th>
-                                        <th class="border-0">
-                                            <i class="fas fa-tools me-2"></i>Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($upcomingDefenses as $defense)
-                                        <tr>
-                                            <td>
-                                                <div class="fw-semibold">{{ $defense->group->name ?? 'N/A' }}</div>
-                                                <small class="text-muted">
-                                                    {{ $defense->group->members->count() ?? 0 }} members
-                                                    @if($defense->group->adviser)
-                                                        • {{ $defense->group->adviser->name }}
-                                                    @endif
-                                                </small>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-{{ $defense->stage == '60' ? 'warning' : ($defense->stage == '100' ? 'danger' : 'info') }}">
-                                                    {{ $defense->stage_label }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="fw-semibold">{{ $defense->start_at ? $defense->start_at->format('M d, Y') : 'TBA' }}</div>
-                                                <small class="text-muted">
-                                                    {{ $defense->start_at ? $defense->start_at->format('h:i A') : 'TBA' }}
-                                                </small>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-info">{{ $defense->room }}</span>
-                                            </td>
-                                            <td>
-                                                @if($defense->status == 'scheduled')
-                                                    <span class="badge bg-primary">Scheduled</span>
-                                                @elseif($defense->status == 'completed')
-                                                    <span class="badge bg-success">Completed</span>
-                                                @else
-                                                    <span class="badge bg-secondary">Cancelled</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <div class="text-center py-4">
-                            <i class="fas fa-gavel fa-3x text-muted mb-3"></i>
-                            <h6 class="text-muted">No upcoming defense schedules</h6>
-                            <p class="text-muted small">Defense schedules for the next 30 days will appear here.</p>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card mb-3 shadow-sm border-0">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-gradient-info text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
@@ -250,7 +165,9 @@
                     @endif
                 </div>
             </div>
-            <div class="card shadow-sm border-0">
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-gradient-success text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-bolt me-2"></i>Quick Actions

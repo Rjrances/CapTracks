@@ -64,7 +64,7 @@ class TaskSubmissionController extends Controller
             ProjectSubmission::create([
                 'student_id' => $student->student_id,
                 'file_path' => $filePath,
-                'type' => 'other', // Task submissions are categorized as 'other'
+                'type' => 'other',
                 'status' => 'pending',
                 'submitted_at' => now(),
                 'title' => $task->milestoneTask->name ?? 'Task Submission',

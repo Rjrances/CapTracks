@@ -47,7 +47,6 @@ class Student extends Model
     }
     public function enrollInOffering(Offering $offering)
     {
-        // Check if already enrolled to avoid duplicates
         if (!$this->offerings()->where('offering_id', $offering->id)->exists()) {
             $this->offerings()->attach($offering->id, ['enrolled_at' => now()]);
         }
@@ -67,7 +66,6 @@ class Student extends Model
         if ($this->offer_code) {
             $offering = Offering::where('offer_code', $this->offer_code)->first();
             if ($offering) {
-                // Check if already enrolled to avoid duplicates
                 if (!$this->offerings()->where('offering_id', $offering->id)->exists()) {
                     $this->offerings()->attach($offering->id, ['enrolled_at' => now()]);
                 }
@@ -76,7 +74,6 @@ class Student extends Model
         }
         return null;
     }
-    // Set primary key
     protected $primaryKey = 'student_id';
     public $incrementing = false;
     protected $keyType = 'string';

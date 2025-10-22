@@ -83,11 +83,6 @@
                                                            title="Edit Template">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
-                                                        <a href="{{ route('coordinator.milestones.tasks.index', $template->id) }}" 
-                                                           class="btn btn-sm btn-outline-info" 
-                                                           title="Manage Tasks">
-                                                            <i class="fas fa-tasks"></i>
-                                                        </a>
                                                         <form action="{{ route('coordinator.milestones.destroy', $template->id) }}" 
                                                               method="POST" 
                                                               class="d-inline"

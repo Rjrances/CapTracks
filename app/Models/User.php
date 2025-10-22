@@ -10,12 +10,11 @@ class User extends Authenticatable
         'name',
         'email',
         'birthday',
-        'department',     // Department instead of course
-        'role',           // Role instead of position
-        'semester',       // Semester when faculty was uploaded
+        'department',
+        'role',
+        'semester',
     ];
 
-    // Set primary key
     protected $primaryKey = 'id';
     public $incrementing = true;
     protected $keyType = 'int';
@@ -27,7 +26,6 @@ class User extends Authenticatable
         'birthday' => 'date',
     ];
 
-    // Authentication methods
     public function getAuthPassword()
     {
         return $this->account ? $this->account->password : null;
@@ -118,7 +116,7 @@ class User extends Authenticatable
     }
     public function isStudent(): bool
     {
-        return false; // Students are in separate table
+        return false;
     }
     public function getPrimaryRoleAttribute()
     {
@@ -137,7 +135,7 @@ class User extends Authenticatable
             return true;
         }
         
-        return false; // No change needed
+        return false;
     }
     public function getRoleDisplayNameAttribute()
     {
@@ -181,10 +179,8 @@ class User extends Authenticatable
             $roles = [$roles];
         }
         
-        // Clear existing roles
         $this->roles()->detach();
         
-        // Assign new roles
         foreach ($roles as $role) {
             $roleModel = Role::where('name', $role)->first();
             if ($roleModel) {
@@ -192,7 +188,6 @@ class User extends Authenticatable
             }
         }
         
-        // Update primary role to the first assigned role
         if (!empty($roles)) {
             $this->update(['role' => $roles[0]]);
         }

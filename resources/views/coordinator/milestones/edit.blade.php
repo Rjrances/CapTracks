@@ -8,7 +8,7 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <h1 class="h3 mb-1">Edit Milestone Template</h1>
-                        <p class="text-muted mb-0">Update milestone template details and manage tasks</p>
+                        <p class="text-muted mb-0">Update milestone template details</p>
                     </div>
                     <div class="d-flex gap-2">
                         <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-outline-secondary">

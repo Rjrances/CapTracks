@@ -24,13 +24,11 @@ class FacultyAccount extends Authenticatable
         'password' => 'hashed',
     ];
 
-    // Relationships
     public function user()
     {
         return $this->belongsTo(User::class, 'faculty_id', 'faculty_id');
     }
 
-    // Authentication methods
     public function getAuthIdentifierName()
     {
         return 'email';
@@ -41,10 +39,9 @@ class FacultyAccount extends Authenticatable
         return $this->password;
     }
 
-    // Helper methods
     public function isFaculty()
     {
-        return true; // This is always a faculty account
+        return true;
     }
 
     public function getAssociatedUser()

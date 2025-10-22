@@ -16,7 +16,7 @@ class CoordinatorProposalController extends Controller
     {
         $user = Auth::user();
         
-        // Get all Capstone offerings coordinated by this user
+        //offerings by coordinator-user
         $coordinatedOfferings = Offering::where('faculty_id', $user->faculty_id)
             ->where(function($query) {
                 $query->whereIn('subject_title', ['Capstone Project I', 'Capstone Project II'])
@@ -28,7 +28,7 @@ class CoordinatorProposalController extends Controller
         $proposalsByOffering = [];
         
         foreach ($coordinatedOfferings as $offering) {
-            // Get all groups for this offering
+            //all groups
             $groups = $offering->groups;
             
             $allProposals = collect();
@@ -65,7 +65,7 @@ class CoordinatorProposalController extends Controller
             return redirect()->route('coordinator.proposals.index')->with('error', 'Student not found.');
         }
         
-        // Check if this proposal is from a group in one of the coordinator's offerings
+        //proposal checker
         $studentGroup = $student->groups()->first();
         if (!$studentGroup) {
             return redirect()->route('coordinator.proposals.index')->with('error', 'Student is not in any group.');
@@ -79,7 +79,7 @@ class CoordinatorProposalController extends Controller
         return view('coordinator.proposals.show', compact('proposal', 'studentGroup', 'offering'));
     }
     
-    public function edit($id)
+    public function review($id)
     {
         $user = Auth::user();
         $proposal = ProjectSubmission::findOrFail($id);
@@ -99,7 +99,7 @@ class CoordinatorProposalController extends Controller
             return redirect()->route('coordinator.proposals.index')->with('error', 'You can only review proposals from your coordinated offerings.');
         }
         
-        return view('coordinator.proposals.edit', compact('proposal', 'studentGroup', 'offering'));
+        return view('coordinator.proposals.review', compact('proposal', 'studentGroup', 'offering'));
     }
     
     public function update(Request $request, $id)

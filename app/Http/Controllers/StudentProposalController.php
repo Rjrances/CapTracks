@@ -169,7 +169,7 @@ class StudentProposalController extends Controller
             $path = $request->file('file')->store('proposals', 'public');
             $proposal->update([
                 'file_path' => $path,
-                'status' => 'pending', // Reset status for review
+                'status' => 'pending',
                 'submitted_at' => now(),
             ]);
         }

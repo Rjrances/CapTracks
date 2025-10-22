@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\Student;
 class RoleController extends Controller
 {
     public function index(Request $request)
@@ -10,7 +9,7 @@ class RoleController extends Controller
         $sortBy = $request->get('sort', 'faculty_id');
         $sortDirection = $request->get('direction', 'asc');
         
-        // Get active term for filtering
+        //get active term
         $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
         
         $roles = [
@@ -46,7 +45,7 @@ class RoleController extends Controller
             ]
         ];
         
-        // Get users with their roles for role assignment table
+        //get user roles
         $allUsers = User::with('roles')
             ->select('id', 'name', 'email', 'faculty_id', 'department', 'role')
             ->when($activeTerm, function($query) use ($activeTerm) {
@@ -55,15 +54,14 @@ class RoleController extends Controller
             ->orderBy($sortBy, $sortDirection)
             ->paginate(20);
             
-        // Count users by role for active semester (excluding students)
+        //faculty count
         foreach ($roles as $roleKey => &$role) {
             if ($roleKey === 'student') {
-                // Skip student count - only show faculty roles
                 $role['user_count'] = 0;
                 continue;
             }
             
-            // Count faculty with this role for active semester
+            //faculty count sem
             $query = User::whereIn('role', ['chairperson', 'coordinator', 'adviser', 'panelist', 'teacher']);
             
             if ($activeTerm) {
@@ -83,17 +81,17 @@ class RoleController extends Controller
         ]);
         
         try {
-            // Get active term for filtering
+            //filter term
             $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
             
-            // Find user by faculty_id and active semester
+            //faculty_id for sem
             $user = User::where('faculty_id', $faculty_id)
                 ->when($activeTerm, function($query) use ($activeTerm) {
                     return $query->where('semester', $activeTerm->semester);
                 })
                 ->firstOrFail();
             
-            // Use the new assignRoles method
+            
             $user->assignRoles($request->roles);
             
             if ($request->ajax()) {

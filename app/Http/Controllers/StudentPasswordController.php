@@ -9,9 +9,6 @@ use Illuminate\Support\Facades\Validator;
 
 class StudentPasswordController extends Controller
 {
-    /**
-     * Show the password change form
-     */
     public function showChangePasswordForm()
     {
         $student = Auth::guard('student')->user();
@@ -21,23 +18,19 @@ class StudentPasswordController extends Controller
                 ->with('info', 'Your password is already up to date.');
         }
         
-        // Check if this is a first-time user (no password set)
+        //first-time validaiton
         $isFirstTime = is_null($student->password);
         
         return view('student.change-password', compact('isFirstTime'));
     }
     
-    /**
-     * Update the student's password
-     */
     public function updatePassword(Request $request)
     {
         $student = Auth::guard('student')->user();
         
-        // Check if this is a first-time user (no password set)
+        //no password
         $isFirstTime = is_null($student->password);
         
-        // Set up validation rules based on whether it's first time or not
         $rules = [
             'new_password' => 'required|min:8|confirmed',
             'new_password_confirmation' => 'required',
@@ -50,13 +43,11 @@ class StudentPasswordController extends Controller
             'new_password_confirmation.required' => 'Please confirm your new password.',
         ];
         
-        // Only require current password if it's not a first-time user
         if (!$isFirstTime) {
             $rules['current_password'] = 'required';
             $messages['current_password.required'] = 'Current password is required.';
         }
         
-        // Validate the request
         $validator = Validator::make($request->all(), $rules, $messages);
         
         if ($validator->fails()) {
@@ -65,7 +56,7 @@ class StudentPasswordController extends Controller
                 ->withInput();
         }
         
-        // Verify current password only if it's not a first-time user
+        //verify password
         if (!$isFirstTime) {
             if (!Hash::check($request->current_password, $student->password)) {
                 return redirect()->back()
@@ -74,7 +65,6 @@ class StudentPasswordController extends Controller
             }
         }
         
-        // Update password
         $student->update([
             'password' => Hash::make($request->new_password),
             'must_change_password' => false,

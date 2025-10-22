@@ -39,7 +39,7 @@ class StudentDashboardController extends Controller
         $existingProposal = $this->getExistingProposal($student);
         $offeringInfo = $this->getOfferingInfo($group, $student);
         $activeTerm = AcademicTerm::where('is_active', true)->first();
-        return view('student.dashboard', compact(
+        return view('dashboards.student', compact(
             'activeTerm',
             'student',
             'group',
@@ -64,19 +64,7 @@ class StudentDashboardController extends Controller
             $totalProgress = $group->groupMilestones->sum('progress_percentage');
             return round($totalProgress / $group->groupMilestones->count());
         }
-        $totalMilestones = 3; // Proposal, Progress, Final
-        $completedMilestones = 0;
-        $submissions = ProjectSubmission::where('student_id', $student->student_id)->get();
-        if ($submissions->where('type', 'proposal')->count() > 0) {
-            $completedMilestones++;
-        }
-        if ($submissions->where('type', 'final')->count() > 0) {
-            $completedMilestones++;
-        }
-        if ($submissions->count() >= 2) {
-            $completedMilestones++;
-        }
-        return round(($completedMilestones / $totalMilestones) * 100);
+        return 0; //0 progress
     }
     private function getTaskStatistics($student, $group = null)
     {

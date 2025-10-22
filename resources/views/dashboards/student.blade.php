@@ -1,4 +1,5 @@
 @extends('layouts.student')
+@section('title', 'Student Dashboard')
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
@@ -6,20 +7,71 @@
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
-                        <h1 class="h3 mb-1">Welcome, {{ auth()->check() ? auth()->user()->name : 'Student' }}!</h1>
-                        <p class="text-muted mb-0">Access your project, group, proposal, and milestones</p>
+                        <h1 class="h3 mb-1">Welcome, {{ $student->name ?? 'Student' }}!</h1>
+                        <p class="text-muted mb-0">Track your capstone project progress</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('student.group') }}" class="btn btn-primary">
-                            <i class="fas fa-users me-2"></i>View Group
+                        <a href="{{ route('student.project') }}" class="btn btn-primary">
+                            <i class="fas fa-file-alt me-2"></i>My Submissions
                         </a>
-                        <a href="{{ route('student.milestones') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-flag me-2"></i>Milestones
+                        <a href="{{ route('student.group') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-users me-2"></i>My Group
+                        </a>
+                        <a href="{{ route('student.defense-requests.index') }}" class="btn btn-outline-success">
+                            <i class="fas fa-gavel me-2"></i>Defense Requests
                         </a>
                     </div>
                 </div>
             </div>
         </div>
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+        @if($offeringInfo['has_offering'])
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-book me-2"></i>Current Capstone Subject
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-center mb-2">
+                                    <h4 class="mb-0 me-3">{{ $offeringInfo['subject_title'] }}</h4>
+                                    <span class="badge bg-secondary fs-6 me-2">{{ $offeringInfo['offer_code'] }}</span>
+                                    <span class="badge bg-success fs-6">Enrolled</span>
+                                </div>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-chalkboard-teacher me-1"></i>
+                                    Coordinator: <strong>{{ $offeringInfo['coordinator_name'] }}</strong>
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <span class="text-muted small">Capstone Project Course</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @else
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>No Capstone Subject Enrolled
+                    </h5>
+                    <p class="mb-0">You are not currently enrolled in any capstone offering. Please contact your coordinator to get enrolled in the appropriate capstone subject.</p>
+                </div>
+            </div>
+        </div>
+        @endif
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-primary">
@@ -33,7 +85,7 @@
                             <div class="row align-items-center">
                                 <div class="col-md-8">
                                     <div class="d-flex align-items-center mb-2">
-                                        <h4 class="mb-0 me-3">{{ $activeTerm->full_name }}</h4>
+                                        <h4 class="mb-0 me-3">{{ $activeTerm->semester }}</h4>
                                         <span class="badge bg-success fs-6">Active</span>
                                     </div>
                                     <p class="text-muted mb-0">
@@ -70,74 +122,228 @@
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
                     <div class="card-body text-center">
-                        <i class="fas fa-project-diagram fa-3x mb-3"></i>
-                        <h5 class="card-title">Project Submissions</h5>
-                        <p class="card-text">Upload and manage your project files</p>
-                        <a href="{{ route('student.project') }}" class="btn btn-light">
-                            <i class="fas fa-arrow-right me-2"></i>Access
-                        </a>
+                        <h5 class="card-title">Overall Progress</h5>
+                        <h3 class="mb-0">{{ $overallProgress ?? 25 }}%</h3>
+                        <div class="progress mt-2" style="height: 6px;">
+                            <div class="progress-bar bg-white" style="width: {{ $overallProgress ?? 25 }}%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card bg-success text-white">
                     <div class="card-body text-center">
-                        <i class="fas fa-users fa-3x mb-3"></i>
-                        <h5 class="card-title">My Group</h5>
-                        <p class="card-text">View group details and members</p>
-                        <a href="{{ route('student.group') }}" class="btn btn-light">
-                            <i class="fas fa-arrow-right me-2"></i>Access
-                        </a>
+                        <h5 class="card-title">Completed Tasks</h5>
+                        <h3 class="mb-0">{{ $taskStats['completed'] ?? 3 }}</h3>
+                        <small>of {{ $taskStats['total'] ?? 12 }} total</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card bg-warning text-white">
                     <div class="card-body text-center">
-                        <i class="fas fa-file-alt fa-3x mb-3"></i>
-                        <h5 class="card-title">Proposal & Endorsement</h5>
-                        <p class="card-text">Submit and track your project proposal</p>
-                        <a href="{{ route('student.proposal') }}" class="btn btn-light">
-                            <i class="fas fa-arrow-right me-2"></i>Access
-                        </a>
+                        <h5 class="card-title">In Progress</h5>
+                        <h3 class="mb-0">{{ $taskStats['doing'] ?? 2 }}</h3>
+                        <small>currently working</small>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card bg-info text-white">
                     <div class="card-body text-center">
-                        <i class="fas fa-flag fa-3x mb-3"></i>
-                        <h5 class="card-title">Milestones</h5>
-                        <p class="card-text">Track your project progress</p>
-                        <a href="{{ route('student.milestones') }}" class="btn btn-light">
-                            <i class="fas fa-arrow-right me-2"></i>Access
-                        </a>
+                        <h5 class="card-title">Pending Tasks</h5>
+                        <h3 class="mb-0">{{ $taskStats['pending'] ?? 7 }}</h3>
+                        <small>needs attention</small>
                     </div>
                 </div>
             </div>
         </div>
         <div class="row mb-4">
-            <div class="col-md-8">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
-                            <i class="fas fa-chart-line me-2"></i>Project Status Overview
+                            <i class="fas fa-flag me-2"></i>Current Milestone
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="text-center py-4">
-                            <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
-                            <h6 class="text-muted">Project Status</h6>
-                            <p class="text-muted small">Your project status and progress will appear here.</p>
-                            <a href="{{ route('student.project') }}" class="btn btn-primary">
-                                <i class="fas fa-eye me-1"></i> View Project Status
-                            </a>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ $milestoneInfo['name'] ?? 'Proposal Development' }}</h6>
+                                <p class="text-muted mb-0">{{ $milestoneInfo['description'] ?? 'Working on initial project proposal' }}</p>
+                                @if(isset($milestoneInfo['status']))
+                                    <span class="badge bg-{{ $milestoneInfo['status'] === 'completed' ? 'success' : ($milestoneInfo['status'] === 'in_progress' ? 'warning' : 'secondary') }} mt-2">
+                                        {{ ucfirst(str_replace('_', ' ', $milestoneInfo['status'])) }}
+                                    </span>
+                                @endif
+                            </div>
+                            <div class="text-end">
+                                <div class="progress mb-2" style="width: 150px; height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: {{ $milestoneInfo['progress'] ?? 60 }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ $milestoneInfo['progress'] ?? 60 }}% complete</small>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+        @if($group)
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chalkboard-teacher me-2"></i>Adviser Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if($adviserInfo['has_adviser'])
+                            <div class="text-center">
+                                <i class="fas fa-user-tie fa-3x text-primary mb-3"></i>
+                                <h5 class="mb-2">{{ $adviserInfo['adviser']->name }}</h5>
+                                <p class="text-muted mb-2">{{ $adviserInfo['adviser']->email }}</p>
+                                <span class="badge bg-success fs-6">Assigned</span>
+                            </div>
+                        @elseif($adviserInfo['invitations']->count() > 0)
+                            <div class="text-center">
+                                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                                <h5 class="mb-2">Pending Invitations</h5>
+                                <p class="text-muted mb-2">{{ $adviserInfo['invitations']->count() }} invitation(s) sent</p>
+                                <span class="badge bg-warning fs-6">Awaiting Response</span>
+                            </div>
+                        @else
+                            <div class="text-center">
+                                <i class="fas fa-user-tie fa-3x text-muted mb-3"></i>
+                                <h5 class="mb-2">No Adviser Assigned</h5>
+                                <p class="text-muted mb-3">You need an adviser to proceed with your project</p>
+                                @if($adviserInfo['can_invite'])
+                                    <a href="{{ route('student.group') }}" class="btn btn-primary">
+                                        <i class="fas fa-envelope me-2"></i>Invite Adviser
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="fas fa-graduation-cap me-2"></i>Defense Schedule
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if($defenseInfo['scheduled_defenses']->count() > 0)
+                            <div class="text-center mb-3">
+                                <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
+                                <h5 class="mb-2">Scheduled Defenses</h5>
+                            </div>
+                            @foreach($defenseInfo['scheduled_defenses'] as $defense)
+                                <div class="border rounded p-3 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ $defense->stage_label ?? 'Defense' }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ $defense->start_at ? $defense->start_at->format('M d, Y') : 'TBA' }}
+                                                <br>
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ $defense->start_at ? $defense->start_at->format('h:i A') : 'TBA' }}
+                                                @if($defense->room)
+                                                    <br>
+                                                    <i class="fas fa-door-open me-1"></i>
+                                                    {{ $defense->room }}
+                                                @endif
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-success">Scheduled</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @elseif($defenseInfo['pending_requests']->count() > 0)
+                            <div class="text-center mb-3">
+                                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                                <h5 class="mb-2">Pending Requests</h5>
+                            </div>
+                            @foreach($defenseInfo['pending_requests'] as $request)
+                                <div class="border rounded p-3 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ ucfirst(str_replace('_', ' ', $request->defense_type)) }} Defense</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Requested {{ $request->created_at->diffForHumans() }}
+                                            </small>
+                                        </div>
+                                        <span class="badge bg-warning">Pending</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="text-center">
+                                <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                                <h5 class="mb-2">No Defense Scheduled</h5>
+                                <p class="text-muted mb-3">Defense schedules will appear here when scheduled</p>
+                                @if($defenseInfo['can_request'])
+                                    <a href="{{ route('student.group') }}" class="btn btn-warning">
+                                        <i class="fas fa-rocket me-2"></i>Request Defense
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-tasks me-2"></i>Recent Tasks
+                            </h5>
+                            <a href="{{ route('student.milestones') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-columns me-1"></i>Kanban Board
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if(isset($recentTasks) && $recentTasks->count() > 0)
+                            <div class="list-group list-group-flush">
+                                @foreach($recentTasks as $task)
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ $task->name }}</h6>
+                                            <small class="text-muted">{{ $task->description }}</small>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if($task->status === 'done')
+                                                <span class="badge bg-success">Done</span>
+                                            @elseif($task->status === 'doing')
+                                                <span class="badge bg-warning">Doing</span>
+                                            @else
+                                                <span class="badge bg-secondary">Pending</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-center py-4">
+                                <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">No tasks assigned yet</h6>
+                                <p class="text-muted small">Tasks will appear here when created in your milestones.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
             <div class="col-md-4">
-                <div class="card mb-3">
+                <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
                             <i class="fas fa-bolt me-2"></i>Quick Actions
@@ -145,32 +351,18 @@
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <a href="{{ route('student.project') }}" class="btn btn-primary">
-                                <i class="fas fa-upload me-2"></i>Upload Project File
+                            <a href="{{ route('student.project.create') }}" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload Document
                             </a>
                             <a href="{{ route('student.group') }}" class="btn btn-outline-primary">
-                                <i class="fas fa-users me-2"></i>View Group Details
+                                <i class="fas fa-users me-2"></i>View Group
                             </a>
                             <a href="{{ route('student.milestones') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-flag me-2"></i>Check Milestones
+                                <i class="fas fa-columns me-2"></i>Kanban Board
                             </a>
                             <a href="{{ route('student.proposal') }}" class="btn btn-outline-success">
-                                <i class="fas fa-file-alt me-2"></i>Submit Proposal
+                                <i class="fas fa-file-alt me-2"></i>Proposal & Endorsement
                             </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-clock me-2"></i>Recent Activity
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="text-center py-3">
-                            <i class="fas fa-clock fa-2x text-muted mb-2"></i>
-                            <p class="text-muted small mb-0">No recent activity</p>
-                            <small class="text-muted">Your activities will appear here</small>
                         </div>
                     </div>
                 </div>
@@ -185,15 +377,49 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="text-center py-4">
-                            <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
-                            <h6 class="text-muted">No upcoming deadlines</h6>
-                            <p class="text-muted small">Deadlines will appear here when they are set.</p>
-                        </div>
+                        @if(isset($upcomingDeadlines) && $upcomingDeadlines->count() > 0)
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Task/Milestone</th>
+                                            <th>Type</th>
+                                            <th>Due Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($upcomingDeadlines as $deadline)
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-semibold">{{ $deadline->title }}</div>
+                                                    <small class="text-muted">{{ $deadline->description }}</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-primary">Milestone</span>
+                                                </td>
+                                                <td>
+                                                    {{ $deadline->due_date ? $deadline->due_date->format('M d, Y') : 'TBA' }}
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-success">On Track</span>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center py-4">
+                                <i class="fas fa-calendar fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">No upcoming deadlines</h6>
+                                <p class="text-muted small">Deadlines will appear here when they are set.</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-@endsection 
+@endsection

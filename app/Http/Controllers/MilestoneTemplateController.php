@@ -11,7 +11,7 @@ class MilestoneTemplateController extends Controller
         
         $milestoneTemplates = MilestoneTemplate::with('tasks')->get();
         
-        // Filter groups by active semester
+        //group filter
         $groupsQuery = \App\Models\Group::with(['members', 'adviser', 'milestones.template']);
         if ($activeTerm) {
             $groupsQuery->where('academic_term_id', $activeTerm->id);

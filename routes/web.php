@@ -23,10 +23,12 @@ use App\Http\Controllers\CoordinatorDashboardController;
 use App\Http\Controllers\ChairpersonDashboardController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ChairpersonController;
+use App\Http\Controllers\ChairpersonOfferingController;
+use App\Http\Controllers\ChairpersonFacultyController;
+use App\Http\Controllers\ChairpersonStudentController;
 use App\Http\Controllers\ClassController;
 
 use App\Http\Controllers\MilestoneTemplateController;
-use App\Http\Controllers\MilestoneTaskController;
 
 
 // Landing page
@@ -105,34 +107,17 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
     // Calendar
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'coordinatorCalendar'])->name('calendar');
     
-    // Academic Terms Management
-    Route::get('/academic-terms', [CoordinatorController::class, 'academicTerms'])->name('academic-terms.index');
-    Route::post('/academic-terms/activate', [CoordinatorController::class, 'activateTerm'])->name('academic-terms.activate');
-    Route::post('/academic-terms/deactivate', [CoordinatorController::class, 'deactivateTerm'])->name('academic-terms.deactivate');
-    
     // Proposal Review (for coordinators to approve proposals from their offerings)
     Route::get('/proposals', [\App\Http\Controllers\CoordinatorProposalController::class, 'index'])->name('proposals.index');
     Route::get('/proposals/{id}', [\App\Http\Controllers\CoordinatorProposalController::class, 'show'])->name('proposals.show');
-    Route::get('/proposals/{id}/edit', [\App\Http\Controllers\CoordinatorProposalController::class, 'edit'])->name('proposals.edit');
+    Route::get('/proposals/{id}/review', [\App\Http\Controllers\CoordinatorProposalController::class, 'review'])->name('proposals.review');
     Route::put('/proposals/{id}', [\App\Http\Controllers\CoordinatorProposalController::class, 'update'])->name('proposals.update');
     Route::post('/proposals/bulk-update', [\App\Http\Controllers\CoordinatorProposalController::class, 'bulkUpdate'])->name('proposals.bulk-update');
     Route::get('/proposals/stats', [\App\Http\Controllers\CoordinatorProposalController::class, 'getStats'])->name('proposals.stats');
     
-    // Semester Management (legacy dropdown)
-    Route::post('/change-semester', [CoordinatorController::class, 'changeSemester'])->name('change-semester');
-    
     // Milestone Templates Management
     Route::resource('milestones', MilestoneTemplateController::class);
     Route::patch('milestones/{milestone}/status', [MilestoneTemplateController::class, 'updateStatus'])->name('milestones.updateStatus');
-    
-    // Milestone Tasks Management
-    Route::prefix('milestones/{milestone}')->name('milestones.')->group(function () {
-        Route::get('tasks', [MilestoneTaskController::class, 'index'])->name('tasks.index');
-        Route::post('tasks', [MilestoneTaskController::class, 'store'])->name('tasks.store');
-        Route::get('tasks/{task}/edit', [MilestoneTaskController::class, 'edit'])->name('tasks.edit');
-        Route::put('tasks/{task}', [MilestoneTaskController::class, 'update'])->name('tasks.update');
-        Route::delete('tasks/{task}', [MilestoneTaskController::class, 'destroy'])->name('tasks.destroy');
-    });
 });
 
 
@@ -146,53 +131,59 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
         Route::post('/roles/{faculty_id}', [RoleController::class, 'update'])->name('roles.update');
 
         // Offerings
-        Route::get('/offerings', [ChairpersonController::class, 'indexOfferings'])->name('offerings.index');
-        Route::get('/offerings/create', [ChairpersonController::class, 'createOffering'])->name('offerings.create');
-        Route::post('/offerings', [ChairpersonController::class, 'storeOffering'])->name('offerings.store');
-        Route::get('/offerings/{id}', [ChairpersonController::class, 'showOffering'])->name('offerings.show');
-        Route::get('/offerings/{id}/edit', [ChairpersonController::class, 'editOffering'])->name('offerings.edit');
-        Route::put('/offerings/{id}', [ChairpersonController::class, 'updateOffering'])->name('offerings.update');
-        Route::delete('/offerings/{id}', [ChairpersonController::class, 'deleteOffering'])->name('offerings.delete');
+        Route::get('/offerings', [ChairpersonOfferingController::class, 'index'])->name('offerings.index');
+        Route::get('/offerings/create', [ChairpersonOfferingController::class, 'create'])->name('offerings.create');
+        Route::post('/offerings', [ChairpersonOfferingController::class, 'store'])->name('offerings.store');
+        Route::get('/offerings/{id}', [ChairpersonOfferingController::class, 'show'])->name('offerings.show');
+        Route::get('/offerings/{id}/edit', [ChairpersonOfferingController::class, 'edit'])->name('offerings.edit');
+        Route::put('/offerings/{id}', [ChairpersonOfferingController::class, 'update'])->name('offerings.update');
+        Route::delete('/offerings/{id}', [ChairpersonOfferingController::class, 'destroy'])->name('offerings.delete');
         
         // Offering Student Management
-        Route::delete('/offerings/{offeringId}/students/{studentId}', [ChairpersonController::class, 'removeStudentFromOffering'])->name('offerings.remove-student');
+        Route::delete('/offerings/{offeringId}/students/{studentId}', [ChairpersonOfferingController::class, 'removeStudent'])->name('offerings.remove-student');
 
         // Role Management
 
         // Teachers/Faculty Management
-        Route::get('/teachers', [ChairpersonController::class, 'teachers'])->name('teachers.index');
-        Route::get('/teachers/create', [ChairpersonController::class, 'createFaculty'])->name('teachers.create');
-        Route::post('/teachers', [ChairpersonController::class, 'storeFaculty'])->name('teachers.store');
-        Route::get('/teachers/create-manual', [ChairpersonController::class, 'createFacultyManual'])->name('teachers.create-manual');
-        Route::post('/teachers/manual', [ChairpersonController::class, 'storeFacultyManual'])->name('teachers.store-manual');
-        Route::get('/teachers/{id}/edit', [ChairpersonController::class, 'editFaculty'])->name('teachers.edit');
-        Route::put('/teachers/{id}', [ChairpersonController::class, 'updateFaculty'])->name('teachers.update');
-        Route::delete('/teachers/{id}', [ChairpersonController::class, 'deleteFaculty'])->name('teachers.delete');
+        Route::get('/teachers', [ChairpersonFacultyController::class, 'index'])->name('teachers.index');
+        Route::get('/teachers/create', [ChairpersonFacultyController::class, 'create'])->name('teachers.create');
+        Route::post('/teachers', [ChairpersonFacultyController::class, 'upload'])->name('teachers.store');
+        Route::get('/teachers/create-manual', [ChairpersonFacultyController::class, 'createManual'])->name('teachers.create-manual');
+        Route::post('/teachers/manual', [ChairpersonFacultyController::class, 'storeManual'])->name('teachers.store-manual');
+        Route::get('/teachers/{id}/edit', [ChairpersonFacultyController::class, 'edit'])->name('teachers.edit');
+        Route::put('/teachers/{id}', [ChairpersonFacultyController::class, 'update'])->name('teachers.update');
+        Route::delete('/teachers/{id}', [ChairpersonFacultyController::class, 'destroy'])->name('teachers.delete');
 
 
 
 
         // Student Management
-        Route::get('/students', [ChairpersonController::class, 'indexStudents'])->name('students.index');
-        Route::get('/students/export', [ChairpersonController::class, 'exportStudents'])->name('students.export');
-        Route::get('/students/{id}/edit', [ChairpersonController::class, 'editStudent'])->name('students.edit');
-        Route::put('/students/{id}', [ChairpersonController::class, 'updateStudent'])->name('students.update');
-        Route::delete('/students/bulk-delete', [ChairpersonController::class, 'bulkDeleteStudents'])->name('students.bulk-delete');
-        Route::delete('/students/{id}', [ChairpersonController::class, 'deleteStudent'])->name('students.delete');
+        Route::get('/students', [ChairpersonStudentController::class, 'index'])->name('students.index');
+        Route::get('/students/export', [ChairpersonStudentController::class, 'export'])->name('students.export');
+        Route::get('/students/{id}/edit', [ChairpersonStudentController::class, 'edit'])->name('students.edit');
+        Route::put('/students/{id}', [ChairpersonStudentController::class, 'update'])->name('students.update');
+        Route::delete('/students/bulk-delete', [ChairpersonStudentController::class, 'bulkDelete'])->name('students.bulk-delete');
+        Route::delete('/students/{id}', [ChairpersonStudentController::class, 'destroy'])->name('students.delete');
 
         // Student Enrollment Management
-        Route::get('/offerings/{offeringId}/unenrolled-students', [ChairpersonController::class, 'showUnenrolledStudents'])->name('offerings.unenrolled-students');
-        Route::post('/offerings/{offeringId}/enroll-student', [ChairpersonController::class, 'enrollStudent'])->name('offerings.enroll-student');
-        Route::post('/offerings/{offeringId}/enroll-multiple-students', [ChairpersonController::class, 'enrollMultipleStudents'])->name('offerings.enroll-multiple-students');
+        Route::get('/offerings/{offeringId}/unenrolled-students', [ChairpersonOfferingController::class, 'showUnenrolledStudents'])->name('offerings.unenrolled-students');
+        Route::post('/offerings/{offeringId}/enroll-student', [ChairpersonOfferingController::class, 'enrollStudent'])->name('offerings.enroll-student');
+        Route::post('/offerings/{offeringId}/enroll-multiple-students', [ChairpersonOfferingController::class, 'enrollMultipleStudents'])->name('offerings.enroll-multiple-students');
         
         // Student Import via Excel
         Route::get('/upload-students', fn () => view('chairperson.students.import'))->name('upload-form');
-        Route::post('/upload-students', [ChairpersonController::class, 'uploadStudentList'])->name('upload-students');
+        Route::post('/upload-students', [ChairpersonStudentController::class, 'upload'])->name('upload-students');
 
         // Academic Terms
         Route::resource('academic-terms', \App\Http\Controllers\AcademicTermController::class);
         Route::post('/academic-terms/{academicTerm}/toggle-active', [\App\Http\Controllers\AcademicTermController::class, 'toggleActive'])->name('academic-terms.toggle-active');
         Route::post('/academic-terms/{academicTerm}/toggle-archived', [\App\Http\Controllers\AcademicTermController::class, 'toggleArchived'])->name('academic-terms.toggle-archived');
+
+        // Notification Management
+        Route::get('/notifications', [ChairpersonController::class, 'notifications'])->name('notifications');
+        Route::post('/notifications/mark-all-read', [ChairpersonController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
+        Route::post('/notifications/{notification}/mark-read', [ChairpersonController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
+        Route::delete('/notifications/{notification}', [ChairpersonController::class, 'deleteNotification'])->name('notifications.delete');
 
         // Scheduling (Defense Schedules) - Moved to Coordinator
         // Route::resource('scheduling', \App\Http\Controllers\Chairperson\DefenseScheduleController::class)->parameters(['scheduling' => 'defenseSchedule']);
@@ -269,7 +260,11 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::get('/defense-requests/{defenseRequest}', [\App\Http\Controllers\StudentDefenseRequestController::class, 'show'])->name('defense-requests.show');
     Route::delete('/defense-requests/{defenseRequest}', [\App\Http\Controllers\StudentDefenseRequestController::class, 'cancel'])->name('defense-requests.cancel');
     
-
+    // Notification Management
+    Route::get('/notifications', [\App\Http\Controllers\StudentController::class, 'notifications'])->name('notifications');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\StudentController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/{notification}/mark-read', [\App\Http\Controllers\StudentController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
+    Route::delete('/notifications/{notification}', [\App\Http\Controllers\StudentController::class, 'deleteNotification'])->name('notifications.delete');
     
     // Calendar
     Route::get('/calendar', [\App\Http\Controllers\CalendarController::class, 'studentCalendar'])->name('calendar');

@@ -84,7 +84,7 @@ class AuthController extends Controller
     }
     public function logout(Request $request)
     {
-        // Logout from both guards
+        
         Auth::logout();
         Auth::guard('student')->logout();
         
@@ -110,14 +110,14 @@ class AuthController extends Controller
         }
         
         if ($role === 'student') {
-            // Create student
+            
             $student = Student::create([
                 'student_id' => now()->timestamp,
                 'name' => $request->name,
                 'email' => $request->email,
             ]);
             
-            // Create student account
+            
             StudentAccount::create([
                 'student_id' => $student->student_id,
                 'email' => $request->email,

@@ -25,13 +25,11 @@ class UserAccount extends Authenticatable
         'must_change_password' => 'boolean',
     ];
 
-    // Relationships
     public function user()
     {
         return $this->belongsTo(User::class, 'faculty_id', 'faculty_id');
     }
 
-    // Authentication methods
     public function getAuthIdentifierName()
     {
         return 'email';
@@ -42,10 +40,9 @@ class UserAccount extends Authenticatable
         return $this->password;
     }
 
-    // Helper methods
     public function isUser()
     {
-        return true; // This is always a user account
+        return true;
     }
 
     public function getAssociatedUser()

@@ -131,9 +131,9 @@
                                                                class="btn btn-outline-primary" title="View">
                                                                 <i class="fas fa-eye"></i>
                                                             </a>
-                                                            <a href="{{ route('coordinator.proposals.edit', $proposal->id) }}" 
+                                                            <a href="{{ route('coordinator.proposals.review', $proposal->id) }}" 
                                                                class="btn btn-outline-warning" title="Review">
-                                                                <i class="fas fa-edit"></i>
+                                                                <i class="fas fa-gavel"></i>
                                                             </a>
                                                         </div>
                                                     </td>

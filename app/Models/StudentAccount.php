@@ -25,13 +25,11 @@ class StudentAccount extends Authenticatable
         'must_change_password' => 'boolean',
     ];
 
-    // Relationships
     public function student()
     {
         return $this->belongsTo(Student::class, 'student_id', 'student_id');
     }
 
-    // Authentication methods
     public function getAuthIdentifierName()
     {
         return 'email';
@@ -42,10 +40,9 @@ class StudentAccount extends Authenticatable
         return $this->password;
     }
 
-    // Helper methods
     public function isStudent()
     {
-        return true; // This is always a student account
+        return true;
     }
 
     public function getAssociatedUser()

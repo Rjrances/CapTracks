@@ -372,49 +372,6 @@
                 </div>
             </div>
         </div>
-        @if($groupMilestones->count() > 0)
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-columns me-2"></i>Kanban Board Preview
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="text-center">
-                            <div class="bg-secondary text-white rounded p-3 mb-2">
-                                <i class="fas fa-clock fa-2x mb-2"></i>
-                                <h6>Pending</h6>
-                                <h4>{{ $studentTasks->where('status', 'pending')->count() }}</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="text-center">
-                            <div class="bg-warning text-dark rounded p-3 mb-2">
-                                <i class="fas fa-play fa-2x mb-2"></i>
-                                <h6>In Progress</h6>
-                                <h4>{{ $studentTasks->where('status', 'doing')->count() }}</h4>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="text-center">
-                            <div class="bg-success text-white rounded p-3 mb-2">
-                                <i class="fas fa-check fa-2x mb-2"></i>
-                                <h6>Completed</h6>
-                                <h4>{{ $studentTasks->where('status', 'done')->count() }}</h4>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-center mt-3">
-                    <p class="text-muted mb-0">Click on any milestone above to access the full Kanban board with drag & drop functionality!</p>
-                </div>
-            </div>
-        </div>
-        @endif
     @endif
 </div>
 @push('scripts')

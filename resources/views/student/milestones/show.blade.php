@@ -126,66 +126,6 @@
             </div>
         </div>
     </div>
-    <div class="card mt-4">
-        <div class="card-header bg-info text-white">
-            <h6 class="mb-0">
-                <i class="fas fa-users me-2"></i>Group Information
-            </h6>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4">
-                    <h6 class="fw-semibold">Group Details</h6>
-                    <p><strong>Name:</strong> {{ $group->name }}</p>
-                    <p><strong>Adviser:</strong> 
-                        @if($group->adviser)
-                            <span class="badge bg-success">{{ $group->adviser->name }}</span>
-                        @else
-                            <span class="badge bg-warning">No adviser assigned</span>
-                        @endif
-                    </p>
-                </div>
-                <div class="col-md-4">
-                    <h6 class="fw-semibold">Milestone Status</h6>
-                    @php
-                        $statusClass = match($groupMilestone->status) {
-                            'completed' => 'success',
-                            'almost_done' => 'warning',
-                            'in_progress' => 'info',
-                            default => 'secondary'
-                        };
-                        $statusText = ucfirst(str_replace('_', ' ', $groupMilestone->status));
-                    @endphp
-                    <span class="badge bg-{{ $statusClass }} fs-6">{{ $statusText }}</span>
-                    @if($groupMilestone->target_date)
-                        <br><small class="text-muted mt-2 d-block">
-                            <i class="fas fa-calendar me-1"></i>
-                            Target Date: {{ $groupMilestone->target_date ? \Carbon\Carbon::parse($groupMilestone->target_date)->format('M d, Y') : 'TBA' }}
-                        </small>
-                    @endif
-                </div>
-                <div class="col-md-4">
-                    <h6 class="fw-semibold">Defense Status</h6>
-                    @if($group->defenseSchedules->where('status', 'scheduled')->count() > 0)
-                        <span class="badge bg-success fs-6">Defense Scheduled</span>
-                        @foreach($group->defenseSchedules->where('status', 'scheduled')->take(1) as $defense)
-                            <br><small class="text-muted mt-2 d-block">
-                                <i class="fas fa-calendar me-1"></i>
-                                {{ $defense->start_at ? $defense->start_at->format('M d, Y') : 'TBA' }}
-                                <br>
-                                <i class="fas fa-clock me-1"></i>
-                                {{ $defense->start_at ? $defense->start_at->format('h:i A') : 'TBA' }}
-                            </small>
-                        @endforeach
-                    @elseif($group->defenseRequests->where('status', 'pending')->count() > 0)
-                        <span class="badge bg-warning fs-6">Request Pending</span>
-                    @else
-                        <span class="badge bg-secondary fs-6">No Defense</span>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 @if($isGroupLeader)
     @php

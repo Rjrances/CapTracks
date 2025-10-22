@@ -74,7 +74,7 @@ class CoordinatorController extends Controller
         $sortDirection = $request->get('direction', 'asc');
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         
-        // Get unique courses for filter dropdown
+        //course filter
         $courses = Student::where('semester', $activeTerm ? $activeTerm->semester : '')
             ->distinct()
             ->pluck('course')
@@ -82,24 +82,24 @@ class CoordinatorController extends Controller
             ->sort()
             ->values();
         
-        $students = collect(); // default to empty collection
+        $students = collect(); //null
         if ($activeTerm) {
             $studentsQuery = Student::with(['offerings'])
                 ->where('semester', $activeTerm->semester);
                 
-            // Name filter
+            
             if ($request->filled('name')) {
                 $name = $request->input('name');
                 $studentsQuery->where('name', 'like', "%$name%");
             }
             
-            // Course filter
+            
             if ($request->filled('course')) {
                 $course = $request->input('course');
                 $studentsQuery->where('course', $course);
             }
             
-            // General search (if no specific filters)
+            //Default search
             if ($request->filled('search') && !$request->filled('name') && !$request->filled('course')) {
                 $search = $request->input('search');
                 $studentsQuery->where(function($q) use ($search) {
@@ -121,7 +121,7 @@ class CoordinatorController extends Controller
         
         $query = Group::with(['adviser', 'members']);
         
-        // Filter by active semester
+        
         if ($activeTerm) {
             $query->where('academic_term_id', $activeTerm->id);
         }
@@ -203,8 +203,8 @@ class CoordinatorController extends Controller
     public function destroy($id)
     {
         $group = Group::findOrFail($id);
-        $group->members()->detach(); // Remove all group members
-        $group->adviserInvitations()->delete(); // Delete adviser invitations
+        $group->members()->detach(); //Tangtang members
+        $group->adviserInvitations()->delete();
         $group->delete();
         return redirect()->route('coordinator.groups.index')->with('success', 'Group deleted successfully!');
     }
@@ -242,117 +242,5 @@ class CoordinatorController extends Controller
         }
         $notifications = $query->orderBy('created_at', 'desc')->get();
         return view('coordinator.notifications', compact('notifications'));
-    }
-
-    /**
-     * Show academic terms management page for coordinator
-     */
-    public function academicTerms()
-    {
-        $academicTerms = AcademicTerm::orderBy('school_year', 'desc')
-            ->orderBy('semester', 'desc')
-            ->get();
-        
-        $activeTerm = AcademicTerm::where('is_active', true)->first();
-        
-        return view('coordinator.academic-terms.index', compact('academicTerms', 'activeTerm'));
-    }
-
-    /**
-     * Activate a specific academic term
-     */
-    public function activateTerm(Request $request)
-    {
-        $request->validate([
-            'term_id' => 'required|exists:academic_terms,id'
-        ]);
-
-        try {
-            // Deactivate current active term
-            AcademicTerm::where('is_active', true)->update(['is_active' => false]);
-            
-            // Activate selected term
-            $selectedTerm = AcademicTerm::findOrFail($request->term_id);
-            $selectedTerm->update(['is_active' => true]);
-
-            return response()->json([
-                'success' => true,
-                'message' => "Active semester changed to {$selectedTerm->semester}",
-                'new_term' => $selectedTerm->semester
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to activate semester: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Deactivate the current active academic term
-     */
-    public function deactivateTerm(Request $request)
-    {
-        $request->validate([
-            'term_id' => 'required|exists:academic_terms,id'
-        ]);
-
-        try {
-            // Find the term to deactivate
-            $selectedTerm = AcademicTerm::findOrFail($request->term_id);
-            
-            // Check if it's currently active
-            if (!$selectedTerm->is_active) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This term is not currently active'
-                ], 400);
-            }
-            
-            // Deactivate the term
-            $selectedTerm->update(['is_active' => false]);
-
-            return response()->json([
-                'success' => true,
-                'message' => "Deactivated semester: {$selectedTerm->semester}",
-                'deactivated_term' => $selectedTerm->semester
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to deactivate semester: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-
-    /**
-     * Change the active semester for coordinator (legacy method for dropdown)
-     */
-    public function changeSemester(Request $request)
-    {
-        $request->validate([
-            'semester' => 'required|string|exists:academic_terms,semester'
-        ]);
-
-        try {
-            // Deactivate current active term
-            AcademicTerm::where('is_active', true)->update(['is_active' => false]);
-            
-            // Activate selected term
-            $selectedTerm = AcademicTerm::where('semester', $request->semester)->first();
-            $selectedTerm->update(['is_active' => true]);
-
-            return response()->json([
-                'success' => true,
-                'message' => "Active semester changed to {$selectedTerm->full_name}",
-                'new_term' => $selectedTerm->full_name
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to change semester: ' . $e->getMessage()
-            ], 500);
-        }
     }
 }

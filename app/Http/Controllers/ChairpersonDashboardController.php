@@ -12,13 +12,7 @@ class ChairpersonDashboardController extends Controller
     public function index()
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
-        $upcomingDefenses = DefenseSchedule::with(['group', 'defensePanels.faculty'])
-            ->where('start_at', '>=', now()->toDateString())
-            ->where('start_at', '<=', now()->addDays(30)->toDateString())
-            ->where('status', 'scheduled')
-            ->orderBy('start_at')
-            ->limit(5)
-            ->get();
+        
         $notifications = Notification::where('role', 'chairperson')
                                      ->latest()
                                      ->take(5)
@@ -41,7 +35,6 @@ class ChairpersonDashboardController extends Controller
         ];
         return view('dashboards.chairperson', compact(
             'activeTerm',
-            'upcomingDefenses',
             'notifications',
             'stats'
         ));

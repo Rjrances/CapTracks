@@ -26,7 +26,6 @@ class ProjectSubmission extends Model
         return $this->belongsTo(Student::class, 'student_id', 'student_id');
     }
     
-    // Alternative method to get student without relationship
     public function getStudentData()
     {
         return Student::where('student_id', $this->student_id)->first();

@@ -8,7 +8,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="fw-bold mb-0">
-                    <i class="fas fa-edit me-2"></i>Review Proposal
+                    <i class="fas fa-gavel me-2"></i>Review Proposal
                 </h2>
                 <a href="{{ route('coordinator.proposals.index') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-1"></i>Back to Proposals

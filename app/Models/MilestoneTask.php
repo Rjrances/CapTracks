@@ -10,9 +10,9 @@ class MilestoneTask extends Model
         'name', 
         'description', 
         'order',
-        'is_completed', // NEW: Track completion status
-        'completed_at', // NEW: Track when completed
-        'assigned_to', // NEW: Track who it's assigned to
+        'is_completed',
+        'completed_at',
+        'assigned_to',
     ];
     protected $casts = [
         'is_completed' => 'boolean',

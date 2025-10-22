@@ -387,17 +387,17 @@ class DefenseScheduleController extends Controller
         );
     }
 
-    // Defense Request Management Methods
+    
     public function createSchedule(DefenseRequest $defenseRequest)
     {
         if (!$defenseRequest->isPending() && !$defenseRequest->isApproved()) {
             return back()->with('error', 'This defense request cannot be scheduled.');
         }
         
-        // Load the defense request with group and adviser relationships
+        //group and adviser relationships
         $defenseRequest->load(['group.adviser', 'group.members']);
         
-        // Get faculty for panelist selection
+        //panelist selection
         $availableFaculty = User::whereIn('role', ['teacher'])
             ->where('id', '!=', $defenseRequest->group->adviser->id)
             ->where('role', '!=', 'chairperson')
@@ -424,6 +424,7 @@ class DefenseScheduleController extends Controller
         $endAt = $startAt->copy()->addHours(2);
 
         $defenseSchedule = DefenseSchedule::create([
+            'defense_request_id' => $defenseRequest->id,
             'group_id' => $defenseRequest->group_id,
             'defense_type' => $defenseRequest->defense_type,
             'start_at' => $startAt,

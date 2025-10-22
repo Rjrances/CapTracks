@@ -6,10 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 class StudentGroupController extends Controller
 {
-    /**
-     * Get available students for group invitation based on offering and semester
-     * This method ensures consistent filtering for both create and existing groups
-     */
+    
     private function getAvailableStudentsForInvitation($offering, $excludeStudentIds = [], $excludePendingInvitations = [])
     {
         $query = \App\Models\Student::whereNotIn('student_id', $excludeStudentIds)
@@ -48,7 +45,7 @@ class StudentGroupController extends Controller
             ->orderBy('name')
             ->get();
         
-        // Get available students for invitation using consistent filtering
+        //get available students
         $availableStudents = collect();
         if ($group && $group->offering) {
             $excludeStudentIds = $group->members->pluck('student_id')->toArray();
@@ -75,17 +72,17 @@ class StudentGroupController extends Controller
             return redirect()->route('student.dashboard')->with('error', 'Student record not found. Please contact administrator.');
         }
         
-        // Check if student is enrolled in any offering
+        
         $offering = $student->getCurrentOffering();
         if (!$offering) {
             return redirect()->route('student.dashboard')->with('error', 'You must be enrolled in a capstone offering before creating a group. Please contact your coordinator to get enrolled.');
         }
         
-        // Get available students for invitation using consistent filtering
+        //invite members
         $availableStudents = $this->getAvailableStudentsForInvitation(
             $offering, 
-            [$student->student_id], // Exclude the current student (group leader)
-            [] // No pending invitations to exclude for new groups
+            [$student->student_id],
+            []
         );
         
         return view('student.group.create', compact('offering', 'availableStudents'));
@@ -98,8 +95,8 @@ class StudentGroupController extends Controller
             'description' => 'nullable|string',
             'adviser_id' => 'required|exists:users,id',
             'adviser_message' => 'nullable|string|max:500',
-            'members' => 'nullable|array|max:2', // Max 2 additional members (3 total including leader) - optional
-            'members.*' => 'nullable|exists:students,student_id', // Each member is optional
+            'members' => 'nullable|array|max:2',
+            'members.*' => 'nullable|exists:students,student_id',
         ]);
         
         if (Auth::guard('student')->check()) {
@@ -126,13 +123,13 @@ class StudentGroupController extends Controller
             return back()->with('error', 'Student record not found. Please contact administrator.');
         }
         
-        // Validate that student is enrolled in an offering
+        //student validation
         $offering = $student->getCurrentOffering();
         if (!$offering) {
             \Log::error('Student not enrolled in any offering', ['student_id' => $student->student_id]);
             return back()->with('error', 'You must be enrolled in a capstone offering before creating a group. Please contact your coordinator to get enrolled.');
         }
-        // Get current active term for adviser validation
+        //get active term
         $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
         
         $adviser = User::where('id', $request->adviser_id)
@@ -149,10 +146,10 @@ class StudentGroupController extends Controller
             return back()->with('error', 'Selected adviser is not available for the current semester. Please select an adviser from the current term.');
         }
         
-        // Validate that all group members are enrolled in the same offering
+        //same offering validation
         if ($request->has('members') && is_array($request->members) && !empty(array_filter($request->members))) {
             foreach ($request->members as $memberId) {
-                if (empty($memberId)) continue; // Skip empty values
+                if (empty($memberId)) continue;
                 
                 $member = \App\Models\Student::where('student_id', $memberId)->first();
                 if (!$member) {
@@ -175,17 +172,17 @@ class StudentGroupController extends Controller
             \Log::info('Group created successfully', ['group_id' => $group->id]);
             $group->members()->attach($student->student_id, ['role' => 'leader']);
             
-            // Send invitations to selected members instead of directly adding them
+            //send invite
             if ($request->has('members') && is_array($request->members) && !empty(array_filter($request->members))) {
                 foreach ($request->members as $memberId) {
-                    if (empty($memberId)) continue; // Skip empty values
+                    if (empty($memberId)) continue;
                     
                     $existingGroup = \App\Models\Group::whereHas('members', function($q) use ($memberId) {
                         $q->where('group_members.student_id', $memberId);
                     })->first();
                     
                     if (!$existingGroup) {
-                        // Create group invitation
+                        //make invitation
                         \App\Models\GroupInvitation::create([
                             'group_id' => $group->id,
                             'student_id' => $memberId,
@@ -235,7 +232,7 @@ class StudentGroupController extends Controller
             $q->where('group_members.student_id', $student->student_id);
         })->with(['adviser', 'members', 'adviserInvitations.faculty', 'offering'])->first() : null;
         
-        // Get available students for invitation using consistent filtering
+        //available students
         $availableStudents = collect();
         if ($group && $group->offering) {
             $excludeStudentIds = $group->members->pluck('student_id')->toArray();

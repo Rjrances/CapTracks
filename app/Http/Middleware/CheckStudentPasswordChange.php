@@ -16,11 +16,11 @@ class CheckStudentPasswordChange
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if student is authenticated using the student guard
+        //student auth checker
         if (Auth::guard('student')->check()) {
             $studentAccount = Auth::guard('student')->user();
             
-            // Check if student must change password and is not already on password change page
+            //password change checker
             if ($studentAccount->must_change_password && 
                 !$request->routeIs('student.change-password') && 
                 !$request->routeIs('student.update-password')) {
