@@ -18,7 +18,6 @@ class AdviserProposalController extends Controller
             ->get();
         $proposalsByGroup = [];
         
-        // Collect all proposals for stats
         $allProposals = collect();
         
         foreach ($groups as $group) {
@@ -39,7 +38,6 @@ class AdviserProposalController extends Controller
             }
         }
         
-        // Calculate stats
         $stats = [
             'total_proposals' => $allProposals->count(),
             'pending_review' => $allProposals->where('status', 'pending')->count(),

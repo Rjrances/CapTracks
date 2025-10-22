@@ -21,7 +21,7 @@ class AuthController extends Controller
             'password' => ['nullable'],
         ]);
         
-        // Check by faculty_id
+        //check by faculty_id
         $userAccount = UserAccount::where('faculty_id', $request->school_id)->first();
         
         if ($userAccount) {
@@ -39,11 +39,11 @@ class AuthController extends Controller
             }
         }
         
-        // Check by student_id
+        //check by student_id
         $studentAccount = StudentAccount::where('student_id', $request->school_id)->first();
         if ($studentAccount) {
             if ($studentAccount->must_change_password && is_null($studentAccount->password)) {
-                // First time login
+                //first time login
                 Auth::guard('student')->login($studentAccount);
                 $request->session()->regenerate();
                 
@@ -124,21 +124,19 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
             ]);
         } else {
-            // Get active term for semester
+
             $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
             
-            // Create faculty user
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'birthday' => now()->subYears(25),
                 'department' => 'N/A',
                 'role' => $role,
-                'faculty_id' => '100' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT), // Generate faculty_id
+                'faculty_id' => '100' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
                 'semester' => $activeTerm ? $activeTerm->semester : 'Unknown',
             ]);
             
-            // Create faculty account
             UserAccount::create([
                 'faculty_id' => $user->faculty_id,
                 'email' => $request->email,
