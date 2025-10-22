@@ -301,7 +301,6 @@
 .group-item:last-child {
     border-bottom: none;
 }
-/* Success theme colors */
 .bg-success {
     background: linear-gradient(135deg, #28a745, #20c997) !important;
 }
