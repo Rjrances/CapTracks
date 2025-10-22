@@ -17,10 +17,17 @@ class AdviserProposalController extends Controller
             }])
             ->get();
         $proposalsByGroup = [];
+        
+        // Collect all proposals for stats
+        $allProposals = collect();
+        
         foreach ($groups as $group) {
             $proposals = $group->members->flatMap->submissions
                 ->where('type', 'proposal')
                 ->sortByDesc('submitted_at');
+            
+            $allProposals = $allProposals->merge($proposals);
+            
             if ($proposals->isNotEmpty()) {
                 $proposalsByGroup[$group->id] = [
                     'group' => $group,
@@ -31,7 +38,16 @@ class AdviserProposalController extends Controller
                 ];
             }
         }
-        return view('adviser.proposal.index', compact('proposalsByGroup'));
+        
+        // Calculate stats
+        $stats = [
+            'total_proposals' => $allProposals->count(),
+            'pending_review' => $allProposals->where('status', 'pending')->count(),
+            'approved' => $allProposals->where('status', 'approved')->count(),
+            'rejected' => $allProposals->where('status', 'rejected')->count(),
+        ];
+        
+        return view('adviser.proposal.index', compact('proposalsByGroup', 'stats'));
     }
     public function show($id)
     {

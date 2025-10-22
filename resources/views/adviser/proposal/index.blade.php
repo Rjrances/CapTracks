@@ -18,7 +18,7 @@
             <div class="card bg-primary text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Total Proposals</h5>
-                    <h3 class="mb-0" id="total-proposals">0</h3>
+                    <h3 class="mb-0" id="total-proposals">{{ $stats['total_proposals'] ?? 0 }}</h3>
                 </div>
             </div>
         </div>
@@ -26,7 +26,7 @@
             <div class="card bg-warning text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Pending Review</h5>
-                    <h3 class="mb-0" id="pending-review">0</h3>
+                    <h3 class="mb-0" id="pending-review">{{ $stats['pending_review'] ?? 0 }}</h3>
                 </div>
             </div>
         </div>
@@ -34,7 +34,7 @@
             <div class="card bg-success text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Approved</h5>
-                    <h3 class="mb-0" id="approved">0</h3>
+                    <h3 class="mb-0" id="approved">{{ $stats['approved'] ?? 0 }}</h3>
                 </div>
             </div>
         </div>
@@ -42,7 +42,7 @@
             <div class="card bg-danger text-white">
                 <div class="card-body text-center">
                     <h5 class="card-title">Rejected</h5>
-                    <h3 class="mb-0" id="rejected">0</h3>
+                    <h3 class="mb-0" id="rejected">{{ $stats['rejected'] ?? 0 }}</h3>
                 </div>
             </div>
         </div>
@@ -154,17 +154,4 @@
         </div>
     @endif
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    fetch('{{ route("adviser.proposal.stats") }}')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('total-proposals').textContent = data.total_proposals;
-            document.getElementById('pending-review').textContent = data.pending_review;
-            document.getElementById('approved').textContent = data.approved;
-            document.getElementById('rejected').textContent = data.rejected;
-        })
-        .catch(error => console.error('Error loading stats:', error));
-});
-</script>
 @endsection
