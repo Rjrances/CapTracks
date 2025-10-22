@@ -1,9 +1,7 @@
 @php
-    if (\Illuminate\Support\Facades\Auth::check()) {
-        $user = \Illuminate\Support\Facades\Auth::user();
-        $studentName = $user->name ?? 'User';
-    } elseif (session('is_student') && session('student_id')) {
-        $student = \App\Models\Student::find(session('student_id'));
+    if (\Illuminate\Support\Facades\Auth::guard('student')->check()) {
+        $studentAccount = \Illuminate\Support\Facades\Auth::guard('student')->user();
+        $student = $studentAccount->student;
         $studentName = $student->name ?? 'Student';
     } else {
         $studentName = 'Guest';
@@ -54,9 +52,6 @@
                 if (Auth::guard('student')->check()) {
                     $studentAccount = Auth::guard('student')->user();
                     $student = $studentAccount->student;
-                    $studentHasGroup = $student && $student->groups()->exists();
-                } elseif (session('is_student') && session('student_id')) {
-                    $student = \App\Models\Student::find(session('student_id'));
                     $studentHasGroup = $student && $student->groups()->exists();
                 }
             @endphp

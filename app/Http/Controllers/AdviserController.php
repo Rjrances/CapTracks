@@ -325,7 +325,7 @@ class AdviserController extends Controller
             });
             return [$group->id => [
                 'group' => $group,
-                'submissions' => $groupSubmissions->sortByDesc('submitted_at')->take(5), // Show only latest 5
+                'submissions' => $groupSubmissions->sortByDesc('submitted_at')->take(5), 
                 'user_role' => $group->role_type
             ]];
         });
@@ -382,7 +382,7 @@ class AdviserController extends Controller
         ];
         return view('adviser.project.index', compact('panelGroups', 'submissions', 'submissionsByGroup', 'summaryStats'))
             ->with('allGroups', $panelGroups)
-            ->with('adviserGroups', collect()); // Empty collection since this is panel-only view
+            ->with('adviserGroups', collect());
     }
     public function markAllNotificationsAsRead()
     {

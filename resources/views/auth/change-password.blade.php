@@ -18,8 +18,12 @@
                 <span class="text-2xl font-extrabold text-blue-700 tracking-wide">CapTrack</span>
             </div>
             <h2 class="text-2xl font-bold mb-6 text-gray-900 text-center">Change Your Password</h2>
-            @if(session('is_student'))
-                <p class="text-sm text-gray-600 text-center mb-4">Welcome, {{ session('student_name') }}! Please set your password.</p>
+            @if(Auth::guard('student')->check())
+                @php
+                    $studentAccount = Auth::guard('student')->user();
+                    $student = $studentAccount->student;
+                @endphp
+                <p class="text-sm text-gray-600 text-center mb-4">Welcome, {{ $student->name }}! Please set your password.</p>
             @elseif(Auth::check())
                 <p class="text-sm text-gray-600 text-center mb-4">Welcome, {{ Auth::user()->name }}! Please set your password.</p>
             @endif

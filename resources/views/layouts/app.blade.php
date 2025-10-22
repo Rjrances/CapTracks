@@ -15,9 +15,7 @@
 </head>
 <body class="bg-gray-100 font-sans text-gray-900">
     {{-- Conditionally include navigation if the partial exists --}}
-    @if (auth()->check() && auth()->user()->hasRole('student'))
-        @include('partials.nav.student')
-    @elseif (session('is_student'))
+    @if (Auth::guard('student')->check())
         @include('partials.nav.student')
     @elseif (View::exists('partials.nav'))
         @include('partials.nav')

@@ -22,7 +22,7 @@
                             <i class="fas fa-bell fa-lg text-muted"></i>
                             @php
                                 $notificationCount = 0;
-                                if (session('is_student') && session('student_id')) {
+                                if (\Illuminate\Support\Facades\Auth::guard('student')->check()) {
                                     $notificationCount = \App\Models\Notification::where('role', 'student')
                                         ->where('is_read', false)
                                         ->count();
@@ -42,8 +42,9 @@
                             <div class="dropdown-divider"></div>
                             @php
                                 $recentNotifications = collect();
-                                if (session('is_student') && session('student_id')) {
-                                    $studentId = session('student_id');
+                                if (\Illuminate\Support\Facades\Auth::guard('student')->check()) {
+                                    $studentAccount = \Illuminate\Support\Facades\Auth::guard('student')->user();
+                                    $studentId = $studentAccount->student_id;
                                     $recentNotifications = \App\Models\Notification::where(function($query) use ($studentId) {
                                         $query->where('role', 'student')
                                               ->orWhere('user_id', $studentId);
@@ -86,11 +87,10 @@
                     <div class="nav-item dropdown ms-3">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user-circle me-2"></i>
-                            @if(\Illuminate\Support\Facades\Auth::check())
-                                {{ auth()->user()->name }}
-                            @elseif(session('is_student') && session('student_id'))
+                            @if(\Illuminate\Support\Facades\Auth::guard('student')->check())
                                 @php
-                                    $student = \App\Models\Student::find(session('student_id'));
+                                    $studentAccount = \Illuminate\Support\Facades\Auth::guard('student')->user();
+                                    $student = $studentAccount->student;
                                     echo $student->name ?? 'Student';
                                 @endphp
                             @else

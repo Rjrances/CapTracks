@@ -517,11 +517,11 @@ class ChairpersonController extends Controller
     public function uploadStudentList(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+            'file' => 'required|file|mimes:csv|max:10240', // 10MB max
         ], [
             'file.required' => 'Please select a file to upload.',
             'file.file' => 'The uploaded file is invalid.',
-            'file.mimes' => 'Please upload an Excel file (.xlsx, .xls) or CSV file (.csv).',
+            'file.mimes' => 'Please upload a CSV file (.csv).',
             'file.max' => 'File size must not exceed 10MB.',
         ]);
         try {
@@ -609,14 +609,22 @@ class ChairpersonController extends Controller
             ->get();
         return view('chairperson.teachers.index', compact('faculty', 'activeTerm'));
     }
+    public function createFaculty()
+    {
+        return view('chairperson.teachers.create');
+    }
+    public function createFacultyManual()
+    {
+        return view('chairperson.teachers.create-manual');
+    }
     public function uploadFacultyList(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+            'file' => 'required|file|mimes:csv|max:10240', // 10MB max
         ], [
             'file.required' => 'Please select a file to upload.',
             'file.file' => 'The uploaded file is invalid.',
-            'file.mimes' => 'Please upload an Excel file (.xlsx, .xls) or CSV file (.csv).',
+            'file.mimes' => 'Please upload a CSV file (.csv).',
             'file.max' => 'File size must not exceed 10MB.',
         ]);
         try {
@@ -666,22 +674,14 @@ class ChairpersonController extends Controller
             return back()->with('error', $errorMessage);
         }
     }
-    public function createFaculty()
-    {
-        return view('chairperson.teachers.create');
-    }
-    public function createFacultyManual()
-    {
-        return view('chairperson.teachers.create-manual');
-    }
     public function storeFaculty(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
+            'file' => 'required|file|mimes:csv|max:10240', // 10MB max
         ], [
             'file.required' => 'Please select a file to upload.',
             'file.file' => 'The uploaded file is invalid.',
-            'file.mimes' => 'Please upload an Excel file (.xlsx, .xls) or CSV file (.csv).',
+            'file.mimes' => 'Please upload a CSV file (.csv).',
             'file.max' => 'File size must not exceed 10MB.',
         ]);
         try {
@@ -770,6 +770,7 @@ class ChairpersonController extends Controller
         // Use faculty_id from form input
         $facultyId = $request->faculty_id;
         
+        // Create faculty user
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,

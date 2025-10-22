@@ -21,7 +21,7 @@ class AuthController extends Controller
             'password' => ['nullable'],
         ]);
         
-        // Try to find faculty account by faculty_id
+        // Check by faculty_id
         $userAccount = UserAccount::where('faculty_id', $request->school_id)->first();
         
         if ($userAccount) {
@@ -39,12 +39,11 @@ class AuthController extends Controller
             }
         }
         
-        // Try to find student account by student_id
+        // Check by student_id
         $studentAccount = StudentAccount::where('student_id', $request->school_id)->first();
         if ($studentAccount) {
-            // Check if student needs to set password for first time
             if ($studentAccount->must_change_password && is_null($studentAccount->password)) {
-                // Allow login without password for first-time users
+                // First time login
                 Auth::guard('student')->login($studentAccount);
                 $request->session()->regenerate();
                 
@@ -52,7 +51,6 @@ class AuthController extends Controller
                     ->with('info', 'Welcome! Please set your password to continue.');
             }
             
-            // For students with existing passwords, require password
             if (empty($request->password)) {
                 return back()->withErrors(['password' => 'Password is required.']);
             }
@@ -60,7 +58,6 @@ class AuthController extends Controller
                 return back()->withErrors(['password' => 'Incorrect password.']);
             }
             
-            // Login the student using Laravel's Auth system
             Auth::guard('student')->login($studentAccount);
             $request->session()->regenerate();
             
@@ -91,7 +88,6 @@ class AuthController extends Controller
         Auth::logout();
         Auth::guard('student')->logout();
         
-        $request->session()->forget(['student_id', 'student_name', 'student_email', 'student_role', 'is_student', 'must_change_password']);
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/login');
@@ -116,7 +112,7 @@ class AuthController extends Controller
         if ($role === 'student') {
             // Create student
             $student = Student::create([
-                'student_id' => now()->timestamp, // Generate unique student ID
+                'student_id' => now()->timestamp,
                 'name' => $request->name,
                 'email' => $request->email,
             ]);
@@ -155,7 +151,7 @@ class AuthController extends Controller
     }
     public function showChangePasswordForm()
     {
-        if (!Auth::check() && !session('is_student')) {
+        if (!Auth::check() && !Auth::guard('student')->check()) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         return view('auth.change-password');
@@ -165,15 +161,11 @@ class AuthController extends Controller
         $request->validate([
             'password' => 'required|min:8|confirmed',
         ]);
-        if (session('is_student')) {
-            $student = Student::find(session('student_id'));
-            if ($student) {
-                $account = StudentAccount::where('student_id', $student->student_id)->first();
-                if ($account) {
-                    $account->password = Hash::make($request->password);
-                    $account->save();
-                }
-                $request->session()->forget('must_change_password');
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            if ($studentAccount) {
+                $studentAccount->password = Hash::make($request->password);
+                $studentAccount->save();
                 return redirect()->route('student.dashboard');
             }
             return redirect('/login')->withErrors(['auth' => 'Student session expired. Please log in again.']);

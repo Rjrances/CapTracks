@@ -72,7 +72,7 @@ class NotificationController extends Controller
                 $userId = $user->id;
             } elseif (Auth::guard('student')->check()) {
                 $userRole = 'student';
-                $userId = session('student_id');
+                $userId = Auth::guard('student')->user()->student_id;
             } else {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }

@@ -120,7 +120,7 @@
                                         <option value="">Select a student...</option>
                                         {{-- Available students are now passed from the controller with consistent filtering --}}
                                         @foreach($availableStudents as $student)
-                                            @if($student->email !== (Auth::check() ? Auth::user()->email : session('student_email')))
+                                            @if($student->email !== (Auth::guard('student')->check() ? Auth::guard('student')->user()->email : ''))
                                                 <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
                                                     {{ $student->name }} ({{ $student->student_id }})
                                                 </option>
@@ -138,7 +138,7 @@
                                     <select name="members[]" id="member2" class="form-select">
                                         <option value="">Select a student...</option>
                                         @foreach($availableStudents as $student)
-                                            @if($student->email !== (Auth::check() ? Auth::user()->email : session('student_email')))
+                                            @if($student->email !== (Auth::guard('student')->check() ? Auth::guard('student')->user()->email : ''))
                                                 <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
                                                     {{ $student->name }} ({{ $student->student_id }})
                                                 </option>

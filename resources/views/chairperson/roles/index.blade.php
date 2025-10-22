@@ -241,34 +241,6 @@
             </nav>
         </div>
     @endif
-    
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-gradient-secondary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-pie me-2"></i>Role Distribution Summary
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        @foreach($roles as $roleKey => $role)
-                            @if($roleKey !== 'student')
-                                <div class="col-md-2 col-sm-4 col-6 mb-3">
-                                    <div class="card h-100 shadow-sm border-0">
-                                        <div class="card-body">
-                                            <h4 class="text-{{ $roleKey === 'chairperson' ? 'danger' : ($roleKey === 'coordinator' ? 'primary' : ($roleKey === 'adviser' ? 'success' : ($roleKey === 'teacher' ? 'info' : ($roleKey === 'panelist' ? 'warning' : 'secondary')))) }} mb-1">{{ $role['user_count'] }}</h4>
-                                            <small class="text-muted">{{ $role['name'] }}</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 <style>
 .avatar-sm {

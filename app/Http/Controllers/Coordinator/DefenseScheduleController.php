@@ -397,11 +397,11 @@ class DefenseScheduleController extends Controller
         // Load the defense request with group and adviser relationships
         $defenseRequest->load(['group.adviser', 'group.members']);
         
-        // Get faculty for panelist selection (exclude adviser, chairperson, and coordinator who are pre-assigned)
+        // Get faculty for panelist selection
         $availableFaculty = User::whereIn('role', ['teacher'])
-            ->where('id', '!=', $defenseRequest->group->adviser->id) // Exclude the group's adviser
-            ->where('role', '!=', 'chairperson') // Exclude any chairperson
-            ->where('id', '!=', auth()->user()->id) // Exclude the current coordinator (you)
+            ->where('id', '!=', $defenseRequest->group->adviser->id)
+            ->where('role', '!=', 'chairperson')
+            ->where('id', '!=', auth()->user()->id)
             ->get();
         
         return view('coordinator.defense-requests.create-schedule', compact('defenseRequest', 'availableFaculty'));
@@ -474,28 +474,25 @@ class DefenseScheduleController extends Controller
 
     private function createDefensePanel(DefenseSchedule $defenseSchedule, Request $request)
     {
-        // Create adviser panel entry
+
         DefensePanel::create([
             'defense_schedule_id' => $defenseSchedule->id,
             'faculty_id' => $request->adviser_id,
             'role' => 'adviser',
         ]);
         
-        // Create coordinator panel entry
         DefensePanel::create([
             'defense_schedule_id' => $defenseSchedule->id,
             'faculty_id' => $request->subject_coordinator_id,
             'role' => 'coordinator',
         ]);
         
-        // Create panelist 1 entry
         DefensePanel::create([
             'defense_schedule_id' => $defenseSchedule->id,
             'faculty_id' => $request->panelist_1_id,
             'role' => 'member',
         ]);
         
-        // Create panelist 2 entry
         DefensePanel::create([
             'defense_schedule_id' => $defenseSchedule->id,
             'faculty_id' => $request->panelist_2_id,
