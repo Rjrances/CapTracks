@@ -231,7 +231,7 @@ function toggleReadStatus(notificationId) {
 }
 function markAllAsRead() {
     if (confirm('Mark all notifications as read?')) {
-        fetch('{{ route("notifications.mark-all-read") }}', {
+        fetch('{{ route("coordinator.notifications.mark-all-read") }}', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -256,7 +256,7 @@ function markSelectedAsRead() {
     const selectedIds = Array.from(document.querySelectorAll('.notification-checkbox:checked'))
         .map(cb => cb.value);
     if (selectedIds.length === 0) return;
-    fetch('{{ route("notifications.mark-multiple-read") }}', {
+    fetch('{{ route("coordinator.notifications.mark-multiple-read") }}', {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -279,7 +279,7 @@ function markSelectedAsRead() {
 }
 function deleteNotification(notificationId) {
     if (confirm('Are you sure you want to delete this notification?')) {
-        fetch(`/notifications/${notificationId}`, {
+        fetch(`{{ url('coordinator/notifications') }}/${notificationId}`, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -305,7 +305,7 @@ function deleteSelected() {
         .map(cb => cb.value);
     if (selectedIds.length === 0) return;
     if (confirm(`Are you sure you want to delete ${selectedIds.length} selected notification(s)?`)) {
-        fetch('{{ route("notifications.delete-multiple") }}', {
+        fetch('{{ route("coordinator.notifications.delete-multiple") }}', {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',

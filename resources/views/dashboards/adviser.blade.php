@@ -75,7 +75,7 @@
                             <div class="row align-items-center">
                                 <div class="col-md-8">
                                     <div class="d-flex align-items-center mb-2">
-                                        <h4 class="mb-0 me-3">{{ $activeTerm->full_name }}</h4>
+                                        <h4 class="mb-0 me-3">{{ $activeTerm->semester }}</h4>
                                         <span class="badge bg-success fs-6">Active</span>
                                     </div>
                                     <p class="text-muted mb-0">
@@ -358,4 +358,5 @@
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+

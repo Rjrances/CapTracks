@@ -112,5 +112,57 @@ class StudentController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Notification deleted successfully']);
     }
+
+    public function markMultipleAsRead(Request $request)
+    {
+        $student = $this->getAuthenticatedStudent();
+        
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'notification_ids' => 'required|array',
+            'notification_ids.*' => 'integer|exists:notifications,id'
+        ]);
+
+        $updated = Notification::whereIn('id', $request->notification_ids)
+            ->where(function($query) use ($student) {
+                $query->where('role', 'student')
+                      ->orWhere('user_id', $student->student_id);
+            })
+            ->update(['is_read' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $updated . ' notifications marked as read'
+        ]);
+    }
+
+    public function deleteMultiple(Request $request)
+    {
+        $student = $this->getAuthenticatedStudent();
+        
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'notification_ids' => 'required|array',
+            'notification_ids.*' => 'integer|exists:notifications,id'
+        ]);
+
+        $deleted = Notification::whereIn('id', $request->notification_ids)
+            ->where(function($query) use ($student) {
+                $query->where('role', 'student')
+                      ->orWhere('user_id', $student->student_id);
+            })
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => $deleted . ' notifications deleted'
+        ]);
+    }
 }
 

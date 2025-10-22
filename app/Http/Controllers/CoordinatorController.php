@@ -243,4 +243,81 @@ class CoordinatorController extends Controller
         $notifications = $query->orderBy('created_at', 'desc')->get();
         return view('coordinator.notifications', compact('notifications'));
     }
+
+    public function markNotificationAsRead($notificationId)
+    {
+        $notification = Notification::findOrFail($notificationId);
+        
+        if ($notification->role !== 'coordinator') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $notification->update(['is_read' => true]);
+
+        return response()->json(['success' => true, 'message' => 'Notification marked as read']);
+    }
+
+    public function markAllNotificationsAsRead()
+    {
+        $notificationIds = Notification::where('role', 'coordinator')
+            ->where('is_read', false)
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($notificationIds)) {
+            return response()->json(['success' => true, 'message' => 'No unread notifications found']);
+        }
+
+        Notification::whereIn('id', $notificationIds)
+            ->update(['is_read' => true]);
+
+        return response()->json(['success' => true, 'message' => count($notificationIds) . ' notifications marked as read']);
+    }
+
+    public function deleteNotification($notificationId)
+    {
+        $notification = Notification::findOrFail($notificationId);
+        
+        if ($notification->role !== 'coordinator') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $notification->delete();
+
+        return response()->json(['success' => true, 'message' => 'Notification deleted successfully']);
+    }
+
+    public function markMultipleAsRead(Request $request)
+    {
+        $request->validate([
+            'notification_ids' => 'required|array',
+            'notification_ids.*' => 'integer|exists:notifications,id'
+        ]);
+
+        $updated = Notification::whereIn('id', $request->notification_ids)
+            ->where('role', 'coordinator')
+            ->update(['is_read' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $updated . ' notifications marked as read'
+        ]);
+    }
+
+    public function deleteMultiple(Request $request)
+    {
+        $request->validate([
+            'notification_ids' => 'required|array',
+            'notification_ids.*' => 'integer|exists:notifications,id'
+        ]);
+
+        $deleted = Notification::whereIn('id', $request->notification_ids)
+            ->where('role', 'coordinator')
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => $deleted . ' notifications deleted'
+        ]);
+    }
 }

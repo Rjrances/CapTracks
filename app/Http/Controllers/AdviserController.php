@@ -59,7 +59,7 @@ class AdviserController extends Controller
             ->take(5)
             ->get();
         $recentActivities = $this->getRecentActivities($user);
-        return view('adviser.dashboard', compact(
+        return view('dashboards.adviser', compact(
             'activeTerm', 
             'pendingInvitations', 
             'adviserGroups', 

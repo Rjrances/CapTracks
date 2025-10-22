@@ -155,7 +155,7 @@
         }
     }
     function markAllNotificationsAsRead() {
-        fetch('{{ route("notifications.mark-all-read") }}', {
+        fetch('{{ route("chairperson.notifications.mark-all-read") }}', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',

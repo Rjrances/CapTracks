@@ -98,20 +98,24 @@ class AdviserProposalController extends Controller
             'approved' => 0,
             'rejected' => 0,
         ];
-        $groups = Group::where('faculty_id', $user->faculty_id)->pluck('id');
-        if ($groups->isNotEmpty()) {
-            $proposals = ProjectSubmission::where('type', 'proposal')
-                ->whereIn('student_id', function($query) use ($groups) {
-                    $query->select('student_id')
-                          ->from('group_members')
-                          ->whereIn('group_id', $groups);
-                })
-                ->get();
-            $stats['total_proposals'] = $proposals->count();
-            $stats['pending_review'] = $proposals->where('status', 'pending')->count();
-            $stats['approved'] = $proposals->where('status', 'approved')->count();
-            $stats['rejected'] = $proposals->where('status', 'rejected')->count();
+        
+        $groups = Group::where('faculty_id', $user->faculty_id)
+            ->with(['members', 'members.submissions' => function($query) {
+                $query->where('type', 'proposal');
+            }])
+            ->get();
+        
+        $allProposals = collect();
+        foreach ($groups as $group) {
+            $proposals = $group->members->flatMap->submissions->where('type', 'proposal');
+            $allProposals = $allProposals->merge($proposals);
         }
+        
+        $stats['total_proposals'] = $allProposals->count();
+        $stats['pending_review'] = $allProposals->where('status', 'pending')->count();
+        $stats['approved'] = $allProposals->where('status', 'approved')->count();
+        $stats['rejected'] = $allProposals->where('status', 'rejected')->count();
+        
         return response()->json($stats);
     }
     public function bulkUpdate(Request $request)

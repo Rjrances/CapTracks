@@ -123,7 +123,7 @@
         .catch(error => console.error('Error:', error));
     }
     function markAllNotificationsAsRead() {
-        fetch('{{ route("notifications.mark-all-read") }}', {
+        fetch('{{ route("coordinator.notifications.mark-all-read") }}', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
