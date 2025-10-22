@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
     @else
         document.getElementById('current_password').focus();
     @endif
-
+    
     const newPassword = document.getElementById('new_password');
     const confirmPassword = document.getElementById('new_password_confirmation');
     

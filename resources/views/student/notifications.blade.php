@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
             markNotificationAsRead(notificationId);
         });
     });
+
     const markAllReadBtn = document.getElementById('markAllReadBtn');
     if (markAllReadBtn) {
         markAllReadBtn.addEventListener('click', function() {
@@ -165,7 +166,7 @@ function deleteNotification(notificationId) {
             const notificationItem = document.querySelector(`[data-notification-id="${notificationId}"]`);
             notificationItem.remove();
             showAlert('Notification deleted', 'success');
-
+            
             if (document.querySelectorAll('.notification-item').length === 0) {
                 setTimeout(() => location.reload(), 1000);
             }
