@@ -79,13 +79,13 @@
                             </div>
                             <p class="mb-0 mt-2">
                                 <strong>Notes:</strong><br>
-                                • Faculty ID must be provided in the CSV (e.g., 10001, 10002, etc.)<br>
-                                • Faculty ID must be unique and not already exist in the system<br>
-                                • The role column is optional - if not specified, it will default to "teacher"<br>
-                                • Valid roles: teacher, adviser, panelist, coordinator, chairperson<br>
-                                • <strong>Semester format:</strong> "2024-2025 First Semester", "2024-2025 Second Semester", "2024-2025 Summer"<br>
-                                • Department should be "SCS" for School of Computer Science<br>
-                                • Faculty names should include appropriate titles (Dr., Prof., etc.)<br>
+Faculty ID must be provided in the CSV (e.g., 10001, 10002, etc.)<br>
+Faculty ID must be unique and not already exist in the system<br>
+The role column is optional - if not specified, it will default to "teacher"<br>
+Valid roles: teacher, adviser, panelist, coordinator, chairperson<br>
+<strong>Semester format:</strong> "2024-2025 First Semester", "2024-2025 Second Semester", "2024-2025 Summer"<br>
+Department should be "SCS" for School of Computer Science<br>
+Faculty names should include appropriate titles (Dr., Prof., etc.)<br>
                             </p>
                         </div>
                         <div class="alert alert-warning">

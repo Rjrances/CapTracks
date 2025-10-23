@@ -109,23 +109,18 @@
                         </div>
                         <ul class="space-y-3">
                             <li class="flex items-start space-x-3">
-                                <span class="text-blue-500 text-lg">✓</span>
                                 <span class="text-gray-700">Create and manage project proposals</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-blue-500 text-lg">✓</span>
                                 <span class="text-gray-700">Track milestone progress and deadlines</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-blue-500 text-lg">✓</span>
                                 <span class="text-gray-700">Submit project documents and files</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-blue-500 text-lg">✓</span>
                                 <span class="text-gray-700">Collaborate with team members</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-blue-500 text-lg">✓</span>
                                 <span class="text-gray-700">Schedule and manage defense appointments</span>
                             </li>
                         </ul>
@@ -142,23 +137,18 @@
                         </div>
                         <ul class="space-y-3">
                             <li class="flex items-start space-x-3">
-                                <span class="text-green-500 text-lg">✓</span>
                                 <span class="text-gray-700">Review and approve project proposals</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-green-500 text-lg">✓</span>
                                 <span class="text-gray-700">Monitor student progress and provide feedback</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-green-500 text-lg">✓</span>
                                 <span class="text-gray-700">Evaluate milestone submissions</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-green-500 text-lg">✓</span>
                                 <span class="text-gray-700">Schedule consultation meetings</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-green-500 text-lg">✓</span>
                                 <span class="text-gray-700">Participate in defense panels</span>
                             </li>
                         </ul>
@@ -175,23 +165,18 @@
                         </div>
                         <ul class="space-y-3">
                             <li class="flex items-start space-x-3">
-                                <span class="text-purple-500 text-lg">✓</span>
                                 <span class="text-gray-700">Manage class offerings and enrollments</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-purple-500 text-lg">✓</span>
                                 <span class="text-gray-700">Create and assign milestone templates</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-purple-500 text-lg">✓</span>
                                 <span class="text-gray-700">Organize events and schedules</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-purple-500 text-lg">✓</span>
                                 <span class="text-gray-700">Generate comprehensive reports</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-purple-500 text-lg">✓</span>
                                 <span class="text-gray-700">Facilitate group formations</span>
                             </li>
                         </ul>
@@ -208,23 +193,18 @@
                         </div>
                         <ul class="space-y-3">
                             <li class="flex items-start space-x-3">
-                                <span class="text-orange-500 text-lg">✓</span>
                                 <span class="text-gray-700">Manage faculty roles and permissions</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-orange-500 text-lg">✓</span>
                                 <span class="text-gray-700">Oversee program-wide statistics</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-orange-500 text-lg">✓</span>
                                 <span class="text-gray-700">Approve major program changes</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-orange-500 text-lg">✓</span>
                                 <span class="text-gray-700">Monitor academic standards</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-orange-500 text-lg">✓</span>
                                 <span class="text-gray-700">Generate institutional reports</span>
                             </li>
                         </ul>
@@ -320,23 +300,18 @@
                         <h3 class="text-2xl font-bold text-captrack-dark mb-6">Key Benefits</h3>
                         <ul class="space-y-4">
                             <li class="flex items-start space-x-3">
-                                <span class="text-captrack-blue text-xl">✓</span>
                                 <span class="text-gray-700">Reduced administrative workload by 60%</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-captrack-blue text-xl">✓</span>
                                 <span class="text-gray-700">Improved project completion rates</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-captrack-blue text-xl">✓</span>
                                 <span class="text-gray-700">Enhanced communication between stakeholders</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-captrack-blue text-xl">✓</span>
                                 <span class="text-gray-700">Real-time progress tracking and reporting</span>
                             </li>
                             <li class="flex items-start space-x-3">
-                                <span class="text-captrack-blue text-xl">✓</span>
                                 <span class="text-gray-700">Secure document storage and management</span>
                             </li>
                         </ul>

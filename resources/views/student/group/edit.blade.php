@@ -271,8 +271,7 @@
                             <option value="">Choose a faculty member...</option>
                             @foreach($availableFaculty as $faculty)
                                 <option value="{{ $faculty->id }}" {{ old('faculty_id') == $faculty->id ? 'selected' : '' }}>
-                                    {{ $faculty->name }} 
-                                    <span class="text-muted">({{ ucfirst($faculty->roles->first()->name ?? 'N/A') }})</span>
+                                    {{ $faculty->name }}{{ $faculty->department ? ' (' . $faculty->department . ')' : '' }}
                                 </option>
                             @endforeach
                         </select>

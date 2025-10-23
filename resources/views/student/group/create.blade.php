@@ -77,14 +77,14 @@
                                         @php
                                             // Get current active term
                                             $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
-                                            $availableFaculty = \App\Models\User::where('role', 'adviser')
+                                            $availableFaculty = \App\Models\User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator'])
                                                 ->where('semester', $activeTerm ? $activeTerm->semester : null)
+                                                ->orderBy('name')
                                                 ->get();
                                         @endphp
                                         @foreach($availableFaculty as $faculty)
                                             <option value="{{ $faculty->id }}">
-                                                {{ $faculty->name }} 
-                                                <span class="text-muted">({{ ucfirst($faculty->role) }}{{ $faculty->department ? ' - ' . $faculty->department : '' }})</span>
+                                                {{ $faculty->name }}{{ $faculty->department ? ' (' . $faculty->department . ')' : '' }}
                                             </option>
                                         @endforeach
                                     </select>

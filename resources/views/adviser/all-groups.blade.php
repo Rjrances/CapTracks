@@ -125,7 +125,7 @@
                                             <span class="badge bg-secondary ms-1">{{ ucfirst($group->panel_role) }}</span>
                                         @endif
                                     </h5>
-                                    <small class="text-white-50">{{ $group->members->count() }} members • {{ $group->academicTerm->full_name ?? 'No Term' }}</small>
+                                    <small class="text-white-50">{{ $group->members->count() }} members - {{ $group->academicTerm->full_name ?? 'No Term' }}</small>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-outline-light btn-sm">
@@ -306,7 +306,7 @@
                                         {{ $group->name }}
                                         <span class="badge bg-light text-dark ms-2">Adviser</span>
                                     </h5>
-                                    <small class="text-white-50">{{ $group->members->count() }} members • {{ $group->academicTerm->full_name ?? 'No Term' }}</small>
+                                    <small class="text-white-50">{{ $group->members->count() }} members - {{ $group->academicTerm->full_name ?? 'No Term' }}</small>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-outline-light btn-sm">
@@ -380,7 +380,7 @@
                                             <span class="badge bg-secondary ms-1">{{ ucfirst($group->panel_role) }}</span>
                                         @endif
                                     </h5>
-                                    <small class="text-white-50">{{ $group->members->count() }} members • {{ $group->academicTerm->full_name ?? 'No Term' }}</small>
+                                    <small class="text-white-50">{{ $group->members->count() }} members - {{ $group->academicTerm->full_name ?? 'No Term' }}</small>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-outline-light btn-sm">

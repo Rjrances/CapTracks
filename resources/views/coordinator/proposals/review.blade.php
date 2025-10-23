@@ -131,15 +131,17 @@
                                 
                                 <div class="mb-3">
                                     <label for="status" class="form-label fw-semibold">Decision</label>
-                                    <select name="status" id="status" class="form-select" required>
-                                        <option value="">Select Decision</option>
-                                        <option value="approved" {{ $proposal->status === 'approved' ? 'selected' : '' }}>
+                                    <select name="status" id="status" class="form-select @error('status') is-invalid @enderror" required>
+                                        <option value="approved" {{ old('status', 'approved') === 'approved' ? 'selected' : '' }}>
                                             Approve Proposal
                                         </option>
-                                        <option value="rejected" {{ $proposal->status === 'rejected' ? 'selected' : '' }}>
+                                        <option value="rejected" {{ old('status') === 'rejected' ? 'selected' : '' }}>
                                             Reject Proposal
                                         </option>
                                     </select>
+                                    @error('status')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
                                 <div class="mb-3">
@@ -148,10 +150,13 @@
                                     </label>
                                     <textarea name="teacher_comment" 
                                               id="teacher_comment" 
-                                              class="form-control" 
+                                              class="form-control @error('teacher_comment') is-invalid @enderror" 
                                               rows="4" 
                                               placeholder="Provide detailed feedback for the student..."
                                               required>{{ old('teacher_comment', $proposal->teacher_comment) }}</textarea>
+                                    @error('teacher_comment')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                     <div class="form-text">
                                         Minimum 10 characters. This feedback will be sent to the student.
                                     </div>

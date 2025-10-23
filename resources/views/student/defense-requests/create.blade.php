@@ -121,9 +121,9 @@
                             <div class="alert alert-success">
                                 <h6 class="mb-2"><i class="fas fa-check-circle me-2"></i>Requirements Met</h6>
                                 <ul class="mb-0">
-                                    <li>✓ You are part of a group</li>
-                                    <li>✓ Your group has an adviser assigned</li>
-                                    <li>✓ No pending defense requests</li>
+                                    <li>You are part of a group</li>
+                                    <li>Your group has an adviser assigned</li>
+                                    <li>No pending defense requests</li>
                                 </ul>
                             </div>
                         </div>

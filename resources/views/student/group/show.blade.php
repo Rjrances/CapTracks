@@ -237,11 +237,11 @@
                         <h6 class="mb-1">Proposal Defense</h6>
                         <small class="text-muted">
                             @if($group->defenseRequests->where('defense_type', 'proposal')->where('status', 'scheduled')->first())
-                                 Scheduled • Ready to proceed
+                                 Scheduled - Ready to proceed
                             @elseif($group->defenseRequests->where('defense_type', 'proposal')->where('status', 'pending')->first())
-                                 Request pending • Waiting for coordinator response
+                                 Request pending - Waiting for coordinator response
                             @else
-                                 Ready to request • All requirements met
+                                 Ready to request - All requirements met
                             @endif
                         </small>
                     </div>
@@ -266,13 +266,13 @@
                         <h6 class="mb-1">60% Progress Defense</h6>
                         <small class="text-muted">
                             @if($group->defenseRequests->where('defense_type', '60_percent')->where('status', 'scheduled')->first())
-                                 Scheduled • Ready to proceed
+                                 Scheduled - Ready to proceed
                             @elseif($group->defenseRequests->where('defense_type', '60_percent')->where('status', 'pending')->first())
-                                 Request pending • Waiting for coordinator response
+                                 Request pending - Waiting for coordinator response
                             @elseif($group->overall_progress_percentage < 60)
-                                 Not ready • Progress: {{ $group->overall_progress_percentage }}%
+                                 Not ready - Progress: {{ $group->overall_progress_percentage }}%
                             @else
-                                 Ready to request • Progress: {{ $group->overall_progress_percentage }}%
+                                 Ready to request - Progress: {{ $group->overall_progress_percentage }}%
                             @endif
                         </small>
                     </div>
@@ -301,13 +301,13 @@
                         <h6 class="mb-1">100% Final Defense</h6>
                         <small class="text-muted">
                             @if($group->defenseRequests->where('defense_type', '100_percent')->where('status', 'scheduled')->first())
-                                 Scheduled • Ready to proceed
+                                 Scheduled - Ready to proceed
                             @elseif($group->defenseRequests->where('defense_type', '100_percent')->where('status', 'pending')->first())
-                                 Request pending • Waiting for coordinator response
+                                 Request pending - Waiting for coordinator response
                             @elseif($group->overall_progress_percentage < 100)
-                                 Not ready • Progress: {{ $group->overall_progress_percentage }}%
+                                 Not ready - Progress: {{ $group->overall_progress_percentage }}%
                             @else
-                                 Ready to request • Progress: {{ $group->overall_progress_percentage }}%
+                                 Ready to request - Progress: {{ $group->overall_progress_percentage }}%
                             @endif
                         </small>
                     </div>
@@ -349,7 +349,7 @@
                             <small class="text-muted">
                                 Requested: {{ $request->requested_at->format('M d, Y') }}
                                 @if($request->student_message)
-                                    • Message: "{{ Str::limit($request->student_message, 50) }}"
+                                    - Message: "{{ Str::limit($request->student_message, 50) }}"
                                 @endif
                             </small>
                         </div>
@@ -412,8 +412,7 @@
                             <option value="">Choose a faculty member...</option>
                             @foreach($availableFaculty as $faculty)
                                 <option value="{{ $faculty->id }}">
-                                    {{ $faculty->name }} 
-                                    <span class="text-muted">({{ ucfirst($faculty->roles->first()->name ?? 'N/A') }}{{ $faculty->department ? ' - ' . $faculty->department : '' }})</span>
+                                    {{ $faculty->name }}{{ $faculty->department ? ' (' . $faculty->department . ')' : '' }}
                                 </option>
                             @endforeach
                         </select>

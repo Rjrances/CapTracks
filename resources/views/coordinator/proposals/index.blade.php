@@ -10,11 +10,6 @@
                 <h2 class="fw-bold mb-0">
                     <i class="fas fa-file-alt me-2"></i>Proposal Review
                 </h2>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-primary" onclick="loadStats()">
-                        <i class="fas fa-chart-bar me-1"></i>View Stats
-                    </button>
-                </div>
             </div>
 
             @if(session('success'))
@@ -48,7 +43,7 @@
                                         {{ $data['offering']->subject_code }} - {{ $data['offering']->subject_title }}
                                     </h5>
                                     <small class="opacity-75">
-                                        {{ $data['offering']->offer_code }} • {{ $data['total_groups'] }} groups
+                                        {{ $data['offering']->offer_code }} - {{ $data['total_groups'] }} groups
                                     </small>
                                 </div>
                                 <div class="col-md-4 text-end">
@@ -151,97 +146,4 @@
     </div>
 </div>
 
-<!-- Stats Modal -->
-<div class="modal fade" id="statsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-chart-bar me-2"></i>Proposal Statistics
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="statsContent">
-                    <div class="text-center">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function loadStats() {
-    fetch('{{ route("coordinator.proposals.stats") }}')
-        .then(response => response.json())
-        .then(data => {
-            const statsContent = document.getElementById('statsContent');
-            statsContent.innerHTML = `
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <h3 class="text-primary">${data.total_proposals}</h3>
-                                <p class="card-text">Total Proposals</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <h3 class="text-warning">${data.pending_proposals}</h3>
-                                <p class="card-text">Pending Review</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <h3 class="text-success">${data.approved_proposals}</h3>
-                                <p class="card-text">Approved</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <h3 class="text-danger">${data.rejected_proposals}</h3>
-                                <p class="card-text">Rejected</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-md-6">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <h3 class="text-info">${data.total_offerings}</h3>
-                                <p class="card-text">Coordinated Offerings</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <h3 class="text-secondary">${data.total_groups}</h3>
-                                <p class="card-text">Total Groups</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        })
-        .catch(error => {
-            console.error('Error loading stats:', error);
-            document.getElementById('statsContent').innerHTML = '<div class="alert alert-danger">Error loading statistics.</div>';
-        });
-    
-    const modal = new bootstrap.Modal(document.getElementById('statsModal'));
-    modal.show();
-}
-</script>
 @endsection

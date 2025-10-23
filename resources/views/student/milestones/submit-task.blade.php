@@ -38,13 +38,13 @@
                                     required>
                                 <option value="">Select submission type</option>
                                 <option value="document" {{ old('submission_type') == 'document' ? 'selected' : '' }}>
-                                    📄 Document (Chapter 1&2 or Chapter 3&4)
+                                    Document (Chapter 1&2 or Chapter 3&4)
                                 </option>
                                 <option value="screenshots" {{ old('submission_type') == 'screenshots' ? 'selected' : '' }}>
-                                    📸 Screenshots (60% or 100% Progress)
+                                    Screenshots (60% or 100% Progress)
                                 </option>
                                 <option value="progress_notes" {{ old('submission_type') == 'progress_notes' ? 'selected' : '' }}>
-                                    📝 Progress Notes & Updates
+                                    Progress Notes & Updates
                                 </option>
                             </select>
                             @error('submission_type')
@@ -199,21 +199,21 @@
                 <div class="card-body">
                     <h6 class="fw-bold">For Documents:</h6>
                     <ul class="list-unstyled small mb-3">
-                        <li>• Use clear, professional formatting</li>
-                        <li>• Include proper citations</li>
-                        <li>• Follow academic writing standards</li>
+                        <li>Use clear, professional formatting</li>
+                        <li>Include proper citations</li>
+                        <li>Follow academic writing standards</li>
                     </ul>
                     <h6 class="fw-bold">For Screenshots:</h6>
                     <ul class="list-unstyled small mb-3">
-                        <li>• Show key functionality</li>
-                        <li>• Include UI/UX elements</li>
-                        <li>• Demonstrate progress clearly</li>
+                        <li>Show key functionality</li>
+                        <li>Include UI/UX elements</li>
+                        <li>Demonstrate progress clearly</li>
                     </ul>
                     <h6 class="fw-bold">For Progress Notes:</h6>
                     <ul class="list-unstyled small">
-                        <li>• Be specific about accomplishments</li>
-                        <li>• Mention any challenges faced</li>
-                        <li>• Outline next steps</li>
+                        <li>Be specific about accomplishments</li>
+                        <li>Mention any challenges faced</li>
+                        <li>Outline next steps</li>
                     </ul>
                 </div>
             </div>

@@ -73,7 +73,7 @@
                                 </div>
                                 <div class="text-muted small">
                                     <i class="fas fa-graduation-cap me-1"></i>
-                                    {{ $member->course }} • {{ $member->semester }}
+                                    {{ $member->course }} - {{ $member->semester }}
                                 </div>
                             </div>
                             <div>

@@ -129,6 +129,14 @@ class DefenseScheduleController extends Controller
         if ($conflict) {
             return back()->withErrors(['room' => 'This room is already booked for the selected time slot.'])->withInput();
         }
+
+        //check member conflict
+        $panelFacultyIds = collect($validated['panel_members'])->pluck('faculty_id')->toArray();
+        $panelConflict = $this->checkPanelMemberConflicts($panelFacultyIds, $startAt, $endAt);
+        if ($panelConflict) {
+            return back()->withErrors(['error' => 'One or more panel members are already scheduled for another defense at the selected time.'])->withInput();
+        }
+
         try {
             DB::beginTransaction();
             $schedule = DefenseSchedule::create([
@@ -172,7 +180,8 @@ class DefenseScheduleController extends Controller
             return redirect()->route('coordinator.defense.index')->with('success', 'Defense schedule created successfully. All parties have been notified.');
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->withErrors(['error' => 'Failed to create defense schedule.'])->withInput();
+            \Log::error('Failed to create defense schedule: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to create defense schedule. Please try again or contact support if the problem persists.'])->withInput();
         }
     }
     public function show($id)
@@ -233,6 +242,14 @@ class DefenseScheduleController extends Controller
         if ($conflict) {
             return back()->withErrors(['room' => 'This room is already booked for the selected time slot.'])->withInput();
         }
+
+        //check member conflict
+        $panelFacultyIds = collect($validated['panel_members'])->pluck('faculty_id')->toArray();
+        $panelConflict = $this->checkPanelMemberConflicts($panelFacultyIds, $startAt, $endAt, $id);
+        if ($panelConflict) {
+            return back()->withErrors(['error' => 'One or more panel members are already scheduled for another defense at the selected time.'])->withInput();
+        }
+
         try {
             DB::beginTransaction();
             $schedule->update([
@@ -275,7 +292,8 @@ class DefenseScheduleController extends Controller
             return redirect()->route('coordinator.defense.index')->with('success', 'Defense schedule updated successfully.');
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->withErrors(['error' => 'Failed to update defense schedule.'])->withInput();
+            \Log::error('Failed to update defense schedule: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to update defense schedule. Please try again or contact support if the problem persists.'])->withInput();
         }
     }
     public function destroy($id)
@@ -344,6 +362,27 @@ class DefenseScheduleController extends Controller
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }
+        return $query->exists();
+    }
+
+    private function checkPanelMemberConflicts($facultyIds, $startAt, $endAt, $excludeId = null)
+    {
+        $query = DefenseSchedule::where(function ($q) use ($startAt, $endAt) {
+                $q->whereBetween('start_at', [$startAt, $endAt])
+                  ->orWhereBetween('end_at', [$startAt, $endAt])
+                  ->orWhere(function ($q2) use ($startAt, $endAt) {
+                      $q2->where('start_at', '<=', $startAt)
+                         ->where('end_at', '>=', $endAt);
+                  });
+            })
+            ->whereHas('defensePanels', function ($q) use ($facultyIds) {
+                $q->whereIn('faculty_id', $facultyIds);
+            });
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
         return $query->exists();
     }
     private function sendDefenseScheduleNotifications($schedule)
