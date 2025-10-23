@@ -103,15 +103,9 @@ class User extends Authenticatable
     {
         return $this->hasRole('coordinator') && $this->offerings()->exists();
     }
-    public function getCoordinatedOfferings($activeTerm = null)
+    public function getCoordinatedOfferings()
     {
-        $query = $this->offerings()->with('academicTerm');
-        
-        if ($activeTerm) {
-            $query->where('academic_term_id', $activeTerm->id);
-        }
-        
-        return $query->get();
+        return $this->offerings()->with('academicTerm')->get();
     }
     public function canBeAdviserForGroup($groupId): bool
     {

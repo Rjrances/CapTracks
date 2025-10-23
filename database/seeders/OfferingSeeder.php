@@ -63,14 +63,13 @@ class OfferingSeeder extends Seeder
                         'faculty_id' => $coordinators[3]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
-                    // Thesis II offering removed as requested
-                    // [
-                    //     'subject_title' => 'Thesis II',
-                    //     'subject_code' => 'CS-THS-302',
-                    //     'offer_code' => '11004',
-                    //     'faculty_id' => $coordinators[4]->faculty_id ?? $coordinators[0]->faculty_id,
-                    //     'academic_term_id' => $term->id,
-                    // ],
+                    [
+                        'subject_title' => 'Thesis II',
+                        'subject_code' => 'CS-THS-302',
+                        'offer_code' => '11004',
+                        'faculty_id' => $coordinators[4]->faculty_id ?? $coordinators[0]->faculty_id,
+                        'academic_term_id' => $term->id,
+                    ],
                 ];
             } elseif ($term->semester === '2024-2025 Second Semester') {
                 $offerings = [
@@ -102,14 +101,13 @@ class OfferingSeeder extends Seeder
                         'faculty_id' => $coordinators[7]->faculty_id ?? $coordinators[3]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
-                    // Thesis II offering removed as requested
-                    // [
-                    //     'subject_title' => 'Thesis II',
-                    //     'subject_code' => 'CS-THS-302',
-                    //     'offer_code' => '12004',
-                    //     'faculty_id' => $coordinators[8]->faculty_id ?? $coordinators[4]->faculty_id ?? $coordinators[0]->faculty_id,
-                    //     'academic_term_id' => $term->id,
-                    // ],
+                    [
+                        'subject_title' => 'Thesis II',
+                        'subject_code' => 'CS-THS-302',
+                        'offer_code' => '12004',
+                        'faculty_id' => $coordinators[8]->faculty_id ?? $coordinators[4]->faculty_id ?? $coordinators[0]->faculty_id,
+                        'academic_term_id' => $term->id,
+                    ],
                 ];
             } elseif ($term->semester === '2024-2025 Summer') {
                 $offerings = [
@@ -134,14 +132,13 @@ class OfferingSeeder extends Seeder
                         'faculty_id' => $coordinators[1]->faculty_id ?? $coordinators[0]->faculty_id,
                         'academic_term_id' => $term->id,
                     ],
-                    // Thesis II offering removed as requested
-                    // [
-                    //     'subject_title' => 'Thesis II',
-                    //     'subject_code' => 'CS-THS-302',
-                    //     'offer_code' => '13003',
-                    //     'faculty_id' => $coordinators[2]->faculty_id ?? $coordinators[0]->faculty_id,
-                    //     'academic_term_id' => $term->id,
-                    // ],
+                    [
+                        'subject_title' => 'Thesis II',
+                        'subject_code' => 'CS-THS-302',
+                        'offer_code' => '13003',
+                        'faculty_id' => $coordinators[2]->faculty_id ?? $coordinators[0]->faculty_id,
+                        'academic_term_id' => $term->id,
+                    ],
                 ];
             }
 
