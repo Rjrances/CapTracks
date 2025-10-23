@@ -17,33 +17,55 @@ class CoordinatorDashboardController extends Controller
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         
-        // Filter all data by active term only
+        // Filter all data by active term and coordinator offerings
+        $coordinatorOfferings = auth()->user()->offerings()
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->pluck('id')->toArray();
         $studentCount = $activeTerm ? Student::where('semester', $activeTerm->semester)->count() : 0;
-        $groupCount = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->count() : 0;
+        $groupCount = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->count() : 0;
         $facultyCount = User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator', 'chairperson'])
             ->when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('semester', $activeTerm->semester);
             })->count();
-        $submissionCount = ProjectSubmission::count();
-        $groupsWithAdviser = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereNotNull('faculty_id')->count() : 0;
+        $submissionCount = $activeTerm ? ProjectSubmission::whereHas('student', function($query) use ($activeTerm) {
+            $query->where('semester', $activeTerm->semester);
+        })->count() : 0;
+        $groupsWithAdviser = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->whereNotNull('faculty_id')->count() : 0;
         $groupsWithoutAdviser = $groupCount - $groupsWithAdviser;
-        $totalGroupMembers = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->withCount('members')->get()->sum('members_count') : 0;
-        $pendingSubmissions = ProjectSubmission::where('status', 'pending')->count();
-        $approvedSubmissions = ProjectSubmission::where('status', 'approved')->count();
-        $rejectedSubmissions = ProjectSubmission::where('status', 'rejected')->count();
+        $totalGroupMembers = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->withCount('members')->get()->sum('members_count') : 0;
+        $pendingSubmissions = $activeTerm ? ProjectSubmission::where('status', 'pending')
+            ->whereHas('student', function($query) use ($activeTerm) {
+                $query->where('semester', $activeTerm->semester);
+            })->count() : 0;
+        $approvedSubmissions = $activeTerm ? ProjectSubmission::where('status', 'approved')
+            ->whereHas('student', function($query) use ($activeTerm) {
+                $query->where('semester', $activeTerm->semester);
+            })->count() : 0;
+        $rejectedSubmissions = $activeTerm ? ProjectSubmission::where('status', 'rejected')
+            ->whereHas('student', function($query) use ($activeTerm) {
+                $query->where('semester', $activeTerm->semester);
+            })->count() : 0;
         $milestoneTemplates = MilestoneTemplate::count();
         $activeMilestones = MilestoneTemplate::where('status', 'active')->count();
         $totalTasks = MilestoneTask::count();
         $completedTasks = MilestoneTask::where('is_completed', true)->count();
         $recentStudents = $activeTerm ? Student::where('semester', $activeTerm->semester)->latest()->take(5)->get() : collect();
-        $recentGroups = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->with(['adviser', 'members'])->latest()->take(5)->get() : collect();
-        $recentSubmissions = ProjectSubmission::latest()->take(5)->get();
+        $recentGroups = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->with(['adviser', 'members'])->latest()->take(5)->get() : collect();
+        $recentSubmissions = $activeTerm ? ProjectSubmission::whereHas('student', function($query) use ($activeTerm) {
+            $query->where('semester', $activeTerm->semester);
+        })->latest()->take(5)->get() : collect();
         $notifications = Notification::latest()->take(5)->get();
-        $pendingInvitations = AdviserInvitation::where('status', 'pending')
+        $pendingInvitations = $activeTerm ? AdviserInvitation::where('status', 'pending')
+                                              ->whereHas('group', function($query) use ($activeTerm, $coordinatorOfferings) {
+                                                  $query->where('academic_term_id', $activeTerm->id)
+                                                        ->whereIn('offering_id', $coordinatorOfferings);
+                                              })
                                               ->with(['group', 'faculty'])
                                               ->latest()
                                               ->take(5)
-                                              ->get();
+                                              ->get() : collect();
         $recentActivities = $this->getRecentActivities($activeTerm);
         $upcomingDeadlines = $this->getUpcomingDeadlines();
         $user = auth()->user();
@@ -51,7 +73,7 @@ class CoordinatorDashboardController extends Controller
         $isTeacherCoordinator = false;
         if ($user && $user->hasRole('coordinator') && $user->offerings()->exists()) {
             $isTeacherCoordinator = true;
-            $coordinatedOfferings = $user->getCoordinatedOfferings();
+            $coordinatedOfferings = $user->getCoordinatedOfferings($activeTerm);
         }
         $coordinatedOfferings = $coordinatedOfferings ?? collect();
         $isTeacherCoordinator = $isTeacherCoordinator ?? false;
@@ -99,27 +121,33 @@ class CoordinatorDashboardController extends Controller
             }
         }
         
-        $recentSubs = ProjectSubmission::latest()->take(3)->get();
-        foreach ($recentSubs as $submission) {
-            $student = $submission->getStudentData();
-            $activities->push((object)[
-                'title' => "New submission: {$submission->type}",
-                'description' => "Submitted by " . ($student ? $student->name : 'Unknown'),
-                'icon' => 'file-alt',
-                'created_at' => $submission->created_at,
-                'type' => 'submission'
-            ]);
-        }
-        
-        $recentInvites = AdviserInvitation::with(['group', 'faculty'])->latest()->take(3)->get();
-        foreach ($recentInvites as $invitation) {
-            $activities->push((object)[
-                'title' => "Adviser invitation sent",
-                'description' => "{$invitation->faculty->name} invited to {$invitation->group->name}",
-                'icon' => 'envelope',
-                'created_at' => $invitation->created_at,
-                'type' => 'invitation'
-            ]);
+        if ($selectedTerm) {
+            $recentSubs = ProjectSubmission::whereHas('student', function($query) use ($selectedTerm) {
+                $query->where('semester', $selectedTerm->semester);
+            })->latest()->take(3)->get();
+            foreach ($recentSubs as $submission) {
+                $student = $submission->getStudentData();
+                $activities->push((object)[
+                    'title' => "New submission: {$submission->type}",
+                    'description' => "Submitted by " . ($student ? $student->name : 'Unknown'),
+                    'icon' => 'file-alt',
+                    'created_at' => $submission->created_at,
+                    'type' => 'submission'
+                ]);
+            }
+            
+            $recentInvites = AdviserInvitation::whereHas('group', function($query) use ($selectedTerm) {
+                $query->where('academic_term_id', $selectedTerm->id);
+            })->with(['group', 'faculty'])->latest()->take(3)->get();
+            foreach ($recentInvites as $invitation) {
+                $activities->push((object)[
+                    'title' => "Adviser invitation sent",
+                    'description' => "{$invitation->faculty->name} invited to {$invitation->group->name}",
+                    'icon' => 'envelope',
+                    'created_at' => $invitation->created_at,
+                    'type' => 'invitation'
+                ]);
+            }
         }
         return $activities->sortByDesc('created_at')->take(8);
     }

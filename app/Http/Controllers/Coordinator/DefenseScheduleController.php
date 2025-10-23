@@ -88,9 +88,16 @@ class DefenseScheduleController extends Controller
     public function create()
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
-        $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
+        $coordinatorOfferings = auth()->user()->offerings()
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->pluck('id')->toArray();
         $groups = Group::with(['members', 'adviser', 'offering'])
             ->whereIn('offering_id', $coordinatorOfferings)
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
             ->get();
         $faculty = User::whereIn('role', ['teacher', 'chairperson', 'coordinator', 'adviser', 'panelist'])
             ->when($activeTerm, function($query) use ($activeTerm) {
@@ -331,7 +338,11 @@ class DefenseScheduleController extends Controller
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
         $conflict = $this->checkDoubleBooking($startAt, $endAt, $request->room);
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
         $availableFaculty = User::whereIn('role', ['teacher', 'chairperson'])
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
             ->where(function ($query) use ($group) {
                 if ($group->faculty_id) {
                     $query->where('id', '!=', $group->faculty_id);
@@ -437,7 +448,11 @@ class DefenseScheduleController extends Controller
         $defenseRequest->load(['group.adviser', 'group.members']);
         
         //panelist selection
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
         $availableFaculty = User::whereIn('role', ['teacher'])
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
             ->where('id', '!=', $defenseRequest->group->adviser->id)
             ->where('role', '!=', 'chairperson')
             ->where('id', '!=', auth()->user()->id)

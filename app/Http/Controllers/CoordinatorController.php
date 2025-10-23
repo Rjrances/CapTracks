@@ -23,38 +23,67 @@ class CoordinatorController extends Controller
         $isTeacherCoordinator = false;
         if ($user && $user->hasRole('coordinator') && $user->offerings()->exists()) {
             $isTeacherCoordinator = true;
-            $coordinatedOfferings = $user->getCoordinatedOfferings();
+            $coordinatedOfferings = $user->getCoordinatedOfferings($activeTerm);
         }
         $coordinatedOfferings = $coordinatedOfferings ?? collect();
         $isTeacherCoordinator = $isTeacherCoordinator ?? false;
+        $coordinatorOfferings = auth()->user()->offerings()
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->pluck('id')->toArray();
         $stats = [
-            'studentCount' => Student::count(),
-            'groupCount' => Group::count(),
+            'studentCount' => $activeTerm ? Student::where('semester', $activeTerm->semester)->count() : 0,
+            'groupCount' => $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->count() : 0,
             'facultyCount' => User::whereHas('roles', function($query) {
                 $query->whereIn('name', ['adviser', 'panelist']);
             })->when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('semester', $activeTerm->semester);
             })->count(),
-            'submissionCount' => ProjectSubmission::count(),
-            'pendingSubmissions' => ProjectSubmission::where('status', 'pending')->count(),
-            'totalGroupMembers' => Group::withCount('members')->get()->sum('members_count'),
-            'groupsWithAdviser' => Group::whereNotNull('faculty_id')->count(),
-            'groupsWithoutAdviser' => Group::whereNull('faculty_id')->count(),
+            'submissionCount' => $activeTerm ? ProjectSubmission::whereHas('student', function($query) use ($activeTerm) {
+                $query->where('semester', $activeTerm->semester);
+            })->count() : 0,
+            'pendingSubmissions' => $activeTerm ? ProjectSubmission::where('status', 'pending')
+                ->whereHas('student', function($query) use ($activeTerm) {
+                    $query->where('semester', $activeTerm->semester);
+                })->count() : 0,
+            'totalGroupMembers' => $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->withCount('members')->get()->sum('members_count') : 0,
+            'groupsWithAdviser' => $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->whereNotNull('faculty_id')->count() : 0,
+            'groupsWithoutAdviser' => $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->whereNull('faculty_id')->count() : 0,
         ];
         $recentActivities = collect();
-        $recentGroups = Group::with(['adviser', 'members'])
+        $recentGroups = $activeTerm ? Group::with(['adviser', 'members'])
+            ->where('academic_term_id', $activeTerm->id)
+            ->whereIn('offering_id', $coordinatorOfferings)
             ->latest()
             ->take(5)
-            ->get();
-        $recentSubmissions = ProjectSubmission::latest()
+            ->get() : collect();
+        $recentSubmissions = $activeTerm ? ProjectSubmission::whereHas('student', function($query) use ($activeTerm) {
+                $query->where('semester', $activeTerm->semester);
+            })
+            ->latest()
             ->take(5)
-            ->get();
-        $pendingInvitations = AdviserInvitation::with(['faculty', 'group'])
+            ->get() : collect();
+        $pendingInvitations = $activeTerm ? AdviserInvitation::with(['faculty', 'group'])
             ->where('status', 'pending')
+            ->whereHas('group', function($query) use ($activeTerm, $coordinatorOfferings) {
+                $query->where('academic_term_id', $activeTerm->id)
+                      ->whereIn('offering_id', $coordinatorOfferings);
+            })
             ->latest()
             ->take(5)
-            ->get();
+            ->get() : collect();
         $upcomingDeadlines = collect();
+        // Extract individual stats for the view
+        $studentCount = $stats['studentCount'];
+        $groupCount = $stats['groupCount'];
+        $facultyCount = $stats['facultyCount'];
+        $submissionCount = $stats['submissionCount'];
+        $pendingSubmissions = $stats['pendingSubmissions'];
+        $totalGroupMembers = $stats['totalGroupMembers'];
+        $groupsWithAdviser = $stats['groupsWithAdviser'];
+        $groupsWithoutAdviser = $stats['groupsWithoutAdviser'];
+
         return view('dashboards.coordinator', compact(
             'activeTerm',
             'notifications',
@@ -65,7 +94,15 @@ class CoordinatorController extends Controller
             'pendingInvitations',
             'upcomingDeadlines',
             'coordinatedOfferings',
-            'isTeacherCoordinator'
+            'isTeacherCoordinator',
+            'studentCount',
+            'groupCount',
+            'facultyCount',
+            'submissionCount',
+            'pendingSubmissions',
+            'totalGroupMembers',
+            'groupsWithAdviser',
+            'groupsWithoutAdviser'
         ));
     }
     public function classlist(Request $request)
@@ -118,8 +155,10 @@ class CoordinatorController extends Controller
     public function groups(Request $request)
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
+        $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
         
-        $query = Group::with(['adviser', 'members']);
+        $query = Group::with(['adviser', 'members'])
+            ->whereIn('offering_id', $coordinatorOfferings);
         
         
         if ($activeTerm) {
