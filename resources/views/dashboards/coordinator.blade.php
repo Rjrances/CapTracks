@@ -43,7 +43,7 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-start mb-2">
                                             <h6 class="card-title mb-0 text-primary">{{ $offering->subject_code }}</h6>
-                                            <span class="badge bg-info">{{ $offering->academicTerm->full_name ?? 'N/A' }}</span>
+                                            <span class="badge bg-info">{{ $offering->academicTerm->semester ?? 'N/A' }}</span>
                                         </div>
                                         <p class="card-text text-muted mb-3">{{ $offering->subject_title }}</p>
                                         <div class="d-flex justify-content-between align-items-center">

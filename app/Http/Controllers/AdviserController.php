@@ -17,7 +17,7 @@ class AdviserController extends Controller
         $user = Auth::user();
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         $pendingInvitations = AdviserInvitation::with(['group', 'group.members'])
-            ->where('faculty_id', $user->faculty_id)
+            ->where('faculty_id', $user->id)
             ->pending()
             ->get();
         $adviserGroups = Group::with([
@@ -174,10 +174,12 @@ class AdviserController extends Controller
     public function invitations()
     {
         $user = Auth::user();
+        
         $invitations = AdviserInvitation::with(['group', 'group.members'])
             ->where('faculty_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
+        
         return view('adviser.invitations', compact('invitations'));
     }
     public function respondToInvitation(Request $request, AdviserInvitation $invitation)
@@ -187,7 +189,8 @@ class AdviserController extends Controller
             'response_message' => 'nullable|string|max:500',
         ]);
         
-        if ($invitation->faculty_id !== Auth::id()) {
+        $user = Auth::user();
+        if ($invitation->faculty_id !== $user->id) {
             abort(403, 'Unauthorized');
         }
         if (!$invitation->isPending()) {
