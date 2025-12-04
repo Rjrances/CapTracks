@@ -193,16 +193,19 @@ class StudentGroupController extends Controller
                     }
                 }
             }
+            $faculty = User::find($request->adviser_id);
+            if (!$faculty) {
+                return back()->with('error', 'Selected adviser not found. Please try again.');
+            }
+            
             \App\Models\AdviserInvitation::create([
                 'group_id' => $group->id,
-                'faculty_id' => $request->adviser_id,
+                'faculty_id' => $faculty->id,
                 'message' => $request->adviser_message,
                 'status' => 'pending',
             ]);
-            $faculty = User::find($request->adviser_id);
-            if ($faculty) {
-                \App\Services\NotificationService::newAdviserInvitation($faculty, $group->name);
-            }
+            
+            \App\Services\NotificationService::newAdviserInvitation($faculty, $group->name);
             \Log::info('Group creation completed successfully', ['group_id' => $group->id]);
             $invitationCount = count($request->members ?? []);
             $message = 'Group created successfully! Adviser invitation has been sent.';
@@ -329,16 +332,19 @@ class StudentGroupController extends Controller
         if ($existingInvitation) {
             return back()->with('error', 'This faculty member has already been invited.');
         }
+        $faculty = User::find($request->faculty_id);
+        if (!$faculty) {
+            return back()->with('error', 'Selected faculty member not found. Please try again.');
+        }
+        
         \App\Models\AdviserInvitation::create([
             'group_id' => $group->id,
-            'faculty_id' => $request->faculty_id,
+            'faculty_id' => $faculty->id,
             'message' => $request->message,
             'status' => 'pending',
         ]);
-        $faculty = User::find($request->faculty_id);
-        if ($faculty) {
-            \App\Services\NotificationService::newAdviserInvitation($faculty, $group->name);
-        }
+        
+        \App\Services\NotificationService::newAdviserInvitation($faculty, $group->name);
         return back()->with('success', 'Adviser invitation sent successfully!');
     }
     public function inviteMember(Request $request)

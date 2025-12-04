@@ -67,7 +67,7 @@
                     <h5 class="alert-heading">
                         <i class="fas fa-exclamation-triangle me-2"></i>No Capstone Subject Enrolled
                     </h5>
-                    <p class="mb-0">You are not currently enrolled in any capstone offering. Please contact your coordinator to get enrolled in the appropriate capstone subject.</p>
+                    <p class="mb-0">You are not currently enrolled in any capstone offering. Please contact your chairperson to get enrolled in the appropriate capstone subject.</p>
                 </div>
             </div>
         </div>

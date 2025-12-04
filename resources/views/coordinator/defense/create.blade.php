@@ -87,7 +87,7 @@
                                 @if($activeTerm)
                                     <div class="form-control-plaintext bg-light">
                                         <i class="fas fa-calendar-check text-success me-2"></i>
-                                        <strong>{{ $activeTerm->school_year }} - {{ $activeTerm->semester }}</strong>
+                                        <strong>{{ $activeTerm->school_year }}</strong>
                                         <span class="badge bg-success ms-2">Active</span>
                                     </div>
                                 @else

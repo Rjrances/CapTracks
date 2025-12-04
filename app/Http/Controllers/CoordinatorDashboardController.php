@@ -23,12 +23,13 @@ class CoordinatorDashboardController extends Controller
                 return $query->where('academic_term_id', $activeTerm->id);
             })
             ->pluck('id')->toArray();
+        // $activeTerm = AcademicTerm::where('is_active', true)->first();
         $studentCount = $activeTerm ? Student::where('semester', $activeTerm->semester)->count() : 0;
         $groupCount = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->count() : 0;
         $facultyCount = User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator', 'chairperson'])
             ->when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('semester', $activeTerm->semester);
-            })->count();
+            })->count(); 
         $submissionCount = $activeTerm ? ProjectSubmission::whereHas('student', function($query) use ($activeTerm) {
             $query->where('semester', $activeTerm->semester);
         })->count() : 0;
