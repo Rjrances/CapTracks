@@ -368,16 +368,7 @@ class StudentMilestoneController extends Controller
             'done' => $tasks->where('status', 'done')
         ];
     }
-    private function getMilestoneTasks($groupMilestone, $student)
-    {
-        return GroupMilestoneTask::where('group_milestone_id', $groupMilestone->id)
-            ->with('milestoneTask')
-            ->get()
-            ->map(function($task) use ($student) {
-                $task->is_assigned_to_me = $task->assigned_to == $student->student_id;
-                return $task;
-            });
-    }
+
     private function calculateMilestoneProgress($groupMilestone)
     {
         $tasks = GroupMilestoneTask::where('group_milestone_id', $groupMilestone->id)->get();

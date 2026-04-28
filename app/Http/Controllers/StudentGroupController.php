@@ -1,9 +1,18 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
-use App\Models\Group;
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Models\AdviserInvitation;
+use App\Models\AcademicTerm;
+use App\Models\DefenseRequest;
+use App\Models\Group;
+use App\Models\GroupInvitation;
+use App\Models\Student;
+use App\Models\User;
+use App\Services\NotificationService;
+
 class StudentGroupController extends Controller
 {
     
@@ -89,7 +98,6 @@ class StudentGroupController extends Controller
     }
     public function store(Request $request)
     {
-        \Log::info('Group creation request received', $request->all());
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -117,7 +125,6 @@ class StudentGroupController extends Controller
                 'student_id' => null
             ];
         }
-        \Log::info('User info', $userInfo);
         if (!$student) {
             \Log::error('Student record not found for user', $userInfo);
             return back()->with('error', 'Student record not found. Please contact administrator.');
@@ -136,13 +143,7 @@ class StudentGroupController extends Controller
                       ->where('role', 'adviser')
                       ->where('semester', $activeTerm ? $activeTerm->semester : null)
                       ->first();
-        \Log::info('Adviser verification', [
-            'requested_adviser_id' => $request->adviser_id,
-            'adviser_found' => $adviser ? 'yes' : 'no',
-            'adviser_role' => $adviser ? $adviser->role : null
-        ]);
         if (!$adviser) {
-            \Log::error('Invalid adviser selected', ['adviser_id' => $request->adviser_id]);
             return back()->with('error', 'Selected adviser is not available for the current semester. Please select an adviser from the current term.');
         }
         
@@ -169,7 +170,6 @@ class StudentGroupController extends Controller
                 'offering_id' => $offering->id,
                 'academic_term_id' => $offering->academic_term_id,
             ]);
-            \Log::info('Group created successfully', ['group_id' => $group->id]);
             $group->members()->attach($student->student_id, ['role' => 'leader']);
             
             //send invite
@@ -206,7 +206,6 @@ class StudentGroupController extends Controller
             ]);
             
             \App\Services\NotificationService::newAdviserInvitation($faculty, $group->name);
-            \Log::info('Group creation completed successfully', ['group_id' => $group->id]);
             $invitationCount = count($request->members ?? []);
             $message = 'Group created successfully! Adviser invitation has been sent.';
             if ($invitationCount > 0) {
