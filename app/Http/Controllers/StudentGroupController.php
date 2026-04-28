@@ -30,14 +30,19 @@ class StudentGroupController extends Controller
         
         return $query->get();
     }
+
+    private function getAuthenticatedStudent(): ?Student
+    {
+        if (!Auth::guard('student')->check()) {
+            return null;
+        }
+
+        return Auth::guard('student')->user()->student;
+    }
+
     public function show()
     {
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
+        $student = $this->getAuthenticatedStudent();
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->student_id);
         })->with(['adviser', 'members', 'adviserInvitations.faculty', 'offering'])->first() : null;
@@ -70,18 +75,12 @@ class StudentGroupController extends Controller
     }
     public function create()
     {
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
-        
+        $student = $this->getAuthenticatedStudent();
+
         if (!$student) {
             return redirect()->route('student.dashboard')->with('error', 'Student record not found. Please contact administrator.');
         }
-        
-        
+
         $offering = $student->getCurrentOffering();
         if (!$offering) {
             return redirect()->route('student.dashboard')->with('error', 'You must be enrolled in a capstone offering before creating a group. Please contact your coordinator to get enrolled.');
@@ -107,26 +106,9 @@ class StudentGroupController extends Controller
             'members.*' => 'nullable|exists:students,student_id',
         ]);
         
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-            $userInfo = [
-                'user_id' => $studentAccount->student_id,
-                'user_email' => $studentAccount->email,
-                'student_exists' => $student ? 'yes' : 'no',
-                'student_id' => $student ? $student->student_id : null
-            ];
-        } else {
-            $student = null;
-            $userInfo = [
-                'user_id' => null,
-                'user_email' => null,
-                'student_exists' => 'no',
-                'student_id' => null
-            ];
-        }
+        $student = $this->getAuthenticatedStudent();
+
         if (!$student) {
-            \Log::error('Student record not found for user', $userInfo);
             return back()->with('error', 'Student record not found. Please contact administrator.');
         }
         
@@ -224,16 +206,11 @@ class StudentGroupController extends Controller
     }
     public function edit()
     {
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
+        $student = $this->getAuthenticatedStudent();
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->student_id);
         })->with(['adviser', 'members', 'adviserInvitations.faculty', 'offering'])->first() : null;
-        
+
         //available students
         $availableStudents = collect();
         if ($group && $group->offering) {
@@ -259,12 +236,7 @@ class StudentGroupController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
         ]);
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
+        $student = $this->getAuthenticatedStudent();
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->student_id);
         })->first() : null;
@@ -284,17 +256,12 @@ class StudentGroupController extends Controller
     public function index()
     {
         // Get the authenticated student
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
-        
+        $student = $this->getAuthenticatedStudent();
+
         if (!$student) {
             return redirect()->route('student.dashboard')->with('error', 'Student not found.');
         }
-        
+
         // Get the student's group (any term)
         $studentGroup = \App\Models\Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->student_id);
@@ -312,12 +279,7 @@ class StudentGroupController extends Controller
             'faculty_id' => 'required|exists:users,id',
             'message' => 'nullable|string|max:500',
         ]);
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
+        $student = $this->getAuthenticatedStudent();
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->student_id);
         })->first() : null;
@@ -353,13 +315,8 @@ class StudentGroupController extends Controller
             'message' => 'nullable|string|max:500',
         ]);
         
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
-        
+        $student = $this->getAuthenticatedStudent();
+
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->student_id);
         })->with('offering')->first() : null;
@@ -430,17 +387,12 @@ class StudentGroupController extends Controller
     
     public function acceptInvitation(Request $request, $invitationId)
     {
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
-        
+        $student = $this->getAuthenticatedStudent();
+
         if (!$student) {
             return redirect()->route('student.dashboard')->with('error', 'Student not found.');
         }
-        
+
         $invitation = \App\Models\GroupInvitation::where('id', $invitationId)
             ->where('student_id', $student->student_id)
             ->first();
@@ -498,17 +450,12 @@ class StudentGroupController extends Controller
     
     public function declineInvitation(Request $request, $invitationId)
     {
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
-        
+        $student = $this->getAuthenticatedStudent();
+
         if (!$student) {
             return redirect()->route('student.dashboard')->with('error', 'Student not found.');
         }
-        
+
         $invitation = \App\Models\GroupInvitation::where('id', $invitationId)
             ->where('student_id', $student->student_id)
             ->where('status', 'pending')
@@ -525,17 +472,12 @@ class StudentGroupController extends Controller
     
     public function invitations()
     {
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
-        
+        $student = $this->getAuthenticatedStudent();
+
         if (!$student) {
             return redirect()->route('student.dashboard')->with('error', 'Student not found.');
         }
-        
+
         // Check if student already has a group
         if ($student->groups()->exists()) {
             return redirect()->route('student.group')->with('info', 'You are already in a group. Group invitations are only available for students without a group.');
@@ -551,17 +493,12 @@ class StudentGroupController extends Controller
     }
     public function removeMember(Request $request, $memberId)
     {
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
-        
+        $student = $this->getAuthenticatedStudent();
+
         if (!$student) {
             return redirect()->route('student.dashboard')->with('error', 'Student not found.');
         }
-        
+
         $group = Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->student_id);
         })->first();
@@ -600,12 +537,7 @@ class StudentGroupController extends Controller
             'defense_type' => 'required|in:proposal,60_percent,100_percent',
             'message' => 'nullable|string|max:500',
         ]);
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
+        $student = $this->getAuthenticatedStudent();
         $group = $student ? Group::whereHas('members', function($q) use ($student) {
             $q->where('group_members.student_id', $student->student_id);
         })->first() : null;
@@ -650,17 +582,12 @@ class StudentGroupController extends Controller
 
     public function cancelInvitation(Request $request, $invitationId)
     {
-        if (Auth::guard('student')->check()) {
-            $studentAccount = Auth::guard('student')->user();
-            $student = $studentAccount->student;
-        } else {
-            $student = null;
-        }
-        
+        $student = $this->getAuthenticatedStudent();
+
         if (!$student) {
             return redirect()->route('student.dashboard')->with('error', 'Student not found.');
         }
-        
+
         // Find the invitation
         $invitation = \App\Models\GroupInvitation::findOrFail($invitationId);
         
