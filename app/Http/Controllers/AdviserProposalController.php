@@ -1,11 +1,13 @@
 <?php
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
-use App\Models\ProjectSubmission;
 use App\Models\Group;
-use App\Models\User;
+use App\Models\ProjectSubmission;
+use App\Models\SubmissionComment;
 use Illuminate\Support\Facades\Auth;
 use App\Services\NotificationService;
+
 class AdviserProposalController extends Controller
 {
     public function index()
@@ -62,7 +64,13 @@ class AdviserProposalController extends Controller
             ->orderByDesc('submitted_at')
             ->get();
 
-        return view('adviser.proposal.show', compact('proposal', 'studentGroup', 'versionHistory'));
+        $comments = $proposal->comments()
+            ->whereNull('parent_id')
+            ->with(['user', 'children.user'])
+            ->latest()
+            ->get();
+
+        return view('adviser.proposal.show', compact('proposal', 'studentGroup', 'versionHistory', 'comments'));
     }
     public function edit($id)
     {
@@ -176,5 +184,39 @@ class AdviserProposalController extends Controller
         }
         $statusMessage = $request->status === 'approved' ? 'approved' : 'rejected';
         return redirect()->route('adviser.proposal.index')->with('success', "{$updatedCount} proposals {$statusMessage} successfully.");
+    }
+
+    public function storeComment(Request $request, $id)
+    {
+        $request->validate([
+            'body' => 'required|string|max:2000',
+            'parent_id' => 'nullable|exists:submission_comments,id',
+        ]);
+
+        $user = Auth::user();
+        $proposal = ProjectSubmission::findOrFail($id);
+        $student = $proposal->getStudentData();
+        $studentGroup = $student ? $student->groups()->first() : null;
+
+        if (!$studentGroup || $studentGroup->faculty_id !== $user->faculty_id) {
+            return redirect()->route('adviser.proposal.index')->with('error', 'You can only comment on proposals from your assigned groups.');
+        }
+
+        if ($request->filled('parent_id')) {
+            $parentComment = SubmissionComment::find($request->parent_id);
+            if (!$parentComment || (int) $parentComment->project_submission_id !== (int) $proposal->id) {
+                return back()->withErrors(['body' => 'Invalid parent comment.'])->withInput();
+            }
+        }
+
+        SubmissionComment::create([
+            'project_submission_id' => $proposal->id,
+            'user_id' => $user->id,
+            'student_id' => null,
+            'body' => $request->body,
+            'parent_id' => $request->parent_id,
+        ]);
+
+        return back()->with('success', 'Comment posted successfully.');
     }
 }

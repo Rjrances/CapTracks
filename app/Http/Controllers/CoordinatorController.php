@@ -25,8 +25,7 @@ class CoordinatorController extends Controller
             $isTeacherCoordinator = true;
             $coordinatedOfferings = $user->getCoordinatedOfferings();
         }
-        $coordinatedOfferings = $coordinatedOfferings ?? collect();
-        $isTeacherCoordinator = $isTeacherCoordinator ?? false;
+
         $stats = [
             'studentCount' => Student::count(),
             'groupCount' => Group::count(),

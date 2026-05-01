@@ -179,6 +179,9 @@
                             </div>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-outline-info" id="auto-assign-panel">
+                                <i class="fas fa-magic me-2"></i>Auto-Assign Panel
+                            </button>
                             <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
                                 Cancel
                             </a>
@@ -291,6 +294,44 @@ document.addEventListener('DOMContentLoaded', function() {
             loadFacultyForGroup(groupId);
         }
     });
+
+    document.getElementById('auto-assign-panel').addEventListener('click', function() {
+        autoAssignPanelMembers();
+    });
+
+    function autoAssignPanelMembers() {
+        const facultySelects = Array.from(document.querySelectorAll('.faculty-select'));
+        const roleSelects = Array.from(document.querySelectorAll('select[name$="[role]"]'));
+
+        if (facultySelects.length === 0) {
+            return;
+        }
+
+        const firstSelectOptions = Array.from(facultySelects[0].options)
+            .filter(option => option.value !== '');
+
+        if (firstSelectOptions.length < 2) {
+            alert('Not enough available faculty to auto-assign panel members.');
+            return;
+        }
+
+        const targetCount = Math.min(3, firstSelectOptions.length);
+        while (facultySelects.length < targetCount) {
+            document.getElementById('add-panel-member').click();
+            facultySelects.push(document.querySelectorAll('.faculty-select')[facultySelects.length]);
+            roleSelects.push(document.querySelectorAll('select[name$="[role]"]')[roleSelects.length]);
+        }
+
+        const selectedFacultyIds = firstSelectOptions.slice(0, targetCount).map(option => option.value);
+
+        facultySelects.forEach((select, index) => {
+            if (index < targetCount) {
+                select.value = selectedFacultyIds[index];
+                roleSelects[index].value = index === 0 ? 'chair' : 'member';
+            }
+        });
+    }
+
     document.addEventListener('click', function(e) {
         if (e.target.closest('.remove-panel-member')) {
             e.target.closest('.panel-member-row').remove();

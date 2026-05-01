@@ -1,18 +1,12 @@
 <?php
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\AcademicTerm;
 use App\Models\Notification;
 use App\Services\NotificationService;
 
 class ChairpersonController extends Controller
 {
-    public function index()
-    {
-        return view('dashboards.chairperson');
-    }
-
     public function getActiveTerm()
     {
         return AcademicTerm::where('is_active', true)->first();

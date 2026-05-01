@@ -1,6 +1,8 @@
 <?php
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
+
 class ProjectSubmission extends Model
 {
     protected $fillable = [
@@ -39,5 +41,10 @@ class ProjectSubmission extends Model
             ->max('version');
 
         return $latestVersion ? $latestVersion + 1 : 1;
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(SubmissionComment::class)->latest();
     }
 }

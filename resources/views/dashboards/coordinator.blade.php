@@ -181,6 +181,9 @@
                             <a href="{{ route('coordinator.classlist.index') }}" class="btn btn-outline-success">
                                 <i class="fas fa-list me-2"></i>View Class List
                             </a>
+                            <a href="{{ route('coordinator.defense-requests.index') }}" class="btn btn-outline-warning">
+                                <i class="fas fa-inbox me-2"></i>Pending Defense Requests
+                            </a>
                         </div>
                     </div>
                 </div>

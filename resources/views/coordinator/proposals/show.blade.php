@@ -229,6 +229,81 @@
                     @endif
                 </div>
             </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comments me-2"></i>Discussion
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('coordinator.proposals.comments.store', $proposal->id) }}" method="POST" class="mb-4">
+                        @csrf
+                        <label for="comment-body" class="form-label">Add comment</label>
+                        <textarea
+                            id="comment-body"
+                            name="body"
+                            class="form-control @error('body') is-invalid @enderror"
+                            rows="3"
+                            placeholder="Write your comment here..."
+                            required
+                        >{{ old('body') }}</textarea>
+                        @error('body')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <button type="submit" class="btn btn-primary mt-2">
+                            <i class="fas fa-paper-plane me-1"></i>Post Comment
+                        </button>
+                    </form>
+
+                    @if(isset($comments) && $comments->count())
+                        <div class="d-flex flex-column gap-3">
+                            @foreach($comments as $comment)
+                                <div class="border rounded p-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <strong>{{ $comment->user->name ?? ('Student ' . ($comment->student_id ?? 'Unknown')) }}</strong>
+                                            <small class="text-muted ms-2">{{ $comment->created_at->diffForHumans() }}</small>
+                                        </div>
+                                    </div>
+                                    <p class="mb-3">{{ $comment->body }}</p>
+
+                                    <button class="btn btn-sm btn-outline-secondary mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#reply-{{ $comment->id }}">
+                                        Reply
+                                    </button>
+
+                                    <div class="collapse" id="reply-{{ $comment->id }}">
+                                        <form action="{{ route('coordinator.proposals.comments.store', $proposal->id) }}" method="POST" class="mb-3">
+                                            @csrf
+                                            <input type="hidden" name="parent_id" value="{{ $comment->id }}">
+                                            <textarea name="body" class="form-control" rows="2" placeholder="Write a reply..." required></textarea>
+                                            <button type="submit" class="btn btn-sm btn-primary mt-2">Post Reply</button>
+                                        </form>
+                                    </div>
+
+                                    @if($comment->children->count())
+                                        <div class="ms-4 mt-3 d-flex flex-column gap-2">
+                                            @foreach($comment->children as $reply)
+                                                <div class="border rounded p-2 bg-light">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <strong>{{ $reply->user->name ?? ('Student ' . ($reply->student_id ?? 'Unknown')) }}</strong>
+                                                            <small class="text-muted ms-2">{{ $reply->created_at->diffForHumans() }}</small>
+                                                        </div>
+                                                    </div>
+                                                    <p class="mb-0 mt-1">{{ $reply->body }}</p>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="text-muted mb-0">No comments yet.</p>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 </div>

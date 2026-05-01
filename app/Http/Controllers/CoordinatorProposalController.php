@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ProjectSubmission;
 use App\Models\Group;
 use App\Models\Offering;
+use App\Models\ProjectSubmission;
+use App\Models\SubmissionComment;
 use Illuminate\Support\Facades\Auth;
 use App\Services\NotificationService;
 
@@ -81,7 +82,13 @@ class CoordinatorProposalController extends Controller
             ->orderByDesc('submitted_at')
             ->get();
 
-        return view('coordinator.proposals.show', compact('proposal', 'studentGroup', 'offering', 'versionHistory'));
+        $comments = $proposal->comments()
+            ->whereNull('parent_id')
+            ->with(['user', 'children.user'])
+            ->latest()
+            ->get();
+
+        return view('coordinator.proposals.show', compact('proposal', 'studentGroup', 'offering', 'versionHistory', 'comments'));
     }
     
     public function update(Request $request, $id)
@@ -216,5 +223,48 @@ class CoordinatorProposalController extends Controller
             'total_offerings' => $coordinatedOfferings->count(),
             'total_groups' => $groups->count(),
         ]);
+    }
+
+    public function storeComment(Request $request, $id)
+    {
+        $request->validate([
+            'body' => 'required|string|max:2000',
+            'parent_id' => 'nullable|exists:submission_comments,id',
+        ]);
+
+        $user = Auth::user();
+        $proposal = ProjectSubmission::findOrFail($id);
+        $student = $proposal->getStudentData();
+
+        if (!$student) {
+            return redirect()->route('coordinator.proposals.index')->with('error', 'Student not found.');
+        }
+
+        $studentGroup = $student->groups()->first();
+        if (!$studentGroup) {
+            return redirect()->route('coordinator.proposals.index')->with('error', 'Student is not in any group.');
+        }
+
+        $offering = $studentGroup->offering;
+        if (!$offering || $offering->faculty_id !== $user->faculty_id) {
+            return redirect()->route('coordinator.proposals.index')->with('error', 'You can only comment on proposals from your coordinated offerings.');
+        }
+
+        if ($request->filled('parent_id')) {
+            $parentComment = SubmissionComment::find($request->parent_id);
+            if (!$parentComment || (int) $parentComment->project_submission_id !== (int) $proposal->id) {
+                return back()->withErrors(['body' => 'Invalid parent comment.'])->withInput();
+            }
+        }
+
+        SubmissionComment::create([
+            'project_submission_id' => $proposal->id,
+            'user_id' => $user->id,
+            'student_id' => null,
+            'body' => $request->body,
+            'parent_id' => $request->parent_id,
+        ]);
+
+        return back()->with('success', 'Comment posted successfully.');
     }
 }

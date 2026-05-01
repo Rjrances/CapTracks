@@ -14,6 +14,21 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 class DefenseScheduleController extends Controller
 {
+    public function defenseRequestsIndex()
+    {
+        $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
+
+        $pendingRequests = DefenseRequest::with(['group.members', 'group.adviser'])
+            ->where('status', 'pending')
+            ->whereHas('group', function ($query) use ($coordinatorOfferings) {
+                $query->whereIn('offering_id', $coordinatorOfferings);
+            })
+            ->latest('requested_at')
+            ->get();
+
+        return view('coordinator.defense-requests.index', compact('pendingRequests'));
+    }
+
     public function index(Request $request)
     {
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
@@ -348,6 +363,7 @@ class DefenseScheduleController extends Controller
             'message' => $conflict ? 'This room is already booked for the selected time slot.' : null
         ]);
     }
+
     private function checkDoubleBooking($startAt, $endAt, $room, $excludeId = null)
     {
         $query = DefenseSchedule::where('room', $room)

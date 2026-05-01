@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,17 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('project_submissions', function (Blueprint $table) {
-            // Drop the existing foreign key constraint
-            $table->dropForeign(['student_id']);
-            $table->dropColumn('student_id');
-        });
-        
-        Schema::table('project_submissions', function (Blueprint $table) {
-            // Add student_id as string column with foreign key to students.student_id
-            $table->string('student_id', 20)->after('id');
-            $table->foreign('student_id')->references('student_id')->on('students')->onDelete('cascade');
-        });
+        if (! Schema::hasColumn('project_submissions', 'student_id')) {
+            return;
+        }
+
+        try {
+            DB::statement('ALTER TABLE project_submissions DROP FOREIGN KEY project_submissions_student_id_foreign');
+        } catch (\Throwable $e) {
+            // Foreign key may not exist yet.
+        }
+
+        DB::statement('ALTER TABLE project_submissions MODIFY student_id VARCHAR(20) NOT NULL');
+
+        try {
+            DB::statement('ALTER TABLE project_submissions ADD CONSTRAINT project_submissions_student_id_foreign FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE');
+        } catch (\Throwable $e) {
+            // Foreign key may already exist.
+        }
     }
 
     /**
@@ -29,15 +35,22 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('project_submissions', function (Blueprint $table) {
-            // Drop the new foreign key constraint
-            $table->dropForeign(['student_id']);
-            $table->dropColumn('student_id');
-        });
-        
-        Schema::table('project_submissions', function (Blueprint $table) {
-            // Restore the original foreign key constraint
-            $table->foreignId('student_id')->constrained('students')->onDelete('cascade');
-        });
+        if (! Schema::hasColumn('project_submissions', 'student_id')) {
+            return;
+        }
+
+        try {
+            DB::statement('ALTER TABLE project_submissions DROP FOREIGN KEY project_submissions_student_id_foreign');
+        } catch (\Throwable $e) {
+            // Foreign key may not exist.
+        }
+
+        DB::statement('ALTER TABLE project_submissions MODIFY student_id BIGINT UNSIGNED NOT NULL');
+
+        try {
+            DB::statement('ALTER TABLE project_submissions ADD CONSTRAINT project_submissions_student_id_foreign FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE');
+        } catch (\Throwable $e) {
+            // Foreign key may already exist.
+        }
     }
 };

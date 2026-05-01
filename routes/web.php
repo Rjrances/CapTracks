@@ -102,6 +102,7 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
     Route::get('/proposals', [CoordinatorProposalController::class, 'index'])->name('proposals.index');
     Route::get('/proposals/{id}', [CoordinatorProposalController::class, 'show'])->name('proposals.show');
     Route::put('/proposals/{id}', [CoordinatorProposalController::class, 'update'])->name('proposals.update');
+    Route::post('/proposals/{id}/comments', [CoordinatorProposalController::class, 'storeComment'])->name('proposals.comments.store');
     Route::post('/proposals/bulk-update', [CoordinatorProposalController::class, 'bulkUpdate'])->name('proposals.bulk-update');
     Route::get('/proposals/stats', [CoordinatorProposalController::class, 'getStats'])->name('proposals.stats');
 
@@ -285,6 +286,7 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::get('/proposals/{id}', [AdviserProposalController::class, 'show'])->name('proposal.show');
     Route::get('/proposals/{id}/edit', [AdviserProposalController::class, 'edit'])->name('proposal.edit');
     Route::put('/proposals/{id}', [AdviserProposalController::class, 'update'])->name('proposal.update');
+    Route::post('/proposals/{id}/comments', [AdviserProposalController::class, 'storeComment'])->name('proposal.comments.store');
     Route::post('/proposals/bulk-update', [AdviserProposalController::class, 'bulkUpdate'])->name('proposal.bulk-update');
     Route::get('/proposals/stats', [AdviserProposalController::class, 'getStats'])->name('proposal.stats');
 
@@ -298,6 +300,7 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
 
 // Coordinator Defense Request Management
 Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->name('coordinator.')->group(function () {
+    Route::get('/defense-requests', [DefenseScheduleController::class, 'defenseRequestsIndex'])->name('defense-requests.index');
     Route::get('/defense-requests/{defenseRequest}/create-schedule', [DefenseScheduleController::class, 'createSchedule'])->name('defense-requests.create-schedule');
     Route::post('/defense-requests/{defenseRequest}/store-schedule', [DefenseScheduleController::class, 'storeSchedule'])->name('defense-requests.store-schedule');
     Route::get('/defense-requests/{defenseSchedule}/edit-schedule', [DefenseScheduleController::class, 'editSchedule'])->name('defense-requests.edit-schedule');
