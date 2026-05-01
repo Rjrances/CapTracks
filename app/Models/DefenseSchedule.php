@@ -41,6 +41,12 @@ class DefenseSchedule extends Model
     {
         return $this->hasMany(DefensePanel::class);
     }
+
+    public function ratingSheets()
+    {
+        return $this->hasMany(RatingSheet::class);
+    }
+
     public function getFormattedDateTimeAttribute()
     {
         return $this->start_at->format('M d, Y') . ' at ' . $this->start_at->format('h:i A');

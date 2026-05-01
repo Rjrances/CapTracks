@@ -1,0 +1,39 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class RatingSheet extends Model
+{
+    protected $fillable = [
+        'defense_schedule_id',
+        'faculty_id',
+        'group_id',
+        'criteria',
+        'total_score',
+        'remarks',
+        'submitted_at',
+    ];
+
+    protected $casts = [
+        'criteria' => 'array',
+        'submitted_at' => 'datetime',
+        'total_score' => 'decimal:2',
+    ];
+
+    public function defenseSchedule()
+    {
+        return $this->belongsTo(DefenseSchedule::class);
+    }
+
+    public function faculty()
+    {
+        return $this->belongsTo(User::class, 'faculty_id');
+    }
+
+    public function group()
+    {
+        return $this->belongsTo(Group::class);
+    }
+}

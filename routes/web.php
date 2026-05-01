@@ -28,6 +28,7 @@ use App\Http\Controllers\TaskSubmissionController;
 use App\Http\Controllers\StudentDefenseRequestController;
 use App\Http\Controllers\AdviserController;
 use App\Http\Controllers\AdviserProposalController;
+use App\Http\Controllers\RatingSheetController;
 
 // Health check route for Railway
 Route::get('/health', function () {
@@ -302,6 +303,10 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     // Calendar
     Route::get('/calendar', [CalendarController::class, 'adviserCalendar'])->name('calendar');
     Route::get('/activity-log', [AdviserController::class, 'activityLog'])->name('activity-log');
+
+    // Rating Sheets
+    Route::get('/rating-sheets/{schedule}', [RatingSheetController::class, 'showAdviserForm'])->name('rating-sheets.show');
+    Route::post('/rating-sheets/{schedule}', [RatingSheetController::class, 'submitAdviserRating'])->name('rating-sheets.submit');
 });
 
 // Coordinator Defense Request Management
@@ -313,4 +318,5 @@ Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->nam
     Route::put('/defense-requests/{defenseSchedule}/update-schedule', [DefenseScheduleController::class, 'updateSchedule'])->name('defense-requests.update-schedule');
     Route::post('/defense-requests/{defenseRequest}/approve', [DefenseScheduleController::class, 'approve'])->name('defense-requests.approve');
     Route::post('/defense-requests/{defenseRequest}/reject', [DefenseScheduleController::class, 'reject'])->name('defense-requests.reject');
+    Route::get('/rating-sheets/{schedule}', [RatingSheetController::class, 'showCoordinatorRatings'])->name('rating-sheets.show');
 });

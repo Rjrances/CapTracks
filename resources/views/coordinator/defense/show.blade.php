@@ -94,6 +94,9 @@
                                 <a href="{{ route('coordinator.defense.edit', $defenseSchedule->id) }}" class="btn btn-primary">
                                     <i class="fas fa-edit me-2"></i>Edit Schedule
                                 </a>
+                                <a href="{{ route('coordinator.rating-sheets.show', $defenseSchedule->id) }}" class="btn btn-outline-info">
+                                    <i class="fas fa-clipboard-check me-2"></i>View Rating Sheets
+                                </a>
                                 @if(in_array($defenseSchedule->status, ['scheduled', 'in_progress']))
                                     <form action="{{ route('coordinator.defense.complete', $defenseSchedule->id) }}" method="POST" class="d-grid">
                                         @csrf

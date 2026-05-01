@@ -129,9 +129,6 @@
                                             <span class="badge bg-{{ ($activity->type ?? 'general') == 'submission' ? 'success' : (($activity->type ?? 'general') == 'review' ? 'warning' : 'info') }}">
                                                 {{ ucfirst($activity->type ?? 'general') }}
                                             </span>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
                                         </div>
                                     </div>
                                 @endforeach

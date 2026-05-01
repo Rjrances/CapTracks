@@ -38,6 +38,12 @@ class Group extends Model
     {
         return $this->hasMany(DefenseRequest::class);
     }
+
+    public function ratingSheets()
+    {
+        return $this->hasMany(RatingSheet::class);
+    }
+
     public function pendingAdviserInvitation()
     {
         return $this->hasOne(AdviserInvitation::class)->where('status', 'pending');
