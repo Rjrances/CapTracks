@@ -23,6 +23,7 @@ use App\Http\Controllers\ProjectSubmissionController;
 use App\Http\Controllers\StudentGroupController;
 use App\Http\Controllers\StudentProposalController;
 use App\Http\Controllers\StudentMilestoneController;
+use App\Http\Controllers\StudentMilestoneChecklistController;
 use App\Http\Controllers\TaskSubmissionController;
 use App\Http\Controllers\StudentDefenseRequestController;
 use App\Http\Controllers\AdviserController;
@@ -218,6 +219,7 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
 
     // Milestones
     Route::get('/milestones', [StudentMilestoneController::class, 'index'])->name('milestones');
+    Route::get('/milestones/checklist', [StudentMilestoneChecklistController::class, 'checklist'])->name('milestones.checklist');
     Route::get('/milestones/create', [StudentMilestoneController::class, 'create'])->name('milestones.create');
     Route::post('/milestones', [StudentMilestoneController::class, 'store'])->name('milestones.store');
     Route::get('/milestones/{milestone}', [StudentMilestoneController::class, 'show'])->name('milestones.show');
@@ -297,6 +299,7 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
 
     // Calendar
     Route::get('/calendar', [CalendarController::class, 'adviserCalendar'])->name('calendar');
+    Route::get('/activity-log', [AdviserController::class, 'activityLog'])->name('activity-log');
 });
 
 // Coordinator Defense Request Management

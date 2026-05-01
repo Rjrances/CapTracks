@@ -62,6 +62,13 @@
                     Calendar
                 </a>
             </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('adviser.activity-log') ? 'active bg-primary' : '' }}"
+                   href="{{ route('adviser.activity-log') }}">
+                    <i class="fas fa-history me-2"></i>
+                    Activity Log
+                </a>
+            </li>
         </ul>
     </nav>
     <div class="mt-auto p-3 border-top border-secondary">

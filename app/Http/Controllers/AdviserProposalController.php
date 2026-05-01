@@ -5,8 +5,9 @@ use Illuminate\Http\Request;
 use App\Models\Group;
 use App\Models\ProjectSubmission;
 use App\Models\SubmissionComment;
-use Illuminate\Support\Facades\Auth;
 use App\Services\NotificationService;
+use App\Services\ActivityLogService;
+use Illuminate\Support\Facades\Auth;
 
 class AdviserProposalController extends Controller
 {
@@ -223,6 +224,8 @@ class AdviserProposalController extends Controller
             'body' => $request->body,
             'parent_id' => $request->parent_id,
         ]);
+
+        ActivityLogService::logSubmissionCommentAdded($proposal, $user);
 
         return back()->with('success', 'Comment posted successfully.');
     }

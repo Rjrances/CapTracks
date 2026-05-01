@@ -8,6 +8,7 @@ use App\Models\DefensePanel;
 use App\Models\Group;
 use App\Models\ProjectSubmission;
 use App\Models\AcademicTerm;
+use App\Models\ActivityLog;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 
@@ -508,5 +509,26 @@ class AdviserController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error updating notification'], 500);
         }
+    }
+
+    public function activityLog()
+    {
+        $user = Auth::user();
+
+        $studentIds = Group::where('faculty_id', $user->faculty_id)
+            ->with('members')
+            ->get()
+            ->flatMap(function ($group) {
+                return $group->members->pluck('student_id');
+            })
+            ->unique()
+            ->values();
+
+        $logs = ActivityLog::with(['student', 'user'])
+            ->whereIn('student_id', $studentIds)
+            ->latest()
+            ->paginate(20);
+
+        return view('adviser.activity-log', compact('logs'));
     }
 } 
