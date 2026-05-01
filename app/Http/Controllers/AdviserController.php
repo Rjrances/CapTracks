@@ -1,7 +1,10 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use App\Models\AdviserInvitation;
+use App\Models\DefensePanel;
 use App\Models\Group;
 use App\Models\User;
 use App\Models\MilestoneTask;
@@ -10,6 +13,7 @@ use App\Models\ProjectSubmission;
 use App\Models\AcademicTerm;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
+
 class AdviserController extends Controller
 {
     public function dashboard()
@@ -387,6 +391,53 @@ class AdviserController extends Controller
             ->with('allGroups', $panelGroups)
             ->with('adviserGroups', collect());
     }
+
+    public function panelInvitations()
+    {
+        $user = Auth::user();
+
+        $pendingPanels = DefensePanel::with(['defenseSchedule.group', 'defenseSchedule.academicTerm'])
+            ->where('faculty_id', $user->id)
+            ->where('status', 'pending')
+            ->get();
+
+        $respondedPanels = DefensePanel::with(['defenseSchedule.group', 'defenseSchedule.academicTerm'])
+            ->where('faculty_id', $user->id)
+            ->whereIn('status', ['accepted', 'declined'])
+            ->orderBy('responded_at', 'desc')
+            ->limit(20)
+            ->get();
+
+        return view('adviser.panel-invitations', compact('pendingPanels', 'respondedPanels'));
+    }
+
+    public function respondToPanelInvitation(Request $request, DefensePanel $panel)
+    {
+        $user = Auth::user();
+
+        if ($panel->faculty_id !== $user->id) {
+            return back()->with('error', 'You are not authorized to respond to this panel invitation.');
+        }
+
+        if (!$panel->isPending()) {
+            return back()->with('error', 'This panel invitation has already been responded to.');
+        }
+
+        $request->validate([
+            'response' => 'required|in:accept,decline',
+        ]);
+
+        if ($request->response === 'accept') {
+            $panel->accept();
+            $message = 'Panel invitation accepted successfully!';
+        } else {
+            $panel->decline();
+            $message = 'Panel invitation declined.';
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function markAllNotificationsAsRead()
     {
         try {

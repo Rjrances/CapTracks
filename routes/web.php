@@ -265,6 +265,10 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::get('/invitations', [AdviserController::class, 'invitations'])->name('invitations');
     Route::post('/invitations/{invitation}/respond', [AdviserController::class, 'respondToInvitation'])->name('invitations.respond');
 
+    // Panel Invitations
+    Route::get('/panel-invitations', [AdviserController::class, 'panelInvitations'])->name('panel-invitations');
+    Route::post('/panel-invitations/{panel}/respond', [AdviserController::class, 'respondToPanelInvitation'])->name('panel-invitations.respond');
+
     // Groups
     Route::get('/groups', [AdviserController::class, 'myGroups'])->name('groups');
     Route::get('/all-groups', [AdviserController::class, 'allGroups'])->name('all-groups');
