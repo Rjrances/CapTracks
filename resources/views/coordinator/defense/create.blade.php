@@ -145,8 +145,7 @@
                                 <label>Panel Members <span class="text-danger">*</span></label>
                                 <div class="alert alert-info mb-3">
                                     <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
-                                    You can select teachers (imported faculty) and chairperson as additional panel members. 
-                                    Coordinators and advisers are excluded from the selection.
+                                    You can select any available faculty member not conflicting with the selected defense slot.
                                 </div>
                                 <div id="panel-members-container">
                                     <div class="panel-member-row mb-2">
@@ -198,6 +197,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let panelCount = 1;
+    let currentAvailableFaculty = [];
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
     loadInitialFaculty();
     document.getElementById('group_id').addEventListener('change', function() {
         const groupId = this.value;
@@ -210,15 +211,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function loadInitialFaculty() {
         const facultyData = @json($faculty);
         if (facultyData && facultyData.length > 0) {
+            currentAvailableFaculty = facultyData;
             updateFacultyOptions(facultyData);
         }
     }
     function loadFacultyForGroup(groupId) {
-        fetch('{{ route("coordinator.defense.available-faculty") }}', {
+        return fetch('{{ route("coordinator.defense.available-faculty") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': csrfToken
             },
             body: JSON.stringify({
                 group_id: groupId,
@@ -230,10 +232,14 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
+            currentAvailableFaculty = data.availableFaculty || [];
             updateFacultyOptions(data.availableFaculty);
+            return data.availableFaculty || [];
         })
         .catch(error => {
             console.error('Error loading faculty:', error);
+            currentAvailableFaculty = [];
+            return [];
         });
     }
     function updateFacultyOptions(faculty) {
@@ -299,30 +305,41 @@ document.addEventListener('DOMContentLoaded', function() {
         autoAssignPanelMembers();
     });
 
-    function autoAssignPanelMembers() {
+    async function autoAssignPanelMembers() {
         const facultySelects = Array.from(document.querySelectorAll('.faculty-select'));
         const roleSelects = Array.from(document.querySelectorAll('select[name$="[role]"]'));
+        const groupId = document.getElementById('group_id').value;
+        const date = document.getElementById('date').value;
+        const startTime = document.getElementById('start_time').value;
+        const endTime = document.getElementById('end_time').value;
+        const room = document.getElementById('room').value;
 
         if (facultySelects.length === 0) {
             return;
         }
 
-        const firstSelectOptions = Array.from(facultySelects[0].options)
-            .filter(option => option.value !== '');
+        if (!groupId || !date || !startTime || !endTime || !room) {
+            alert('Please select group, date, start time, end time, and room before auto-assigning.');
+            return;
+        }
 
-        if (firstSelectOptions.length < 2) {
+        await loadFacultyForGroup(groupId);
+
+        if (currentAvailableFaculty.length < 2) {
             alert('Not enough available faculty to auto-assign panel members.');
             return;
         }
 
-        const targetCount = Math.min(3, firstSelectOptions.length);
+        const targetCount = Math.min(3, currentAvailableFaculty.length);
         while (facultySelects.length < targetCount) {
             document.getElementById('add-panel-member').click();
             facultySelects.push(document.querySelectorAll('.faculty-select')[facultySelects.length]);
             roleSelects.push(document.querySelectorAll('select[name$="[role]"]')[roleSelects.length]);
         }
 
-        const selectedFacultyIds = firstSelectOptions.slice(0, targetCount).map(option => option.value);
+        const selectedFacultyIds = currentAvailableFaculty
+            .slice(0, targetCount)
+            .map(member => String(member.id));
 
         facultySelects.forEach((select, index) => {
             if (index < targetCount) {
@@ -342,18 +359,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     function checkDoubleBooking() {
+        const groupId = document.getElementById('group_id').value;
         const date = document.getElementById('date').value;
         const startTime = document.getElementById('start_time').value;
         const endTime = document.getElementById('end_time').value;
         const room = document.getElementById('room').value;
-        if (date && startTime && endTime && room) {
+        if (groupId && date && startTime && endTime && room) {
             fetch('{{ route("coordinator.defense.available-faculty") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': csrfToken
                 },
                 body: JSON.stringify({
+                    group_id: groupId,
                     date: date,
                     start_time: startTime,
                     end_time: endTime,
@@ -362,6 +381,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
+                currentAvailableFaculty = data.availableFaculty || [];
+                updateFacultyOptions(currentAvailableFaculty);
                 if (data.conflict) {
                     document.getElementById('warningMessage').textContent = data.message;
                     document.getElementById('doubleBookingWarning').classList.remove('d-none');

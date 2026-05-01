@@ -74,7 +74,7 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 
     // Defense Scheduling
     Route::resource('defense', DefenseScheduleController::class);
-    Route::get('/defense/available-faculty', [DefenseScheduleController::class, 'getAvailableFaculty'])->name('defense.available-faculty');
+    Route::match(['get', 'post'], '/defense/available-faculty', [DefenseScheduleController::class, 'getAvailableFaculty'])->name('defense.available-faculty');
     Route::patch('/defense/{defenseSchedule}/complete', [DefenseScheduleController::class, 'markAsCompleted'])->name('defense.complete');
 
     // Groups

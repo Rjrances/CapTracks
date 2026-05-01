@@ -106,13 +106,16 @@ class DefenseScheduleController extends Controller
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
         $groups = Group::with(['members', 'adviser', 'offering'])
             ->whereIn('offering_id', $coordinatorOfferings)
+            ->whereDoesntHave('defenseSchedules')
             ->get();
         $faculty = User::whereIn('role', ['teacher', 'chairperson', 'coordinator', 'adviser', 'panelist'])
             ->when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('semester', $activeTerm->semester);
             })
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->unique('faculty_id')
+            ->values();
         return view('coordinator.defense.create', compact('groups', 'faculty', 'activeTerm'));
     }
     public function store(Request $request)
@@ -140,6 +143,13 @@ class DefenseScheduleController extends Controller
         }
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
+
+        if ($this->hasGroupScheduleOnDate($validated['group_id'], $request->date)) {
+            return back()->withErrors([
+                'date' => 'This group already has a defense schedule on the selected date.'
+            ])->withInput();
+        }
+
         $conflict = $this->checkDoubleBooking($startAt, $endAt, $request->room);
         if ($conflict) {
             return back()->withErrors(['room' => 'This room is already booked for the selected time slot.'])->withInput();
@@ -253,6 +263,13 @@ class DefenseScheduleController extends Controller
         }
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
+
+        if ($this->hasGroupScheduleOnDate($validated['group_id'], $request->date, $id)) {
+            return back()->withErrors([
+                'date' => 'This group already has a defense schedule on the selected date.'
+            ])->withInput();
+        }
+
         $conflict = $this->checkDoubleBooking($startAt, $endAt, $request->room, $id);
         if ($conflict) {
             return back()->withErrors(['room' => 'This room is already booked for the selected time slot.'])->withInput();
@@ -339,29 +356,52 @@ class DefenseScheduleController extends Controller
             'group_id' => 'required|exists:groups,id'
         ]);
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
         $group = Group::with(['adviser', 'offering'])->find($request->group_id);
         if (!in_array($group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only access faculty for groups in your offerings.');
         }
+
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
         $conflict = $this->checkDoubleBooking($startAt, $endAt, $request->room);
-        $availableFaculty = User::whereIn('role', ['teacher', 'chairperson'])
-            ->where(function ($query) use ($group) {
-                if ($group->faculty_id) {
-                    $query->where('id', '!=', $group->faculty_id);
-                }
-                if ($group->offering_id) {
-                    $query->whereDoesntHave('offerings', function ($q) use ($group) {
-                        $q->where('id', $group->offering_id);
-                    });
-                }
-            })->get();
+        $conflictingFacultyIds = $this->getConflictingFacultyIds($startAt, $endAt);
+
+        $availableFaculty = User::whereIn('role', ['teacher', 'chairperson', 'panelist', 'adviser', 'coordinator'])
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
+            ->when($group->faculty_id, function ($query) use ($group) {
+                return $query->where('faculty_id', '!=', $group->faculty_id);
+            })
+            ->when($group->offering && $group->offering->faculty_id, function ($query) use ($group) {
+                return $query->where('faculty_id', '!=', $group->offering->faculty_id);
+            })
+            ->whereNotIn('id', $conflictingFacultyIds)
+            ->orderBy('name')
+            ->get()
+            ->unique('faculty_id')
+            ->values();
+
         return response()->json([
             'availableFaculty' => $availableFaculty,
             'conflict' => $conflict,
             'message' => $conflict ? 'This room is already booked for the selected time slot.' : null
         ]);
+    }
+
+    private function getConflictingFacultyIds($startAt, $endAt)
+    {
+        return DefensePanel::whereHas('defenseSchedule', function ($query) use ($startAt, $endAt) {
+            $query->where(function ($overlapQuery) use ($startAt, $endAt) {
+                $overlapQuery->whereBetween('start_at', [$startAt, $endAt])
+                    ->orWhereBetween('end_at', [$startAt, $endAt])
+                    ->orWhere(function ($containQuery) use ($startAt, $endAt) {
+                        $containQuery->where('start_at', '<=', $startAt)
+                            ->where('end_at', '>=', $endAt);
+                    });
+            });
+        })->pluck('faculty_id')->unique()->values()->all();
     }
 
     private function checkDoubleBooking($startAt, $endAt, $room, $excludeId = null)
@@ -378,6 +418,18 @@ class DefenseScheduleController extends Controller
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);
         }
+        return $query->exists();
+    }
+
+    private function hasGroupScheduleOnDate($groupId, $date, $excludeId = null)
+    {
+        $query = DefenseSchedule::where('group_id', $groupId)
+            ->whereDate('start_at', $date);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
         return $query->exists();
     }
 
