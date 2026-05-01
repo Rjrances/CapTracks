@@ -1,7 +1,6 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\ProjectSubmission;
-use App\Models\Student;
 use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

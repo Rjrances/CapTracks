@@ -90,7 +90,7 @@
                                                                 <span class="badge bg-secondary">{{ ucfirst($version->status) }}</span>
                                                         @endswitch
                                                     </td>
-                                                    <td>{{ $version->submitted_at ? \Carbon\Carbon::parse($version->submitted_at)->format('M d, Y H:i') : 'N/A' }}</td>
+                                                    <td>{{ $version->submitted_at ? \Carbon\Carbon::parse($version->submitted_at)->format('M d, Y') : 'N/A' }}</td>
                                                     <td>
                                                         <a href="{{ asset('storage/' . $version->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                                             <i class="fas fa-download me-1"></i>Open

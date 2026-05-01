@@ -11,9 +11,6 @@
                     <i class="fas fa-eye me-2"></i>View Proposal
                 </h2>
                 <div class="d-flex gap-2">
-                    <a href="{{ route('coordinator.proposals.review', $proposal->id) }}" class="btn btn-warning">
-                        <i class="fas fa-gavel me-1"></i>Review Proposal
-                    </a>
                     <a href="{{ route('coordinator.proposals.index') }}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-1"></i>Back to Proposals
                     </a>
@@ -168,7 +165,7 @@
                                                 <div>
                                                     <div>v{{ $version->version ?? 1 }}</div>
                                                     <small class="@if($version->id === $proposal->id) text-white-50 @else text-muted @endif">
-                                                        {{ $version->submitted_at ? $version->submitted_at->format('M d, Y H:i') : 'N/A' }}
+                                                        {{ $version->submitted_at ? $version->submitted_at->format('M d, Y') : 'N/A' }}
                                                     </small>
                                                 </div>
                                                 <a href="{{ Storage::url($version->file_path) }}" target="_blank" class="btn btn-sm @if($version->id === $proposal->id) btn-light @else btn-outline-primary @endif">
@@ -204,11 +201,7 @@
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <p class="mb-3">This proposal is waiting for your review and decision.</p>
-                                <a href="{{ route('coordinator.proposals.review', $proposal->id) }}" 
-                                   class="btn btn-warning w-100">
-                                    <i class="fas fa-gavel me-1"></i>Review Now
-                                </a>
+                                <p class="mb-0">This proposal is waiting for your review and decision.</p>
                             </div>
                         </div>
                     @elseif($proposal->status === 'approved')
@@ -219,11 +212,7 @@
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <p class="mb-3">This proposal has been approved and the student has been notified.</p>
-                                <a href="{{ route('coordinator.proposals.review', $proposal->id) }}" 
-                                   class="btn btn-outline-success w-100">
-                                    <i class="fas fa-gavel me-1"></i>Update Review
-                                </a>
+                                <p class="mb-0">This proposal has been approved and the student has been notified.</p>
                             </div>
                         </div>
                     @elseif($proposal->status === 'rejected')
@@ -234,11 +223,7 @@
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <p class="mb-3">This proposal has been rejected and the student has been notified.</p>
-                                <a href="{{ route('coordinator.proposals.review', $proposal->id) }}" 
-                                   class="btn btn-outline-danger w-100">
-                                    <i class="fas fa-gavel me-1"></i>Update Review
-                                </a>
+                                <p class="mb-0">This proposal has been rejected and the student has been notified.</p>
                             </div>
                         </div>
                     @endif

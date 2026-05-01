@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ProjectSubmission;
 use App\Models\Group;
-use App\Models\User;
 use App\Models\Offering;
 use Illuminate\Support\Facades\Auth;
 use App\Services\NotificationService;
@@ -83,29 +82,6 @@ class CoordinatorProposalController extends Controller
             ->get();
 
         return view('coordinator.proposals.show', compact('proposal', 'studentGroup', 'offering', 'versionHistory'));
-    }
-    
-    public function review($id)
-    {
-        $user = Auth::user();
-        $proposal = ProjectSubmission::findOrFail($id);
-        $student = $proposal->getStudentData();
-        
-        if (!$student) {
-            return redirect()->route('coordinator.proposals.index')->with('error', 'Student not found.');
-        }
-        
-        $studentGroup = $student->groups()->first();
-        if (!$studentGroup) {
-            return redirect()->route('coordinator.proposals.index')->with('error', 'Student is not in any group.');
-        }
-        
-        $offering = $studentGroup->offering;
-        if (!$offering || $offering->faculty_id !== $user->faculty_id) {
-            return redirect()->route('coordinator.proposals.index')->with('error', 'You can only review proposals from your coordinated offerings.');
-        }
-        
-        return view('coordinator.proposals.review', compact('proposal', 'studentGroup', 'offering'));
     }
     
     public function update(Request $request, $id)

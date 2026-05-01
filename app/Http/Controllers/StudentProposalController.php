@@ -2,8 +2,6 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ProjectSubmission;
-use App\Models\Group;
-use App\Models\Student;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 class StudentProposalController extends Controller
@@ -86,7 +84,7 @@ class StudentProposalController extends Controller
         $path = $request->file('file')->store('proposals', 'public');
         $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, 'proposal');
 
-        $proposal = ProjectSubmission::create([
+        ProjectSubmission::create([
             'student_id' => $student->student_id,
             'file_path' => $path,
             'type' => 'proposal',
@@ -164,6 +162,29 @@ class StudentProposalController extends Controller
         if ($proposal->status === 'approved') {
             return redirect()->route('student.proposal')->with('info', 'Approved proposals cannot be edited.');
         }
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('proposals', 'public');
+            $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, 'proposal');
+
+            ProjectSubmission::create([
+                'student_id' => $student->student_id,
+                'file_path' => $path,
+                'type' => 'proposal',
+                'version' => $nextVersion,
+                'status' => 'pending',
+                'submitted_at' => now(),
+                'title' => $request->title,
+                'objectives' => $request->objectives,
+                'methodology' => $request->methodology,
+                'timeline' => $request->timeline,
+                'expected_outcomes' => $request->expected_outcomes,
+                'teacher_comment' => null,
+            ]);
+
+            return redirect()->route('student.proposal')->with('success', 'Proposal updated successfully! A new version was submitted for review.');
+        }
+
         $proposal->update([
             'title' => $request->title,
             'objectives' => $request->objectives,
@@ -171,18 +192,8 @@ class StudentProposalController extends Controller
             'timeline' => $request->timeline,
             'expected_outcomes' => $request->expected_outcomes,
         ]);
-        if ($request->hasFile('file')) {
-            if ($proposal->file_path) {
-                Storage::disk('public')->delete($proposal->file_path);
-            }
-            $path = $request->file('file')->store('proposals', 'public');
-            $proposal->update([
-                'file_path' => $path,
-                'status' => 'pending',
-                'submitted_at' => now(),
-            ]);
-        }
-        return redirect()->route('student.proposal')->with('success', 'Proposal updated successfully! It is now under review again.');
+
+        return redirect()->route('student.proposal')->with('success', 'Proposal details updated successfully.');
     }
 
     public function rollback($id)

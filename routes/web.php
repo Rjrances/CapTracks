@@ -27,7 +27,6 @@ use App\Http\Controllers\TaskSubmissionController;
 use App\Http\Controllers\StudentDefenseRequestController;
 use App\Http\Controllers\AdviserController;
 use App\Http\Controllers\AdviserProposalController;
-use App\Http\Controllers\NotificationController;
 
 // Health check route for Railway
 Route::get('/health', function () {
@@ -102,7 +101,6 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
     // Proposal Review
     Route::get('/proposals', [CoordinatorProposalController::class, 'index'])->name('proposals.index');
     Route::get('/proposals/{id}', [CoordinatorProposalController::class, 'show'])->name('proposals.show');
-    Route::get('/proposals/{id}/review', [CoordinatorProposalController::class, 'review'])->name('proposals.review');
     Route::put('/proposals/{id}', [CoordinatorProposalController::class, 'update'])->name('proposals.update');
     Route::post('/proposals/bulk-update', [CoordinatorProposalController::class, 'bulkUpdate'])->name('proposals.bulk-update');
     Route::get('/proposals/stats', [CoordinatorProposalController::class, 'getStats'])->name('proposals.stats');
