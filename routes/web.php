@@ -69,10 +69,12 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 
     // View Class List by Semester
     Route::get('/classlist', [CoordinatorController::class, 'classlist'])->name('classlist.index');
+    Route::get('/faculty-matrix', [CoordinatorController::class, 'facultyMatrix'])->name('faculty-matrix');
 
     // Defense Scheduling
     Route::resource('defense', DefenseScheduleController::class);
     Route::get('/defense/available-faculty', [DefenseScheduleController::class, 'getAvailableFaculty'])->name('defense.available-faculty');
+    Route::patch('/defense/{defenseSchedule}/complete', [DefenseScheduleController::class, 'markAsCompleted'])->name('defense.complete');
 
     // Groups
     Route::get('/groups', [CoordinatorController::class, 'groups'])->name('groups.index');

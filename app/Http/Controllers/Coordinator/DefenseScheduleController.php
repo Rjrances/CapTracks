@@ -532,6 +532,25 @@ class DefenseScheduleController extends Controller
         return back()->with('success', 'Defense request rejected successfully!');
     }
 
+    public function markAsCompleted(DefenseSchedule $defenseSchedule)
+    {
+        $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
+
+        if (!in_array($defenseSchedule->group->offering_id, $coordinatorOfferings)) {
+            abort(403, 'You can only update defense schedules for groups in your offerings.');
+        }
+
+        if (!in_array($defenseSchedule->status, ['scheduled', 'in_progress'])) {
+            return back()->with('error', 'Only scheduled or in-progress defenses can be marked as completed.');
+        }
+
+        $defenseSchedule->update([
+            'status' => 'completed',
+        ]);
+
+        return back()->with('success', 'Defense marked as completed successfully.');
+    }
+
     private function createDefensePanel(DefenseSchedule $defenseSchedule, Request $request)
     {
 

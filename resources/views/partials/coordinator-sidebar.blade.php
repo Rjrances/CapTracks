@@ -49,6 +49,13 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('coordinator.faculty-matrix') ? 'active bg-primary' : '' }}"
+                   href="{{ route('coordinator.faculty-matrix') }}">
+                    <i class="fas fa-table me-2"></i>
+                    Faculty Matrix
+                </a>
+            </li>
+            <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('coordinator.proposals.*') ? 'active bg-primary' : '' }}" 
                    href="{{ route('coordinator.proposals.index') }}">
                     <i class="fas fa-file-alt me-2"></i>

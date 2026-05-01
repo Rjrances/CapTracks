@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ActivityLog;
+use App\Models\DefenseRequest;
 use App\Models\ProjectSubmission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -32,8 +33,21 @@ class StudentProposalController extends Controller
             ->orderByDesc('version')
             ->orderByDesc('submitted_at')
             ->get();
-        $proposalStatus = $this->getProposalStatus($group, $existingProposal);
-        return view('student.proposal.index', compact('group', 'existingProposal', 'proposalStatus', 'proposalVersions'));
+        $activeProposalDefenseRequest = DefenseRequest::where('group_id', $group->id)
+            ->where('defense_type', 'proposal')
+            ->whereIn('status', ['pending', 'approved', 'scheduled'])
+            ->latest('requested_at')
+            ->first();
+
+        $proposalStatus = $this->getProposalStatus($group, $existingProposal, $activeProposalDefenseRequest);
+
+        return view('student.proposal.index', compact(
+            'group',
+            'existingProposal',
+            'proposalStatus',
+            'proposalVersions',
+            'activeProposalDefenseRequest'
+        ));
     }
     public function create()
     {
@@ -266,7 +280,7 @@ class StudentProposalController extends Controller
         return redirect()->route('student.proposal')->with('success', 'Proposal rolled back and resubmitted as version ' . $nextVersion . '.');
     }
 
-    private function getProposalStatus($group, $existingProposal)
+    private function getProposalStatus($group, $existingProposal, $activeProposalDefenseRequest = null)
     {
         if (!$existingProposal) {
             return [
@@ -285,6 +299,22 @@ class StudentProposalController extends Controller
                     'next_step' => 'Wait for adviser feedback'
                 ];
             case 'approved':
+                if ($activeProposalDefenseRequest) {
+                    $requestStatusLabel = match ($activeProposalDefenseRequest->status) {
+                        'pending' => 'pending coordinator review',
+                        'approved' => 'approved and waiting for scheduling',
+                        'scheduled' => 'already scheduled',
+                        default => $activeProposalDefenseRequest->status,
+                    };
+
+                    return [
+                        'status' => 'approved',
+                        'message' => 'Proposal approved!',
+                        'can_request_defense' => false,
+                        'next_step' => 'Proposal defense request is ' . $requestStatusLabel
+                    ];
+                }
+
                 return [
                     'status' => 'approved',
                     'message' => 'Proposal approved!',

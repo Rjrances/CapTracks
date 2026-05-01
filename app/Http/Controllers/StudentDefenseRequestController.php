@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ActivityLog;
+use App\Models\DefenseSchedule;
 use App\Models\DefenseRequest;
 use App\Models\Group;
 use App\Models\MilestoneTemplate;
@@ -22,7 +23,18 @@ class StudentDefenseRequestController extends Controller
             ->with(['group', 'defenseSchedule.defensePanels.faculty'])
             ->orderBy('created_at', 'desc')
             ->get();
-        return view('student.defense-requests.index', compact('defenseRequests', 'group'));
+
+        $canCreateDefenseRequest = $this->canCreateDefenseRequest($group->id);
+        $requestDisabledReason = $canCreateDefenseRequest
+            ? null
+            : 'You already have an active defense process (pending/approved/scheduled). Wait until it is completed before requesting again.';
+
+        return view('student.defense-requests.index', compact(
+            'defenseRequests',
+            'group',
+            'canCreateDefenseRequest',
+            'requestDisabledReason'
+        ));
     }
     public function create(Request $request)
     {
@@ -38,12 +50,9 @@ class StudentDefenseRequestController extends Controller
             return redirect()->route('student.group')->withErrors(['adviser' => 'Your group must have an adviser before requesting a defense.']);
         }
         $milestoneTemplates = MilestoneTemplate::where('status', 'active')->get();
-        $pendingRequests = DefenseRequest::where('group_id', $group->id)
-            ->where('status', 'pending')
-            ->count();
-        if ($pendingRequests > 0) {
+        if (!$this->canCreateDefenseRequest($group->id)) {
             return redirect()->route('student.defense-requests.index')
-                ->withErrors(['pending' => 'You already have a pending defense request. Please wait for coordinator response.']);
+                ->withErrors(['pending' => 'You already have an active defense process. Please wait until the current one is completed.']);
         }
         
         // Get defense type from URL parameter
@@ -67,12 +76,9 @@ class StudentDefenseRequestController extends Controller
             'preferred_date' => 'required|date|after:today',
             'preferred_time' => 'required|date_format:H:i',
         ]);
-        $pendingRequests = DefenseRequest::where('group_id', $group->id)
-            ->where('status', 'pending')
-            ->count();
-        if ($pendingRequests > 0) {
+        if (!$this->canCreateDefenseRequest($group->id)) {
             return redirect()->route('student.defense-requests.index')
-                ->withErrors(['pending' => 'You already have a pending defense request. Please wait for coordinator response.']);
+                ->withErrors(['pending' => 'You already have an active defense process. Please wait until the current one is completed.']);
         }
         try {
             $defenseRequest = DefenseRequest::create([
@@ -138,5 +144,22 @@ class StudentDefenseRequestController extends Controller
             return $studentAccount->student;
         }
         return null;
+    }
+
+    private function canCreateDefenseRequest(int $groupId): bool
+    {
+        $hasOutstandingRequest = DefenseRequest::where('group_id', $groupId)
+            ->whereIn('status', ['pending', 'approved'])
+            ->exists();
+
+        if ($hasOutstandingRequest) {
+            return false;
+        }
+
+        $hasActiveSchedule = DefenseSchedule::where('group_id', $groupId)
+            ->whereIn('status', ['scheduled', 'in_progress'])
+            ->exists();
+
+        return !$hasActiveSchedule;
     }
 }

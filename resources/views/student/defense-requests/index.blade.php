@@ -8,9 +8,15 @@
             <p class="text-muted mb-0">Manage your defense requests and track their status</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success">
-                <i class="fas fa-plus me-2"></i>Request Defense
-            </a>
+            @if($canCreateDefenseRequest ?? true)
+                <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Request Defense
+                </a>
+            @else
+                <button type="button" class="btn btn-secondary" disabled>
+                    <i class="fas fa-ban me-2"></i>Request Defense Disabled
+                </button>
+            @endif
             <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
                 <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
             </a>
@@ -36,6 +42,11 @@
                 @endforeach
             </ul>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if(!($canCreateDefenseRequest ?? true) && !empty($requestDisabledReason))
+        <div class="alert alert-warning" role="alert">
+            <i class="fas fa-info-circle me-2"></i>{{ $requestDisabledReason }}
         </div>
     @endif
     <div class="card mb-4">
@@ -148,9 +159,15 @@
                     <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">No Defense Requests Yet</h5>
                     <p class="text-muted mb-3">You haven't submitted any defense requests yet.</p>
-                    <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success">
-                        <i class="fas fa-plus me-2"></i>Request Your First Defense
-                    </a>
+                    @if($canCreateDefenseRequest ?? true)
+                        <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>Request Your First Defense
+                        </a>
+                    @else
+                        <button type="button" class="btn btn-secondary" disabled>
+                            <i class="fas fa-ban me-2"></i>Request Defense Disabled
+                        </button>
+                    @endif
                 </div>
             @endif
         </div>

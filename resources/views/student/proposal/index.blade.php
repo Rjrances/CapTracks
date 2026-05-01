@@ -48,7 +48,7 @@
                                 @endswitch
                             </div>
                             <div class="col-md-4 text-end">
-                                @if($existingProposal->status === 'approved')
+                                @if($existingProposal->status === 'approved' && $proposalStatus['can_request_defense'])
                                     <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success">
                                         <i class="fas fa-gavel me-2"></i>Request Proposal Defense
                                     </a>
@@ -157,12 +157,26 @@
                                 <h6 class="text-primary mb-2">
                                     <i class="fas fa-rocket me-2"></i>Step 2: Request 60% Defense
                                 </h6>
-                                <small class="text-muted">Submit a formal request for your 60% defense.</small>
-                                <div class="mt-2">
-                                    <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success btn-sm">
-                                        <i class="fas fa-gavel me-1"></i>Request Defense
-                                    </a>
-                                </div>
+                                <small class="text-muted">
+                                    @if($proposalStatus['can_request_defense'])
+                                        Submit a formal request for your 60% defense.
+                                    @else
+                                        {{ $proposalStatus['next_step'] ?? 'Proposal defense request already submitted.' }}
+                                    @endif
+                                </small>
+                                @if($proposalStatus['can_request_defense'])
+                                    <div class="mt-2">
+                                        <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success btn-sm">
+                                            <i class="fas fa-gavel me-1"></i>Request Defense
+                                        </a>
+                                    </div>
+                                @elseif(isset($activeProposalDefenseRequest))
+                                    <div class="mt-2">
+                                        <a href="{{ route('student.defense-requests.index') }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye me-1"></i>View Defense Request
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
                             <div class="mb-3">
                                 <h6 class="text-warning mb-2">

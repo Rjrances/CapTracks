@@ -8,9 +8,12 @@
             <p class="text-muted mb-0">Kanban board for milestone tasks</p>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-outline-info" onclick="recomputeProgress()">
+            <form action="{{ route('student.milestones.recompute-progress', $groupMilestone->id) }}" method="POST" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-outline-info">
                 <i class="fas fa-sync-alt me-2"></i>Recompute Progress
-            </button>
+                </button>
+            </form>
             <a href="{{ route('student.project') }}" class="btn btn-outline-primary">
                 <i class="fas fa-file-upload me-2"></i>View Project Submissions
             </a>

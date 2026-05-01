@@ -313,6 +313,16 @@
                                                     <a href="{{ route('coordinator.defense.edit', $schedule) }}" class="btn btn-outline-primary btn-sm">
                                                         <i class="fas fa-edit"></i> Edit
                                                     </a>
+                                                    @if(in_array($schedule->status, ['scheduled', 'in_progress']))
+                                                        <form action="{{ route('coordinator.defense.complete', $schedule) }}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <button type="submit" class="btn btn-outline-success btn-sm"
+                                                                    onclick="return confirm('Mark this defense as completed?')">
+                                                                <i class="fas fa-check-circle"></i> Complete
+                                                            </button>
+                                                        </form>
+                                                    @endif
                                                     <button type="button" class="btn btn-outline-danger btn-sm" 
                                                             onclick="deleteSchedule({{ $schedule->id }})">
                                                         <i class="fas fa-trash"></i> Delete

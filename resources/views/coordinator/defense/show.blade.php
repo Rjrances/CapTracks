@@ -66,7 +66,16 @@
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-semibold text-muted">Status</label>
                                     <div>
-                                        <span class="badge bg-success fs-6">{{ ucfirst($defenseSchedule->status) }}</span>
+                                        @php
+                                            $scheduleStatusClass = match($defenseSchedule->status) {
+                                                'scheduled' => 'primary',
+                                                'in_progress' => 'warning',
+                                                'completed' => 'success',
+                                                'cancelled' => 'danger',
+                                                default => 'secondary'
+                                            };
+                                        @endphp
+                                        <span class="badge bg-{{ $scheduleStatusClass }} fs-6">{{ ucfirst(str_replace('_', ' ', $defenseSchedule->status)) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -85,6 +94,16 @@
                                 <a href="{{ route('coordinator.defense.edit', $defenseSchedule->id) }}" class="btn btn-primary">
                                     <i class="fas fa-edit me-2"></i>Edit Schedule
                                 </a>
+                                @if(in_array($defenseSchedule->status, ['scheduled', 'in_progress']))
+                                    <form action="{{ route('coordinator.defense.complete', $defenseSchedule->id) }}" method="POST" class="d-grid">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-success"
+                                                onclick="return confirm('Mark this defense as completed?')">
+                                            <i class="fas fa-check-circle me-2"></i>Mark as Completed
+                                        </button>
+                                    </form>
+                                @endif
                                 <form action="{{ route('coordinator.defense.destroy', $defenseSchedule->id) }}" method="POST" class="d-grid">
                                     @csrf
                                     @method('DELETE')

@@ -266,26 +266,44 @@ class StudentMilestoneController extends Controller
             'milestone_progress' => $groupMilestone->progress_percentage
         ]);
     }
-    public function recomputeProgress($milestoneId)
+    public function recomputeProgress(Request $request, $milestoneId)
     {
         $student = $this->getAuthenticatedStudent();
         if (!$student) {
-            return response()->json(['success' => false, 'message' => 'Not authenticated']);
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Not authenticated'], 401);
+            }
+
+            return redirect()->route('student.milestones')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         $group = $student->groups()->first();
         if (!$group) {
-            return response()->json(['success' => false, 'message' => 'You are not part of any group']);
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'You are not part of any group'], 403);
+            }
+
+            return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
         }
         $groupMilestone = $group->groupMilestones()->find($milestoneId);
         if (!$groupMilestone) {
-            return response()->json(['success' => false, 'message' => 'Milestone not found']);
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Milestone not found'], 404);
+            }
+
+            return redirect()->route('student.milestones')->withErrors(['milestone' => 'Milestone not found.']);
         }
         $progress = $groupMilestone->calculateProgressPercentage();
-        return response()->json([
-            'success' => true,
-            'message' => 'Progress recomputed successfully',
-            'progress' => $progress
-        ]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Progress recomputed successfully',
+                'progress' => $progress
+            ]);
+        }
+
+        return redirect()->route('student.milestones.show', $milestoneId)
+            ->with('success', 'Progress recomputed successfully!');
     }
     public function updateTask(Request $request, $taskId)
     {

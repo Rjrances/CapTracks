@@ -340,4 +340,71 @@ class CoordinatorController extends Controller
 
         return view('coordinator.activity-log', compact('activityLogs'));
     }
+
+    public function facultyMatrix()
+    {
+        $user = auth()->user();
+
+        $coordinatedOfferings = Offering::with(['teacher', 'academicTerm'])
+            ->where('faculty_id', $user->faculty_id)
+            ->get();
+
+        $coordinatedOfferingIds = $coordinatedOfferings->pluck('id');
+
+        $groups = Group::with([
+            'offering.teacher',
+            'adviser',
+            'defenseSchedules' => function ($query) {
+                $query->latest('start_at');
+            },
+            'defenseSchedules.defensePanels.faculty',
+        ])
+            ->whereIn('offering_id', $coordinatedOfferingIds)
+            ->get();
+
+        $matrixRows = $groups->map(function ($group) {
+            $latestSchedule = $group->defenseSchedules->first();
+            $panelsByRole = $latestSchedule
+                ? $latestSchedule->defensePanels->groupBy('role')
+                : collect();
+
+            $panelChairs = $panelsByRole->get('chair', collect())
+                ->pluck('faculty.name')
+                ->filter()
+                ->unique()
+                ->values();
+
+            $panelMembers = $panelsByRole->get('member', collect())
+                ->pluck('faculty.name')
+                ->filter()
+                ->unique()
+                ->values();
+
+            return [
+                'group_name' => $group->name,
+                'offering_label' => $group->offering
+                    ? ($group->offering->subject_code . ' - ' . $group->offering->subject_title)
+                    : 'No offering assigned',
+                'coordinator_name' => $group->offering->teacher->name ?? 'Unassigned',
+                'adviser_name' => $group->adviser->name ?? 'Unassigned',
+                'panel_chairs' => $panelChairs,
+                'panel_members' => $panelMembers,
+                'schedule_stage' => $latestSchedule->stage_label ?? 'Not scheduled',
+                'schedule_status' => $latestSchedule
+                    ? ucfirst(str_replace('_', ' ', $latestSchedule->status))
+                    : 'Not scheduled',
+            ];
+        });
+
+        $summary = [
+            'total_offerings' => $coordinatedOfferings->count(),
+            'total_groups' => $groups->count(),
+            'groups_with_adviser' => $groups->whereNotNull('faculty_id')->count(),
+            'groups_with_schedule' => $groups->filter(function ($group) {
+                return $group->defenseSchedules->isNotEmpty();
+            })->count(),
+        ];
+
+        return view('coordinator.faculty-matrix', compact('matrixRows', 'summary'));
+    }
 }
