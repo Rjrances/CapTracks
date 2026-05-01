@@ -173,9 +173,9 @@ class AdviserController extends Controller
     {
         $overdueCount = 0;
         foreach ($group->groupMilestoneTasks as $task) {
-            if ($task->milestoneTask->due_date && 
-                now()->isAfter($task->milestoneTask->due_date) && 
-                $task->status !== 'completed') {
+            if ($task->deadline &&
+                now()->isAfter($task->deadline) &&
+                $task->status !== 'done') {
                 $overdueCount++;
             }
         }
@@ -268,7 +268,8 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
         $groupsQuery = Group::with([
-            'members', 
+            'members',
+            'members.submissions',
             'adviserInvitations', 
             'groupMilestones.milestoneTemplate',
             'groupMilestoneTasks.milestoneTask',

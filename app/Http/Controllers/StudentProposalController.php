@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
+use App\Models\ActivityLog;
 use App\Models\ProjectSubmission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -84,7 +85,7 @@ class StudentProposalController extends Controller
         $path = $request->file('file')->store('proposals', 'public');
         $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, 'proposal');
 
-        ProjectSubmission::create([
+        $proposal = ProjectSubmission::create([
             'student_id' => $student->student_id,
             'file_path' => $path,
             'type' => 'proposal',
@@ -97,6 +98,15 @@ class StudentProposalController extends Controller
             'timeline' => $request->timeline,
             'expected_outcomes' => $request->expected_outcomes,
         ]);
+
+        ActivityLog::create([
+            'student_id' => $student->student_id,
+            'action' => 'submission_uploaded',
+            'description' => 'Uploaded proposal "' . ($proposal->title ?? 'Project Proposal') . '" (v' . ($proposal->version ?? 1) . ')',
+            'loggable_type' => ProjectSubmission::class,
+            'loggable_id' => $proposal->id,
+        ]);
+
         return redirect()->route('student.proposal')->with('success', 'Proposal submitted successfully! It is now under review.');
     }
     public function show($id)
@@ -167,7 +177,7 @@ class StudentProposalController extends Controller
             $path = $request->file('file')->store('proposals', 'public');
             $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, 'proposal');
 
-            ProjectSubmission::create([
+            $newVersion = ProjectSubmission::create([
                 'student_id' => $student->student_id,
                 'file_path' => $path,
                 'type' => 'proposal',
@@ -180,6 +190,14 @@ class StudentProposalController extends Controller
                 'timeline' => $request->timeline,
                 'expected_outcomes' => $request->expected_outcomes,
                 'teacher_comment' => null,
+            ]);
+
+            ActivityLog::create([
+                'student_id' => $student->student_id,
+                'action' => 'submission_uploaded',
+                'description' => 'Uploaded revised proposal "' . ($newVersion->title ?? 'Project Proposal') . '" (v' . ($newVersion->version ?? 1) . ')',
+                'loggable_type' => ProjectSubmission::class,
+                'loggable_id' => $newVersion->id,
             ]);
 
             return redirect()->route('student.proposal')->with('success', 'Proposal updated successfully! A new version was submitted for review.');
@@ -222,7 +240,7 @@ class StudentProposalController extends Controller
         $rollbackPath = 'proposals/rollback-' . now()->format('YmdHis') . '-' . $fileName;
         Storage::disk('public')->copy($sourceProposal->file_path, $rollbackPath);
 
-        ProjectSubmission::create([
+        $rollbackSubmission = ProjectSubmission::create([
             'student_id' => $student->student_id,
             'file_path' => $rollbackPath,
             'type' => 'proposal',
@@ -235,6 +253,14 @@ class StudentProposalController extends Controller
             'timeline' => $sourceProposal->timeline,
             'expected_outcomes' => $sourceProposal->expected_outcomes,
             'teacher_comment' => null,
+        ]);
+
+        ActivityLog::create([
+            'student_id' => $student->student_id,
+            'action' => 'submission_uploaded',
+            'description' => 'Rolled back proposal to v' . ($sourceProposal->version ?? 1) . ' and submitted as v' . ($rollbackSubmission->version ?? $nextVersion),
+            'loggable_type' => ProjectSubmission::class,
+            'loggable_id' => $rollbackSubmission->id,
         ]);
 
         return redirect()->route('student.proposal')->with('success', 'Proposal rolled back and resubmitted as version ' . $nextVersion . '.');

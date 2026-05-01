@@ -1,17 +1,18 @@
 <?php
 namespace App\Http\Controllers;
+use App\Models\ActivityLog;
 use App\Models\ProjectSubmission;
 use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 class ProjectSubmissionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->isTeacher()) {
-                return $this->adviserIndex($user);
+                return $this->adviserIndex($user, $request);
             } else {
                 return $this->studentIndex($user);
             }
@@ -25,8 +26,9 @@ class ProjectSubmissionController extends Controller
             }
         }
     }
-    private function adviserIndex($user)
+    private function adviserIndex($user, Request $request)
     {
+        $selectedGroupId = $request->query('group');
         $adviserGroups = Group::with(['members', 'members.submissions'])
             ->where('faculty_id', $user->faculty_id)
             ->get();
@@ -35,7 +37,14 @@ class ProjectSubmissionController extends Controller
                 $query->where('faculty_id', $user->id);
             })
             ->get();
-        $allGroups = $adviserGroups->concat($panelGroups)->unique('id');
+        $allGroups = $adviserGroups->concat($panelGroups)->unique('id')->values();
+
+        if ($selectedGroupId) {
+            $allGroups = $allGroups->where('id', (int) $selectedGroupId)->values();
+            $adviserGroups = $adviserGroups->where('id', (int) $selectedGroupId)->values();
+            $panelGroups = $panelGroups->where('id', (int) $selectedGroupId)->values();
+        }
+
         $memberIds = collect();
         foreach ($allGroups as $group) {
             $memberIds = $memberIds->merge($group->members->pluck('id'));
@@ -57,7 +66,7 @@ class ProjectSubmissionController extends Controller
                 'user_role' => $userRole
             ]];
         });
-        return view('adviser.project.index', compact('allGroups', 'adviserGroups', 'panelGroups', 'submissions', 'submissionsByGroup'));
+        return view('adviser.project.index', compact('allGroups', 'adviserGroups', 'panelGroups', 'submissions', 'submissionsByGroup', 'selectedGroupId'));
     }
     private function studentIndex($user)
     {
@@ -95,7 +104,7 @@ class ProjectSubmissionController extends Controller
         $path = $request->file('file')->store('submissions', 'public');
         $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, $request->type);
 
-        ProjectSubmission::create([
+        $submission = ProjectSubmission::create([
             'student_id' => $student->student_id,
             'file_path' => $path,
             'type' => $request->type,
@@ -105,6 +114,15 @@ class ProjectSubmissionController extends Controller
             'title' => $this->getSubmissionTitle($request->type),
             'objectives' => $request->description,
         ]);
+
+        ActivityLog::create([
+            'student_id' => $student->student_id,
+            'action' => 'submission_uploaded',
+            'description' => 'Uploaded ' . ($submission->title ?? 'project submission') . ' (v' . ($submission->version ?? 1) . ')',
+            'loggable_type' => ProjectSubmission::class,
+            'loggable_id' => $submission->id,
+        ]);
+
         return redirect()->route('student.project')->with('success', 'Submission uploaded successfully!');
     }
     private function getSubmissionTitle($type)

@@ -97,6 +97,7 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 
     // Calendar
     Route::get('/calendar', [CalendarController::class, 'coordinatorCalendar'])->name('calendar');
+    Route::get('/activity-log', [CoordinatorController::class, 'activityLog'])->name('activity-log');
 
     // Proposal Review
     Route::get('/proposals', [CoordinatorProposalController::class, 'index'])->name('proposals.index');
@@ -271,7 +272,7 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
 
     // Groups
     Route::get('/groups', [AdviserController::class, 'myGroups'])->name('groups');
-    Route::get('/all-groups', [AdviserController::class, 'allGroups'])->name('all-groups');
+    Route::get('/all-groups', [AdviserController::class, 'myGroups'])->name('all-groups');
     Route::get('/groups/{group}', [AdviserController::class, 'groupDetails'])->name('groups.details');
     Route::get('/panel-submissions', [AdviserController::class, 'panelSubmissions'])->name('panel-submissions');
 

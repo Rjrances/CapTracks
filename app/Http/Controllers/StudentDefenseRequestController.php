@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
+use App\Models\ActivityLog;
 use App\Models\DefenseRequest;
 use App\Models\Group;
 use App\Models\MilestoneTemplate;
@@ -74,13 +75,22 @@ class StudentDefenseRequestController extends Controller
                 ->withErrors(['pending' => 'You already have a pending defense request. Please wait for coordinator response.']);
         }
         try {
-            DefenseRequest::create([
+            $defenseRequest = DefenseRequest::create([
                 'group_id' => $group->id,
                 'defense_type' => $request->defense_type,
                 'student_message' => $request->student_message,
                 'status' => 'pending',
                 'requested_at' => now(),
             ]);
+
+            ActivityLog::create([
+                'student_id' => $student->student_id,
+                'action' => 'defense_requested',
+                'description' => 'Submitted a ' . str_replace('_', ' ', $defenseRequest->defense_type) . ' defense request',
+                'loggable_type' => DefenseRequest::class,
+                'loggable_id' => $defenseRequest->id,
+            ]);
+
             return redirect()->route('student.defense-requests.index')
                 ->with('success', 'Defense request submitted successfully! The coordinator will review your request.');
         } catch (\Exception $e) {

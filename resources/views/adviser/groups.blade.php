@@ -1,5 +1,5 @@
 @extends('layouts.adviser')
-@section('title', 'Adviser Workspace')
+@section('title', 'All My Groups')
 @section('content')
 <div class="container-fluid py-4">
     <div class="row mb-4">
@@ -8,14 +8,11 @@
                 <div>
                     <h1 class="h2 mb-1 text-dark fw-bold">
                         <i class="fas fa-user-tie me-3 text-success"></i>
-                        Adviser Workspace
+                        All My Groups
                     </h1>
-                    <p class="text-muted mb-0">Detailed workspace for managing your student groups and monitoring progress</p>
+                    <p class="text-muted mb-0">Manage and monitor all your assigned groups in one place</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="{{ route('adviser.all-groups') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-layer-group me-2"></i>All My Groups
-                    </a>
                     <a href="{{ route('adviser.project.index') }}" class="btn btn-success">
                         <i class="fas fa-file-alt me-2"></i>Review Projects
                     </a>
@@ -200,13 +197,28 @@
                                                 </div>
                                             @endif
                                             <div class="group-actions">
+                                                @php
+                                                    $latestGroupSubmission = $group->members
+                                                        ->flatMap(function ($member) {
+                                                            return $member->submissions ?? collect();
+                                                        })
+                                                        ->sortByDesc('submitted_at')
+                                                        ->first();
+                                                    $latestGroupProposal = $group->members
+                                                        ->flatMap(function ($member) {
+                                                            return $member->submissions ?? collect();
+                                                        })
+                                                        ->where('type', 'proposal')
+                                                        ->sortByDesc('submitted_at')
+                                                        ->first();
+                                                @endphp
                                                 <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-success btn-sm px-3 me-2 mb-2 w-100">
                                                     <i class="fas fa-eye me-1"></i> View Details
                                                 </a>
-                                                <a href="{{ route('adviser.project.index') }}" class="btn btn-outline-success btn-sm px-3 me-2 mb-2 w-100">
+                                                <a href="{{ $latestGroupSubmission ? route('adviser.project.show', $latestGroupSubmission->id) : route('adviser.project.index', ['group' => $group->id]) }}" class="btn btn-outline-success btn-sm px-3 me-2 mb-2 w-100">
                                                     <i class="fas fa-file-alt me-1"></i> Review Projects
                                                 </a>
-                                                <a href="{{ route('adviser.proposal.index') }}" class="btn btn-outline-info btn-sm px-3 w-100">
+                                                <a href="{{ $latestGroupProposal ? route('adviser.proposal.show', $latestGroupProposal->id) : route('adviser.proposal.index', ['group' => $group->id]) }}" class="btn btn-outline-info btn-sm px-3 w-100">
                                                     <i class="fas fa-clipboard-check me-1"></i> Review Proposals
                                                 </a>
                                             </div>
@@ -226,8 +238,8 @@
                             <h5 class="text-muted">No Adviser Groups</h5>
                             <p class="text-muted mb-0">You don't have any groups assigned as adviser yet.</p>
                             <div class="mt-3">
-                                <a href="{{ route('adviser.all-groups') }}" class="btn btn-outline-primary">
-                                    <i class="fas fa-layer-group me-2"></i>View All My Groups
+                                <a href="{{ route('adviser.groups') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-layer-group me-2"></i>Refresh Groups
                                 </a>
                             </div>
                         </div>

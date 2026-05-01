@@ -1,10 +1,12 @@
 <?php
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
+use App\Models\ActivityLog;
 use App\Models\Notification;
 use App\Models\AcademicTerm;
 use App\Models\Student;
 use App\Models\Group;
+use App\Models\Offering;
 use App\Models\User;
 use App\Models\ProjectSubmission;
 use App\Models\AdviserInvitation;
@@ -318,5 +320,24 @@ class CoordinatorController extends Controller
             'success' => true,
             'message' => $deleted . ' notifications deleted'
         ]);
+    }
+
+    public function activityLog()
+    {
+        $user = auth()->user();
+
+        $coordinatedOfferingIds = Offering::where('faculty_id', $user->faculty_id)
+            ->pluck('id');
+
+        $studentIds = Student::whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
+            $query->whereIn('offerings.id', $coordinatedOfferingIds);
+        })->pluck('student_id');
+
+        $activityLogs = ActivityLog::with('student')
+            ->whereIn('student_id', $studentIds)
+            ->latest()
+            ->paginate(20);
+
+        return view('coordinator.activity-log', compact('activityLogs'));
     }
 }

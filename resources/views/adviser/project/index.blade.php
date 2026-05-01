@@ -7,7 +7,7 @@
             <h2 class="mb-0">Project Submissions</h2>
             <p class="text-muted mb-0">Review and provide feedback on student submissions</p>
         </div>
-        <a href="{{ route('adviser.all-groups') }}" class="btn btn-outline-secondary">
+        <a href="{{ route('adviser.groups') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-2"></i>Back to All My Groups
         </a>
     </div>
@@ -158,7 +158,7 @@
                     <a href="{{ route('adviser.invitations') }}" class="btn btn-primary">
                         <i class="fas fa-envelope me-2"></i>Check Invitations
                     </a>
-                    <a href="{{ route('adviser.all-groups') }}" class="btn btn-outline-primary">
+                    <a href="{{ route('adviser.groups') }}" class="btn btn-outline-primary">
                         <i class="fas fa-layer-group me-2"></i>View All Groups
                     </a>
                 </div>

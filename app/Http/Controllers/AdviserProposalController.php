@@ -10,13 +10,20 @@ use App\Services\NotificationService;
 
 class AdviserProposalController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $selectedGroupId = $request->query('group');
         $groups = Group::where('faculty_id', $user->faculty_id)
             ->with(['members', 'members.submissions' => function($query) {
                 $query->where('type', 'proposal')->latest();
-            }])
+            }]);
+
+        if ($selectedGroupId) {
+            $groups->where('id', (int) $selectedGroupId);
+        }
+
+        $groups = $groups
             ->get();
         $proposalsByGroup = [];
         
@@ -47,7 +54,7 @@ class AdviserProposalController extends Controller
             'rejected' => $allProposals->where('status', 'rejected')->count(),
         ];
         
-        return view('adviser.proposal.index', compact('proposalsByGroup', 'stats'));
+        return view('adviser.proposal.index', compact('proposalsByGroup', 'stats', 'selectedGroupId'));
     }
     public function show($id)
     {

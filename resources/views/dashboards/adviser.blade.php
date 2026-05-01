@@ -11,7 +11,7 @@
                         <p class="text-muted mb-0">Manage your groups, invitations, and student projects</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('adviser.all-groups') }}" class="btn btn-primary">
+                        <a href="{{ route('adviser.groups') }}" class="btn btn-primary">
                             <i class="fas fa-layer-group me-2"></i>All My Groups
                         </a>
                         <a href="{{ route('adviser.invitations') }}" class="btn btn-outline-primary">

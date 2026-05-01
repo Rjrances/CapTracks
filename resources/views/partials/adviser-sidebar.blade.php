@@ -35,8 +35,8 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('adviser.all-groups') ? 'active bg-primary' : '' }}" 
-                   href="{{ route('adviser.all-groups') }}">
+                <a class="nav-link text-white {{ request()->routeIs('adviser.groups') || request()->routeIs('adviser.all-groups') ? 'active bg-primary' : '' }}"
+                   href="{{ route('adviser.groups') }}">
                     <i class="fas fa-layer-group me-2"></i>
                     All My Groups
                     </a>
