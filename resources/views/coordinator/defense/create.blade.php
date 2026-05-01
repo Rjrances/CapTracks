@@ -145,7 +145,7 @@
                                 <label>Panel Members <span class="text-danger">*</span></label>
                                 <div class="alert alert-info mb-3">
                                     <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
-                                    You can select any available faculty member not conflicting with the selected defense slot.
+                                    Select exactly two slots only: one Chair and one Member.
                                 </div>
                                 <div id="panel-members-container">
                                     <div class="panel-member-row mb-2">
@@ -154,24 +154,39 @@
                                                 <select name="panel_members[0][faculty_id]" class="form-control faculty-select" required>
                                                     <option value="">Select Faculty</option>
                                                     @foreach($faculty as $member)
-                                                        <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->faculty_id ?? 'N/A' }})</option>
+                                                        <option value="{{ $member->id }}" {{ old('panel_members.0.faculty_id') == $member->id ? 'selected' : '' }}>{{ $member->name }} ({{ $member->faculty_id ?? 'N/A' }})</option>
                                                     @endforeach
                                                 </select>
                                             </div>
                                             <div class="col-md-5">
-                                                <select name="panel_members[0][role]" class="form-control" required>
-                                                    <option value="">Select Role</option>
-                                                    <option value="chair">Chair</option>
-                                                    <option value="member">Member</option>
-                                                </select>
+                                                <input type="text" class="form-control" value="Chair" readonly>
+                                                <input type="hidden" name="panel_members[0][role]" value="chair">
                                             </div>
                                             <div class="col-md-2">
-                                                <button type="button" class="btn btn-danger btn-sm remove-panel-member" style="display: none;">Remove</button>
+                                                <span class="badge bg-secondary">Required</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel-member-row mb-2">
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <select name="panel_members[1][faculty_id]" class="form-control faculty-select" required>
+                                                    <option value="">Select Faculty</option>
+                                                    @foreach($faculty as $member)
+                                                        <option value="{{ $member->id }}" {{ old('panel_members.1.faculty_id') == $member->id ? 'selected' : '' }}>{{ $member->name }} ({{ $member->faculty_id ?? 'N/A' }})</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" value="Member" readonly>
+                                                <input type="hidden" name="panel_members[1][role]" value="member">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <span class="badge bg-secondary">Required</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-success btn-sm" id="add-panel-member">Add Panel Member</button>
                                 @error('panel_members')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -196,8 +211,8 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let panelCount = 1;
     let currentAvailableFaculty = [];
+    let latestDoubleBookingRequestId = 0;
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
     loadInitialFaculty();
     document.getElementById('group_id').addEventListener('change', function() {
@@ -264,50 +279,13 @@ document.addEventListener('DOMContentLoaded', function() {
             select.innerHTML = '<option value="">Select Faculty</option>';
         });
     }
-    document.getElementById('add-panel-member').addEventListener('click', function() {
-        const panelMembersContainer = document.getElementById('panel-members-container');
-        const newPanelRow = document.createElement('div');
-        newPanelRow.className = 'panel-member-row mb-2';
-        newPanelRow.innerHTML = `
-            <div class="row">
-                <div class="col-md-5">
-                    <select name="panel_members[${panelCount}][faculty_id]" class="form-control faculty-select" required>
-                        <option value="">Select Faculty</option>
-                        @foreach($faculty as $member)
-                            <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->faculty_id ?? 'N/A' }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <select name="panel_members[${panelCount}][role]" class="form-control" required>
-                        <option value="">Select Role</option>
-                        <option value="chair">Chair</option>
-                        <option value="member">Member</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="button" class="btn btn-danger btn-sm remove-panel-member">Remove</button>
-                </div>
-            </div>
-        `;
-        panelMembersContainer.appendChild(newPanelRow);
-        panelCount++;
-        if (panelCount > 1) {
-            document.querySelector('.remove-panel-member').style.display = 'block';
-        }
-        const groupId = document.getElementById('group_id').value;
-        if (groupId) {
-            loadFacultyForGroup(groupId);
-        }
-    });
-
     document.getElementById('auto-assign-panel').addEventListener('click', function() {
         autoAssignPanelMembers();
     });
 
     async function autoAssignPanelMembers() {
         const facultySelects = Array.from(document.querySelectorAll('.faculty-select'));
-        const roleSelects = Array.from(document.querySelectorAll('select[name$="[role]"]'));
+        const roleInputs = Array.from(document.querySelectorAll('input[name$="[role]"]'));
         const groupId = document.getElementById('group_id').value;
         const date = document.getElementById('date').value;
         const startTime = document.getElementById('start_time').value;
@@ -329,41 +307,40 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Not enough available faculty to auto-assign panel members.');
             return;
         }
-
-        const targetCount = Math.min(3, currentAvailableFaculty.length);
-        while (facultySelects.length < targetCount) {
-            document.getElementById('add-panel-member').click();
-            facultySelects.push(document.querySelectorAll('.faculty-select')[facultySelects.length]);
-            roleSelects.push(document.querySelectorAll('select[name$="[role]"]')[roleSelects.length]);
-        }
-
         const selectedFacultyIds = currentAvailableFaculty
-            .slice(0, targetCount)
+            .slice(0, 2)
             .map(member => String(member.id));
 
         facultySelects.forEach((select, index) => {
-            if (index < targetCount) {
+            if (index < 2) {
                 select.value = selectedFacultyIds[index];
-                roleSelects[index].value = index === 0 ? 'chair' : 'member';
+                roleInputs[index].value = index === 0 ? 'chair' : 'member';
             }
         });
     }
-
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-panel-member')) {
-            e.target.closest('.panel-member-row').remove();
-            panelCount--;
-            if (panelCount === 1) {
-                document.querySelector('.remove-panel-member').style.display = 'none';
-            }
-        }
-    });
     function checkDoubleBooking() {
         const groupId = document.getElementById('group_id').value;
         const date = document.getElementById('date').value;
         const startTime = document.getElementById('start_time').value;
         const endTime = document.getElementById('end_time').value;
         const room = document.getElementById('room').value;
+
+        if (!groupId || !date || !startTime || !endTime || !room) {
+            document.getElementById('doubleBookingWarning').classList.add('d-none');
+            return;
+        }
+
+        const requestId = ++latestDoubleBookingRequestId;
+        const requestPayload = {
+            group_id: groupId,
+            date: date,
+            start_time: startTime,
+            end_time: endTime,
+            room: room
+        };
+
+        const requestSignature = JSON.stringify(requestPayload);
+
         if (groupId && date && startTime && endTime && room) {
             fetch('{{ route("coordinator.defense.available-faculty") }}', {
                 method: 'POST',
@@ -371,22 +348,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken
                 },
-                body: JSON.stringify({
-                    group_id: groupId,
-                    date: date,
-                    start_time: startTime,
-                    end_time: endTime,
-                    room: room
-                })
+                body: JSON.stringify(requestPayload)
             })
             .then(response => response.json())
             .then(data => {
+                const currentSignature = JSON.stringify({
+                    group_id: document.getElementById('group_id').value,
+                    date: document.getElementById('date').value,
+                    start_time: document.getElementById('start_time').value,
+                    end_time: document.getElementById('end_time').value,
+                    room: document.getElementById('room').value
+                });
+
+                if (requestId !== latestDoubleBookingRequestId || requestSignature !== currentSignature) {
+                    return;
+                }
+
                 currentAvailableFaculty = data.availableFaculty || [];
                 updateFacultyOptions(currentAvailableFaculty);
                 if (data.conflict) {
                     document.getElementById('warningMessage').textContent = data.message;
                     document.getElementById('doubleBookingWarning').classList.remove('d-none');
                 } else {
+                    document.getElementById('doubleBookingWarning').classList.add('d-none');
+                }
+            })
+            .catch(() => {
+                if (requestId === latestDoubleBookingRequestId) {
                     document.getElementById('doubleBookingWarning').classList.add('d-none');
                 }
             });

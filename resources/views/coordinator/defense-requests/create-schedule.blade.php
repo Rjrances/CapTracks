@@ -89,7 +89,8 @@
                             <i class="fas fa-users me-2"></i>Defense Panel Assignment
                         </h6>
                         <p class="text-muted small mb-3">
-                            Assign the four required panel members. The same panel will serve for all defense phases.
+                            The panel has exactly 4 members: Adviser, Coordinator, 1 Chair, and 1 Member.
+                            The same panel will serve for all defense phases.
                         </p>
                         <div class="row mb-3">
                             <div class="col-md-6">
@@ -111,10 +112,10 @@
                         </div>
                         <div class="row mb-4">
                             <div class="col-md-6">
-                                <label for="panelist_1_id" class="form-label">Faculty Panelist #1 *</label>
+                                <label for="panelist_1_id" class="form-label">Chair Panel Slot *</label>
                                 <select name="panelist_1_id" id="panelist_1_id" 
                                         class="form-select @error('panelist_1_id') is-invalid @enderror" required>
-                                    <option value="">Select Faculty Panelist</option>
+                                    <option value="">Select Chair</option>
                                     @foreach($availableFaculty as $faculty)
                                         <option value="{{ $faculty->id }}" 
                                                 {{ old('panelist_1_id') == $faculty->id ? 'selected' : '' }}>
@@ -125,13 +126,13 @@
                                 @error('panelist_1_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <small class="text-muted">Adviser, chairperson, and coordinator are pre-assigned and excluded from this list.</small>
+                                <small class="text-muted">Adviser and coordinator are pre-assigned and excluded from this list.</small>
                             </div>
                             <div class="col-md-6">
-                                <label for="panelist_2_id" class="form-label">Faculty Panelist #2 *</label>
+                                <label for="panelist_2_id" class="form-label">Member Panel Slot *</label>
                                 <select name="panelist_2_id" id="panelist_2_id" 
                                         class="form-select @error('panelist_2_id') is-invalid @enderror" required>
-                                    <option value="">Select Faculty Panelist</option>
+                                    <option value="">Select Member</option>
                                     @foreach($availableFaculty as $faculty)
                                         <option value="{{ $faculty->id }}" 
                                                 {{ old('panelist_2_id') == $faculty->id ? 'selected' : '' }}>
@@ -142,7 +143,7 @@
                                 @error('panelist_2_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <small class="text-muted">Adviser, chairperson, and coordinator are pre-assigned and excluded from this list.</small>
+                                <small class="text-muted">Adviser and coordinator are pre-assigned and excluded from this list.</small>
                             </div>
                         </div>
                         <div class="alert alert-warning">
@@ -150,7 +151,7 @@
                                 <i class="fas fa-exclamation-triangle me-2"></i>Important Notes
                             </h6>
                             <ul class="mb-0 small">
-                                <li>Only Faculty Panelists #1 and #2 will receive notifications</li>
+                                <li>Both selectable panel slots (Chair and Member) will receive notifications</li>
                                 <li>The same panel will serve for all defense phases (Proposal, 60%, 100%)</li>
                                 <li>Faculty can accept or decline panel invitations</li>
                                 <li>Schedule changes can be made later if needed</li>

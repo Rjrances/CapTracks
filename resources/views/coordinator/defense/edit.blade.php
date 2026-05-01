@@ -135,7 +135,7 @@
                                 <label>Panel Members <span class="text-danger">*</span></label>
                                 <div class="alert alert-info mb-3">
                                     <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
-                                    You only need to add additional panel members below.
+                                    Select exactly two slots only: one Chair and one Member.
                                 </div>
                                 @if($defenseSchedule->group->adviser || ($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id))
                                     <div class="alert alert-success mb-3">
@@ -150,40 +150,60 @@
                                         </ul>
                                     </div>
                                 @endif
+                                @php
+                                    $chairPanel = $defenseSchedule->defensePanels->firstWhere('role', 'chair');
+                                    $memberPanel = $defenseSchedule->defensePanels->firstWhere('role', 'member');
+                                @endphp
                                 <div id="panel-members-container">
-                                    @php $memberIndex = 0; @endphp
-                                    @foreach($defenseSchedule->defensePanels as $panel)
-                                        @if($panel->role == 'member' || $panel->role == 'chair')
-                                            <div class="panel-member-row mb-2">
-                                                <div class="row">
-                                                    <div class="col-md-5">
-                                                        <select name="panel_members[{{ $memberIndex }}][faculty_id]" class="form-control faculty-select" required>
-                                                            <option value="">Select Faculty</option>
-                                                            @foreach($faculty as $facultyMember)
-                                                                <option value="{{ $facultyMember->id }}" {{ $panel->faculty_id == $facultyMember->id ? 'selected' : '' }}>
-                                                                    {{ $facultyMember->name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                        <input type="hidden" name="panel_members[{{ $memberIndex }}][id]" value="{{ $panel->id }}">
-                                                    </div>
-                                                    <div class="col-md-5">
-                                                        <select name="panel_members[{{ $memberIndex }}][role]" class="form-control" required>
-                                                            <option value="">Select Role</option>
-                                                            <option value="chair" {{ $panel->role == 'chair' ? 'selected' : '' }}>Chair</option>
-                                                            <option value="member" {{ $panel->role == 'member' ? 'selected' : '' }}>Member</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-md-2">
-                                                        <button type="button" class="btn btn-danger btn-sm remove-panel-member">Remove</button>
-                                                    </div>
-                                                </div>
+                                    <div class="panel-member-row mb-2">
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <select name="panel_members[0][faculty_id]" class="form-control faculty-select" required>
+                                                    <option value="">Select Faculty</option>
+                                                    @foreach($faculty as $facultyMember)
+                                                        <option
+                                                            value="{{ $facultyMember->id }}"
+                                                            {{ (string) old('panel_members.0.faculty_id', $chairPanel->faculty_id ?? '') === (string) $facultyMember->id ? 'selected' : '' }}
+                                                        >
+                                                            {{ $facultyMember->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
                                             </div>
-                                            @php $memberIndex++; @endphp
-                                        @endif
-                                    @endforeach
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" value="Chair" readonly>
+                                                <input type="hidden" name="panel_members[0][role]" value="chair">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <span class="badge bg-secondary">Required</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel-member-row mb-2">
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <select name="panel_members[1][faculty_id]" class="form-control faculty-select" required>
+                                                    <option value="">Select Faculty</option>
+                                                    @foreach($faculty as $facultyMember)
+                                                        <option
+                                                            value="{{ $facultyMember->id }}"
+                                                            {{ (string) old('panel_members.1.faculty_id', $memberPanel->faculty_id ?? '') === (string) $facultyMember->id ? 'selected' : '' }}
+                                                        >
+                                                            {{ $facultyMember->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" value="Member" readonly>
+                                                <input type="hidden" name="panel_members[1][role]" value="member">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <span class="badge bg-secondary">Required</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <button type="button" class="btn btn-success btn-sm" id="add-panel-member">Add Panel Member</button>
                                 @error('panel_members')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -204,59 +224,6 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let panelCount = {{ $defenseSchedule->defensePanels->where('role', 'member')->count() }};
-    function initializeFacultyOptions() {
-        const facultySelects = document.querySelectorAll('.faculty-select');
-        facultySelects.forEach(select => {
-        });
-    }
-    
-    initializeFacultyOptions();
-    document.getElementById('add-panel-member').addEventListener('click', function() {
-        const panelMembersContainer = document.getElementById('panel-members-container');
-        const newPanelRow = document.createElement('div');
-        newPanelRow.className = 'panel-member-row mb-2';
-        newPanelRow.innerHTML = `
-            <div class="row">
-                <div class="col-md-5">
-                    <select name="panel_members[${panelCount}][faculty_id]" class="form-control faculty-select" required>
-                        <option value="">Select Faculty</option>
-                        @foreach($faculty as $facultyMember)
-                            <option value="{{ $facultyMember->id }}">{{ $facultyMember->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <select name="panel_members[${panelCount}][role]" class="form-control" required>
-                        <option value="">Select Role</option>
-                        <option value="chair">Chair</option>
-                        <option value="member">Member</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="button" class="btn btn-danger btn-sm remove-panel-member">Remove</button>
-                </div>
-            </div>
-        `;
-        panelMembersContainer.appendChild(newPanelRow);
-        panelCount++;
-        if (panelCount > 1) {
-            document.querySelector('.remove-panel-member').style.display = 'block';
-        }
-        const groupId = document.getElementById('group_id').value;
-        if (groupId) {
-            loadFacultyForGroup(groupId);
-        }
-    });
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-panel-member')) {
-            e.target.closest('.panel-member-row').remove();
-            panelCount--;
-            if (panelCount === 1) {
-                document.querySelector('.remove-panel-member').style.display = 'none';
-            }
-        }
-    });
     function checkDoubleBooking() {
         const date = document.getElementById('date').value;
         const startTime = document.getElementById('start_time').value;

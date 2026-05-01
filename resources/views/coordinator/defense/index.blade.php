@@ -166,6 +166,11 @@
                                 </thead>
                                 <tbody>
                                     @foreach($defenseRequests as $request)
+                                        @php
+                                            $hasActiveGroupSchedule = $request->group->defenseSchedules
+                                                ->whereIn('status', ['scheduled', 'in_progress'])
+                                                ->isNotEmpty();
+                                        @endphp
                                         <tr>
                                             <td>
                                                 <div class="fw-semibold">{{ $request->group->name }}</div>
@@ -222,10 +227,14 @@
                                                     </div>
                                                 @elseif($request->status === 'approved')
                                                     <div class="btn-group btn-group-sm" role="group">
-                                                        <a href="{{ route('coordinator.defense-requests.create-schedule', $request) }}" 
-                                                           class="btn btn-success btn-sm">
-                                                            <i class="fas fa-calendar-plus"></i> Create Schedule
-                                                        </a>
+                                                        @if(!$hasActiveGroupSchedule)
+                                                            <a href="{{ route('coordinator.defense-requests.create-schedule', $request) }}" 
+                                                               class="btn btn-success btn-sm">
+                                                                <i class="fas fa-calendar-plus"></i> Create Schedule
+                                                            </a>
+                                                        @else
+                                                            <span class="badge bg-secondary">Schedule Exists</span>
+                                                        @endif
                                                         <button type="button" class="btn btn-danger btn-sm" 
                                                                 onclick="rejectRequest({{ $request->id }})">
                                                             <i class="fas fa-times"></i> Reject

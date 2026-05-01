@@ -33,6 +33,10 @@ class DefenseScheduleController extends Controller
     {
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
         $activeTerm = AcademicTerm::where('is_active', true)->first();
+
+        DefenseRequest::where('status', 'scheduled')
+            ->whereDoesntHave('defenseSchedule')
+            ->update(['status' => 'approved']);
         
         $requestFilters = $request->only(['status', 'defense_type', 'search']);
         $requestFilters = array_merge([
@@ -41,7 +45,7 @@ class DefenseScheduleController extends Controller
             'search' => ''
         ], $requestFilters);
         
-        $defenseRequestsQuery = DefenseRequest::with(['group.members', 'group.adviser'])
+        $defenseRequestsQuery = DefenseRequest::with(['group.members', 'group.adviser', 'group.defenseSchedules'])
             ->whereHas('group', function($q) use ($coordinatorOfferings) {
                 $q->whereIn('offering_id', $coordinatorOfferings);
             })
@@ -59,7 +63,11 @@ class DefenseScheduleController extends Controller
             });
         }
         
-        $defenseRequests = $defenseRequestsQuery->get();
+        $defenseRequests = $defenseRequestsQuery->get()->filter(function ($requestItem) {
+            return $requestItem->group->defenseSchedules
+                ->whereIn('status', ['scheduled', 'in_progress'])
+                ->isEmpty();
+        })->values();
         
         $scheduleQuery = DefenseSchedule::with(['group', 'academicTerm', 'defensePanels.faculty'])
             ->whereHas('group', function($q) use ($coordinatorOfferings) {
@@ -67,10 +75,6 @@ class DefenseScheduleController extends Controller
             })
             ->orderBy('start_at', 'asc');
             
-        if ($activeTerm) {
-            $scheduleQuery->where('academic_term_id', $activeTerm->id);
-        }
-        
         if ($request->filled('offering')) {
             $scheduleQuery->whereHas('group.offering', function ($q) use ($request, $coordinatorOfferings) {
                 $q->where('id', $request->offering)->whereIn('id', $coordinatorOfferings);
@@ -127,10 +131,14 @@ class DefenseScheduleController extends Controller
             'date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'panel_members' => 'required|array|min:1',
-            'panel_members.*.faculty_id' => 'required|exists:users,id',
+            'panel_members' => 'required|array|size:2',
+            'panel_members.*.faculty_id' => 'required|distinct|exists:users,id',
             'panel_members.*.role' => 'required|in:chair,member'
         ]);
+        $panelValidationError = $this->validatePanelComposition($validated['panel_members']);
+        if ($panelValidationError) {
+            return back()->withErrors(['panel_members' => $panelValidationError])->withInput();
+        }
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         if (!$activeTerm) {
             return back()->withErrors(['error' => 'No active academic term found. Please contact the chairperson to set an active term.'])->withInput();
@@ -251,10 +259,14 @@ class DefenseScheduleController extends Controller
             'date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'panel_members' => 'required|array|min:1',
-            'panel_members.*.faculty_id' => 'required|exists:users,id',
+            'panel_members' => 'required|array|size:2',
+            'panel_members.*.faculty_id' => 'required|distinct|exists:users,id',
             'panel_members.*.role' => 'required|in:chair,member'
         ]);
+        $panelValidationError = $this->validatePanelComposition($validated['panel_members']);
+        if ($panelValidationError) {
+            return back()->withErrors(['panel_members' => $panelValidationError])->withInput();
+        }
         $schedule = DefenseSchedule::findOrFail($id);
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
         $group = Group::findOrFail($validated['group_id']);
@@ -335,11 +347,27 @@ class DefenseScheduleController extends Controller
         if (!in_array($defenseSchedule->group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only delete defense schedules for groups in your offerings.');
         }
+
+        $groupName = $defenseSchedule->group->name;
+
         try {
             DB::beginTransaction();
+
+            if ($defenseSchedule->defense_request_id) {
+                DefenseRequest::where('id', $defenseSchedule->defense_request_id)->delete();
+            }
+
             DefensePanel::where('defense_schedule_id', $id)->delete();
             $defenseSchedule->delete();
             DB::commit();
+
+            NotificationService::createSimpleNotification(
+                'Defense Schedule Removed',
+                "The defense schedule for {$groupName} was removed. Please submit a new defense request.",
+                'student',
+                route('student.defense-requests.create')
+            );
+
             return redirect()->route('coordinator.defense.index')->with('success', 'Defense schedule deleted successfully.');
         } catch (\Exception $e) {
             DB::rollback();
@@ -381,6 +409,26 @@ class DefenseScheduleController extends Controller
             ->orderBy('name')
             ->get()
             ->unique('faculty_id')
+            ->values();
+
+        $assignmentCounts = DefensePanel::select('faculty_id', DB::raw('COUNT(*) as assignment_count'))
+            ->whereHas('defenseSchedule', function ($query) use ($activeTerm) {
+                if ($activeTerm) {
+                    $query->where('academic_term_id', $activeTerm->id);
+                }
+            })
+            ->groupBy('faculty_id')
+            ->pluck('assignment_count', 'faculty_id');
+
+        $availableFaculty = $availableFaculty
+            ->map(function ($facultyMember) use ($assignmentCounts) {
+                $facultyMember->assignment_count = (int) ($assignmentCounts[$facultyMember->id] ?? 0);
+                return $facultyMember;
+            })
+            ->sortBy([
+                ['assignment_count', 'asc'],
+                ['name', 'asc'],
+            ])
             ->values();
 
         return response()->json([
@@ -453,6 +501,31 @@ class DefenseScheduleController extends Controller
 
         return $query->exists();
     }
+
+    private function validatePanelComposition(array $panelMembers): ?string
+    {
+        $roles = collect($panelMembers)
+            ->pluck('role')
+            ->filter()
+            ->values();
+
+        if ($roles->count() !== 2) {
+            return 'Panel must contain exactly two selectable slots: one Chair and one Member.';
+        }
+
+        $chairCount = $roles->filter(function ($role) {
+            return $role === 'chair';
+        })->count();
+        $memberCount = $roles->filter(function ($role) {
+            return $role === 'member';
+        })->count();
+
+        if ($chairCount !== 1 || $memberCount !== 1) {
+            return 'Panel must contain exactly one Chair and one Member.';
+        }
+
+        return null;
+    }
     private function sendDefenseScheduleNotifications($schedule)
     {
         $group = $schedule->group;
@@ -500,6 +573,10 @@ class DefenseScheduleController extends Controller
         if (!$defenseRequest->isPending() && !$defenseRequest->isApproved()) {
             return back()->with('error', 'This defense request cannot be scheduled.');
         }
+
+        if ($this->hasActiveScheduleForGroup($defenseRequest->group_id)) {
+            return back()->with('error', 'This group already has an active defense schedule.');
+        }
         
         //group and adviser relationships
         $defenseRequest->load(['group.adviser', 'group.members']);
@@ -516,6 +593,10 @@ class DefenseScheduleController extends Controller
 
     public function storeSchedule(Request $request, DefenseRequest $defenseRequest)
     {
+        if ($this->hasActiveScheduleForGroup($defenseRequest->group_id)) {
+            return back()->withErrors(['error' => 'This group already has an active defense schedule.'])->withInput();
+        }
+
         $request->validate([
             'scheduled_date' => 'required|date|after:today',
             'scheduled_time' => 'required',
@@ -523,8 +604,8 @@ class DefenseScheduleController extends Controller
             'coordinator_notes' => 'nullable|string|max:1000',
             'adviser_id' => 'required|exists:users,id',
             'subject_coordinator_id' => 'required|exists:users,id',
-            'panelist_1_id' => 'required|exists:users,id',
-            'panelist_2_id' => 'required|exists:users,id',
+            'panelist_1_id' => 'required|exists:users,id|different:panelist_2_id',
+            'panelist_2_id' => 'required|exists:users,id|different:panelist_1_id',
         ]);
 
         $startAt = Carbon::parse($request->scheduled_date . ' ' . $request->scheduled_time);
@@ -621,7 +702,7 @@ class DefenseScheduleController extends Controller
         DefensePanel::create([
             'defense_schedule_id' => $defenseSchedule->id,
             'faculty_id' => $request->panelist_1_id,
-            'role' => 'member',
+            'role' => 'chair',
         ]);
         
         DefensePanel::create([
@@ -633,7 +714,7 @@ class DefenseScheduleController extends Controller
 
     private function sendPanelNotifications(DefenseSchedule $defenseSchedule)
     {
-        $panelists = $defenseSchedule->defensePanels()->where('role', 'member')->get();
+        $panelists = $defenseSchedule->defensePanels()->whereIn('role', ['chair', 'member'])->get();
         foreach ($panelists as $panelist) {
             \App\Models\Notification::create([
                 'title' => 'Defense Panel Assignment',
@@ -642,5 +723,12 @@ class DefenseScheduleController extends Controller
                 'redirect_url' => route('coordinator.defense.index'),
             ]);
         }
+    }
+
+    private function hasActiveScheduleForGroup($groupId)
+    {
+        return DefenseSchedule::where('group_id', $groupId)
+            ->whereIn('status', ['scheduled', 'in_progress'])
+            ->exists();
     }
 }
