@@ -92,9 +92,9 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
     Route::get('/notifications', [CoordinatorController::class, 'notifications'])->name('notifications');
     Route::post('/notifications/mark-all-read', [CoordinatorController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/mark-multiple-read', [CoordinatorController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read');
+    Route::delete('/notifications/delete-multiple', [CoordinatorController::class, 'deleteMultiple'])->name('notifications.delete-multiple');
     Route::post('/notifications/{notification}/mark-read', [CoordinatorController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
     Route::delete('/notifications/{notification}', [CoordinatorController::class, 'deleteNotification'])->name('notifications.delete');
-    Route::delete('/notifications/delete-multiple', [CoordinatorController::class, 'deleteMultiple'])->name('notifications.delete-multiple');
 
     // Profile
     Route::get('/profile', [CoordinatorController::class, 'profile'])->name('profile');
@@ -170,9 +170,9 @@ Route::middleware(['checkrole:chairperson'])->prefix('chairperson')->name('chair
     Route::get('/notifications', [ChairpersonController::class, 'notifications'])->name('notifications');
     Route::post('/notifications/mark-all-read', [ChairpersonController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/mark-multiple-read', [ChairpersonController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read');
+    Route::delete('/notifications/delete-multiple', [ChairpersonController::class, 'deleteMultiple'])->name('notifications.delete-multiple');
     Route::post('/notifications/{notification}/mark-read', [ChairpersonController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
     Route::delete('/notifications/{notification}', [ChairpersonController::class, 'deleteNotification'])->name('notifications.delete');
-    Route::delete('/notifications/delete-multiple', [ChairpersonController::class, 'deleteMultiple'])->name('notifications.delete-multiple');
 
     // Calendar
     Route::get('/calendar', [CalendarController::class, 'chairpersonCalendar'])->name('calendar');
@@ -255,9 +255,9 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::get('/notifications', [StudentController::class, 'notifications'])->name('notifications');
     Route::post('/notifications/mark-all-read', [StudentController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/mark-multiple-read', [StudentController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read');
+    Route::delete('/notifications/delete-multiple', [StudentController::class, 'deleteMultiple'])->name('notifications.delete-multiple');
     Route::post('/notifications/{notification}/mark-read', [StudentController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
     Route::delete('/notifications/{notification}', [StudentController::class, 'deleteNotification'])->name('notifications.delete');
-    Route::delete('/notifications/delete-multiple', [StudentController::class, 'deleteMultiple'])->name('notifications.delete-multiple');
 
     // Calendar
     Route::get('/calendar', [CalendarController::class, 'studentCalendar'])->name('calendar');
@@ -297,8 +297,12 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::get('/proposals/stats', [AdviserProposalController::class, 'getStats'])->name('proposal.stats');
 
     // Notification Management
+    Route::get('/notifications', [AdviserController::class, 'notifications'])->name('notifications');
     Route::post('/notifications/mark-all-read', [AdviserController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read-adviser');
+    Route::post('/notifications/mark-multiple-read', [AdviserController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read-adviser');
     Route::post('/notifications/{notification}/mark-read', [AdviserController::class, 'markNotificationAsRead'])->name('notifications.mark-read-adviser');
+    Route::delete('/notifications/delete-multiple', [AdviserController::class, 'deleteMultiple'])->name('notifications.delete-multiple-adviser');
+    Route::delete('/notifications/{notification}', [AdviserController::class, 'deleteNotification'])->name('notifications.delete-adviser');
 
     // Calendar
     Route::get('/calendar', [CalendarController::class, 'adviserCalendar'])->name('calendar');

@@ -51,12 +51,8 @@ class AdviserController extends Controller
             'overdue_tasks_total' => $adviserGroups->sum('overdue_tasks'),
             'pending_invitations' => $pendingInvitations->count()
         ];
-        $userRole = $user->role;
-        $notifications = Notification::where('user_id', $user->id)
-            ->where(function($query) use ($userRole) {
-                $query->where('role', $userRole)
-                      ->orWhereIn('role', ['teacher', 'adviser', 'panelist']);
-            })
+        $notifications = Notification::query()
+            ->visibleToWebUser($user)
             ->latest()
             ->take(5)
             ->get();
@@ -481,13 +477,10 @@ class AdviserController extends Controller
     {
         try {
             $user = Auth::user();
-            $updatedCount = Notification::where(function($query) use ($user) {
-                $query->where('user_id', $user->id)
-                      ->orWhere('role', $user->role)
-                      ->orWhereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator']);
-            })
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
+            $updatedCount = Notification::query()
+                ->visibleToWebUser($user)
+                ->where('is_read', false)
+                ->update(['is_read' => true]);
             return response()->json(['success' => true, 'message' => $updatedCount . ' notifications marked as read']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error updating notifications'], 500);
@@ -497,10 +490,10 @@ class AdviserController extends Controller
     {
         try {
             $user = Auth::user();
-            $validRoles = ['teacher', 'adviser', 'panelist', 'coordinator'];
-            $hasAccess = $notification->user_id === $user->id || 
-                        $notification->role === $user->role || 
-                        in_array($notification->role, $validRoles);
+            $hasAccess = Notification::query()
+                ->visibleToWebUser($user)
+                ->whereKey($notification->id)
+                ->exists();
             if (!$hasAccess) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
@@ -509,6 +502,70 @@ class AdviserController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error updating notification'], 500);
         }
+    }
+
+    public function notifications()
+    {
+        $user = Auth::user();
+        $notifications = Notification::query()
+            ->visibleToWebUser($user)
+            ->latest()
+            ->get();
+
+        return view('adviser.notifications', compact('notifications'));
+    }
+
+    public function markMultipleAsRead(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'notification_ids' => 'required|array',
+            'notification_ids.*' => 'integer|exists:notifications,id',
+        ]);
+
+        $updated = Notification::whereIn('id', $request->notification_ids)
+            ->visibleToWebUser($user)
+            ->update(['is_read' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $updated . ' notifications marked as read',
+        ]);
+    }
+
+    public function deleteNotification(Notification $notification)
+    {
+        $user = Auth::user();
+        $hasAccess = Notification::query()
+            ->visibleToWebUser($user)
+            ->whereKey($notification->id)
+            ->exists();
+
+        if (!$hasAccess) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $notification->delete();
+
+        return response()->json(['success' => true, 'message' => 'Notification deleted successfully']);
+    }
+
+    public function deleteMultiple(Request $request)
+    {
+        $user = Auth::user();
+        $request->validate([
+            'notification_ids' => 'required|array',
+            'notification_ids.*' => 'integer|exists:notifications,id',
+        ]);
+
+        $deleted = Notification::whereIn('id', $request->notification_ids)
+            ->visibleToWebUser($user)
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => $deleted . ' notifications deleted',
+        ]);
     }
 
     public function activityLog()

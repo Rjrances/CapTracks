@@ -1,194 +1,205 @@
 @extends('layouts.chairperson')
+@section('title', 'Notifications')
 @section('content')
-<div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h2 mb-1">Notifications</h1>
-            <p class="text-muted mb-0">Stay updated with system activities and important updates</p>
-        </div>
-        <div class="d-flex gap-2">
-            @if($notifications->where('is_read', false)->count() > 0)
-                <button id="markAllReadBtn" class="btn btn-primary">
-                    <i class="fas fa-check-double me-2"></i>Mark All as Read
-                </button>
-            @endif
-            <a href="{{ route('chairperson.dashboard') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-            </a>
-        </div>
-    </div>
-
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <div class="card">
-        <div class="card-body">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">Notifications</h1>
+                    <p class="text-muted mb-0">Manage and view all system notifications</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="markAllAsRead()">
+                        <i class="fas fa-check-double me-2"></i>Mark All as Read
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="refreshNotifications()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">All Notifications</h5>
+                        <span class="badge bg-primary">{{ $notifications->count() }} total</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if($notifications->count() > 0)
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 50px;"><input type="checkbox" id="selectAll" class="form-check-input"></th>
+                                        <th style="width: 60px;">Status</th>
+                                        <th>Title & Description</th>
+                                        <th style="width: 120px;">Role</th>
+                                        <th style="width: 150px;">Date</th>
+                                        <th style="width: 100px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($notifications as $notification)
+                                        <tr class="{{ $notification->is_read ? '' : 'table-warning' }}">
+                                            <td><input type="checkbox" class="form-check-input notification-checkbox" value="{{ $notification->id }}"></td>
+                                            <td>
+                                                @if($notification->is_read)
+                                                    <span class="badge bg-success">Read</span>
+                                                @else
+                                                    <span class="badge bg-warning">Unread</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-start">
+                                                    <div class="me-3"><i class="fas fa-{{ $notification->icon ?? 'bell' }} text-primary"></i></div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-semibold">{{ $notification->title }}</div>
+                                                        <div class="text-muted small">{{ $notification->description }}</div>
+                                                        @if($notification->redirect_url)
+                                                            <small class="text-info"><i class="fas fa-link me-1"></i>Clickable notification</small>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge bg-secondary">{{ ucfirst($notification->role) }}</span></td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    {{ $notification->created_at->format('M d, Y') }}<br>
+                                                    {{ $notification->created_at->format('g:i A') }}
+                                                </small>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    @if($notification->redirect_url)
+                                                        <a href="{{ $notification->redirect_url }}" class="btn btn-outline-primary btn-sm" title="View Details">
+                                                            <i class="fas fa-external-link-alt"></i>
+                                                        </a>
+                                                    @endif
+                                                    <button class="btn btn-outline-secondary btn-sm" onclick="toggleReadStatus({{ $notification->id }})" title="Mark as Read">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-outline-danger btn-sm" onclick="deleteNotification({{ $notification->id }})" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center py-5">
+                            <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No notifications found</h5>
+                            <p class="text-muted">You're all caught up! Check back later for new updates.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
             @if($notifications->count() > 0)
-                <div class="list-group list-group-flush">
-                    @foreach($notifications as $notification)
-                        <div class="list-group-item {{ !$notification->is_read ? 'bg-light' : '' }} notification-item" data-notification-id="{{ $notification->id }}">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div class="flex-grow-1">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <h6 class="mb-0 me-2">
-                                            @if(!$notification->is_read)
-                                                <span class="badge bg-primary me-2">New</span>
-                                            @endif
-                                            {{ $notification->title }}
-                                        </h6>
-                                        <small class="text-muted">
-                                            <i class="fas fa-clock me-1"></i>
-                                            {{ $notification->created_at ? $notification->created_at->diffForHumans() : 'Recently' }}
-                                        </small>
-                                    </div>
-                                    <p class="mb-2 text-muted">{{ $notification->message }}</p>
-                                    @if($notification->link)
-                                        <a href="{{ $notification->link }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-external-link-alt me-1"></i>View Details
-                                        </a>
-                                    @endif
-                                </div>
-                                <div class="ms-3">
-                                    @if(!$notification->is_read)
-                                        <button class="btn btn-sm btn-success mark-read-btn" data-notification-id="{{ $notification->id }}" title="Mark as read">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                    @endif
-                                    <button class="btn btn-sm btn-danger delete-notification-btn" data-notification-id="{{ $notification->id }}" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div><span class="text-muted"><span id="selectedCount">0</span> of {{ $notifications->count() }} selected</span></div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary" onclick="markSelectedAsRead()" id="markReadBtn" disabled>
+                                    <i class="fas fa-check me-2"></i>Mark Selected as Read
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteSelected()" id="deleteSelectedBtn" disabled>
+                                    <i class="fas fa-trash me-2"></i>Delete Selected
+                                </button>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-
-                <div class="d-flex justify-content-center mt-4">
-                    {{ $notifications->links() }}
-                </div>
-            @else
-                <div class="text-center py-5">
-                    <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted">No notifications yet</h5>
-                    <p class="text-muted">You'll see notifications here when there are updates</p>
+                    </div>
                 </div>
             @endif
         </div>
     </div>
 </div>
-
-@push('scripts')
 <script>
+function updateSelectedCount() {
+    const selectedCount = document.querySelectorAll('.notification-checkbox:checked').length;
+    const selectedCountElement = document.getElementById('selectedCount');
+    const markReadBtn = document.getElementById('markReadBtn');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    if (selectedCountElement) selectedCountElement.textContent = selectedCount;
+    if (markReadBtn) markReadBtn.disabled = selectedCount === 0;
+    if (deleteSelectedBtn) deleteSelectedBtn.disabled = selectedCount === 0;
+}
+function toggleReadStatus(notificationId) {
+    const urlTemplate = '{{ route("chairperson.notifications.mark-read", ["notification" => "__ID__"]) }}';
+    fetch(urlTemplate.replace('__ID__', notificationId), {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' }
+    }).then(response => response.json()).then(data => {
+        if (data.success) location.reload();
+        else alert('Error updating notification status');
+    }).catch(() => alert('Error updating notification status'));
+}
+function markAllAsRead() {
+    if (!confirm('Mark all notifications as read?')) return;
+    fetch('{{ route("chairperson.notifications.mark-all-read") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' }
+    }).then(response => response.json()).then(data => {
+        if (data.success) location.reload();
+        else alert('Error marking notifications as read: ' + (data.message || 'Unknown error'));
+    }).catch(() => alert('Error marking notifications as read'));
+}
+function markSelectedAsRead() {
+    const selectedIds = Array.from(document.querySelectorAll('.notification-checkbox:checked')).map(cb => cb.value);
+    if (selectedIds.length === 0) return;
+    fetch('{{ route("chairperson.notifications.mark-multiple-read") }}', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notification_ids: selectedIds })
+    }).then(response => response.json()).then(data => {
+        if (data.success) location.reload();
+        else alert('Error marking notifications as read');
+    }).catch(() => alert('Error marking notifications as read'));
+}
+function deleteNotification(notificationId) {
+    if (!confirm('Are you sure you want to delete this notification?')) return;
+    const urlTemplate = '{{ route("chairperson.notifications.delete", ["notification" => "__ID__"]) }}';
+    fetch(urlTemplate.replace('__ID__', notificationId), {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' }
+    }).then(response => response.json()).then(data => {
+        if (data.success) location.reload();
+        else alert('Error deleting notification: ' + (data.message || 'Unknown error'));
+    }).catch(() => alert('Error deleting notification'));
+}
+function deleteSelected() {
+    const selectedIds = Array.from(document.querySelectorAll('.notification-checkbox:checked')).map(cb => cb.value);
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected notification(s)?`)) return;
+    fetch('{{ route("chairperson.notifications.delete-multiple") }}', {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notification_ids: selectedIds })
+    }).then(response => response.json()).then(data => {
+        if (data.success) location.reload();
+        else alert('Error deleting notifications: ' + (data.message || 'Unknown error'));
+    }).catch(() => alert('Error deleting notifications'));
+}
+function refreshNotifications() { location.reload(); }
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.mark-read-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const notificationId = this.dataset.notificationId;
-            markNotificationAsRead(notificationId);
-        });
-    });
-
-    const markAllReadBtn = document.getElementById('markAllReadBtn');
-    if (markAllReadBtn) {
-        markAllReadBtn.addEventListener('click', function() {
-            markAllNotificationsAsRead();
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            document.querySelectorAll('.notification-checkbox').forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectedCount();
         });
     }
-
-    document.querySelectorAll('.delete-notification-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to delete this notification?')) {
-                const notificationId = this.dataset.notificationId;
-                deleteNotification(notificationId);
-            }
-        });
+    document.querySelectorAll('.notification-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
     });
+    updateSelectedCount();
 });
-
-function markNotificationAsRead(notificationId) {
-    fetch(`/chairperson/notifications/${notificationId}/mark-read`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            const notificationItem = document.querySelector(`[data-notification-id="${notificationId}"]`);
-            notificationItem.classList.remove('bg-light');
-            notificationItem.querySelector('.mark-read-btn')?.remove();
-            notificationItem.querySelector('.badge')?.remove();
-            showAlert('Notification marked as read', 'success');
-        } else {
-            showAlert('Error marking notification as read', 'danger');
-        }
-    })
-    .catch(() => showAlert('Error marking notification as read', 'danger'));
-}
-
-function markAllNotificationsAsRead() {
-    fetch('/chairperson/notifications/mark-all-read', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showAlert(data.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showAlert('Error marking notifications as read', 'danger');
-        }
-    })
-    .catch(() => showAlert('Error marking notifications as read', 'danger'));
-}
-
-function deleteNotification(notificationId) {
-    fetch(`/chairperson/notifications/${notificationId}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            const notificationItem = document.querySelector(`[data-notification-id="${notificationId}"]`);
-            notificationItem.remove();
-            showAlert('Notification deleted', 'success');
-            
-            if (document.querySelectorAll('.notification-item').length === 0) {
-                setTimeout(() => location.reload(), 1000);
-            }
-        } else {
-            showAlert('Error deleting notification', 'danger');
-        }
-    })
-    .catch(() => showAlert('Error deleting notification', 'danger'));
-}
-
-function showAlert(message, type) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    const container = document.querySelector('.container');
-    container.insertBefore(alertDiv, container.firstChild);
-    setTimeout(() => alertDiv.remove(), 3000);
-}
 </script>
-@endpush
 @endsection
 

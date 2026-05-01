@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use App\Models\Notification;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 class NotificationController extends Controller
 {
     public function markAsRead(Request $request, Notification $notification)
@@ -64,25 +65,27 @@ class NotificationController extends Controller
     public function markAllAsRead(Request $request)
     {
         try {
-            $userRole = null;
-            $userId = null;
             if (auth()->check()) {
                 $user = auth()->user();
-                $userRole = $user->getPrimaryRoleAttribute();
-                $userId = $user->id;
+                $notificationIds = Notification::query()
+                    ->visibleToWebUser($user)
+                    ->where('is_read', false)
+                    ->pluck('id')
+                    ->toArray();
             } elseif (Auth::guard('student')->check()) {
-                $userRole = 'student';
-                $userId = Auth::guard('student')->user()->student_id;
+                $studentAccount = Auth::guard('student')->user();
+                $student = $studentAccount?->student;
+                if (!$student) {
+                    return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+                }
+                $notificationIds = Notification::query()
+                    ->visibleToStudent($student, $studentAccount->id)
+                    ->where('is_read', false)
+                    ->pluck('id')
+                    ->toArray();
             } else {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
-            $notificationIds = Notification::where(function($query) use ($userRole, $userId) {
-                $query->where('role', $userRole)
-                      ->orWhere('user_id', $userId);
-            })
-            ->where('is_read', false)
-            ->pluck('id')
-            ->toArray();
             if (empty($notificationIds)) {
                 return response()->json(['success' => true, 'message' => 'No unread notifications found for your role']);
             }
@@ -94,7 +97,6 @@ class NotificationController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Error marking all notifications as read', [
-                'user_role' => $userRole ?? 'unknown',
                 'error' => $e->getMessage()
             ]);
             return response()->json(['success' => false, 'message' => 'Error updating notifications: ' . $e->getMessage()], 500);
@@ -144,8 +146,21 @@ class NotificationController extends Controller
     public function getNotifications(Request $request)
     {
         try {
-            $userRole = auth()->user()->getPrimaryRoleAttribute();
-            $query = Notification::where('role', $userRole);
+            $query = null;
+
+            if (auth()->check()) {
+                $query = Notification::query()->visibleToWebUser(auth()->user());
+            } elseif (Auth::guard('student')->check()) {
+                $studentAccount = Auth::guard('student')->user();
+                $student = $studentAccount?->student;
+                if (!$student) {
+                    return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+                }
+                $query = Notification::query()->visibleToStudent($student, $studentAccount->id);
+            } else {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
             if ($request->filled('status')) {
                 if ($request->status === 'unread') {
                     $query->where('is_read', false);

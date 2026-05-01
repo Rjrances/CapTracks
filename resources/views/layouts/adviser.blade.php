@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Teacher Dashboard') - CapTracks</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -21,12 +22,8 @@
                         <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell fa-lg text-muted"></i>
                             @php
-                                $userRole = auth()->user()->role;
-                                $notificationCount = \App\Models\Notification::where('user_id', auth()->id())
-                                    ->where(function($query) use ($userRole) {
-                                        $query->where('role', $userRole)
-                                              ->orWhereIn('role', ['teacher', 'adviser', 'panelist']);
-                                    })
+                                $notificationCount = \App\Models\Notification::query()
+                                    ->visibleToWebUser(auth()->user())
                                     ->where('is_read', false)
                                     ->count();
                             @endphp
@@ -44,14 +41,11 @@
                             <div class="dropdown-divider"></div>
                             @php
                                 $user = auth()->user();
-                                $recentNotifications = \App\Models\Notification::where(function($query) use ($user) {
-                                    $query->where('user_id', $user->id)
-                                          ->orWhere('role', $user->role)
-                                          ->orWhereIn('role', ['teacher', 'adviser', 'panelist']);
-                                })
-                                ->latest()
-                                ->take(10)
-                                ->get();
+                                $recentNotifications = \App\Models\Notification::query()
+                                    ->visibleToWebUser($user)
+                                    ->latest()
+                                    ->take(10)
+                                    ->get();
                             @endphp
                             @if($recentNotifications->count() > 0)
                                 @foreach($recentNotifications as $notification)
@@ -71,7 +65,7 @@
                                     </a>
                                 @endforeach
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-center text-primary" href="#">
+                                <a class="dropdown-item text-center text-primary" href="{{ route('adviser.notifications') }}">
                                     <i class="fas fa-eye me-2"></i>View All Notifications
                                 </a>
                             @else
@@ -112,7 +106,8 @@
     @stack('scripts')
     <script>
     function markNotificationAsRead(notificationId) {
-        fetch(`/notifications/${notificationId}/mark-read`, {
+        const urlTemplate = '{{ route("adviser.notifications.mark-read-adviser", ["notification" => "__ID__"]) }}';
+        fetch(urlTemplate.replace('__ID__', notificationId), {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Chairperson Dashboard - CapTrack</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -23,12 +24,10 @@
                                 $user = auth()->user();
                                 $notificationCount = 0;
                                 if ($user) {
-                                    $notificationCount = \App\Models\Notification::where(function($query) use ($user) {
-                                        $query->where('role', 'chairperson')
-                                              ->orWhere('user_id', $user->id);
-                                    })
-                                    ->where('is_read', false)
-                                    ->count();
+                                    $notificationCount = \App\Models\Notification::query()
+                                        ->visibleToWebUser($user)
+                                        ->where('is_read', false)
+                                        ->count();
                                 }
                             @endphp
                             @if($notificationCount > 0)
@@ -47,13 +46,11 @@
                                 $user = auth()->user();
                                 $recentNotifications = collect();
                                 if ($user) {
-                                    $recentNotifications = \App\Models\Notification::where(function($query) use ($user) {
-                                        $query->where('role', 'chairperson')
-                                              ->orWhere('user_id', $user->id);
-                                    })
-                                    ->latest()
-                                    ->take(10)
-                                    ->get();
+                                    $recentNotifications = \App\Models\Notification::query()
+                                        ->visibleToWebUser($user)
+                                        ->latest()
+                                        ->take(10)
+                                        ->get();
                                 }
                             @endphp
                             @if($recentNotifications->count() > 0)
@@ -74,7 +71,7 @@
                                     </a>
                                 @endforeach
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-center text-primary" href="#">
+                                <a class="dropdown-item text-center text-primary" href="{{ route('chairperson.notifications') }}">
                                     <i class="fas fa-eye me-2"></i>View All Notifications
                                 </a>
                             @else
@@ -127,7 +124,8 @@
     @stack('scripts')
     <script>
     function markNotificationAsRead(notificationId) {
-        fetch(`/notifications/${notificationId}/mark-read`, {
+        const urlTemplate = '{{ route("chairperson.notifications.mark-read", ["notification" => "__ID__"]) }}';
+        fetch(urlTemplate.replace('__ID__', notificationId), {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',

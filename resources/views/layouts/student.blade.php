@@ -23,9 +23,14 @@
                             @php
                                 $notificationCount = 0;
                                 if (\Illuminate\Support\Facades\Auth::guard('student')->check()) {
-                                    $notificationCount = \App\Models\Notification::where('role', 'student')
-                                        ->where('is_read', false)
-                                        ->count();
+                                    $studentAccount = \Illuminate\Support\Facades\Auth::guard('student')->user();
+                                    $student = $studentAccount?->student;
+                                    $notificationCount = $student
+                                        ? \App\Models\Notification::query()
+                                            ->visibleToStudent($student, $studentAccount?->id)
+                                            ->where('is_read', false)
+                                            ->count()
+                                        : 0;
                                 }
                             @endphp
                             @if($notificationCount > 0)
@@ -44,15 +49,14 @@
                                 $recentNotifications = collect();
                                 if (\Illuminate\Support\Facades\Auth::guard('student')->check()) {
                                     $studentAccount = \Illuminate\Support\Facades\Auth::guard('student')->user();
-                                    $studentId = $studentAccount->student_id;
-                                    $recentNotifications = \App\Models\Notification::where(function($query) use ($studentId) {
-                                        $query->where('role', 'student')
-                                              ->orWhere('user_id', $studentId);
-                                    })
-                                    ->where('is_read', false)
-                                    ->latest()
-                                    ->take(10)
-                                    ->get();
+                                    $student = $studentAccount?->student;
+                                    $recentNotifications = $student
+                                        ? \App\Models\Notification::query()
+                                            ->visibleToStudent($student, $studentAccount?->id)
+                                            ->latest()
+                                            ->take(10)
+                                            ->get()
+                                        : collect();
                                 }
                             @endphp
                             @if($recentNotifications->count() > 0)
@@ -73,7 +77,7 @@
                                     </a>
                                 @endforeach
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-center text-primary" href="#">
+                                <a class="dropdown-item text-center text-primary" href="{{ route('student.notifications') }}">
                                     <i class="fas fa-eye me-2"></i>View All Notifications
                                 </a>
                             @else
@@ -123,7 +127,8 @@
     @stack('scripts')
     <script>
     function markNotificationAsRead(notificationId) {
-        fetch(`/notifications/${notificationId}/mark-read`, {
+        const urlTemplate = '{{ route("student.notifications.mark-read", ["notification" => "__ID__"]) }}';
+        fetch(urlTemplate.replace('__ID__', notificationId), {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',

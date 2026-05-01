@@ -308,7 +308,9 @@ class StudentDashboardController extends Controller
     private function getNotifications($student)
     {
         if (!$student) return collect();
-        return Notification::where('role', 'student')
+        $studentAccountId = Auth::guard('student')->id();
+        return Notification::query()
+            ->visibleToStudent($student, $studentAccountId)
             ->where('is_read', false)
             ->latest()
             ->take(5)

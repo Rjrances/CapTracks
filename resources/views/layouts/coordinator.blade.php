@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Coordinator Dashboard - CapTrack</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -20,7 +21,10 @@
                         <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-bell fa-lg text-muted"></i>
                             @php
-                                $notificationCount = \App\Models\Notification::where('role', 'coordinator')->where('is_read', false)->count();
+                                $notificationCount = \App\Models\Notification::query()
+                                    ->visibleToCoordinatorWorkspace(auth()->user())
+                                    ->where('is_read', false)
+                                    ->count();
                             @endphp
                             @if($notificationCount > 0)
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -35,7 +39,8 @@
                             </div>
                             <div class="dropdown-divider"></div>
                             @php
-                                $recentNotifications = \App\Models\Notification::where('role', 'coordinator')
+                                $recentNotifications = \App\Models\Notification::query()
+                                    ->visibleToCoordinatorWorkspace(auth()->user())
                                     ->latest()
                                     ->take(10)
                                     ->get();
@@ -99,7 +104,8 @@
     @stack('scripts')
     <script>
     function markNotificationAsRead(notificationId) {
-        fetch(`/notifications/${notificationId}/mark-read`, {
+        const urlTemplate = '{{ route("coordinator.notifications.mark-read", ["notification" => "__ID__"]) }}';
+        fetch(urlTemplate.replace('__ID__', notificationId), {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',

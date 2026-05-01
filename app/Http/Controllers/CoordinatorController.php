@@ -19,8 +19,12 @@ class CoordinatorController extends Controller
     public function index()
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
-        $notifications = Notification::latest()->take(5)->get();
         $user = auth()->user();
+        $notifications = Notification::query()
+            ->visibleToCoordinatorWorkspace($user)
+            ->latest()
+            ->take(5)
+            ->get();
         $coordinatedOfferings = collect();
         $isTeacherCoordinator = false;
         if ($user && $user->hasRole('coordinator') && $user->offerings()->exists()) {
@@ -214,42 +218,25 @@ class CoordinatorController extends Controller
         $group = Group::with(['adviser', 'members', 'groupMilestones.milestoneTemplate'])->findOrFail($id);
         return view('coordinator.groups.milestones', compact('group'));
     }
-    public function notifications(Request $request)
+    public function notifications()
     {
-        $query = Notification::where('role', 'coordinator');
-        if ($request->filled('role') && $request->role !== 'coordinator') {
-            $query->where('role', $request->role);
-        }
-        if ($request->filled('status')) {
-            if ($request->status === 'unread') {
-                $query->where('is_read', false);
-            } elseif ($request->status === 'read') {
-                $query->where('is_read', true);
-            }
-        }
-        if ($request->filled('date')) {
-            $now = now();
-            switch ($request->date) {
-                case 'today':
-                    $query->whereDate('created_at', $now->toDateString());
-                    break;
-                case 'week':
-                    $query->whereBetween('created_at', [$now->startOfWeek(), $now->endOfWeek()]);
-                    break;
-                case 'month':
-                    $query->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year);
-                    break;
-            }
-        }
+        $user = auth()->user();
+        $query = Notification::query()->visibleToCoordinatorWorkspace($user);
         $notifications = $query->orderBy('created_at', 'desc')->get();
         return view('coordinator.notifications', compact('notifications'));
     }
 
     public function markNotificationAsRead($notificationId)
     {
+        $user = auth()->user();
         $notification = Notification::findOrFail($notificationId);
         
-        if ($notification->role !== 'coordinator') {
+        $hasAccess = Notification::query()
+            ->visibleToCoordinatorWorkspace($user)
+            ->whereKey($notification->id)
+            ->exists();
+
+        if (!$hasAccess) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -260,7 +247,9 @@ class CoordinatorController extends Controller
 
     public function markAllNotificationsAsRead()
     {
-        $notificationIds = Notification::where('role', 'coordinator')
+        $user = auth()->user();
+        $notificationIds = Notification::query()
+            ->visibleToCoordinatorWorkspace($user)
             ->where('is_read', false)
             ->pluck('id')
             ->toArray();
@@ -277,9 +266,15 @@ class CoordinatorController extends Controller
 
     public function deleteNotification($notificationId)
     {
+        $user = auth()->user();
         $notification = Notification::findOrFail($notificationId);
         
-        if ($notification->role !== 'coordinator') {
+        $hasAccess = Notification::query()
+            ->visibleToCoordinatorWorkspace($user)
+            ->whereKey($notification->id)
+            ->exists();
+
+        if (!$hasAccess) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -290,13 +285,14 @@ class CoordinatorController extends Controller
 
     public function markMultipleAsRead(Request $request)
     {
+        $user = auth()->user();
         $request->validate([
             'notification_ids' => 'required|array',
             'notification_ids.*' => 'integer|exists:notifications,id'
         ]);
 
         $updated = Notification::whereIn('id', $request->notification_ids)
-            ->where('role', 'coordinator')
+            ->visibleToCoordinatorWorkspace($user)
             ->update(['is_read' => true]);
 
         return response()->json([
@@ -307,13 +303,14 @@ class CoordinatorController extends Controller
 
     public function deleteMultiple(Request $request)
     {
+        $user = auth()->user();
         $request->validate([
             'notification_ids' => 'required|array',
             'notification_ids.*' => 'integer|exists:notifications,id'
         ]);
 
         $deleted = Notification::whereIn('id', $request->notification_ids)
-            ->where('role', 'coordinator')
+            ->visibleToCoordinatorWorkspace($user)
             ->delete();
 
         return response()->json([

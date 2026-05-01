@@ -12,11 +12,13 @@ class ChairpersonDashboardController extends Controller
     public function index()
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
+        $user = auth()->user();
         
-        $notifications = Notification::where('role', 'chairperson')
-                                     ->latest()
-                                     ->take(5)
-                                     ->get();
+        $notifications = Notification::query()
+            ->visibleToWebUser($user)
+            ->latest()
+            ->take(5)
+            ->get();
         $stats = [
             'activeProjects' => Group::whereHas('adviser')
                 ->when($activeTerm, function($query) use ($activeTerm) {

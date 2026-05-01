@@ -29,45 +29,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-            <div class="card mb-4">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-3">
-                            <label for="roleFilter" class="form-label">Filter by Role</label>
-                            <select class="form-select" id="roleFilter">
-                                <option value="">All Roles</option>
-                                <option value="coordinator">Coordinator</option>
-                                <option value="adviser">Adviser</option>
-                                <option value="student">Student</option>
-                                <option value="panelist">Panelist</option>
-                                <option value="chairperson">Chairperson</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="statusFilter" class="form-label">Filter by Status</label>
-                            <select class="form-select" id="statusFilter">
-                                <option value="">All Status</option>
-                                <option value="unread">Unread</option>
-                                <option value="read">Read</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="dateFilter" class="form-label">Filter by Date</label>
-                            <select class="form-select" id="dateFilter">
-                                <option value="">All Time</option>
-                                <option value="today">Today</option>
-                                <option value="week">This Week</option>
-                                <option value="month">This Month</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-primary w-100" onclick="applyFilters()">
-                                <i class="fas fa-filter me-2"></i>Apply Filters
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="card">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">
@@ -209,7 +170,8 @@ function updateSelectedCount() {
     document.getElementById('deleteSelectedBtn').disabled = selectedCount === 0;
 }
 function toggleReadStatus(notificationId) {
-    fetch(`/notifications/${notificationId}/mark-read`, {
+    const urlTemplate = '{{ route("coordinator.notifications.mark-read", ["notification" => "__ID__"]) }}';
+    fetch(urlTemplate.replace('__ID__', notificationId), {
         method: 'POST',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -291,7 +253,7 @@ function deleteNotification(notificationId) {
             if (data.success) {
                 location.reload();
             } else {
-                alert('Error deleting notification');
+                alert('Error deleting notification: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
@@ -318,7 +280,7 @@ function deleteSelected() {
             if (data.success) {
                 location.reload();
             } else {
-                alert('Error deleting notifications');
+                alert('Error deleting notifications: ' + (data.message || 'Unknown error'));
             }
         })
         .catch(error => {
@@ -326,16 +288,6 @@ function deleteSelected() {
             alert('Error deleting notifications');
         });
     }
-}
-function applyFilters() {
-    const roleFilter = document.getElementById('roleFilter').value;
-    const statusFilter = document.getElementById('statusFilter').value;
-    const dateFilter = document.getElementById('dateFilter').value;
-    const params = new URLSearchParams();
-    if (roleFilter) params.append('role', roleFilter);
-    if (statusFilter) params.append('status', statusFilter);
-    if (dateFilter) params.append('date', dateFilter);
-    window.location.href = `{{ route('coordinator.notifications') }}?${params.toString()}`;
 }
 function refreshNotifications() {
     location.reload();

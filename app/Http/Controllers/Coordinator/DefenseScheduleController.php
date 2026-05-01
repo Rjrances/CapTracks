@@ -716,12 +716,18 @@ class DefenseScheduleController extends Controller
     {
         $panelists = $defenseSchedule->defensePanels()->whereIn('role', ['chair', 'member'])->get();
         foreach ($panelists as $panelist) {
-            \App\Models\Notification::create([
-                'title' => 'Defense Panel Assignment',
-                'description' => 'You have been assigned to a defense panel for ' . $defenseSchedule->group->name,
-                'role' => 'panelist',
-                'redirect_url' => route('coordinator.defense.index'),
-            ]);
+            $panelUser = User::find($panelist->faculty_id);
+            if (!$panelUser) {
+                continue;
+            }
+
+            NotificationService::createSimpleNotification(
+                'Defense Panel Assignment',
+                'You have been assigned to a defense panel for ' . $defenseSchedule->group->name,
+                $panelUser->role,
+                route('adviser.dashboard'),
+                $panelUser->id
+            );
         }
     }
 

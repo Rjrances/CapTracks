@@ -29,15 +29,16 @@ class StudentController extends Controller
     public function notifications()
     {
         $student = $this->getAuthenticatedStudent();
+        $studentAccountId = Auth::guard('student')->id();
         
         if (!$student) {
             return redirect()->route('student.dashboard')->with('error', 'Student not found.');
         }
 
-        $notifications = Notification::where('role', 'student')
-            ->orWhere('user_id', $student->student_id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $notifications = Notification::query()
+            ->visibleToStudent($student, $studentAccountId)
+            ->latest()
+            ->get();
 
         return view('student.notifications', compact('notifications'));
     }
@@ -45,6 +46,7 @@ class StudentController extends Controller
     public function markNotificationAsRead($notificationId)
     {
         $student = $this->getAuthenticatedStudent();
+        $studentAccountId = Auth::guard('student')->id();
         
         if (!$student) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
@@ -52,7 +54,12 @@ class StudentController extends Controller
 
         $notification = Notification::findOrFail($notificationId);
         
-        if ($notification->role !== 'student' && $notification->user_id !== $student->student_id) {
+        $hasAccess = Notification::query()
+            ->visibleToStudent($student, $studentAccountId)
+            ->whereKey($notification->id)
+            ->exists();
+
+        if (!$hasAccess) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -68,18 +75,17 @@ class StudentController extends Controller
     public function markAllNotificationsAsRead()
     {
         $student = $this->getAuthenticatedStudent();
+        $studentAccountId = Auth::guard('student')->id();
         
         if (!$student) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $notificationIds = Notification::where(function($query) use ($student) {
-            $query->where('role', 'student')
-                  ->orWhere('user_id', $student->student_id);
-        })
-        ->where('is_read', false)
-        ->pluck('id')
-        ->toArray();
+        $notificationIds = Notification::query()
+            ->visibleToStudent($student, $studentAccountId)
+            ->where('is_read', false)
+            ->pluck('id')
+            ->toArray();
 
         if (empty($notificationIds)) {
             return response()->json(['success' => true, 'message' => 'No unread notifications found']);
@@ -97,6 +103,7 @@ class StudentController extends Controller
     public function deleteNotification($notificationId)
     {
         $student = $this->getAuthenticatedStudent();
+        $studentAccountId = Auth::guard('student')->id();
         
         if (!$student) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
@@ -104,7 +111,12 @@ class StudentController extends Controller
 
         $notification = Notification::findOrFail($notificationId);
         
-        if ($notification->role !== 'student' && $notification->user_id !== $student->student_id) {
+        $hasAccess = Notification::query()
+            ->visibleToStudent($student, $studentAccountId)
+            ->whereKey($notification->id)
+            ->exists();
+
+        if (!$hasAccess) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -116,6 +128,7 @@ class StudentController extends Controller
     public function markMultipleAsRead(Request $request)
     {
         $student = $this->getAuthenticatedStudent();
+        $studentAccountId = Auth::guard('student')->id();
         
         if (!$student) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
@@ -127,10 +140,7 @@ class StudentController extends Controller
         ]);
 
         $updated = Notification::whereIn('id', $request->notification_ids)
-            ->where(function($query) use ($student) {
-                $query->where('role', 'student')
-                      ->orWhere('user_id', $student->student_id);
-            })
+            ->visibleToStudent($student, $studentAccountId)
             ->update(['is_read' => true]);
 
         return response()->json([
@@ -142,6 +152,7 @@ class StudentController extends Controller
     public function deleteMultiple(Request $request)
     {
         $student = $this->getAuthenticatedStudent();
+        $studentAccountId = Auth::guard('student')->id();
         
         if (!$student) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
@@ -153,10 +164,7 @@ class StudentController extends Controller
         ]);
 
         $deleted = Notification::whereIn('id', $request->notification_ids)
-            ->where(function($query) use ($student) {
-                $query->where('role', 'student')
-                      ->orWhere('user_id', $student->student_id);
-            })
+            ->visibleToStudent($student, $studentAccountId)
             ->delete();
 
         return response()->json([
