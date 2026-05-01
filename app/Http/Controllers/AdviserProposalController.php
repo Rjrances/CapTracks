@@ -56,7 +56,13 @@ class AdviserProposalController extends Controller
         if (!$studentGroup || $studentGroup->faculty_id !== $user->faculty_id) {
             return redirect()->route('adviser.proposal.index')->with('error', 'You can only review proposals from your assigned groups.');
         }
-        return view('adviser.proposal.show', compact('proposal', 'studentGroup'));
+        $versionHistory = ProjectSubmission::where('student_id', $proposal->student_id)
+            ->where('type', 'proposal')
+            ->orderByDesc('version')
+            ->orderByDesc('submitted_at')
+            ->get();
+
+        return view('adviser.proposal.show', compact('proposal', 'studentGroup', 'versionHistory'));
     }
     public function edit($id)
     {

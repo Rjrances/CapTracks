@@ -214,6 +214,7 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::get('/proposal/{id}', [StudentProposalController::class, 'show'])->name('proposal.show');
     Route::get('/proposal/{id}/edit', [StudentProposalController::class, 'edit'])->name('proposal.edit');
     Route::put('/proposal/{id}', [StudentProposalController::class, 'update'])->name('proposal.update');
+    Route::post('/proposal/{id}/rollback', [StudentProposalController::class, 'rollback'])->name('proposal.rollback');
 
     // Milestones
     Route::get('/milestones', [StudentMilestoneController::class, 'index'])->name('milestones');

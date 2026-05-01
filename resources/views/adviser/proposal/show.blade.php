@@ -54,8 +54,56 @@
                                     <i class="fas fa-download me-1"></i>Download
                                 </a>
                             </p>
+                            <p class="mb-0 mt-2"><strong>Version:</strong> v{{ $proposal->version ?? 1 }}</p>
                         </div>
                     </div>
+                    @if(isset($versionHistory) && $versionHistory->isNotEmpty())
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6>Version History</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Version</th>
+                                                <th>Status</th>
+                                                <th>Submitted</th>
+                                                <th>File</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($versionHistory as $version)
+                                                <tr @if($version->id === $proposal->id) class="table-primary" @endif>
+                                                    <td>v{{ $version->version ?? 1 }}</td>
+                                                    <td>
+                                                        @switch($version->status)
+                                                            @case('pending')
+                                                                <span class="badge bg-warning">Pending</span>
+                                                                @break
+                                                            @case('approved')
+                                                                <span class="badge bg-success">Approved</span>
+                                                                @break
+                                                            @case('rejected')
+                                                                <span class="badge bg-danger">Rejected</span>
+                                                                @break
+                                                            @default
+                                                                <span class="badge bg-secondary">{{ ucfirst($version->status) }}</span>
+                                                        @endswitch
+                                                    </td>
+                                                    <td>{{ $version->submitted_at ? \Carbon\Carbon::parse($version->submitted_at)->format('M d, Y H:i') : 'N/A' }}</td>
+                                                    <td>
+                                                        <a href="{{ asset('storage/' . $version->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-download me-1"></i>Open
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                     <div class="row mb-4">
                         <div class="col-12">
                             <h6>Proposal Content</h6>

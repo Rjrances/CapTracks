@@ -94,10 +94,13 @@ class ProjectSubmissionController extends Controller
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         $path = $request->file('file')->store('submissions', 'public');
+        $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, $request->type);
+
         ProjectSubmission::create([
             'student_id' => $student->student_id,
             'file_path' => $path,
             'type' => $request->type,
+            'version' => $nextVersion,
             'status' => 'pending',
             'submitted_at' => now(),
             'title' => $this->getSubmissionTitle($request->type),

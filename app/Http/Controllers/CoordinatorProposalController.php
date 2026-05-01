@@ -75,8 +75,14 @@ class CoordinatorProposalController extends Controller
         if (!$offering || $offering->faculty_id !== $user->faculty_id) {
             return redirect()->route('coordinator.proposals.index')->with('error', 'You can only review proposals from your coordinated offerings.');
         }
-        
-        return view('coordinator.proposals.show', compact('proposal', 'studentGroup', 'offering'));
+
+        $versionHistory = ProjectSubmission::where('student_id', $proposal->student_id)
+            ->where('type', 'proposal')
+            ->orderByDesc('version')
+            ->orderByDesc('submitted_at')
+            ->get();
+
+        return view('coordinator.proposals.show', compact('proposal', 'studentGroup', 'offering', 'versionHistory'));
     }
     
     public function review($id)

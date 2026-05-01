@@ -117,20 +117,60 @@ class AdviserController extends Controller
     }
     private function getRecentActivities($user)
     {
-        $activities = collect();
-        $activities->push((object)[
-            'title' => 'Group ABC submitted proposal',
-            'description' => 'Proposal document uploaded for review',
-            'icon' => 'file-alt',
-            'created_at' => now()->subHours(2)
-        ]);
-        $activities->push((object)[
-            'title' => 'Task completed by John Doe',
-            'description' => 'Research phase completed',
-            'icon' => 'check-circle',
-            'created_at' => now()->subHours(5)
-        ]);
-        return $activities;
+        $adviserGroups = Group::with(['members'])
+            ->where('faculty_id', $user->faculty_id)
+            ->get();
+
+        if ($adviserGroups->isEmpty()) {
+            return collect();
+        }
+
+        $groupNamesById = $adviserGroups->pluck('name', 'id');
+        $studentIds = $adviserGroups->flatMap(function ($group) {
+            return $group->members->pluck('student_id');
+        })->unique()->values();
+
+        $submissionActivities = ProjectSubmission::with('student')
+            ->whereIn('student_id', $studentIds)
+            ->latest('submitted_at')
+            ->take(10)
+            ->get()
+            ->map(function ($submission) use ($adviserGroups) {
+                $student = $submission->student;
+                $group = $adviserGroups->first(function ($groupItem) use ($submission) {
+                    return $groupItem->members->contains('student_id', $submission->student_id);
+                });
+
+                return (object) [
+                    'title' => ($group ? $group->name : 'Group') . ' submitted ' . ($submission->title ?? ucfirst($submission->type)),
+                    'description' => 'Uploaded by ' . ($student->name ?? 'Unknown student'),
+                    'icon' => 'file-alt',
+                    'created_at' => $submission->submitted_at ?? $submission->created_at,
+                ];
+            });
+
+        $milestoneActivities = $adviserGroups->flatMap(function ($group) use ($groupNamesById) {
+            return $group->groupMilestones()
+                ->with('milestoneTemplate')
+                ->where('status', 'completed')
+                ->latest('updated_at')
+                ->take(5)
+                ->get()
+                ->map(function ($milestone) use ($groupNamesById) {
+                    return (object) [
+                        'title' => $groupNamesById[$milestone->group_id] . ' completed a milestone',
+                        'description' => $milestone->milestoneTemplate->name ?? $milestone->title ?? 'Milestone completed',
+                        'icon' => 'check-circle',
+                        'created_at' => $milestone->updated_at,
+                    ];
+                });
+        });
+
+        return $submissionActivities
+            ->concat($milestoneActivities)
+            ->sortByDesc('created_at')
+            ->take(8)
+            ->values();
     }
     private function getOverdueTasks($group)
     {

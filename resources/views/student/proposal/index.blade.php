@@ -77,6 +77,65 @@
                     @endif
                 </div>
             </div>
+            @if(isset($proposalVersions) && $proposalVersions->isNotEmpty())
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history me-2"></i>Version History
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Version</th>
+                                        <th>Status</th>
+                                        <th>Submitted</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($proposalVersions as $version)
+                                        <tr @if($existingProposal && $version->id === $existingProposal->id) class="table-primary" @endif>
+                                            <td>v{{ $version->version ?? 1 }}</td>
+                                            <td>
+                                                @switch($version->status)
+                                                    @case('pending')
+                                                        <span class="badge bg-warning">Pending</span>
+                                                        @break
+                                                    @case('approved')
+                                                        <span class="badge bg-success">Approved</span>
+                                                        @break
+                                                    @case('rejected')
+                                                        <span class="badge bg-danger">Rejected</span>
+                                                        @break
+                                                    @default
+                                                        <span class="badge bg-secondary">{{ ucfirst($version->status) }}</span>
+                                                @endswitch
+                                            </td>
+                                            <td>{{ $version->submitted_at ? \Carbon\Carbon::parse($version->submitted_at)->format('M d, Y H:i') : 'N/A' }}</td>
+                                            <td class="d-flex gap-1">
+                                                <a href="{{ asset('storage/' . $version->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                                @if(!$existingProposal || $version->id !== $existingProposal->id)
+                                                    <form action="{{ route('student.proposal.rollback', $version->id) }}" method="POST" onsubmit="return confirm('Rollback to this version? This will create a new pending version.');">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                            <i class="fas fa-rotate-left me-1"></i>Rollback
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
         <div class="col-md-4">
             <div class="card">

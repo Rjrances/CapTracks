@@ -25,10 +25,16 @@ class StudentProposalController extends Controller
         }
         $existingProposal = ProjectSubmission::where('student_id', $student->student_id)
             ->where('type', 'proposal')
-            ->latest()
+            ->orderByDesc('version')
+            ->orderByDesc('submitted_at')
             ->first();
+        $proposalVersions = ProjectSubmission::where('student_id', $student->student_id)
+            ->where('type', 'proposal')
+            ->orderByDesc('version')
+            ->orderByDesc('submitted_at')
+            ->get();
         $proposalStatus = $this->getProposalStatus($group, $existingProposal);
-        return view('student.proposal.index', compact('group', 'existingProposal', 'proposalStatus'));
+        return view('student.proposal.index', compact('group', 'existingProposal', 'proposalStatus', 'proposalVersions'));
     }
     public function create()
     {
@@ -78,10 +84,13 @@ class StudentProposalController extends Controller
             return redirect()->route('student.group')->with('error', 'You must be part of a group to submit a proposal.');
         }
         $path = $request->file('file')->store('proposals', 'public');
+        $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, 'proposal');
+
         $proposal = ProjectSubmission::create([
             'student_id' => $student->student_id,
             'file_path' => $path,
             'type' => 'proposal',
+            'version' => $nextVersion,
             'status' => 'pending',
             'submitted_at' => now(),
             'title' => $request->title,
@@ -175,6 +184,51 @@ class StudentProposalController extends Controller
         }
         return redirect()->route('student.proposal')->with('success', 'Proposal updated successfully! It is now under review again.');
     }
+
+    public function rollback($id)
+    {
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
+        } else {
+            $student = null;
+        }
+
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+
+        $sourceProposal = ProjectSubmission::where('student_id', $student->student_id)
+            ->where('type', 'proposal')
+            ->findOrFail($id);
+
+        if (!$sourceProposal->file_path || !Storage::disk('public')->exists($sourceProposal->file_path)) {
+            return redirect()->route('student.proposal')->with('error', 'The selected version file was not found.');
+        }
+
+        $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, 'proposal');
+        $fileName = basename($sourceProposal->file_path);
+        $rollbackPath = 'proposals/rollback-' . now()->format('YmdHis') . '-' . $fileName;
+        Storage::disk('public')->copy($sourceProposal->file_path, $rollbackPath);
+
+        ProjectSubmission::create([
+            'student_id' => $student->student_id,
+            'file_path' => $rollbackPath,
+            'type' => 'proposal',
+            'version' => $nextVersion,
+            'status' => 'pending',
+            'submitted_at' => now(),
+            'title' => $sourceProposal->title,
+            'objectives' => $sourceProposal->objectives,
+            'methodology' => $sourceProposal->methodology,
+            'timeline' => $sourceProposal->timeline,
+            'expected_outcomes' => $sourceProposal->expected_outcomes,
+            'teacher_comment' => null,
+        ]);
+
+        return redirect()->route('student.proposal')->with('success', 'Proposal rolled back and resubmitted as version ' . $nextVersion . '.');
+    }
+
     private function getProposalStatus($group, $existingProposal)
     {
         if (!$existingProposal) {

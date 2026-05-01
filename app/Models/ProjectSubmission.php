@@ -7,6 +7,7 @@ class ProjectSubmission extends Model
         'student_id',
         'file_path',
         'type',
+        'version',
         'status',
         'teacher_comment',
         'submitted_at',
@@ -29,5 +30,14 @@ class ProjectSubmission extends Model
     public function getStudentData()
     {
         return Student::where('student_id', $this->student_id)->first();
+    }
+
+    public static function getNextVersionFor($studentId, $type): int
+    {
+        $latestVersion = static::where('student_id', $studentId)
+            ->where('type', $type)
+            ->max('version');
+
+        return $latestVersion ? $latestVersion + 1 : 1;
     }
 }

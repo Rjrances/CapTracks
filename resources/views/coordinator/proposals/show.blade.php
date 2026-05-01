@@ -154,6 +154,32 @@
                                 <p class="mb-0 text-muted">#{{ $proposal->id }}</p>
                             </div>
 
+                            <div class="mb-3">
+                                <strong>Version:</strong>
+                                <p class="mb-0 text-muted">v{{ $proposal->version ?? 1 }}</p>
+                            </div>
+
+                            @if(isset($versionHistory) && $versionHistory->isNotEmpty())
+                                <div class="mb-3">
+                                    <strong>Version History:</strong>
+                                    <div class="list-group mt-2">
+                                        @foreach($versionHistory as $version)
+                                            <div class="list-group-item d-flex justify-content-between align-items-center @if($version->id === $proposal->id) active @endif">
+                                                <div>
+                                                    <div>v{{ $version->version ?? 1 }}</div>
+                                                    <small class="@if($version->id === $proposal->id) text-white-50 @else text-muted @endif">
+                                                        {{ $version->submitted_at ? $version->submitted_at->format('M d, Y H:i') : 'N/A' }}
+                                                    </small>
+                                                </div>
+                                                <a href="{{ Storage::url($version->file_path) }}" target="_blank" class="btn btn-sm @if($version->id === $proposal->id) btn-light @else btn-outline-primary @endif">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
                             @if($proposal->created_at)
                                 <div class="mb-3">
                                     <strong>Created:</strong>
