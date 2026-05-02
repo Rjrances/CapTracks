@@ -31,40 +31,6 @@
                 </form>
             </div>
 
-            @if(isset($activityCountsByStudent) && $activityCountsByStudent->isNotEmpty())
-                <div class="card mb-4">
-                    <div class="card-header py-2">
-                        <small class="fw-semibold text-muted text-uppercase">Activity count by member (grading overview)</small>
-                    </div>
-                    <div class="card-body py-2">
-                        <div class="table-responsive mb-0">
-                            <table class="table table-sm table-striped mb-0 align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>Student</th>
-                                        <th class="text-end">Logged actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($studentsForFilter as $stu)
-                                        @php $cnt = $activityCountsByStudent[$stu->student_id] ?? 0; @endphp
-                                        <tr>
-                                            <td>
-                                                <a href="{{ route('coordinator.activity-log', ['student_id' => $stu->student_id]) }}" class="text-decoration-none">
-                                                    {{ $stu->name }}
-                                                </a>
-                                                <small class="text-muted ms-1">{{ $stu->student_id }}</small>
-                                            </td>
-                                            <td class="text-end">{{ $cnt }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
             @if($activityLogs->isEmpty())
                 <div class="card">
                     <div class="card-body text-center py-5">

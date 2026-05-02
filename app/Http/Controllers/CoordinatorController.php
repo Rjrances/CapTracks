@@ -367,16 +367,9 @@ class CoordinatorController extends Controller
             ->orderBy('name')
             ->get(['student_id', 'name']);
 
-        $activityCountsByStudent = ActivityLog::query()
-            ->selectRaw('student_id, count(*) as log_count')
-            ->whereIn('student_id', $studentIds)
-            ->groupBy('student_id')
-            ->pluck('log_count', 'student_id');
-
         return view('coordinator.activity-log', compact(
             'activityLogs',
             'studentsForFilter',
-            'activityCountsByStudent',
             'filterStudentId'
         ));
     }
