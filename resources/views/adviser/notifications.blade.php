@@ -85,9 +85,6 @@
                                                             <i class="fas fa-external-link-alt"></i>
                                                         </a>
                                                     @endif
-                                                    <button class="btn btn-outline-secondary btn-sm" onclick="toggleReadStatus({{ $notification->id }})" title="Mark as Read">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
                                                     <button class="btn btn-outline-danger btn-sm" onclick="deleteNotification({{ $notification->id }})" title="Delete">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -116,9 +113,6 @@
                                 <span class="text-muted"><span id="selectedCount">0</span> of {{ $notifications->count() }} selected</span>
                             </div>
                             <div class="d-flex gap-2">
-                                <button class="btn btn-outline-primary" onclick="markSelectedAsRead()" id="markReadBtn" disabled>
-                                    <i class="fas fa-check me-2"></i>Mark Selected as Read
-                                </button>
                                 <button class="btn btn-outline-danger" onclick="deleteSelected()" id="deleteSelectedBtn" disabled>
                                     <i class="fas fa-trash me-2"></i>Delete Selected
                                 </button>
@@ -134,21 +128,9 @@
 function updateSelectedCount() {
     const selectedCount = document.querySelectorAll('.notification-checkbox:checked').length;
     const selectedCountElement = document.getElementById('selectedCount');
-    const markReadBtn = document.getElementById('markReadBtn');
     const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
     if (selectedCountElement) selectedCountElement.textContent = selectedCount;
-    if (markReadBtn) markReadBtn.disabled = selectedCount === 0;
     if (deleteSelectedBtn) deleteSelectedBtn.disabled = selectedCount === 0;
-}
-function toggleReadStatus(notificationId) {
-    const urlTemplate = '{{ route("adviser.notifications.mark-read-adviser", ["notification" => "__ID__"]) }}';
-    fetch(urlTemplate.replace('__ID__', notificationId), {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' }
-    }).then(response => response.json()).then(data => {
-        if (data.success) location.reload();
-        else alert('Error updating notification status');
-    }).catch(() => alert('Error updating notification status'));
 }
 function markAllAsRead() {
     if (!confirm('Mark all notifications as read?')) return;
@@ -158,18 +140,6 @@ function markAllAsRead() {
     }).then(response => response.json()).then(data => {
         if (data.success) location.reload();
         else alert('Error marking notifications as read: ' + (data.message || 'Unknown error'));
-    }).catch(() => alert('Error marking notifications as read'));
-}
-function markSelectedAsRead() {
-    const selectedIds = Array.from(document.querySelectorAll('.notification-checkbox:checked')).map(cb => cb.value);
-    if (selectedIds.length === 0) return;
-    fetch('{{ route("adviser.notifications.mark-multiple-read-adviser") }}', {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notification_ids: selectedIds })
-    }).then(response => response.json()).then(data => {
-        if (data.success) location.reload();
-        else alert('Error marking notifications as read');
     }).catch(() => alert('Error marking notifications as read'));
 }
 function deleteNotification(notificationId) {

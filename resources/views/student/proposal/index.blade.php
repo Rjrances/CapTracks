@@ -78,6 +78,13 @@
                 </div>
             </div>
             @if(isset($proposalVersions) && $proposalVersions->isNotEmpty())
+                @php
+                    $proposalCompareTemplate = str_replace(
+                        ['11111111', '22222222'],
+                        ['__L__', '__R__'],
+                        route('student.proposal.versions.compare', ['left' => 11111111, 'right' => 22222222])
+                    );
+                @endphp
                 <div class="card mt-3">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -85,6 +92,32 @@
                         </h5>
                     </div>
                     <div class="card-body">
+                        @if($proposalVersions->count() >= 2)
+                            <p class="small text-muted mb-2">Compare two versions side by side (PDF or Office preview).</p>
+                            <div class="row g-2 align-items-end mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-0" for="proposal-compare-left">Version A</label>
+                                    <select id="proposal-compare-left" class="form-select form-select-sm">
+                                        @foreach($proposalVersions as $ver)
+                                            <option value="{{ $ver->id }}">v{{ $ver->version ?? 1 }} ({{ $ver->submitted_at ? \Carbon\Carbon::parse($ver->submitted_at)->format('M d, Y') : 'N/A' }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small mb-0" for="proposal-compare-right">Version B</label>
+                                    <select id="proposal-compare-right" class="form-select form-select-sm">
+                                        @foreach($proposalVersions as $ver)
+                                            <option value="{{ $ver->id }}">v{{ $ver->version ?? 1 }} ({{ $ver->submitted_at ? \Carbon\Carbon::parse($ver->submitted_at)->format('M d, Y') : 'N/A' }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="proposal-compare-go">
+                                        <i class="fas fa-columns me-1"></i>Compare
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
                         <div class="table-responsive">
                             <table class="table table-sm align-middle">
                                 <thead>
@@ -115,12 +148,15 @@
                                                 @endswitch
                                             </td>
                                             <td>{{ $version->submitted_at ? \Carbon\Carbon::parse($version->submitted_at)->format('M d, Y') : 'N/A' }}</td>
-                                            <td class="d-flex gap-1">
-                                                <a href="{{ asset('storage/' . $version->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <td class="d-flex flex-wrap gap-1">
+                                                <a href="{{ route('student.proposal.version.preview', $version) }}" class="btn btn-sm btn-outline-info" title="Preview in browser">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ asset('storage/' . $version->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Download">
                                                     <i class="fas fa-download"></i>
                                                 </a>
                                                 @if(!$existingProposal || $version->id !== $existingProposal->id)
-                                                    <form action="{{ route('student.proposal.rollback', $version->id) }}" method="POST" onsubmit="return confirm('Rollback to this version? This will create a new pending version.');">
+                                                    <form action="{{ route('student.proposal.rollback', $version->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Rollback to this version? This will create a new pending version.');">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-outline-warning">
                                                             <i class="fas fa-rotate-left me-1"></i>Rollback
@@ -135,6 +171,24 @@
                         </div>
                     </div>
                 </div>
+                @if($proposalVersions->count() >= 2)
+                    @push('scripts')
+                    <script>
+                        (function () {
+                            var tpl = @json($proposalCompareTemplate);
+                            document.getElementById('proposal-compare-go').addEventListener('click', function () {
+                                var l = document.getElementById('proposal-compare-left').value;
+                                var r = document.getElementById('proposal-compare-right').value;
+                                if (!l || !r || l === r) {
+                                    alert('Choose two different versions.');
+                                    return;
+                                }
+                                window.location.href = tpl.replace('__L__', l).replace('__R__', r);
+                            });
+                        })();
+                    </script>
+                    @endpush
+                @endif
             @endif
         </div>
         <div class="col-md-4">

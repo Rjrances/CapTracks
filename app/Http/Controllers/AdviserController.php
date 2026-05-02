@@ -9,7 +9,10 @@ use App\Models\Group;
 use App\Models\ProjectSubmission;
 use App\Models\AcademicTerm;
 use App\Models\ActivityLog;
+use App\Models\GroupMilestoneTask;
 use App\Models\Notification;
+use App\Models\TaskComment;
+use App\Services\ActivityLogService;
 use Illuminate\Support\Facades\Auth;
 
 class AdviserController extends Controller
@@ -309,7 +312,70 @@ class AdviserController extends Controller
         if ($group->faculty_id !== Auth::user()->faculty_id) {
             abort(403, 'Unauthorized');
         }
+        $group->load([
+            'groupMilestoneTasks' => function ($query) {
+                $query->with(['milestoneTask', 'groupMilestone.milestoneTemplate'])
+                    ->withCount('taskComments');
+            },
+        ]);
+
         return view('adviser.group-details', compact('group'));
+    }
+
+    public function milestoneTaskComments(Group $group, GroupMilestoneTask $groupMilestoneTask)
+    {
+        if ($group->faculty_id !== Auth::user()->faculty_id) {
+            abort(403, 'Unauthorized');
+        }
+        if ((int) $groupMilestoneTask->groupMilestone->group_id !== (int) $group->id) {
+            abort(404);
+        }
+        $groupMilestoneTask->load([
+            'milestoneTask',
+            'groupMilestone.milestoneTemplate',
+            'taskComments' => function ($query) {
+                $query->whereNull('parent_id')
+                    ->with([
+                        'user',
+                        'studentAuthor',
+                        'children.user',
+                        'children.studentAuthor',
+                    ]);
+            },
+        ]);
+
+        return view('adviser.milestone-task-comments', compact('group', 'groupMilestoneTask'));
+    }
+
+    public function storeMilestoneTaskComment(Request $request, Group $group, GroupMilestoneTask $groupMilestoneTask)
+    {
+        $user = Auth::user();
+        if ($group->faculty_id !== $user->faculty_id) {
+            abort(403, 'Unauthorized');
+        }
+        if ((int) $groupMilestoneTask->groupMilestone->group_id !== (int) $group->id) {
+            abort(404);
+        }
+        $request->validate([
+            'body' => 'required|string|max:2000',
+            'parent_id' => 'nullable|exists:task_comments,id',
+        ]);
+        if ($request->filled('parent_id')) {
+            $parentComment = TaskComment::find($request->parent_id);
+            if (!$parentComment || (int) $parentComment->group_milestone_task_id !== (int) $groupMilestoneTask->id) {
+                return back()->withErrors(['body' => 'Invalid reply target.'])->withInput();
+            }
+        }
+        TaskComment::create([
+            'group_milestone_task_id' => $groupMilestoneTask->id,
+            'user_id' => $user->id,
+            'student_id' => null,
+            'body' => $request->body,
+            'parent_id' => $request->parent_id,
+        ]);
+        ActivityLogService::logTaskCommentAdded($groupMilestoneTask, $user, null);
+
+        return back()->with('success', 'Comment posted successfully.');
     }
     public function allGroups()
     {

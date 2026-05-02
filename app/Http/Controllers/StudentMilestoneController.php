@@ -8,6 +8,8 @@ use App\Models\GroupMilestone;
 use App\Models\GroupMilestoneTask;
 use App\Models\MilestoneTemplate;
 use App\Models\ProjectSubmission;
+use App\Models\TaskComment;
+use App\Services\ActivityLogService;
 class StudentMilestoneController extends Controller
 {
     public function index()
@@ -331,6 +333,38 @@ class StudentMilestoneController extends Controller
             'task' => $task
         ]);
     }
+    public function storeTaskComment(Request $request, GroupMilestoneTask $groupMilestoneTask)
+    {
+        $student = $this->getAuthenticatedStudent();
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+        $group = $student->groups()->first();
+        if (!$group || (int) $groupMilestoneTask->groupMilestone->group_id !== (int) $group->id) {
+            return redirect()->back()->withErrors(['auth' => 'You are not authorized to comment on this task.']);
+        }
+        $request->validate([
+            'body' => 'required|string|max:2000',
+            'parent_id' => 'nullable|exists:task_comments,id',
+        ]);
+        if ($request->filled('parent_id')) {
+            $parentComment = TaskComment::find($request->parent_id);
+            if (!$parentComment || (int) $parentComment->group_milestone_task_id !== (int) $groupMilestoneTask->id) {
+                return back()->withErrors(['body' => 'Invalid reply target.'])->withInput();
+            }
+        }
+        TaskComment::create([
+            'group_milestone_task_id' => $groupMilestoneTask->id,
+            'user_id' => null,
+            'student_id' => $student->student_id,
+            'body' => $request->body,
+            'parent_id' => $request->parent_id,
+        ]);
+        ActivityLogService::logTaskCommentAdded($groupMilestoneTask, null, $student->student_id);
+
+        return back()->with('success', 'Comment posted successfully.');
+    }
+
     private function getAuthenticatedStudent()
     {
         if (Auth::guard('student')->check()) {
@@ -370,7 +404,21 @@ class StudentMilestoneController extends Controller
     private function getMilestoneTasksByStatus($groupMilestone, $student)
     {
         $tasks = GroupMilestoneTask::where('group_milestone_id', $groupMilestone->id)
-            ->with(['milestoneTask', 'assignedStudent'])
+            ->with([
+                'milestoneTask',
+                'assignedStudent',
+                'submissions',
+                'taskComments' => function ($query) {
+                    $query->whereNull('parent_id')
+                        ->with([
+                            'user',
+                            'studentAuthor',
+                            'children.user',
+                            'children.studentAuthor',
+                        ]);
+                },
+            ])
+            ->withCount('taskComments')
             ->get()
             ->map(function($task) use ($student) {
                 $task->is_assigned_to_me = $task->assigned_to == $student->student_id;

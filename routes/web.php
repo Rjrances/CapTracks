@@ -188,6 +188,8 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::post('/update-password', [StudentPasswordController::class, 'updatePassword'])->name('update-password')->withoutMiddleware(\App\Http\Middleware\CheckStudentPasswordChange::class);
 
     // Project Submission
+    Route::get('/project/submissions/preview/{projectSubmission}', [ProjectSubmissionController::class, 'studentPreviewSubmission'])->name('project.submission.preview');
+    Route::get('/project/submissions/{left}/compare/{right}', [ProjectSubmissionController::class, 'studentCompareSubmissions'])->name('project.submissions.compare');
     Route::get('/project', [ProjectSubmissionController::class, 'index'])->name('project');
     Route::get('/project/create', [ProjectSubmissionController::class, 'create'])->name('project.create');
     Route::post('/project', [ProjectSubmissionController::class, 'store'])->name('project.store');
@@ -212,6 +214,8 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::delete('/group/cancel-invitation/{invitationId}', [StudentGroupController::class, 'cancelInvitation'])->name('group.cancel-invitation');
 
     // Proposal
+    Route::get('/proposal/versions/preview/{projectSubmission}', [StudentProposalController::class, 'previewVersion'])->name('proposal.version.preview');
+    Route::get('/proposal/versions/{left}/compare/{right}', [StudentProposalController::class, 'compareVersions'])->name('proposal.versions.compare');
     Route::get('/proposal', [StudentProposalController::class, 'index'])->name('proposal');
     Route::get('/proposal/create', [StudentProposalController::class, 'create'])->name('proposal.create');
     Route::post('/proposal', [StudentProposalController::class, 'store'])->name('proposal.store');
@@ -238,6 +242,7 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::patch('/task/{groupMilestoneTask}/assign', [StudentMilestoneController::class, 'assignTask'])->name('milestones.assign-task');
     Route::delete('/task/{groupMilestoneTask}/unassign', [StudentMilestoneController::class, 'unassignTask'])->name('milestones.unassign-task');
     Route::patch('/task/{groupMilestoneTask}', [StudentMilestoneController::class, 'updateTask'])->name('milestones.update-task');
+    Route::post('/milestones/tasks/{groupMilestoneTask}/comments', [StudentMilestoneController::class, 'storeTaskComment'])->name('milestones.task-comments.store');
 
     // Task Submission
     Route::get('/task-submission/{task}/create', [TaskSubmissionController::class, 'create'])->name('task-submission.create');
@@ -279,6 +284,8 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::get('/groups', [AdviserController::class, 'myGroups'])->name('groups');
     Route::get('/all-groups', [AdviserController::class, 'myGroups'])->name('all-groups');
     Route::get('/groups/{group}', [AdviserController::class, 'groupDetails'])->name('groups.details');
+    Route::get('/groups/{group}/milestone-tasks/{groupMilestoneTask}/comments', [AdviserController::class, 'milestoneTaskComments'])->name('groups.milestone-task-comments');
+    Route::post('/groups/{group}/milestone-tasks/{groupMilestoneTask}/comments', [AdviserController::class, 'storeMilestoneTaskComment'])->name('groups.milestone-task-comments.store');
     Route::get('/panel-submissions', [AdviserController::class, 'panelSubmissions'])->name('panel-submissions');
 
     // Project Review
@@ -289,6 +296,10 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
 
     // Proposal Review
     Route::get('/proposals', [AdviserProposalController::class, 'index'])->name('proposal.index');
+    Route::get('/proposals/{id}/preview', [AdviserProposalController::class, 'preview'])->name('proposal.preview');
+    Route::get('/proposals/{left}/compare/{right}', [AdviserProposalController::class, 'compareVersions'])
+        ->whereNumber(['left', 'right'])
+        ->name('proposal.versions.compare');
     Route::get('/proposals/{id}', [AdviserProposalController::class, 'show'])->name('proposal.show');
     Route::get('/proposals/{id}/edit', [AdviserProposalController::class, 'edit'])->name('proposal.edit');
     Route::put('/proposals/{id}', [AdviserProposalController::class, 'update'])->name('proposal.update');

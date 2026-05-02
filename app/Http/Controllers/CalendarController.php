@@ -1,11 +1,8 @@
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
 use App\Models\DefenseSchedule;
-use App\Models\StudentGroup;
 use App\Models\Group;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 class CalendarController extends Controller
 {
     public function coordinatorCalendar()
@@ -160,59 +157,5 @@ class CalendarController extends Controller
             $calendarEvents = [];
         }
         return view('calendar.chairperson', compact('defenses', 'calendarEvents'));
-    }
-    public function getCalendarData(Request $request)
-    {
-        $user = Auth::user();
-        $defenses = collect();
-        switch ($user->role) {
-            case 'coordinator':
-            case 'chairperson':
-                $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
-                    ->whereIn('status', ['scheduled'])
-                    ->get();
-                break;
-            case 'adviser':
-                $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
-                    ->whereIn('status', ['scheduled'])
-                    ->whereHas('group', function($query) use ($user) {
-                        $query->where('faculty_id', $user->faculty_id);
-                    })
-                    ->get();
-                break;
-            case 'student':
-                $group = Group::whereHas('members', function($query) use ($user) {
-                    $query->where('group_members.student_id', $user->student_id);
-                })->first();
-                if ($group) {
-                    $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
-                        ->whereIn('status', ['scheduled'])
-                        ->where('group_id', $group->id)
-                        ->get();
-                }
-                break;
-        }
-        $events = $defenses->map(function ($defense) {
-            $startDate = Carbon::parse($defense->start_at);
-            $endDate = Carbon::parse($defense->end_at);
-            return [
-                'id' => $defense->id,
-                'title' => $defense->group->name ?? 'Defense',
-                'start' => $startDate->toISOString(),
-                'end' => $endDate->toISOString(),
-                'url' => route('coordinator.defense.show', $defense->id),
-                'backgroundColor' => $defense->status === 'scheduled' ? '#ffc107' : '#28a745',
-                'borderColor' => $defense->status === 'scheduled' ? '#ffc107' : '#28a745',
-                'textColor' => $defense->status === 'scheduled' ? '#000000' : '#ffffff',
-                'extendedProps' => [
-                    'group' => $defense->group->name ?? 'N/A',
-                    'defenseType' => $defense->stage_label ?? 'Defense',
-                    'adviser' => $defense->group->adviser->name ?? 'N/A',
-                    'status' => $defense->status,
-                    'room' => $defense->room ?? 'TBD'
-                ]
-            ];
-        });
-        return response()->json($events);
     }
 }

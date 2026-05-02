@@ -48,6 +48,12 @@
                     @endif
                 </div>
                 <div class="task-card-actions">
+                    <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#taskCommentsModal{{ $task->id }}" title="Task discussion">
+                        <i class="fas fa-comments"></i>
+                        @if(($task->task_comments_count ?? 0) > 0)
+                            <span class="badge bg-secondary ms-1">{{ $task->task_comments_count }}</span>
+                        @endif
+                    </button>
                     @if($isGroupLeader)
                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assignTaskModal{{ $task->id }}" title="{{ $task->assigned_to ? 'Reassign Task' : 'Assign Task' }}">
                             <i class="fas fa-{{ $task->assigned_to ? 'user-edit' : 'user-plus' }}"></i>

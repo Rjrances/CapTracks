@@ -41,6 +41,11 @@ class GroupMilestoneTask extends Model
     {
         return $this->hasMany(TaskSubmission::class);
     }
+
+    public function taskComments()
+    {
+        return $this->hasMany(TaskComment::class);
+    }
     public function markAsCompleted($completedBy = null)
     {
         $this->update([

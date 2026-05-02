@@ -102,11 +102,6 @@
                                                             <i class="fas fa-external-link-alt"></i>
                                                         </a>
                                                     @endif
-                                                    <button class="btn btn-outline-secondary btn-sm" 
-                                                            onclick="toggleReadStatus({{ $notification->id }})"
-                                                            title="{{ $notification->is_read ? 'Mark as Unread' : 'Mark as Read' }}">
-                                                        <i class="fas fa-{{ $notification->is_read ? 'eye-slash' : 'eye' }}"></i>
-                                                    </button>
                                                     <button class="btn btn-outline-danger btn-sm" 
                                                             onclick="deleteNotification({{ $notification->id }})"
                                                             title="Delete">
@@ -138,9 +133,6 @@
                                 </span>
                             </div>
                             <div class="d-flex gap-2">
-                                <button class="btn btn-outline-primary" onclick="markSelectedAsRead()" id="markReadBtn" disabled>
-                                    <i class="fas fa-check me-2"></i>Mark Selected as Read
-                                </button>
                                 <button class="btn btn-outline-danger" onclick="deleteSelected()" id="deleteSelectedBtn" disabled>
                                     <i class="fas fa-trash me-2"></i>Delete Selected
                                 </button>
@@ -153,43 +145,12 @@
     </div>
 </div>
 <script>
-document.getElementById('selectAll').addEventListener('change', function() {
-    const checkboxes = document.querySelectorAll('.notification-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = this.checked;
-    });
-    updateSelectedCount();
-});
-document.querySelectorAll('.notification-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', updateSelectedCount);
-});
 function updateSelectedCount() {
     const selectedCount = document.querySelectorAll('.notification-checkbox:checked').length;
-    document.getElementById('selectedCount').textContent = selectedCount;
-    document.getElementById('markReadBtn').disabled = selectedCount === 0;
-    document.getElementById('deleteSelectedBtn').disabled = selectedCount === 0;
-}
-function toggleReadStatus(notificationId) {
-    const urlTemplate = '{{ route("coordinator.notifications.mark-read", ["notification" => "__ID__"]) }}';
-    fetch(urlTemplate.replace('__ID__', notificationId), {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json',
-        },
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Error updating notification status');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error updating notification status');
-    });
+    const selectedCountEl = document.getElementById('selectedCount');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    if (selectedCountEl) selectedCountEl.textContent = selectedCount;
+    if (deleteSelectedBtn) deleteSelectedBtn.disabled = selectedCount === 0;
 }
 function markAllAsRead() {
     if (confirm('Mark all notifications as read?')) {
@@ -213,31 +174,6 @@ function markAllAsRead() {
             alert('Error marking notifications as read');
         });
     }
-}
-function markSelectedAsRead() {
-    const selectedIds = Array.from(document.querySelectorAll('.notification-checkbox:checked'))
-        .map(cb => cb.value);
-    if (selectedIds.length === 0) return;
-    fetch('{{ route("coordinator.notifications.mark-multiple-read") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ notification_ids: selectedIds }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Error marking notifications as read');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error marking notifications as read');
-    });
 }
 function deleteNotification(notificationId) {
     if (confirm('Are you sure you want to delete this notification?')) {
@@ -293,6 +229,18 @@ function refreshNotifications() {
     location.reload();
 }
 document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            document.querySelectorAll('.notification-checkbox').forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectedCount();
+        });
+    }
+    document.querySelectorAll('.notification-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
     updateSelectedCount();
 });
 </script>

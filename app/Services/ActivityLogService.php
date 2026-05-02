@@ -41,4 +41,24 @@ class ActivityLogService
             'loggable_id' => $submission->id,
         ]);
     }
+
+    public static function logTaskCommentAdded(GroupMilestoneTask $task, ?User $user = null, ?string $studentId = null): void
+    {
+        if (!$task->groupMilestone || !$task->groupMilestone->group) {
+            return;
+        }
+
+        $commenterName = $user ? $user->name : ($studentId ? 'Student ' . $studentId : 'Unknown');
+        $taskLabel = $task->milestoneTask->name ?? 'Milestone task';
+        $groupName = $task->groupMilestone->group->name;
+
+        ActivityLog::create([
+            'user_id' => $user?->id,
+            'student_id' => $studentId,
+            'action' => 'task_comment_added',
+            'description' => $commenterName . ' commented on task "' . $taskLabel . '" (' . $groupName . ')',
+            'loggable_type' => GroupMilestoneTask::class,
+            'loggable_id' => $task->id,
+        ]);
+    }
 }

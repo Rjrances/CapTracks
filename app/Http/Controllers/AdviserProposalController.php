@@ -5,9 +5,11 @@ use Illuminate\Http\Request;
 use App\Models\Group;
 use App\Models\ProjectSubmission;
 use App\Models\SubmissionComment;
-use App\Services\NotificationService;
 use App\Services\ActivityLogService;
+use App\Services\DocumentPreviewService;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AdviserProposalController extends Controller
 {
@@ -80,6 +82,60 @@ class AdviserProposalController extends Controller
 
         return view('adviser.proposal.show', compact('proposal', 'studentGroup', 'versionHistory', 'comments'));
     }
+
+    public function preview($id)
+    {
+        $user = Auth::user();
+        $proposal = ProjectSubmission::findOrFail($id);
+        $student = $proposal->getStudentData();
+        $studentGroup = $student ? $student->groups()->first() : null;
+        if (!$studentGroup || $studentGroup->faculty_id !== $user->faculty_id) {
+            return redirect()->route('adviser.proposal.index')->with('error', 'You can only review proposals from your assigned groups.');
+        }
+        if ($proposal->type !== 'proposal') {
+            return redirect()->route('adviser.proposal.index')->with('error', 'Invalid proposal.');
+        }
+        if (!$proposal->file_path || !Storage::disk('public')->exists($proposal->file_path)) {
+            return redirect()->route('adviser.proposal.show', $proposal->id)->with('error', 'The proposal file was not found.');
+        }
+
+        return view('adviser.proposal.preview', [
+            'panel' => DocumentPreviewService::panelForSubmission($proposal),
+            'studentGroup' => $studentGroup,
+            'backUrl' => route('adviser.proposal.show', $proposal->id),
+        ]);
+    }
+
+    public function compareVersions($left, $right)
+    {
+        $user = Auth::user();
+        $a = ProjectSubmission::findOrFail($left);
+        $b = ProjectSubmission::findOrFail($right);
+        if ((int) $a->id === (int) $b->id) {
+            return redirect()->route('adviser.proposal.index')->with('error', 'Choose two different versions.');
+        }
+        if ($a->student_id !== $b->student_id || $a->type !== 'proposal' || $b->type !== 'proposal') {
+            return redirect()->route('adviser.proposal.index')->with('error', 'Invalid version pair.');
+        }
+        $student = $a->getStudentData();
+        $studentGroup = $student ? $student->groups()->first() : null;
+        if (!$studentGroup || $studentGroup->faculty_id !== $user->faculty_id) {
+            return redirect()->route('adviser.proposal.index')->with('error', 'You can only review proposals from your assigned groups.');
+        }
+        foreach ([$a, $b] as $proposalRow) {
+            if (!$proposalRow->file_path || !Storage::disk('public')->exists($proposalRow->file_path)) {
+                return redirect()->route('adviser.proposal.show', $a->id)->with('error', 'A version file was not found.');
+            }
+        }
+
+        return view('adviser.proposal.compare', [
+            'leftPanel' => DocumentPreviewService::panelForSubmission($a),
+            'rightPanel' => DocumentPreviewService::panelForSubmission($b),
+            'studentGroup' => $studentGroup,
+            'backUrl' => route('adviser.proposal.show', $a->id),
+        ]);
+    }
+
     public function edit($id)
     {
         $user = Auth::user();

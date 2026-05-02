@@ -1,9 +1,12 @@
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+
 use App\Models\ActivityLog;
 use App\Models\DefenseRequest;
 use App\Models\ProjectSubmission;
+use App\Models\Student;
+use App\Services\DocumentPreviewService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 class StudentProposalController extends Controller
@@ -278,6 +281,62 @@ class StudentProposalController extends Controller
         ]);
 
         return redirect()->route('student.proposal')->with('success', 'Proposal rolled back and resubmitted as version ' . $nextVersion . '.');
+    }
+
+    public function previewVersion(ProjectSubmission $projectSubmission)
+    {
+        $student = $this->getAuthenticatedStudent();
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+        if ($projectSubmission->student_id !== $student->student_id || $projectSubmission->type !== 'proposal') {
+            abort(404);
+        }
+        if (!$projectSubmission->file_path || !Storage::disk('public')->exists($projectSubmission->file_path)) {
+            return redirect()->route('student.proposal')->with('error', 'The file for this version was not found.');
+        }
+
+        return view('student.proposal.preview', [
+            'panel' => DocumentPreviewService::panelForSubmission($projectSubmission),
+            'backUrl' => route('student.proposal'),
+        ]);
+    }
+
+    public function compareVersions($left, $right)
+    {
+        $student = $this->getAuthenticatedStudent();
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+        $a = ProjectSubmission::where('student_id', $student->student_id)
+            ->where('type', 'proposal')
+            ->findOrFail($left);
+        $b = ProjectSubmission::where('student_id', $student->student_id)
+            ->where('type', 'proposal')
+            ->findOrFail($right);
+        if ((int) $a->id === (int) $b->id) {
+            return redirect()->route('student.proposal')->with('error', 'Choose two different versions to compare.');
+        }
+        foreach ([$a, $b] as $submission) {
+            if (!$submission->file_path || !Storage::disk('public')->exists($submission->file_path)) {
+                return redirect()->route('student.proposal')->with('error', 'A selected version file was not found.');
+            }
+        }
+
+        return view('student.proposal.compare', [
+            'leftPanel' => DocumentPreviewService::panelForSubmission($a),
+            'rightPanel' => DocumentPreviewService::panelForSubmission($b),
+            'backUrl' => route('student.proposal'),
+        ]);
+    }
+
+    private function getAuthenticatedStudent(): ?Student
+    {
+        if (Auth::guard('student')->check()) {
+            return Auth::guard('student')->user()->student;
+        }
+
+        return null;
     }
 
     private function getProposalStatus($group, $existingProposal, $activeProposalDefenseRequest = null)

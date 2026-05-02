@@ -1,10 +1,14 @@
 <?php
 namespace App\Http\Controllers;
+
 use App\Models\ActivityLog;
-use App\Models\ProjectSubmission;
 use App\Models\Group;
+use App\Models\ProjectSubmission;
+use App\Models\Student;
+use App\Services\DocumentPreviewService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 class ProjectSubmissionController extends Controller
 {
     public function index(Request $request)
@@ -226,5 +230,74 @@ class ProjectSubmissionController extends Controller
         }
         $submission->delete();
         return redirect()->route('student.project')->with('success', 'Submission deleted successfully.');
+    }
+
+    public function studentPreviewSubmission(ProjectSubmission $projectSubmission)
+    {
+        $student = $this->getAuthenticatedStudent();
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+        if ($projectSubmission->student_id !== $student->student_id) {
+            abort(403);
+        }
+        if (!$projectSubmission->file_path || !Storage::disk('public')->exists($projectSubmission->file_path)) {
+            return redirect()->route('student.project')->with('error', 'File not found.');
+        }
+        $typeLabel = match ($projectSubmission->type) {
+            'proposal' => 'Proposal',
+            'final' => 'Final report',
+            'other' => 'Additional file',
+            default => ucfirst((string) $projectSubmission->type),
+        };
+
+        return view('student.project.preview', [
+            'panel' => DocumentPreviewService::panelForSubmission($projectSubmission),
+            'typeLabel' => $typeLabel,
+            'backUrl' => route('student.project'),
+        ]);
+    }
+
+    public function studentCompareSubmissions($left, $right)
+    {
+        $student = $this->getAuthenticatedStudent();
+        if (!$student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+        $a = ProjectSubmission::where('student_id', $student->student_id)->findOrFail($left);
+        $b = ProjectSubmission::where('student_id', $student->student_id)->findOrFail($right);
+        if ((int) $a->id === (int) $b->id) {
+            return redirect()->route('student.project')->with('error', 'Choose two different submissions.');
+        }
+        if ($a->type !== $b->type) {
+            return redirect()->route('student.project')->with('error', 'Compare two submissions of the same type.');
+        }
+        foreach ([$a, $b] as $submission) {
+            if (!$submission->file_path || !Storage::disk('public')->exists($submission->file_path)) {
+                return redirect()->route('student.project')->with('error', 'A file is missing for comparison.');
+            }
+        }
+        $typeLabel = match ($a->type) {
+            'proposal' => 'proposal',
+            'final' => 'final report',
+            'other' => 'additional file',
+            default => (string) $a->type,
+        };
+
+        return view('student.project.compare', [
+            'leftPanel' => DocumentPreviewService::panelForSubmission($a),
+            'rightPanel' => DocumentPreviewService::panelForSubmission($b),
+            'typeLabel' => $typeLabel,
+            'backUrl' => route('student.project'),
+        ]);
+    }
+
+    private function getAuthenticatedStudent(): ?Student
+    {
+        if (Auth::guard('student')->check()) {
+            return Auth::guard('student')->user()->student;
+        }
+
+        return null;
     }
 }

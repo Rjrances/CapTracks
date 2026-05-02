@@ -130,6 +130,29 @@
         </div>
     </div>
 </div>
+@php
+    $allTasksForComments = collect($tasks['pending'])->concat($tasks['doing'])->concat($tasks['done']);
+@endphp
+@foreach($allTasksForComments as $task)
+    <div class="modal fade" id="taskCommentsModal{{ $task->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskCommentsModalLabel{{ $task->id }}">
+                        <i class="fas fa-comments me-2"></i>Discussion — {{ $task->milestoneTask->name ?? 'Task' }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @include('partials.task-comments-thread', [
+                        'comments' => $task->taskComments,
+                        'formAction' => route('student.milestones.task-comments.store', $task),
+                    ])
+                </div>
+            </div>
+        </div>
+    </div>
+@endforeach
 @if($isGroupLeader)
     @php
         $allTasks = collect($tasks['pending'])->concat($tasks['doing'])->concat($tasks['done']);

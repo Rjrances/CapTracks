@@ -93,13 +93,46 @@
         </div>
         <div class="mb-4">
             <div class="fw-bold mb-2" style="font-size:1.2rem;">
-                <i class="fas fa-file-alt me-2"></i>Project Submissions
+                <i class="fas fa-tasks me-2"></i>Milestone tasks (discussion)
             </div>
             <div class="bg-light rounded-3 p-3">
-                <div class="text-muted text-center">
-                    <i class="fas fa-file-alt fa-2x mb-2"></i><br>
-                    Project submissions feature coming soon
-                </div>
+                @if($group->groupMilestoneTasks->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered bg-white mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Milestone</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Discussion</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($group->groupMilestoneTasks as $gmt)
+                                    <tr>
+                                        <td>{{ $gmt->milestoneTask->name ?? 'Task' }}</td>
+                                        <td><span class="text-muted small">{{ $gmt->groupMilestone->milestoneTemplate->name ?? '—' }}</span></td>
+                                        <td><span class="badge bg-secondary">{{ $gmt->status ?? 'pending' }}</span></td>
+                                        <td class="text-end">
+                                            <a href="{{ route('adviser.groups.milestone-task-comments', [$group, $gmt]) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-comments me-1"></i>
+                                                Open
+                                                @if(($gmt->task_comments_count ?? 0) > 0)
+                                                    <span class="badge bg-primary ms-1">{{ $gmt->task_comments_count }}</span>
+                                                @endif
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-muted text-center">
+                        <i class="fas fa-tasks fa-2x mb-2"></i><br>
+                        No milestone tasks for this group yet.
+                    </div>
+                @endif
             </div>
         </div>
         <div class="d-flex justify-content-center gap-2">

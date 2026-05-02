@@ -49,7 +49,10 @@
                                         <span class="badge bg-secondary">{{ ucfirst($proposal->status) }}</span>
                                 @endswitch
                             </p>
-                            <p class="mb-0"><strong>Document:</strong> 
+                            <p class="mb-0"><strong>Document:</strong>
+                                <a href="{{ route('adviser.proposal.preview', $proposal->id) }}" class="btn btn-sm btn-outline-info me-1">
+                                    <i class="fas fa-eye me-1"></i>Preview
+                                </a>
                                 <a href="{{ asset('storage/' . $proposal->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-download me-1"></i>Download
                                 </a>
@@ -58,9 +61,42 @@
                         </div>
                     </div>
                     @if(isset($versionHistory) && $versionHistory->isNotEmpty())
+                        @php
+                            $adviserProposalCompareTemplate = str_replace(
+                                ['11111111', '22222222'],
+                                ['__L__', '__R__'],
+                                route('adviser.proposal.versions.compare', ['left' => 11111111, 'right' => 22222222])
+                            );
+                        @endphp
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h6>Version History</h6>
+                                @if($versionHistory->count() >= 2)
+                                    <p class="small text-muted mb-2">Compare two versions side by side.</p>
+                                    <div class="row g-2 align-items-end mb-3">
+                                        <div class="col-md-5">
+                                            <label class="form-label small mb-0" for="adv-prop-cmp-a">Version A</label>
+                                            <select id="adv-prop-cmp-a" class="form-select form-select-sm">
+                                                @foreach($versionHistory as $version)
+                                                    <option value="{{ $version->id }}">v{{ $version->version ?? 1 }} ({{ $version->submitted_at ? \Carbon\Carbon::parse($version->submitted_at)->format('M d, Y') : 'N/A' }})</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label small mb-0" for="adv-prop-cmp-b">Version B</label>
+                                            <select id="adv-prop-cmp-b" class="form-select form-select-sm">
+                                                @foreach($versionHistory as $version)
+                                                    <option value="{{ $version->id }}">v{{ $version->version ?? 1 }} ({{ $version->submitted_at ? \Carbon\Carbon::parse($version->submitted_at)->format('M d, Y') : 'N/A' }})</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="button" class="btn btn-sm btn-outline-primary w-100" id="adv-proposal-compare-go">
+                                                <i class="fas fa-columns me-1"></i>Compare
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
                                 <div class="table-responsive">
                                     <table class="table table-sm align-middle">
                                         <thead>
@@ -92,6 +128,9 @@
                                                     </td>
                                                     <td>{{ $version->submitted_at ? \Carbon\Carbon::parse($version->submitted_at)->format('M d, Y') : 'N/A' }}</td>
                                                     <td>
+                                                        <a href="{{ route('adviser.proposal.preview', $version->id) }}" class="btn btn-sm btn-outline-info me-1">
+                                                            <i class="fas fa-eye me-1"></i>Preview
+                                                        </a>
                                                         <a href="{{ asset('storage/' . $version->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                                             <i class="fas fa-download me-1"></i>Open
                                                         </a>
@@ -101,6 +140,24 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                @if($versionHistory->count() >= 2)
+                                    @push('scripts')
+                                    <script>
+                                        (function () {
+                                            var tpl = @json($adviserProposalCompareTemplate);
+                                            document.getElementById('adv-proposal-compare-go').addEventListener('click', function () {
+                                                var l = document.getElementById('adv-prop-cmp-a').value;
+                                                var r = document.getElementById('adv-prop-cmp-b').value;
+                                                if (!l || !r || l === r) {
+                                                    alert('Choose two different versions.');
+                                                    return;
+                                                }
+                                                window.location.href = tpl.replace('__L__', l).replace('__R__', r);
+                                            });
+                                        })();
+                                    </script>
+                                    @endpush
+                                @endif
                             </div>
                         </div>
                     @endif
