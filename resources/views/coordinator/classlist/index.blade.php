@@ -3,10 +3,21 @@
 @section('content')
 <div class="d-flex justify-content-center align-items-start" style="min-height: 80vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm p-5 w-100" style="max-width: 950px;">
-        <div class="mb-4" style="margin-bottom: 1.2rem !important;">
-            <h1 class="fw-bold mb-1" style="font-size:2.2rem; margin-bottom:0.1rem;">Class List</h1>
-            <div class="text-muted" style="font-size:1.1rem; margin-bottom:0;">View and manage students by semester</div>
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4" style="margin-bottom: 1.2rem !important;">
+            <div>
+                <h1 class="fw-bold mb-1" style="font-size:2.2rem; margin-bottom:0.1rem;">Class List</h1>
+                <div class="text-muted" style="font-size:1.1rem; margin-bottom:0;">View and manage students by semester</div>
+            </div>
+            <a href="{{ route('coordinator.classlist.import') }}" class="btn btn-outline-primary">
+                <i class="fas fa-file-upload me-1"></i>Import students
+            </a>
         </div>
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
         @if($activeTerm)
             <div class="mb-4">
                 <div class="alert alert-info">

@@ -7,9 +7,11 @@ use App\Models\Group;
 use App\Models\Offering;
 use App\Models\ProjectSubmission;
 use App\Models\SubmissionComment;
-use App\Services\NotificationService;
 use App\Services\ActivityLogService;
+use App\Services\DocumentPreviewService;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class CoordinatorProposalController extends Controller
 {
@@ -91,7 +93,69 @@ class CoordinatorProposalController extends Controller
 
         return view('coordinator.proposals.show', compact('proposal', 'studentGroup', 'offering', 'versionHistory', 'comments'));
     }
-    
+
+    public function preview($id)
+    {
+        $user = Auth::user();
+        $proposal = ProjectSubmission::findOrFail($id);
+
+        if (!$this->coordinatorCanReviewProposal($proposal, $user)) {
+            return redirect()->route('coordinator.proposals.index')->with('error', 'You can only review proposals from your coordinated offerings.');
+        }
+
+        if ($proposal->type !== 'proposal') {
+            return redirect()->route('coordinator.proposals.index')->with('error', 'Invalid proposal.');
+        }
+
+        if (!$proposal->file_path || !Storage::disk('public')->exists($proposal->file_path)) {
+            return redirect()->route('coordinator.proposals.show', $proposal->id)->with('error', 'The proposal file was not found.');
+        }
+
+        $student = $proposal->getStudentData();
+        $studentGroup = $student ? $student->groups()->first() : null;
+
+        return view('coordinator.proposals.preview', [
+            'panel' => DocumentPreviewService::panelForSubmission($proposal),
+            'studentGroup' => $studentGroup,
+            'backUrl' => route('coordinator.proposals.show', $proposal->id),
+        ]);
+    }
+
+    public function compareVersions($left, $right)
+    {
+        $user = Auth::user();
+        $a = ProjectSubmission::findOrFail($left);
+        $b = ProjectSubmission::findOrFail($right);
+
+        if ((int) $a->id === (int) $b->id) {
+            return redirect()->route('coordinator.proposals.index')->with('error', 'Choose two different versions.');
+        }
+
+        if ($a->student_id !== $b->student_id || $a->type !== 'proposal' || $b->type !== 'proposal') {
+            return redirect()->route('coordinator.proposals.index')->with('error', 'Invalid version pair.');
+        }
+
+        if (!$this->coordinatorCanReviewProposal($a, $user)) {
+            return redirect()->route('coordinator.proposals.index')->with('error', 'You can only review proposals from your coordinated offerings.');
+        }
+
+        foreach ([$a, $b] as $proposalRow) {
+            if (!$proposalRow->file_path || !Storage::disk('public')->exists($proposalRow->file_path)) {
+                return redirect()->route('coordinator.proposals.show', $a->id)->with('error', 'A version file was not found.');
+            }
+        }
+
+        $student = $a->getStudentData();
+        $studentGroup = $student ? $student->groups()->first() : null;
+
+        return view('coordinator.proposals.compare', [
+            'leftPanel' => DocumentPreviewService::panelForSubmission($a),
+            'rightPanel' => DocumentPreviewService::panelForSubmission($b),
+            'studentGroup' => $studentGroup,
+            'backUrl' => route('coordinator.proposals.show', $a->id),
+        ]);
+    }
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -269,5 +333,22 @@ class CoordinatorProposalController extends Controller
         ActivityLogService::logSubmissionCommentAdded($proposal, $user);
 
         return back()->with('success', 'Comment posted successfully.');
+    }
+
+    private function coordinatorCanReviewProposal(ProjectSubmission $proposal, $user): bool
+    {
+        $student = $proposal->getStudentData();
+        if (!$student) {
+            return false;
+        }
+
+        $studentGroup = $student->groups()->first();
+        if (!$studentGroup) {
+            return false;
+        }
+
+        $offering = $studentGroup->offering;
+
+        return $offering && (int) $offering->faculty_id === (int) $user->faculty_id;
     }
 }

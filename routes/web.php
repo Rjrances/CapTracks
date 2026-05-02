@@ -70,6 +70,8 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 
     // View Class List by Semester
     Route::get('/classlist', [CoordinatorController::class, 'classlist'])->name('classlist.index');
+    Route::get('/classlist/import', [CoordinatorController::class, 'importStudentsForm'])->name('classlist.import');
+    Route::post('/classlist/import', [CoordinatorController::class, 'importStudents'])->name('classlist.import.store');
     Route::get('/faculty-matrix', [CoordinatorController::class, 'facultyMatrix'])->name('faculty-matrix');
 
     // Defense Scheduling
@@ -105,6 +107,10 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 
     // Proposal Review
     Route::get('/proposals', [CoordinatorProposalController::class, 'index'])->name('proposals.index');
+    Route::get('/proposals/{id}/preview', [CoordinatorProposalController::class, 'preview'])->name('proposals.preview');
+    Route::get('/proposals/{left}/compare/{right}', [CoordinatorProposalController::class, 'compareVersions'])
+        ->whereNumber(['left', 'right'])
+        ->name('proposals.versions.compare');
     Route::get('/proposals/{id}', [CoordinatorProposalController::class, 'show'])->name('proposals.show');
     Route::put('/proposals/{id}', [CoordinatorProposalController::class, 'update'])->name('proposals.update');
     Route::post('/proposals/{id}/comments', [CoordinatorProposalController::class, 'storeComment'])->name('proposals.comments.store');

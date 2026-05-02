@@ -6,11 +6,64 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
                 <h2 class="fw-bold mb-0">
                     <i class="fas fa-history me-2"></i>Student Activity Log
                 </h2>
+                <form method="GET" action="{{ route('coordinator.activity-log') }}" class="d-flex flex-wrap align-items-end gap-2">
+                    <div>
+                        <label for="student_id" class="form-label small mb-0 text-muted">Member</label>
+                        <select name="student_id" id="student_id" class="form-select form-select-sm" style="min-width: 220px;">
+                            <option value="">All students</option>
+                            @foreach($studentsForFilter as $stu)
+                                <option value="{{ $stu->student_id }}" {{ (string) ($filterStudentId ?? '') === (string) $stu->student_id ? 'selected' : '' }}>
+                                    {{ $stu->name }} ({{ $stu->student_id }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="fas fa-filter me-1"></i>Apply
+                    </button>
+                    @if($filterStudentId)
+                        <a href="{{ route('coordinator.activity-log') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+                    @endif
+                </form>
             </div>
+
+            @if(isset($activityCountsByStudent) && $activityCountsByStudent->isNotEmpty())
+                <div class="card mb-4">
+                    <div class="card-header py-2">
+                        <small class="fw-semibold text-muted text-uppercase">Activity count by member (grading overview)</small>
+                    </div>
+                    <div class="card-body py-2">
+                        <div class="table-responsive mb-0">
+                            <table class="table table-sm table-striped mb-0 align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th class="text-end">Logged actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($studentsForFilter as $stu)
+                                        @php $cnt = $activityCountsByStudent[$stu->student_id] ?? 0; @endphp
+                                        <tr>
+                                            <td>
+                                                <a href="{{ route('coordinator.activity-log', ['student_id' => $stu->student_id]) }}" class="text-decoration-none">
+                                                    {{ $stu->name }}
+                                                </a>
+                                                <small class="text-muted ms-1">{{ $stu->student_id }}</small>
+                                            </td>
+                                            <td class="text-end">{{ $cnt }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             @if($activityLogs->isEmpty())
                 <div class="card">

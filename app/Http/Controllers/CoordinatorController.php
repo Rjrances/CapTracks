@@ -13,7 +13,9 @@ use App\Models\AdviserInvitation;
 use App\Models\GroupMilestone;
 use App\Models\GroupMilestoneTask;
 use App\Services\NotificationService;
+use App\Services\StudentImportService;
 use Illuminate\Support\Facades\DB;
+
 class CoordinatorController extends Controller
 {
     public function index()
@@ -120,6 +122,24 @@ class CoordinatorController extends Controller
         
         return view('coordinator.classlist.index', compact('students', 'activeTerm', 'courses', 'sortBy', 'sortDirection'));
     }
+
+    public function importStudentsForm(Request $request)
+    {
+        $user = auth()->user();
+        $offerings = Offering::where('faculty_id', $user->faculty_id)
+            ->with('academicTerm')
+            ->orderBy('subject_code')
+            ->get();
+        $selectedOfferingId = $request->get('offering_id');
+
+        return view('coordinator.classlist.import', compact('offerings', 'selectedOfferingId'));
+    }
+
+    public function importStudents(Request $request)
+    {
+        return app(StudentImportService::class)->importFromRequest($request, StudentImportService::MODE_COORDINATOR);
+    }
+
     public function groups(Request $request)
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
@@ -319,7 +339,7 @@ class CoordinatorController extends Controller
         ]);
     }
 
-    public function activityLog()
+    public function activityLog(Request $request)
     {
         $user = auth()->user();
 
@@ -330,12 +350,35 @@ class CoordinatorController extends Controller
             $query->whereIn('offerings.id', $coordinatedOfferingIds);
         })->pluck('student_id');
 
-        $activityLogs = ActivityLog::with('student')
-            ->whereIn('student_id', $studentIds)
-            ->latest()
-            ->paginate(20);
+        $filterStudentId = $request->get('student_id');
 
-        return view('coordinator.activity-log', compact('activityLogs'));
+        $activityQuery = ActivityLog::with('student')
+            ->whereIn('student_id', $studentIds);
+
+        if ($filterStudentId && $studentIds->contains($filterStudentId)) {
+            $activityQuery->where('student_id', $filterStudentId);
+        }
+
+        $activityLogs = $activityQuery->latest()
+            ->paginate(20)
+            ->appends($request->only('student_id'));
+
+        $studentsForFilter = Student::whereIn('student_id', $studentIds)
+            ->orderBy('name')
+            ->get(['student_id', 'name']);
+
+        $activityCountsByStudent = ActivityLog::query()
+            ->selectRaw('student_id, count(*) as log_count')
+            ->whereIn('student_id', $studentIds)
+            ->groupBy('student_id')
+            ->pluck('log_count', 'student_id');
+
+        return view('coordinator.activity-log', compact(
+            'activityLogs',
+            'studentsForFilter',
+            'activityCountsByStudent',
+            'filterStudentId'
+        ));
     }
 
     public function facultyMatrix()

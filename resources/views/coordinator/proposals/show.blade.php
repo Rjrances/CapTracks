@@ -60,13 +60,16 @@
                             @if($proposal->file_path)
                                 <div class="mb-4">
                                     <strong>Attached File:</strong>
-                                    <div class="mt-2">
-                                        <a href="{{ Storage::url($proposal->file_path) }}" 
-                                           target="_blank" 
-                                           class="btn btn-primary">
+                                    <div class="mt-2 d-flex flex-wrap align-items-center gap-2">
+                                        <a href="{{ route('coordinator.proposals.preview', $proposal->id) }}" class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-eye me-1"></i>Preview
+                                        </a>
+                                        <a href="{{ Storage::url($proposal->file_path) }}"
+                                           target="_blank"
+                                           class="btn btn-sm btn-primary">
                                             <i class="fas fa-download me-1"></i>Download File
                                         </a>
-                                        <small class="text-muted ms-2">
+                                        <small class="text-muted">
                                             {{ basename($proposal->file_path) }}
                                         </small>
                                     </div>
@@ -157,24 +160,82 @@
                             </div>
 
                             @if(isset($versionHistory) && $versionHistory->isNotEmpty())
+                                @php
+                                    $coordProposalCompareTemplate = str_replace(
+                                        ['11111111', '22222222'],
+                                        ['__L__', '__R__'],
+                                        route('coordinator.proposals.versions.compare', ['left' => 11111111, 'right' => 22222222])
+                                    );
+                                @endphp
                                 <div class="mb-3">
                                     <strong>Version History:</strong>
+                                    @if($versionHistory->count() >= 2)
+                                        <p class="small text-muted mb-2">Compare two versions side by side.</p>
+                                        <div class="row g-2 align-items-end mb-3">
+                                            <div class="col-5">
+                                                <label class="form-label small mb-0" for="coord-prop-cmp-a">Version A</label>
+                                                <select id="coord-prop-cmp-a" class="form-select form-select-sm">
+                                                    @foreach($versionHistory as $version)
+                                                        <option value="{{ $version->id }}">v{{ $version->version ?? 1 }} ({{ $version->submitted_at ? $version->submitted_at->format('M d, Y') : 'N/A' }})</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-5">
+                                                <label class="form-label small mb-0" for="coord-prop-cmp-b">Version B</label>
+                                                <select id="coord-prop-cmp-b" class="form-select form-select-sm">
+                                                    @foreach($versionHistory as $version)
+                                                        <option value="{{ $version->id }}">v{{ $version->version ?? 1 }} ({{ $version->submitted_at ? $version->submitted_at->format('M d, Y') : 'N/A' }})</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-2">
+                                                <button type="button" class="btn btn-sm btn-outline-primary w-100" id="coord-proposal-compare-go">
+                                                    <i class="fas fa-columns me-1"></i>Compare
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endif
                                     <div class="list-group mt-2">
                                         @foreach($versionHistory as $version)
-                                            <div class="list-group-item d-flex justify-content-between align-items-center @if($version->id === $proposal->id) active @endif">
-                                                <div>
-                                                    <div>v{{ $version->version ?? 1 }}</div>
-                                                    <small class="@if($version->id === $proposal->id) text-white-50 @else text-muted @endif">
-                                                        {{ $version->submitted_at ? $version->submitted_at->format('M d, Y') : 'N/A' }}
-                                                    </small>
+                                            <div class="list-group-item d-flex flex-column gap-2 @if($version->id === $proposal->id) active @endif">
+                                                <div class="d-flex justify-content-between align-items-center w-100">
+                                                    <div>
+                                                        <div>v{{ $version->version ?? 1 }}</div>
+                                                        <small class="@if($version->id === $proposal->id) text-white-50 @else text-muted @endif">
+                                                            {{ $version->submitted_at ? $version->submitted_at->format('M d, Y') : 'N/A' }}
+                                                        </small>
+                                                    </div>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="{{ route('coordinator.proposals.preview', $version->id) }}" class="btn @if($version->id === $proposal->id) btn-light @else btn-outline-info @endif">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <a href="{{ Storage::url($version->file_path) }}" target="_blank" class="btn @if($version->id === $proposal->id) btn-light @else btn-outline-primary @endif">
+                                                            <i class="fas fa-download"></i>
+                                                        </a>
+                                                    </div>
                                                 </div>
-                                                <a href="{{ Storage::url($version->file_path) }}" target="_blank" class="btn btn-sm @if($version->id === $proposal->id) btn-light @else btn-outline-primary @endif">
-                                                    <i class="fas fa-download"></i>
-                                                </a>
                                             </div>
                                         @endforeach
                                     </div>
                                 </div>
+                                @if($versionHistory->count() >= 2)
+                                    @push('scripts')
+                                    <script>
+                                        (function () {
+                                            var tpl = @json($coordProposalCompareTemplate);
+                                            document.getElementById('coord-proposal-compare-go').addEventListener('click', function () {
+                                                var l = document.getElementById('coord-prop-cmp-a').value;
+                                                var r = document.getElementById('coord-prop-cmp-b').value;
+                                                if (!l || !r || l === r) {
+                                                    alert('Choose two different versions.');
+                                                    return;
+                                                }
+                                                window.location.href = tpl.replace('__L__', l).replace('__R__', r);
+                                            });
+                                        })();
+                                    </script>
+                                    @endpush
+                                @endif
                             @endif
 
                             @if($proposal->created_at)
