@@ -202,6 +202,15 @@ class CoordinatorController extends Controller
     public function update(Request $request, $id)
     {
         $group = Group::with('offering')->findOrFail($id);
+
+        // Assign-adviser form only posts faculty_id; keep existing group name/description for validation.
+        if (!$request->has('name')) {
+            $request->merge([
+                'name' => $group->name,
+                'description' => $group->description,
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -213,7 +222,23 @@ class CoordinatorController extends Controller
                 return back()->withErrors(['faculty_id' => 'This faculty member coordinates this offering and cannot be assigned as an adviser due to conflict of interest.']);
             }
         }
+
+        $previousFacultyId = $group->faculty_id;
         $group->update($validated);
+        $group->refresh();
+
+        $newFacultyId = $group->faculty_id;
+        if ($newFacultyId && (string) $newFacultyId !== (string) $previousFacultyId) {
+            $assignedUser = User::where('faculty_id', $newFacultyId)->first();
+            if ($assignedUser) {
+                NotificationService::adviserAssignedByCoordinator(
+                    $assignedUser,
+                    $group,
+                    auth()->user()?->name
+                );
+            }
+        }
+
         $message = 'Group updated successfully!';
         if (isset($validated['faculty_id'])) {
             if ($validated['faculty_id']) {

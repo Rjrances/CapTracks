@@ -13,6 +13,7 @@ use App\Models\GroupMilestoneTask;
 use App\Models\Notification;
 use App\Models\TaskComment;
 use App\Services\ActivityLogService;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 
 class AdviserController extends Controller
@@ -374,6 +375,7 @@ class AdviserController extends Controller
             'parent_id' => $request->parent_id,
         ]);
         ActivityLogService::logTaskCommentAdded($groupMilestoneTask, $user, null);
+        NotificationService::adviserCommentOnMilestoneTask($user, $groupMilestoneTask);
 
         return back()->with('success', 'Comment posted successfully.');
     }

@@ -24,6 +24,15 @@
                     </small>
                 </div>
             @endif
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0 ps-3">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <form method="POST" action="{{ route('coordinator.groups.update', $group->id) }}">
                 @csrf
                 @method('PUT')
@@ -49,6 +58,9 @@
                     <div class="form-text">
                         Available faculty members who can serve as advisers for this group
                     </div>
+                    @error('faculty_id')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                    @enderror
                 </div>
                 <button type="submit" class="btn btn-primary">Assign Adviser</button>
                 <a href="{{ route('coordinator.groups.show', $group->id) }}" class="btn btn-secondary ms-2">Cancel</a>

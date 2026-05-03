@@ -1,5 +1,8 @@
 <?php
 namespace App\Services;
+use App\Models\Group;
+use App\Models\GroupMilestoneTask;
+use App\Models\Student;
 use App\Models\User;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Log;
@@ -107,6 +110,28 @@ class NotificationService
             return null;
         }
     }
+
+    /**
+     * Notify faculty when a coordinator assigns or changes the group's adviser (direct assignment).
+     */
+    public static function adviserAssignedByCoordinator(User $adviser, Group $group, ?string $coordinatorName = null, ?string $redirectUrl = null): ?Notification
+    {
+        $group->loadMissing('offering');
+        $label = $coordinatorName ? "{$coordinatorName}" : 'A coordinator';
+        $offeringText = $group->offering
+            ? " — {$group->offering->subject_code} ({$group->offering->subject_title})"
+            : '';
+        $description = "{$label} assigned you as adviser for “{$group->name}”{$offeringText}.";
+
+        return self::createSimpleNotification(
+            'Assigned as group adviser',
+            $description,
+            $adviser->role ?? 'teacher',
+            $redirectUrl ?? route('adviser.groups.details', $group),
+            $adviser->id
+        );
+    }
+
     public static function milestoneDeadlineApproaching(User $student, string $milestoneName, int $daysLeft, ?string $redirectUrl = null)
     {
         return self::createSimpleNotification(
@@ -190,6 +215,59 @@ class NotificationService
             $student->id
         );
     }
+
+    /**
+     * Notify each group member when their adviser comments on a milestone task thread.
+     */
+    public static function adviserCommentOnMilestoneTask(User $adviser, GroupMilestoneTask $task): void
+    {
+        $task->loadMissing([
+            'milestoneTask',
+            'groupMilestone.group.members.account',
+        ]);
+
+        $group = $task->groupMilestone?->group;
+        if (!$group) {
+            return;
+        }
+
+        $taskLabel = $task->milestoneTask->name ?? 'Milestone task';
+        $milestoneId = $task->groupMilestone->getKey();
+        $fragment = '#taskCommentsModal' . $task->getKey();
+        $redirectUrl = route('student.milestones.show', $milestoneId) . $fragment;
+
+        $title = 'Adviser commented on your milestone task';
+        $description = "{$adviser->name} commented on \"{$taskLabel}\" in {$group->name}.";
+
+        foreach ($group->members as $member) {
+            $userId = self::studentNotificationUserId($member);
+            if ($userId === null) {
+                continue;
+            }
+            self::createSimpleNotification($title, $description, 'student', $redirectUrl, $userId);
+        }
+    }
+
+    /**
+     * Match Notification::visibleToStudent targeting (student_accounts.id preferred).
+     */
+    private static function studentNotificationUserId(Student $student): ?int
+    {
+        $account = $student->relationLoaded('account')
+            ? $student->account
+            : $student->account()->first();
+
+        if ($account) {
+            return (int) $account->getKey();
+        }
+
+        if (is_numeric($student->student_id)) {
+            return (int) $student->student_id;
+        }
+
+        return null;
+    }
+
     public static function createSimpleNotification(string $title, string $description, string $role, ?string $redirectUrl = null, ?int $userId = null)
     {
         try {
