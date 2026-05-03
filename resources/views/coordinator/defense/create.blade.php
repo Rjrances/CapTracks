@@ -21,7 +21,7 @@
                 <i class="fas fa-info-circle me-2"></i>
                 <strong>Note:</strong> You can only create defense schedules for groups that belong to your coordinated offerings (capstone offer codes). 
                 The academic term is automatically set to the current active term.
-                <br><small class="text-muted">Available faculty for panel assignment: {{ $faculty->count() }} members</small>
+                <br><small class="text-muted">Panel Chair/Member lists exclude the group adviser and subject coordinator (they are added automatically).</small>
             </div>
             @if($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -153,9 +153,6 @@
                                             <div class="col-md-5">
                                                 <select name="panel_members[0][faculty_id]" class="form-control faculty-select" required>
                                                     <option value="">Select Faculty</option>
-                                                    @foreach($faculty as $member)
-                                                        <option value="{{ $member->id }}" {{ old('panel_members.0.faculty_id') == $member->id ? 'selected' : '' }}>{{ $member->name }} ({{ $member->faculty_id ?? 'N/A' }})</option>
-                                                    @endforeach
                                                 </select>
                                             </div>
                                             <div class="col-md-5">
@@ -172,9 +169,6 @@
                                             <div class="col-md-5">
                                                 <select name="panel_members[1][faculty_id]" class="form-control faculty-select" required>
                                                     <option value="">Select Faculty</option>
-                                                    @foreach($faculty as $member)
-                                                        <option value="{{ $member->id }}" {{ old('panel_members.1.faculty_id') == $member->id ? 'selected' : '' }}>{{ $member->name }} ({{ $member->faculty_id ?? 'N/A' }})</option>
-                                                    @endforeach
                                                 </select>
                                             </div>
                                             <div class="col-md-5">
@@ -214,23 +208,45 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentAvailableFaculty = [];
     let latestDoubleBookingRequestId = 0;
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+    const panelFacultyByGroupId = @json($panelFacultyByGroupId);
+    const initialPanelPicks = @json([
+        old('panel_members.0.faculty_id'),
+        old('panel_members.1.faculty_id'),
+    ]);
+    const groupSelectEl = document.getElementById('group_id');
+    if (groupSelectEl) {
+        groupSelectEl.addEventListener('change', function() {
+            const groupId = this.value;
+            if (groupId) {
+                loadFacultyForGroup(groupId);
+            } else {
+                clearFacultyOptions();
+            }
+        });
+    }
     loadInitialFaculty();
-    document.getElementById('group_id').addEventListener('change', function() {
-        const groupId = this.value;
-        if (groupId) {
-            loadFacultyForGroup(groupId);
+    function loadInitialFaculty() {
+        const groupSelect = document.getElementById('group_id');
+        const gid = groupSelect ? groupSelect.value : '';
+        if (gid) {
+            loadFacultyForGroup(gid);
         } else {
             clearFacultyOptions();
         }
-    });
-    function loadInitialFaculty() {
-        const facultyData = @json($faculty);
-        if (facultyData && facultyData.length > 0) {
-            currentAvailableFaculty = facultyData;
-            updateFacultyOptions(facultyData);
-        }
     }
     function loadFacultyForGroup(groupId) {
+        const base = panelFacultyByGroupId[groupId] || [];
+        const date = document.getElementById('date').value || '';
+        const startTime = document.getElementById('start_time').value || '';
+        const endTime = document.getElementById('end_time').value || '';
+        const room = document.getElementById('room').value || '';
+
+        if (!date || !startTime || !endTime || !room) {
+            currentAvailableFaculty = base;
+            updateFacultyOptions(base);
+            return Promise.resolve(base);
+        }
+
         return fetch('{{ route("coordinator.defense.available-faculty") }}', {
             method: 'POST',
             headers: {
@@ -239,36 +255,41 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({
                 group_id: groupId,
-                date: document.getElementById('date').value || '',
-                start_time: document.getElementById('start_time').value || '',
-                end_time: document.getElementById('end_time').value || '',
-                room: document.getElementById('room').value || ''
+                date: date,
+                start_time: startTime,
+                end_time: endTime,
+                room: room
             })
         })
         .then(response => response.json())
         .then(data => {
-            currentAvailableFaculty = data.availableFaculty || [];
-            updateFacultyOptions(data.availableFaculty);
-            return data.availableFaculty || [];
+            const list = data.availableFaculty || base;
+            currentAvailableFaculty = list;
+            updateFacultyOptions(list);
+            return list;
         })
         .catch(error => {
             console.error('Error loading faculty:', error);
-            currentAvailableFaculty = [];
-            return [];
+            currentAvailableFaculty = base;
+            updateFacultyOptions(base);
+            return base;
         });
     }
     function updateFacultyOptions(faculty) {
         const facultySelects = document.querySelectorAll('.faculty-select');
-        facultySelects.forEach(select => {
-            const currentValue = select.value;
+        facultySelects.forEach((select, index) => {
+            let currentValue = select.value;
+            if (!currentValue && initialPanelPicks[index] != null && initialPanelPicks[index] !== '') {
+                currentValue = String(initialPanelPicks[index]);
+            }
             select.innerHTML = '<option value="">Select Faculty</option>';
             faculty.forEach(member => {
                 const option = document.createElement('option');
                 option.value = member.id;
-                option.textContent = `${member.name} (${member.faculty_id || 'N/A'})`;
+                option.textContent = `${member.name} (${member.faculty_id != null ? member.faculty_id : 'N/A'})`;
                 select.appendChild(option);
             });
-            if (currentValue && faculty.some(f => f.id == currentValue)) {
+            if (currentValue && faculty.some(f => String(f.id) === String(currentValue))) {
                 select.value = currentValue;
             }
         });

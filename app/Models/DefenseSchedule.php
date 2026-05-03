@@ -60,6 +60,23 @@ class DefenseSchedule extends Model
             default => 'Unknown Stage'
         };
     }
+
+    /**
+     * Label for UI: linked defense request type when present, otherwise manual schedule stage.
+     */
+    public function getDefenseTypeLabelAttribute(): string
+    {
+        if ($this->defense_request_id) {
+            $request = $this->relationLoaded('defenseRequest')
+                ? $this->defenseRequest
+                : $this->defenseRequest()->first();
+            if ($request) {
+                return $request->defense_type_label;
+            }
+        }
+
+        return $this->stage_label;
+    }
     public function getDurationAttribute()
     {
         if ($this->start_at && $this->end_at) {
@@ -92,5 +109,23 @@ class DefenseSchedule extends Model
     public function isCancelled()
     {
         return $this->status === 'cancelled';
+    }
+
+    /** Bootstrap background variant for status badges (primary, success, …). */
+    public function getStatusBadgeVariantAttribute(): string
+    {
+        return match ($this->status) {
+            'scheduled' => 'primary',
+            'in_progress' => 'warning',
+            'completed' => 'success',
+            'cancelled' => 'danger',
+            default => 'secondary',
+        };
+    }
+
+    /** Human-readable workflow status for lists and detail views. */
+    public function getStatusLabelAttribute(): string
+    {
+        return ucfirst(str_replace('_', ' ', (string) $this->status));
     }
 }

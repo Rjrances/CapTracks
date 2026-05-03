@@ -14,7 +14,7 @@ This guide uses **easy words**. It lists **every public and private function** i
 | `CoordinatorDashboardController.php` | 1 | 2 |
 | `CoordinatorController.php` | 22 | 0 |
 | `CoordinatorProposalController.php` | 9 | 1 |
-| `Coordinator/DefenseScheduleController.php` | 15 | 9 |
+| `Coordinator/DefenseScheduleController.php` | 15 | 11 |
 | `MilestoneTemplateController.php` | 7 | 0 |
 | `CalendarController.php` (only the coordinator screen) | 1 | 0 |
 | `RatingSheetController.php` (only coordinator rating screen + shared helper) | 1 (+ 2 adviser-only public noted) | 1 |
@@ -25,7 +25,7 @@ Some coordinator actions call **`app/Services/NotificationService.php`**. For de
 
 | Method | Called from | Purpose |
 |--------|-------------|---------|
-| **`adviserAssignedByCoordinator`** | `CoordinatorController@update` | When **`faculty_id`** changes to a new adviser, sends that faculty member an in-app notification with a link to **`adviser.groups.details`**. |
+| **`adviserAssignedByCoordinator`** | `CoordinatorController@update` | New/changed adviser gets an in-app notice (link to that group for the adviser). |
 
 Other `NotificationService` methods are for students, advisers, chairperson, etc.—see the service file if you need them.
 
@@ -108,15 +108,12 @@ Other `NotificationService` methods are for students, advisers, chairperson, etc
 #### `assignAdviser`
 
 - **Simple:** Page to pick an adviser for the group.
-- **Details:** Shows faculty who could advise; **does not** show someone who already **runs that same class offering** as coordinator (conflict rule).
-- **View (`resources/views/coordinator/groups/assign_adviser.blade.php`):** Form POSTs to **`coordinator.groups.update`** with **`faculty_id` only** (plus CSRF). It shows **all validation errors** in an alert and **`faculty_id`** errors under the dropdown.
+- **Details:** Lists faculty who can advise—not someone who already **coordinates that same offering**. The form only sends **`faculty_id`** to **`groups.update`** and shows errors on the page.
 
 #### `update`
 
 - **Simple:** Saves edits to the group; can set or clear the adviser.
-- **Details:** Blocks picking an adviser who is the **subject coordinator** for that offering (same person cannot be both).
-- **Assign-adviser vs edit:** The **Edit group** form sends `name` (and optional `description`). The **Assign adviser** form does **not** send those fields. Before validating, if the request has **no** `name` key, the controller **fills `name` and `description` from the existing group row**. That way adviser-only saves still pass validation (`name` is required) without repeating hidden fields in the Blade form.
-- **Notify new adviser:** After a successful save, if **`faculty_id` changed** to a **new non-empty** value, **`NotificationService::adviserAssignedByCoordinator`** (in **`app/Services/NotificationService.php`**) sends an **in-app notification** to that faculty user’s **`users.id`** (same pattern as student adviser invitations). Link goes to **`adviser.groups.details`** for that group. Same adviser re-selected → **no** extra notification.
+- **Details:** Blocks assigning the **subject coordinator** of that offering as adviser. If **`name`** is missing (assign page), it copies the group’s current **name** / **description** so validation passes. If **`faculty_id` changed** to a new person, **`NotificationService::adviserAssignedByCoordinator`** notifies them; same person again → no new notice.
 
 #### `destroy`
 
@@ -126,6 +123,7 @@ Other `NotificationService` methods are for students, advisers, chairperson, etc
 #### `groupMilestones`
 
 - **Simple:** Shows milestones for that group (overview style).
+- **Details:** Quick Actions on the page: **View Group Details** and **Manage Adviser** only.
 
 #### `notifications`
 
@@ -174,7 +172,7 @@ Other `NotificationService` methods are for students, advisers, chairperson, etc
 #### `index`
 
 - **Simple:** Lists proposals grouped by class offering you coordinate.
-- **Details:** Only offerings that match capstone title/code rules in code.
+- **Details:** Only capstone offerings you coordinate (title/code rules in code). Each card is one offering: **offer code** badge, course title, group count.
 
 #### `show`
 
@@ -229,18 +227,18 @@ Other `NotificationService` methods are for students, advisers, chairperson, etc
 
 #### `index`
 
-- **Simple:** Main defense screen: requests + already scheduled defenses + small stats.
-- **Details:** Cleans up stuck request rows; filters requests; hides requests that already have a live schedule; can filter schedules by offering.
+- **Simple:** Main defense screen: requests + defense schedules + stats.
+- **Details:** Cleans up stuck request rows and hides requests that already have a live schedule. Filters are **`defense_type`** and **`search`** only (both narrow the requests list and the schedules table; defense type matches request type **or** manual **`stage`**). Optional **`offering`** query param if used. Eager-loads **`defenseRequest`**. Schedule rows show **`DefenseSchedule::status_label`** / **`status_badge_variant`**. Top stats for schedules use **all** your offerings’ schedules (not narrowed by filters): **active** count, **completed** subtext on the green card, **this week** = active defenses in the current week.
 
 #### `create`
 
 - **Simple:** Form to create a defense schedule **without** starting from a student request.
-- **Details:** Only groups that do not already have a defense schedule attached.
+- **Details:** Only groups that do not already have a defense schedule attached. Passes **`panelFacultyByGroupId`**: for each group, the list of people allowed in the **Chair/Member** dropdowns (same rules as the server-side pool—see **`panelChairMemberCandidates`**). The page fills those selects from that JSON **before** date, time, and room are all set; once they are set, the browser calls **`getAvailableFaculty`** to refresh the list (busy people removed, lighter loads first). That way the adviser and subject coordinator never appear as Chair/Member even when the slot is incomplete.
 
 #### `store`
 
 - **Simple:** Saves a new defense: date, time, room, stage, and **two** hand-picked panel slots (one chair, one member).
-- **Details:** Checks active term, your offerings, no double booking for room, no second defense same day for that group, panelists not busy elsewhere; adds adviser and subject coordinator onto the panel automatically when possible; sends notifications.
+- **Details:** Checks active term, your offerings, no double booking for room, no second defense same day for that group, panelists not busy elsewhere; rejects Chair/Member picks that are the **group adviser** or **subject coordinator** (**`panelMembersMustNotIncludeAdviserOrCoordinator`**); adds adviser and subject coordinator onto the panel automatically when possible; sends notifications.
 
 #### `show`
 
@@ -253,6 +251,7 @@ Other `NotificationService` methods are for students, advisers, chairperson, etc
 #### `update`
 
 - **Simple:** Saves changes; rebuilds panel rows the same way as `store` (two picks + auto adviser + auto coordinator).
+- **Details:** Same rule as **`store`**: Chair/Member cannot be the group adviser or subject coordinator (**`panelMembersMustNotIncludeAdviserOrCoordinator`**).
 
 #### `destroy`
 
@@ -261,7 +260,7 @@ Other `NotificationService` methods are for students, advisers, chairperson, etc
 #### `getAvailableFaculty`
 
 - **Simple:** Returns JSON list of teachers who **can** be picked for a time slot (for auto-fill in the browser).
-- **Details:** Marks if the **room** is already taken; removes busy people; removes adviser and subject coordinator from the pool; sorts people who have **fewer** panel duties first.
+- **Details:** Starts from **`panelChairMemberCandidates`** for that group, then drops anyone already tied up in another overlapping defense; marks if the **room** is double-booked; sorts people who have **fewer** panel duties in the active term first (then name).
 
 #### `createSchedule`
 
@@ -304,6 +303,15 @@ Other `NotificationService` methods are for students, advisers, chairperson, etc
 #### `validatePanelComposition`
 
 - **Simple:** Checks the two manual picks are exactly **one chair** and **one member**; returns an error text if not.
+
+#### `panelChairMemberCandidates`
+
+- **Simple:** Builds the **Chair/Member-only** pool for one group (used by **`create`** JSON, **`getAvailableFaculty`**, and server checks).
+- **Details:** Teachers/coordinators/chairperson/panelist/adviser roles, filtered to the active semester when a term exists; **excludes** anyone whose **`faculty_id`** matches the group’s **adviser** or the offering’s **subject coordinator**; **`unique('faculty_id')`** so duplicates don’t appear.
+
+#### `panelMembersMustNotIncludeAdviserOrCoordinator`
+
+- **Simple:** After **`store`** / **`update`** validation, blocks Chair/Member **`users.id`** values that belong to the adviser or subject coordinator (defense in depth if someone tampers with the form).
 
 #### `sendDefenseScheduleNotifications`
 
@@ -417,7 +425,7 @@ The route file may name **`editSchedule`** and **`updateSchedule`** for editing 
 - **CoordinatorDashboardController:** 1 public, 2 private  
 - **CoordinatorController:** 22 public, 0 private  
 - **CoordinatorProposalController:** 9 public, 1 private  
-- **DefenseScheduleController:** 15 public, 9 private  
+- **DefenseScheduleController:** 15 public, 11 private  
 - **MilestoneTemplateController:** 7 public, 0 private  
 - **CalendarController:** 1 public for coordinator (`coordinatorCalendar`), 0 private  
 - **RatingSheetController:** 1 public for coordinator; 2 other public for advisers; 1 private helper  

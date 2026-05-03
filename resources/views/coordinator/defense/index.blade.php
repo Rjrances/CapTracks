@@ -67,8 +67,9 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <h4 class="mb-0">{{ $stats['scheduled_defenses'] }}</h4>
-                                    <p class="mb-0">Scheduled Defenses</p>
+                                    <h4 class="mb-0">{{ $stats['active_defenses'] }}</h4>
+                                    <p class="mb-0">Active defenses</p>
+                                    <small class="opacity-75">{{ $stats['completed_defenses'] }} completed</small>
                                 </div>
                                 <div class="align-self-center">
                                     <i class="fas fa-calendar fa-2x"></i>
@@ -83,7 +84,7 @@
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <h4 class="mb-0">{{ $stats['this_week_defenses'] }}</h4>
-                                    <p class="mb-0">This Week</p>
+                                    <p class="mb-0">This Week <span class="small fw-normal">(active)</span></p>
                                 </div>
                                 <div class="align-self-center">
                                     <i class="fas fa-calendar-week fa-2x"></i>
@@ -104,17 +105,6 @@
                     <form method="GET" action="{{ route('coordinator.defense.index') }}" id="filterForm">
                         <div class="row">
                             <div class="col-md-3">
-                                <label for="status" class="form-label">Status</label>
-                                <select name="status" id="status" class="form-select form-select-sm">
-                                    <option value="">All Statuses</option>
-                                    @foreach($filterOptions['statuses'] as $status)
-                                        <option value="{{ $status }}" {{ $requestFilters['status'] == $status ? 'selected' : '' }}>
-                                            {{ ucfirst($status) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
                                 <label for="defense_type" class="form-label">Defense Type</label>
                                 <select name="defense_type" id="defense_type" class="form-select form-select-sm">
                                     <option value="">All Types</option>
@@ -125,12 +115,12 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-5">
                                 <label for="search" class="form-label">Search Groups</label>
                                 <input type="text" name="search" id="search" class="form-control form-control-sm" 
                                        placeholder="Search by group name..." value="{{ $requestFilters['search'] ?? '' }}">
                             </div>
-                            <div class="col-md-2 d-flex align-items-end">
+                            <div class="col-md-4 d-flex align-items-end">
                                 <button type="submit" class="btn btn-primary btn-sm me-2">
                                     <i class="fas fa-search me-1"></i>Apply
                                 </button>
@@ -279,6 +269,7 @@
                                     <tr>
                                         <th>Group</th>
                                         <th>Defense Type</th>
+                                        <th>Status</th>
                                         <th>Date & Time</th>
                                         <th>Room</th>
                                         <th>Panel Members</th>
@@ -295,7 +286,10 @@
                                                 </small>
                                             </td>
                                             <td>
-                                                <span class="badge bg-primary">{{ ucfirst(str_replace('_', ' ', $schedule->defense_type)) }}</span>
+                                                <span class="badge bg-primary">{{ $schedule->defense_type_label }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ $schedule->status_badge_variant }}">{{ $schedule->status_label }}</span>
                                             </td>
                                             <td>
                                                 <div>{{ $schedule->start_at->format('M d, Y') }}</div>

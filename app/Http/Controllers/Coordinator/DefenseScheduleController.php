@@ -11,6 +11,7 @@ use App\Models\AcademicTerm;
 use App\Models\Offering;
 use App\Services\NotificationService;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 class DefenseScheduleController extends Controller
 {
@@ -38,11 +39,10 @@ class DefenseScheduleController extends Controller
             ->whereDoesntHave('defenseSchedule')
             ->update(['status' => 'approved']);
         
-        $requestFilters = $request->only(['status', 'defense_type', 'search']);
+        $requestFilters = $request->only(['defense_type', 'search']);
         $requestFilters = array_merge([
-            'status' => '',
             'defense_type' => '',
-            'search' => ''
+            'search' => '',
         ], $requestFilters);
         
         $defenseRequestsQuery = DefenseRequest::with(['group.members', 'group.adviser', 'group.defenseSchedules'])
@@ -51,9 +51,6 @@ class DefenseScheduleController extends Controller
             })
             ->orderBy('created_at', 'desc');
             
-        if (!empty($requestFilters['status'])) {
-            $defenseRequestsQuery->where('status', $requestFilters['status']);
-        }
         if (!empty($requestFilters['defense_type'])) {
             $defenseRequestsQuery->where('defense_type', $requestFilters['defense_type']);
         }
@@ -69,34 +66,70 @@ class DefenseScheduleController extends Controller
                 ->isEmpty();
         })->values();
         
-        $scheduleQuery = DefenseSchedule::with(['group', 'academicTerm', 'defensePanels.faculty'])
+        $scheduleQuery = DefenseSchedule::with(['group', 'academicTerm', 'defensePanels.faculty', 'defenseRequest'])
             ->whereHas('group', function($q) use ($coordinatorOfferings) {
                 $q->whereIn('offering_id', $coordinatorOfferings);
             })
             ->orderBy('start_at', 'asc');
+
+        if (!empty($requestFilters['defense_type'])) {
+            $defenseType = $requestFilters['defense_type'];
+            $stageForManual = match ($defenseType) {
+                'proposal' => 'proposal',
+                '60_percent' => '60',
+                '100_percent' => '100',
+                default => null,
+            };
+            $scheduleQuery->where(function ($q) use ($defenseType, $stageForManual) {
+                $q->whereHas('defenseRequest', function ($rq) use ($defenseType) {
+                    $rq->where('defense_type', $defenseType);
+                });
+                if ($stageForManual !== null) {
+                    $q->orWhere(function ($sub) use ($stageForManual) {
+                        $sub->whereNull('defense_request_id')
+                            ->where('stage', $stageForManual);
+                    });
+                }
+            });
+        }
+
+        if (!empty($requestFilters['search'])) {
+            $search = $requestFilters['search'];
+            $scheduleQuery->whereHas('group', function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%');
+            });
+        }
             
         if ($request->filled('offering')) {
             $scheduleQuery->whereHas('group.offering', function ($q) use ($request, $coordinatorOfferings) {
                 $q->where('id', $request->offering)->whereIn('id', $coordinatorOfferings);
             });
         }
-        
+
         $defenseSchedules = $scheduleQuery->get();
-        
+
+        $allCoordinatorSchedules = DefenseSchedule::query()
+            ->whereHas('group', function ($q) use ($coordinatorOfferings) {
+                $q->whereIn('offering_id', $coordinatorOfferings);
+            })
+            ->get();
+
         $stats = [
             'pending_requests' => $defenseRequests->where('status', 'pending')->count(),
             'approved_requests' => $defenseRequests->where('status', 'approved')->count(),
-            'scheduled_defenses' => $defenseSchedules->count(),
-            'this_week_defenses' => $defenseSchedules->filter(function($schedule) {
-                return $schedule->start_at && $schedule->start_at->isCurrentWeek();
-            })->count()
+            'active_defenses' => $allCoordinatorSchedules->whereIn('status', ['scheduled', 'in_progress'])->count(),
+            'completed_defenses' => $allCoordinatorSchedules->where('status', 'completed')->count(),
+            'this_week_defenses' => $allCoordinatorSchedules->filter(function ($schedule) {
+                return $schedule->start_at
+                    && $schedule->start_at->isCurrentWeek()
+                    && in_array($schedule->status, ['scheduled', 'in_progress'], true);
+            })->count(),
         ];
         
         $academicTerms = AcademicTerm::orderBy('school_year', 'desc')->orderBy('semester', 'desc')->get();
         $offerings = Offering::whereIn('id', $coordinatorOfferings)->orderBy('subject_title')->get();
         $filterOptions = [
-            'statuses' => ['pending', 'approved', 'rejected', 'scheduled'],
-            'defense_types' => ['proposal', '60_percent', '100_percent']
+            'defense_types' => ['proposal', '60_percent', '100_percent'],
         ];
         
         return view('coordinator.defense.index', compact(
@@ -112,15 +145,21 @@ class DefenseScheduleController extends Controller
             ->whereIn('offering_id', $coordinatorOfferings)
             ->whereDoesntHave('defenseSchedules')
             ->get();
-        $faculty = User::whereIn('role', ['teacher', 'chairperson', 'coordinator', 'adviser', 'panelist'])
-            ->when($activeTerm, function($query) use ($activeTerm) {
-                return $query->where('semester', $activeTerm->semester);
-            })
-            ->orderBy('name')
-            ->get()
-            ->unique('faculty_id')
-            ->values();
-        return view('coordinator.defense.create', compact('groups', 'faculty', 'activeTerm'));
+
+        $panelFacultyByGroupId = $groups->mapWithKeys(function (Group $group) {
+            return [
+                $group->id => $this->panelChairMemberCandidates($group)
+                    ->map(fn (User $u) => [
+                        'id' => $u->id,
+                        'name' => $u->name,
+                        'faculty_id' => $u->faculty_id,
+                    ])
+                    ->values()
+                    ->all(),
+            ];
+        });
+
+        return view('coordinator.defense.create', compact('groups', 'activeTerm', 'panelFacultyByGroupId'));
     }
     public function store(Request $request)
     {
@@ -145,9 +184,14 @@ class DefenseScheduleController extends Controller
         }
         $validated['academic_term_id'] = $activeTerm->id;
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
-        $group = Group::findOrFail($validated['group_id']);
+        $group = Group::with('offering')->findOrFail($validated['group_id']);
         if (!in_array($group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only create defense schedules for groups in your offerings.');
+        }
+
+        $ineligiblePick = $this->panelMembersMustNotIncludeAdviserOrCoordinator($group, $validated['panel_members']);
+        if ($ineligiblePick) {
+            return back()->withErrors(['panel_members' => $ineligiblePick])->withInput();
         }
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
@@ -269,9 +313,14 @@ class DefenseScheduleController extends Controller
         }
         $schedule = DefenseSchedule::findOrFail($id);
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
-        $group = Group::findOrFail($validated['group_id']);
+        $group = Group::with('offering')->findOrFail($validated['group_id']);
         if (!in_array($group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only edit defense schedules for groups in your offerings.');
+        }
+
+        $ineligiblePick = $this->panelMembersMustNotIncludeAdviserOrCoordinator($group, $validated['panel_members']);
+        if ($ineligiblePick) {
+            return back()->withErrors(['panel_members' => $ineligiblePick])->withInput();
         }
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
@@ -395,20 +444,8 @@ class DefenseScheduleController extends Controller
         $conflict = $this->checkDoubleBooking($startAt, $endAt, $request->room);
         $conflictingFacultyIds = $this->getConflictingFacultyIds($startAt, $endAt);
 
-        $availableFaculty = User::whereIn('role', ['teacher', 'chairperson', 'panelist', 'adviser', 'coordinator'])
-            ->when($activeTerm, function ($query) use ($activeTerm) {
-                return $query->where('semester', $activeTerm->semester);
-            })
-            ->when($group->faculty_id, function ($query) use ($group) {
-                return $query->where('faculty_id', '!=', $group->faculty_id);
-            })
-            ->when($group->offering && $group->offering->faculty_id, function ($query) use ($group) {
-                return $query->where('faculty_id', '!=', $group->offering->faculty_id);
-            })
+        $availableFaculty = $this->panelChairMemberCandidates($group)
             ->whereNotIn('id', $conflictingFacultyIds)
-            ->orderBy('name')
-            ->get()
-            ->unique('faculty_id')
             ->values();
 
         $assignmentCounts = DefensePanel::select('faculty_id', DB::raw('COUNT(*) as assignment_count'))
@@ -526,6 +563,52 @@ class DefenseScheduleController extends Controller
 
         return null;
     }
+
+    /**
+     * Chair/Member dropdown pool only — adviser and subject coordinator are appended in store()/update().
+     */
+    private function panelChairMemberCandidates(Group $group): Collection
+    {
+        $group->loadMissing('offering');
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+
+        return User::query()
+            ->whereIn('role', ['teacher', 'chairperson', 'panelist', 'adviser', 'coordinator'])
+            ->when($activeTerm, fn ($q) => $q->where('semester', $activeTerm->semester))
+            ->when($group->faculty_id, fn ($q) => $q->where('faculty_id', '!=', $group->faculty_id))
+            ->when($group->offering && $group->offering->faculty_id, fn ($q) => $q->where('faculty_id', '!=', $group->offering->faculty_id))
+            ->orderBy('name')
+            ->get()
+            ->unique('faculty_id')
+            ->values();
+    }
+
+    private function panelMembersMustNotIncludeAdviserOrCoordinator(Group $group, array $panelMembers): ?string
+    {
+        $group->loadMissing('offering');
+        $blockedIds = [];
+        if ($group->faculty_id) {
+            $adviserUser = User::where('faculty_id', $group->faculty_id)->first();
+            if ($adviserUser) {
+                $blockedIds[] = (int) $adviserUser->id;
+            }
+        }
+        if ($group->offering && $group->offering->faculty_id) {
+            $coordinatorUser = User::where('faculty_id', $group->offering->faculty_id)->first();
+            if ($coordinatorUser) {
+                $blockedIds[] = (int) $coordinatorUser->id;
+            }
+        }
+        foreach ($panelMembers as $row) {
+            $pickId = (int) ($row['faculty_id'] ?? 0);
+            if ($pickId !== 0 && in_array($pickId, $blockedIds, true)) {
+                return 'The group adviser and subject coordinator cannot be Chair or Member — they are added to the panel automatically.';
+            }
+        }
+
+        return null;
+    }
+
     private function sendDefenseScheduleNotifications($schedule)
     {
         $group = $schedule->group;

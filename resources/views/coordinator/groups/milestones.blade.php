@@ -189,19 +189,14 @@
         </div>
         <div class="card-body">
             <div class="row g-2">
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <a href="{{ route('coordinator.groups.show', $group->id) }}" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-chart-bar me-2"></i>View Group Details
+                        <i class="fas fa-users me-2"></i>View Group Details
                     </a>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <a href="{{ route('coordinator.groups.assignAdviser', $group->id) }}" class="btn btn-outline-secondary w-100">
                         <i class="fas fa-user-tie me-2"></i>Manage Adviser
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="{{ route('coordinator.groups.show', $group->id) }}" class="btn btn-outline-info w-100">
-                        <i class="fas fa-users me-2"></i>View Group Details
                     </a>
                 </div>
             </div>

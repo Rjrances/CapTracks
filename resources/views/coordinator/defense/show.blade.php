@@ -66,16 +66,7 @@
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-semibold text-muted">Status</label>
                                     <div>
-                                        @php
-                                            $scheduleStatusClass = match($defenseSchedule->status) {
-                                                'scheduled' => 'primary',
-                                                'in_progress' => 'warning',
-                                                'completed' => 'success',
-                                                'cancelled' => 'danger',
-                                                default => 'secondary'
-                                            };
-                                        @endphp
-                                        <span class="badge bg-{{ $scheduleStatusClass }} fs-6">{{ ucfirst(str_replace('_', ' ', $defenseSchedule->status)) }}</span>
+                                        <span class="badge bg-{{ $defenseSchedule->status_badge_variant }} fs-6">{{ $defenseSchedule->status_label }}</span>
                                     </div>
                                 </div>
                             </div>

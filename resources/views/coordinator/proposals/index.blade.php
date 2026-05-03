@@ -38,12 +38,15 @@
                         <div class="card-header bg-primary text-white">
                             <div class="row align-items-center">
                                 <div class="col-md-8">
-                                    <h5 class="mb-0">
-                                        <i class="fas fa-book me-2"></i>
-                                        {{ $data['offering']->subject_code }} - {{ $data['offering']->subject_title }}
+                                    <h5 class="mb-0 d-flex flex-wrap align-items-center gap-2">
+                                        <i class="fas fa-book"></i>
+                                        @if($data['offering']->offer_code)
+                                            <span class="badge bg-light text-primary fw-semibold">{{ $data['offering']->offer_code }}</span>
+                                        @endif
+                                        <span>{{ $data['offering']->subject_code }} — {{ $data['offering']->subject_title }}</span>
                                     </h5>
                                     <small class="opacity-75">
-                                        {{ $data['offering']->offer_code }} - {{ $data['total_groups'] }} groups
+                                        {{ $data['total_groups'] }} {{ Str::plural('group', $data['total_groups']) }} in this offering
                                     </small>
                                 </div>
                                 <div class="col-md-4 text-end">
