@@ -1,19 +1,26 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Models\DefenseSchedule;
 use App\Models\Group;
 use App\Models\AcademicTerm;
 use Illuminate\Support\Facades\Auth;
+
 class CalendarController extends Controller
 {
     public function coordinatorCalendar()
     {
+        $user = Auth::user();
         $activeTerm = AcademicTerm::where('is_active', true)->first();
 
         $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'group.offering.teacher', 'panelists'])
             ->whereIn('status', ['scheduled'])
             ->when($activeTerm, function ($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->whereHas('group.offering', function ($query) use ($user) {
+                $query->where('teacher_id', $user->id);
             })
             ->orderBy('start_at')
             ->get();
@@ -45,6 +52,7 @@ class CalendarController extends Controller
         }
         return view('calendar.coordinator', compact('defenses', 'calendarEvents'));
     }
+
     public function adviserCalendar()
     {
         $user = Auth::user();
@@ -82,6 +90,7 @@ class CalendarController extends Controller
         }
         return view('calendar.adviser', compact('defenses', 'calendarEvents'));
     }
+
     public function studentCalendar()
     {
         if (Auth::guard('student')->check()) {
@@ -132,6 +141,7 @@ class CalendarController extends Controller
         }
         return view('calendar.student', compact('defenses', 'group', 'calendarEvents'));
     }
+
     public function chairpersonCalendar()
     {
         $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
