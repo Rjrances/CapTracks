@@ -80,6 +80,11 @@
                             <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-outline-light btn-sm">
                                 <i class="fas fa-eye"></i> Group Details
                             </a>
+                            @if($userRole === 'panel' && isset($group->defense_schedule) && $group->defense_schedule)
+                                <a href="{{ route('adviser.rating-sheets.show', $group->defense_schedule) }}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-clipboard-check"></i> Rating Sheet
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>
