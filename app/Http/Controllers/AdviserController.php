@@ -44,7 +44,8 @@ class AdviserController extends Controller
         });
         $panelGroups = Group::with(['academicTerm', 'defenseSchedules.defensePanels'])
             ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-                $query->where('faculty_id', $user->faculty_id);
+                // defense_panels.faculty_id references users.id
+                $query->where('faculty_id', $user->id);
             })
             ->get();
         $summaryStats = [
@@ -289,7 +290,7 @@ class AdviserController extends Controller
             return $group;
         });
         $panelGroupsCount = Group::whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->faculty_id);
+            $query->where('faculty_id', $user->id);
         })->count();
         $workspaceStats = [
             'total_adviser_groups' => $allGroups->count(),
@@ -409,7 +410,7 @@ class AdviserController extends Controller
             'defenseSchedules.defensePanels'
         ])
         ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->faculty_id);
+            $query->where('faculty_id', $user->id);
         })
         ->get()
         ->map(function ($group) use ($user) {
@@ -457,7 +458,7 @@ class AdviserController extends Controller
             'defenseSchedules.defensePanels'
         ])
         ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->faculty_id);
+            $query->where('faculty_id', $user->id);
         })
         ->get()
         ->map(function ($group) use ($user) {
