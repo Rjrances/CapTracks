@@ -2,6 +2,16 @@
 
 Students manage group formations, submit deliverables, track capstone milestones, manage specific tasks, and request defense schedules.
 
+## 🔄 User Journey Flow (Top to Bottom)
+If panelists ask for the "System Workflow" or "Use Case" of a Student, explain this exact step-by-step flow:
+1. **Secure Account:** The student logs in for the first time and the middleware blocks them until they change their default password.
+2. **Form a Group:** They search for classmates by ID and invite them to form a Capstone Group.
+3. **Find an Adviser:** They send an Adviser Invitation to a faculty member from the available list.
+4. **Work on Milestones:** They access their Kanban Board, uploading documents to specific tasks and dragging the cards from 'Pending' to 'Done'.
+5. **Revise Documents:** When the adviser leaves feedback, the student uploads a new document which automatically increments the `version` number.
+6. **Request Defense:** Once their milestone progress hits an acceptable threshold, they submit a Defense Request to their Coordinator.
+
+
 ## 1. Password Management & Bypass Middleware
 
 **Description:** When a student logs in for the first time, they are forced to change their default password. A special middleware handles this bypass logic.

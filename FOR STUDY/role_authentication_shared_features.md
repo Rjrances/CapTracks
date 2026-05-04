@@ -64,6 +64,18 @@ public function login(Request $request) {
 }
 ```
 
+### 🧠 Defense Tip: How Does Student Authentication Work? (60% Defense Question)
+If panelists ask: *"How did you separate Student logins from Faculty logins since they are in different database tables?"*
+
+**Where to find the code:**
+- **Controller:** `app/Http/Controllers/AuthController.php` (Where the login logic happens)
+- **Configuration:** `config/auth.php` (Where the custom 'student' guard is registered)
+- **Model:** `app/Models/Student.php` (The model the guard uses)
+
+**Your Answer:** *"We used Laravel's **Multi-Guard Authentication** system. By default, Laravel only looks at the `users` table for logins. Because we designed our database to keep students in a completely separate `students` table for better normalization, we couldn't use the default login. To solve this, we went into `config/auth.php` and created a custom guard named `'student'` and pointed it to the Student table. 
+
+In our `AuthController.php`, when someone submits the login form, the system runs an `if` statement. It first tries `Auth::guard('web')->attempt()` to see if the email belongs to a faculty member. If that fails, it immediately tries `Auth::guard('student')->attempt()`. If it finds a match there, it logs them in but restricts them strictly to the student guard context, ensuring they can never access faculty routes."*
+
 ### 🧠 Defense Tip: How did you handle Cyber Security during Login?
 If a panelist asks: *"How do you prevent malicious actors from stealing active sessions or hacking the login?"*
 **Your Answer:** *"We handled security on three levels during login. First, we use explicit `validate()` rules on the server side so malicious payloads can't be injected into our database checks. Second, the passwords in the database are encrypted using `Bcrypt/Hash`, so even if the DB leaks, the passwords are safe. Lastly, right after a successful login, we execute `$request->session()->regenerate()`. This instantly generates a brand new session token, which completely prevents a major cyber attack known as 'Session Fixation'."*

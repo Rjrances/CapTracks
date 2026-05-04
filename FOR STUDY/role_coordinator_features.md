@@ -2,6 +2,15 @@
 
 The Coordinator acts as the project manager, establishing milestone requirements, reviewing proposals, analyzing faculty loads, and coordinating defenses.
 
+## 🔄 User Journey Flow (Top to Bottom)
+If panelists ask for the "System Workflow" or "Use Case" of a Coordinator, explain this exact step-by-step flow:
+1. **Setup Milestones:** The Coordinator creates Milestone Templates (e.g., Chapter 1-3) which act as blueprints for the students.
+2. **Manage Classlists:** They view and manage the specific students enrolled in their assigned Offerings.
+3. **Monitor Load:** They check the Faculty Matrix to ensure they don't over-assign tasks to busy teachers.
+4. **Review Proposals:** They review project proposals and can bulk approve/reject them.
+5. **Schedule Defenses:** When students request a defense, the Coordinator reviews the request, uses the Auto-Assign logic to find available panelists, and finalizes the Defense Schedule.
+6. **Review Grades:** After the defense finishes, they view the aggregated Rating Sheets submitted by the panelists.
+
 ## 1. Class Lists & Faculty Matrix
 
 **Description:** Coordinators can view lists of all students enrolled in capstone classes for the current term and view a matrix showing how many groups each faculty member is advising/paneling.

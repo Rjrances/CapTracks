@@ -2,6 +2,14 @@
 
 The Chairperson manages the academic environment, handles user roles, establishes class offerings, and imports student/faculty data.
 
+## 🔄 User Journey Flow (Top to Bottom)
+If panelists ask for the "System Workflow" or "Use Case" of a Chairperson, explain this exact step-by-step flow:
+1. **Set the Semester:** The Chairperson logs in and toggles the Active Academic Term (e.g., 1st Semester 2026).
+2. **Import Data:** They upload the raw CSV files to populate the database with Students and Faculty.
+3. **Assign Roles:** They go to the Role Management screen to assign specific teachers as Coordinators or Advisers.
+4. **Create Offerings:** They create Class Sections (Offerings) and assign a specific Coordinator/Teacher to them.
+5. **Enroll Students:** Finally, they enroll the imported students into their respective Class Offerings so the Coordinators can take over.
+
 ## 1. Role Management
 
 **Description:** The Chairperson can reassign roles for faculty members.

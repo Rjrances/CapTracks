@@ -2,6 +2,15 @@
 
 Faculty members (whether assigned as an Adviser, Subject Teacher, or Panelist) mentor student groups, provide threaded feedback, evaluate submissions, track group progress, and rate capstone defenses.
 
+## 🔄 User Journey Flow (Top to Bottom)
+If panelists ask for the "System Workflow" or "Use Case" of an Adviser or Panelist, explain this exact step-by-step flow:
+1. **Receive Invitations:** The Faculty member logs in and sees pending dashboard notifications inviting them to either Advise a group or sit on a Defense Panel.
+2. **Accept/Decline:** They interact with the invitation, accepting it to officially link themselves to the group.
+3. **Monitor Progress:** As an Adviser, they use their Dashboard to see the real-time progress percentages of their assigned groups.
+4. **Provide Feedback:** They review uploaded task submissions and leave threaded (nested) comments to guide the students.
+5. **Grade Defenses:** As a Panelist, they attend the scheduled defense and input their final grades into the dynamic JSON Rating Sheet rubric.
+
+
 ## 1. Dashboard Statistics Calculation
 
 **Description:** The dashboard dynamically calculates group progress and pending tasks to give the adviser a snapshot of their workload.
