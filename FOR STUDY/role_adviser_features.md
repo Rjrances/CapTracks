@@ -1,6 +1,6 @@
-# Adviser Features (Faculty)
+# Adviser & Teacher Features (Faculty Member)
 
-The Adviser mentors student groups, provides threaded feedback, evaluates submissions, tracks group progress, and rates capstone defenses.
+Faculty members (whether assigned as an Adviser, Subject Teacher, or Panelist) mentor student groups, provide threaded feedback, evaluate submissions, track group progress, and rate capstone defenses.
 
 ## 1. Dashboard Statistics Calculation
 
