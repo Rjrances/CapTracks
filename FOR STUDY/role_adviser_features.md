@@ -147,3 +147,31 @@ public function submitAdviserRating(Request $request, DefenseSchedule $schedule)
     ]);
 }
 ```
+
+## 5. Exhaustive Feature & Endpoint List (All Functions)
+For complete system coverage, here is every single specific function the Adviser/Teacher can perform across the application:
+
+**Dashboard & General Mentoring (`AdviserController`)**
+- View adviser-specific statistics and calculate real-time group progress (`dashboard`).
+- View all assigned groups (`myGroups`).
+- View group details and members (`groupDetails`).
+- View the Global Activity Log filtered only to their advisees (`activityLog`).
+
+**Invitations (`AdviserController`)**
+- View pending group mentorship invitations (`invitations`).
+- Accept or decline mentorship invitations (`respondToInvitation`).
+- View pending Defense Panel invitations (`panelInvitations`).
+- Accept or decline Defense Panel invitations (`respondToPanelInvitation`).
+
+**Milestones & Feedback (`AdviserController` & `AdviserProposalController`)**
+- View task threads for a specific milestone (`milestoneTaskComments`).
+- Post or reply to nested task comments (`storeMilestoneTaskComment`).
+- View all proposals for their mentored groups (`index`).
+- Preview proposals and compare versions side-by-side (`preview`, `compareVersions`).
+- Bulk approve/reject proposals with shared comments (`bulkUpdate`).
+- Leave threaded comments on project proposals (`storeComment`).
+
+**Defenses & Grading (`RatingSheetController`)**
+- View panel submissions (`panelSubmissions`).
+- Open the digital grading form for a scheduled defense (`showAdviserForm`).
+- Submit rubric scores which are converted to JSON (`submitAdviserRating`).

@@ -179,3 +179,39 @@ public function store(Request $request) {
     ]);
 }
 ```
+
+## 7. Exhaustive Feature & Endpoint List (All Functions)
+For complete system coverage, here is every single specific function the Student can perform across the application:
+
+**Account Management (`StudentDashboardController` & `StudentPasswordController`)**
+- View Student Dashboard with real-time progress and upcoming deadlines (`index`).
+- Change default password (forced on first login) (`updatePassword`).
+
+**Group Management (`StudentGroupController`)**
+- Create a Capstone Group (`store`).
+- Invite classmates to join the group (`inviteMember`).
+- Accept or decline group invitations from others (`acceptInvitation`, `declineInvitation`).
+- Cancel a pending invite or remove a member (`cancelInvitation`, `removeMember`).
+- Invite a faculty member to be the Adviser (`inviteAdviser`).
+
+**Milestone & Task Management (`StudentMilestoneController` & `StudentMilestoneChecklistController` & `TaskSubmissionController`)**
+- View the checklist of required templates (`checklist`).
+- Initialize a milestone from a template (`store`).
+- Move task cards across the Kanban board (`moveTask`).
+- Bulk update task statuses (`bulkUpdateTasks`).
+- Edit task details (due dates, notes) (`updateTask`).
+- Assign a task to a specific groupmate (`assignTask`, `unassignTask`).
+- Post or reply to comments on a task (`storeTaskComment`).
+- Upload files directly to a specific task (`store` in TaskSubmissionController).
+
+**Proposals & Project Submissions (`StudentProposalController` & `ProjectSubmissionController`)**
+- Upload a formal Capstone Proposal (`store`).
+- Upload new file versions for an existing proposal (`update`).
+- Rollback to a previous proposal version (`rollback`).
+- Preview their own documents or compare two versions side-by-side (`previewVersion`, `compareVersions`).
+- Upload ad-hoc project submissions (e.g. final drafts) and delete them if unapproved (`store`, `destroy`).
+
+**Defense Management (`StudentDefenseRequestController`)**
+- Check eligibility for defense.
+- Submit a formal defense request picking a preferred date/time (`store`).
+- Cancel a pending defense request (`cancel`).

@@ -139,3 +139,43 @@ public function bulkUpdate(Request $request) {
     return back()->with('success', 'Selected proposals updated successfully.'); 
 }
 ```
+
+## 5. Exhaustive Feature & Endpoint List (All Functions)
+For complete system coverage, here is every single specific function the Coordinator can perform across the application:
+
+**Dashboard & Analytics (`CoordinatorDashboardController` & `CoordinatorController`)**
+- View active semester statistics (Groups, Defenses, Milestones).
+- View `classlist` for assigned offerings.
+- Mass import students via CSV specifically for their classes (`importStudents`).
+- View the `facultyMatrix` to monitor teacher workload.
+- View global `activityLog` specifically filtered to their assigned students.
+
+**Group Management (`CoordinatorController`)**
+- View paginated list of all active groups (`groups`).
+- Manually create, edit, update, or destroy a group (`store`, `update`, `destroy`).
+- Force-assign an adviser to a group (`assignAdviser`).
+- View a group's read-only milestones (`groupMilestones`).
+
+**Proposal Management (`CoordinatorProposalController`)**
+- View all proposals for their capstone offerings (`index`).
+- View specific proposal details and version history (`show`).
+- Preview documents in-browser (`preview`).
+- Compare two versions of a proposal side-by-side (`compareVersions`).
+- Bulk update (approve/reject) multiple proposals at once (`bulkUpdate`).
+- Add threaded comments to a proposal (`storeComment`).
+
+**Milestone Blueprints (`MilestoneTemplateController`)**
+- Create, edit, update, or delete a Milestone Template (`store`, `update`, `destroy`).
+- Add required tasks to a milestone.
+- Toggle template status (`updateStatus`).
+
+**Defense Scheduling (`DefenseScheduleController`)**
+- View all pending student defense requests (`defenseRequestsIndex`).
+- Approve or reject a defense request (`approve`, `reject`).
+- Generate a defense schedule (`createSchedule`, `storeSchedule`).
+- Use the auto-assign panel engine (`getAvailableFaculty`).
+- Edit, update, or destroy an existing schedule (`update`, `destroy`).
+- Mark a defense officially as completed (`markAsCompleted`).
+
+**Notifications**
+- View, mark read, or bulk-delete notifications (`markMultipleAsRead`, `deleteMultiple`).

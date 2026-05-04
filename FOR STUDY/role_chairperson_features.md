@@ -150,3 +150,28 @@ public function toggleActive(AcademicTerm $academicTerm) {
     return back()->with('success', 'Academic term status updated successfully.'); 
 }
 ```
+
+## 5. Exhaustive Feature & Endpoint List (All Functions)
+For complete system coverage, here is every single specific function the Chairperson can perform across the entire application:
+
+**Dashboard (`ChairpersonDashboardController`)**
+- View global institution statistics (Active groups, faculty count, defenses).
+
+**Class / Offering Management (`ChairpersonOfferingController`)**
+- Create, edit, update, or delete Class Offerings (`store`, `update`, `destroy`).
+- View un-enrolled students (`showUnenrolledStudents`).
+- Enroll single or multiple students into an offering (`enrollStudent`, `enrollMultipleStudents`).
+- Remove a student from an offering (`removeStudent`).
+
+**User & Role Management (`ChairpersonFacultyController` & `ChairpersonStudentController` & `RoleController`)**
+- Create, edit, update, or mass-delete Student accounts (`update`, `bulkDelete`).
+- Mass import students via CSV (`upload`).
+- Export the student registry to CSV (`export`).
+- Create, edit, or delete Faculty accounts (`storeManual`, `destroy`).
+- Mass import faculty via CSV (`upload`).
+- Re-assign faculty roles (e.g. Teacher to Coordinator) (`update` in RoleController).
+
+**Academic Terms (`AcademicTermController`)**
+- Create, edit, or delete Semesters/Terms (`store`, `destroy`).
+- Toggle the active semester, automatically deactivating the rest (`toggleActive`).
+- Archive historical terms (`toggleArchived`).
