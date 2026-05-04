@@ -112,10 +112,13 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a href="#" id="editDefenseBtn" class="btn btn-primary">
+                <a href="#" id="editDefenseBtn" class="btn btn-primary" style="display:none;">
                     <i class="fas fa-edit me-2"></i>
                     Edit Defense
                 </a>
+                <span id="viewOnlyBadge" class="badge bg-secondary fs-6 px-3 py-2" style="display:none;">
+                    <i class="fas fa-eye me-1"></i> View Only
+                </span>
             </div>
         </div>
     </div>
@@ -379,7 +382,20 @@ function showEventDetails(event) {
         </div>
     `;
     document.getElementById('defenseModalBody').innerHTML = eventDetails;
-    document.getElementById('editDefenseBtn').href = `/coordinator/defense/${event.id}/edit`;
+
+    const editBtn     = document.getElementById('editDefenseBtn');
+    const viewBadge   = document.getElementById('viewOnlyBadge');
+    const isMine      = event.extendedProps.is_mine;
+
+    if (isMine) {
+        editBtn.href    = `/coordinator/defense/${event.id}/edit`;
+        editBtn.style.display  = 'inline-block';
+        viewBadge.style.display = 'none';
+    } else {
+        editBtn.style.display  = 'none';
+        viewBadge.style.display = 'inline-block';
+    }
+
     modal.show();
 }
 </script>
