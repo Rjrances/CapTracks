@@ -9,28 +9,35 @@ The Coordinator acts as the project manager, establishing milestone requirements
 **Core Logic (`app/Http/Controllers/CoordinatorController.php`):**
 ```php
 public function facultyMatrix() {
-    $activeTerm = AcademicTerm::where('is_active', true)->first();
     
-    // Calculate load by counting relationships
+    // Get the current ongoing semester
+    $activeTerm = AcademicTerm::where('is_active', true)->first(); 
+    
+    // Fetch all active faculty members (Teachers, Coordinators, Advisers, Chairpersons)
     $facultyLoad = User::whereIn('role', ['adviser', 'coordinator', 'chairperson', 'teacher'])
-        ->withCount([
-            'advisingGroups' => function($q) use ($activeTerm) {
-                $q->where('academic_term_id', $activeTerm->id);
+        
+        // Dynamically count their relationships without fetching every single row
+        ->withCount([ 
+            
+            // Count how many groups they advise...
+            'advisingGroups' => function($q) use ($activeTerm) { 
+                // ...but only for the current semester
+                $q->where('academic_term_id', $activeTerm->id); 
             },
-            'defensePanels' => function($q) use ($activeTerm) {
+            
+            // Count how many defense panels they sit on...
+            'defensePanels' => function($q) use ($activeTerm) { 
                 $q->whereHas('defenseSchedule', function($sq) use ($activeTerm) {
-                    $sq->where('academic_term_id', $activeTerm->id);
+                    // ...but only for the current semester
+                    $sq->where('academic_term_id', $activeTerm->id); 
                 });
             }
-        ])->get();
+        ])->get(); // Execute the query
 
-    return view('coordinator.faculty-matrix', compact('facultyLoad', 'activeTerm'));
+    // Send the data to the Blade template
+    return view('coordinator.faculty-matrix', compact('facultyLoad', 'activeTerm')); 
 }
 ```
-**Code Explanation:**
-- `AcademicTerm::where('is_active', true)->first();`: Fetches the current ongoing semester. We only want to see faculty workload for right now, not historically.
-- `withCount([...])`: This is a Laravel Eloquent feature that counts related records without having to load all the actual rows. It adds a dynamic `advising_groups_count` and `defense_panels_count` attribute to the fetched user.
-- `function($q) use ($activeTerm)`: We use closures inside the `withCount` to filter the count. We only count groups and defense schedules if they belong to the `$activeTerm->id`.
 
 ## 2. Defense Scheduling & Automatic Panel Assignment
 
@@ -39,25 +46,32 @@ public function facultyMatrix() {
 **Core Logic (`app/Http/Controllers/Coordinator/DefenseScheduleController.php`):**
 ```php
 public function storeSchedule(Request $request, DefenseRequest $defenseRequest) {
-    $schedule = DefenseSchedule::create([
-        'group_id' => $defenseRequest->group_id,
-        'academic_term_id' => AcademicTerm::where('is_active', true)->first()->id,
-        'schedule_date' => $request->schedule_date,
-        'start_time' => $request->start_time,
-        'end_time' => $request->end_time,
-        'venue' => $request->venue,
-        'status' => 'scheduled'
+    
+    // Create a new record in the defense_schedules table
+    $schedule = DefenseSchedule::create([ 
+        'group_id' => $defenseRequest->group_id, // Link it to the group that requested it
+        'academic_term_id' => AcademicTerm::where('is_active', true)->first()->id, // Link to the current semester
+        'schedule_date' => $request->schedule_date, // Set the date
+        'start_time' => $request->start_time, // Set the start time
+        'end_time' => $request->end_time, // Set the end time
+        'venue' => $request->venue, // Set the physical room
+        'status' => 'scheduled' // Mark the schedule as officially active
     ]);
 
-    foreach ($request->panel_members as $role => $facultyId) {
-        DefensePanel::create([
-            'defense_schedule_id' => $schedule->id,
-            'faculty_id' => $facultyId,
-            'role' => $role,
-            'status' => 'pending' 
+    // Loop through the selected panel members (Chair, Member)
+    foreach ($request->panel_members as $role => $facultyId) { 
+        
+        // Create a new record in the defense_panels table
+        DefensePanel::create([ 
+            'defense_schedule_id' => $schedule->id, // Link this panelist to the schedule we just created
+            'faculty_id' => $facultyId, // Assign the specific faculty member's ID
+            'role' => $role, // Set their role (e.g., 'chair' or 'member')
+            'status' => 'pending'  // Keep it pending until the faculty member logs in and accepts the invite
         ]);
     }
-    $defenseRequest->update(['status' => 'approved']);
+    
+    // Update the student's original request so they know it was approved
+    $defenseRequest->update(['status' => 'approved']); 
 }
 ```
 
@@ -70,10 +84,6 @@ If panelists ask, *"How does your system know who to suggest for a defense panel
 4. **Time Collision Check:** It checks the `defense_schedules` table. If a faculty member is already sitting on another defense panel at the exact same `start_time` and `schedule_date`, they are completely hidden from the selection list.
 5. **Workload Balancing (Sorting):** Finally, it looks at how many panels the remaining eligible faculty members are currently assigned to this semester. It **sorts them in ascending order**, placing faculty with the fewest panel assignments at the very top of the auto-assign list to balance the workload across the department.
 
-**Code Explanation:**
-- `DefenseSchedule::create(...)`: Saves the core scheduling metadata (when and where the defense is happening) and links it to the group that requested it.
-- `foreach ($request->panel_members as $role => $facultyId)`: The coordinator assigns multiple panel members from a form (e.g., a 'chair' and a 'member'). This loop iterates through those assignments and creates individual `DefensePanel` rows tying the faculty member to the schedule. They are marked as `pending` because the faculty members must log in and explicitly accept the invitation later.
-- `$defenseRequest->update(['status' => 'approved']);`: Updates the student's original request to inform them that it has been successfully processed.
 
 ## 3. Milestone Templates
 
@@ -82,23 +92,25 @@ If panelists ask, *"How does your system know who to suggest for a defense panel
 **Core Logic (`app/Http/Controllers/MilestoneTemplateController.php`):**
 ```php
 public function store(Request $request) {
-    $milestone = MilestoneTemplate::create([
-        'name' => $request->name,
-        'order' => $request->order,
-        'is_active' => true
+    
+    // Create the main Milestone category (e.g., "Chapter 1")
+    $milestone = MilestoneTemplate::create([ 
+        'name' => $request->name, // Set the milestone name
+        'order' => $request->order, // Set the sorting order
+        'is_active' => true // Mark it as active
     ]);
 
-    foreach ($request->tasks as $taskData) {
-        $milestone->tasks()->create([
-            'task_name' => $taskData['name'],
-            'is_required' => $taskData['required'] ?? false
+    // Loop through the specific tasks inside this milestone
+    foreach ($request->tasks as $taskData) { 
+        
+        // Use the Eloquent relationship to insert tasks linked to this milestone
+        $milestone->tasks()->create([ 
+            'task_name' => $taskData['name'], // Set the specific task name
+            'is_required' => $taskData['required'] ?? false // Check if the task is mandatory
         ]);
     }
 }
 ```
-**Code Explanation:**
-- `MilestoneTemplate::create(...)`: Creates the "blueprint" or "parent category" for the milestone (e.g., "Chapter 1 Requirements").
-- `$milestone->tasks()->create(...)`: Because a Milestone Template `hasMany` Tasks, we can call `create()` directly on the relationship. This automatically inserts the task and links its `milestone_template_id` to the parent milestone we just created.
 
 ## 4. Proposal Review & Bulk Updating
 
@@ -107,11 +119,14 @@ public function store(Request $request) {
 **Core Logic (`app/Http/Controllers/CoordinatorProposalController.php`):**
 ```php
 public function bulkUpdate(Request $request) {
-    ProjectSubmission::whereIn('id', $request->submission_ids)
-                     ->update(['status' => $request->status]);
-    return back()->with('success', 'Selected proposals updated successfully.');
+    
+    // Select all the database rows that match the checkbox IDs sent from the frontend
+    ProjectSubmission::whereIn('id', $request->submission_ids) 
+                     
+                     // Change their status to 'approved' or 'rejected' all at once
+                     ->update(['status' => $request->status]); 
+                     
+    // Refresh the page
+    return back()->with('success', 'Selected proposals updated successfully.'); 
 }
 ```
-**Code Explanation:**
-- `whereIn('id', $request->submission_ids)`: The frontend sends an array of selected checkbox IDs (e.g., `[15, 18, 22]`). The `whereIn` clause constructs a SQL query: `UPDATE project_submissions SET status = ? WHERE id IN (15, 18, 22)`.
-- `update(['status' => $request->status])`: Sets the status (either 'approved' or 'rejected') across all matched records in a single, highly efficient database call.

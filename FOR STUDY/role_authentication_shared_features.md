@@ -8,18 +8,39 @@ This document outlines the core logic and features that are shared across all ro
 
 **Core Logic (`app/Http/Controllers/AuthController.php` & `web.php`):**
 ```php
+// Health Check (web.php)
+// Expose a simple URL endpoint
+Route::get('/health', function () { 
+    
+    // Return a JSON response
+    return response()->json([ 
+        'status' => 'ok', // Let external monitoring services know the server is alive
+        'timestamp' => now(), // Provide the exact server time
+        'app' => config('app.name') // Provide the name of the app
+    ]);
+});
+
 // Authentication (AuthController.php)
 public function login(Request $request) {
-    $credentials = $request->validate([
-        'email' => ['required', 'email'],
+    
+    // Block the request if the email or password are empty or invalid format
+    $credentials = $request->validate([ 
+        'email' => ['required', 'email'], 
         'password' => ['required'],
     ]);
 
     // Check Faculty/Staff Guard
-    if (Auth::guard('web')->attempt($credentials)) {
-        $request->session()->regenerate();
-        $role = Auth::user()->role;
-        return match($role) {
+    // Try to log in against the main `users` table
+    if (Auth::guard('web')->attempt($credentials)) { 
+        
+        // Instantly create a new session ID to prevent Session Fixation hacking
+        $request->session()->regenerate(); 
+        
+        // Check the role column of the faculty member
+        $role = Auth::user()->role; 
+        
+        // Use PHP match to cleanly redirect them based on their exact role
+        return match($role) { 
             'coordinator' => redirect()->route('coordinator.dashboard'),
             'chairperson' => redirect()->route('chairperson.dashboard'),
             'adviser' => redirect()->route('adviser.dashboard'),
@@ -28,11 +49,17 @@ public function login(Request $request) {
     }
     
     // Check Student Guard
-    if (Auth::guard('student')->attempt($credentials)) {
-        $request->session()->regenerate();
-        return redirect()->route('student.dashboard');
+    // If faculty login failed, try the `students` table
+    if (Auth::guard('student')->attempt($credentials)) { 
+        
+        // Generate a new session ID for the student
+        $request->session()->regenerate(); 
+        
+        // Send them to the student dashboard
+        return redirect()->route('student.dashboard'); 
     }
 
+    // If both guards fail, kick them back to the login page with an error
     return back()->withErrors(['email' => 'The provided credentials do not match our records.']);
 }
 ```
@@ -41,13 +68,6 @@ public function login(Request $request) {
 If a panelist asks: *"How do you prevent malicious actors from stealing active sessions or hacking the login?"*
 **Your Answer:** *"We handled security on three levels during login. First, we use explicit `validate()` rules on the server side so malicious payloads can't be injected into our database checks. Second, the passwords in the database are encrypted using `Bcrypt/Hash`, so even if the DB leaks, the passwords are safe. Lastly, right after a successful login, we execute `$request->session()->regenerate()`. This instantly generates a brand new session token, which completely prevents a major cyber attack known as 'Session Fixation'."*
 
-**Code Explanation:**
-- `$request->validate(...)`: Validates that the user input actually contains valid email syntax and isn't empty, otherwise throwing an error before wasting database resources.
-- `Auth::guard('web')->attempt(...)`: Laravel uses "guards" to manage different user tables. Here, it takes the email/password and checks it against the main `users` table (faculty/staff). If it matches, it logs them in.
-- `$request->session()->regenerate()`: Crucial for security. Generates a brand new session ID upon login, completely preventing "Session Fixation" cyber attacks.
-- `match($role)`: A modern, cleaner alternative to `switch` statements in PHP. It checks the user's role column and redirects them to the URL corresponding to their role's dashboard.
-- `Auth::guard('student')->attempt(...)`: If they failed the faculty check, the system then checks if those credentials belong to a student in the `students` table.
-- `back()->withErrors(...)`: If both guards fail, it redirects back to the login page and flashes an error message to the user.
 
 ## 2. Real-Time Notifications
 
@@ -57,23 +77,28 @@ If a panelist asks: *"How do you prevent malicious actors from stealing active s
 ```php
 // Marking multiple notifications as read
 public function markMultipleAsRead(Request $request) {
-    $user = Auth::user();
+    
+    // Get the logged-in user
+    $user = Auth::user(); 
+    
     $request->validate([
-        'notification_ids' => 'required|array',
-        'notification_ids.*' => 'integer|exists:notifications,id',
+        'notification_ids' => 'required|array', // Ensure the incoming data is specifically an array
+        'notification_ids.*' => 'integer|exists:notifications,id', // Ensure every ID actually exists in the database to prevent tampering
     ]);
 
-    $updated = Notification::whereIn('id', $request->notification_ids)
-        ->visibleToWebUser($user)
-        ->update(['is_read' => true]);
+    // Find all notifications matching these IDs
+    $updated = Notification::whereIn('id', $request->notification_ids) 
+        
+        // Ensure the user actually owns these notifications (Security Local Scope)
+        ->visibleToWebUser($user) 
+        
+        // Run a single, fast SQL UPDATE to mark them all as read
+        ->update(['is_read' => true]); 
 
+    // Send a JSON response back to the Javascript frontend
     return response()->json(['success' => true, 'message' => $updated . ' notifications marked as read']);
 }
 ```
-**Code Explanation:**
-- `$request->validate(...)`: Ensures that the data sent by the frontend is specifically an array, and that every item inside the array is a valid ID that actually exists in the `notifications` table database. This prevents tampering.
-- `whereIn(...)`: Performs a SQL `UPDATE` statement that updates multiple rows concurrently, rather than writing a slow loop that updates them one by one.
-- `visibleToWebUser($user)`: This is a "Local Scope" defined on the Notification model. It ensures users can only mark notifications as read if they actually belong to them (preventing users from marking another person's notifications as read).
 
 ## 3. Global Activity Logging
 
@@ -82,20 +107,18 @@ public function markMultipleAsRead(Request $request) {
 **Core Logic (`app/Services/ActivityLogService.php`):**
 ```php
 public static function logTaskCommentAdded(GroupMilestoneTask $task, $user, $student = null) {
-    ActivityLog::create([
-        'student_id' => clone $student?->student_id, 
-        'user_id'    => clone $user?->id,            
-        'action'     => 'task_commented',
-        'description'=> 'Added a comment to task: ' . $task->milestoneTask->task_name,
-        'loggable_type' => GroupMilestoneTask::class,
-        'loggable_id' => $task->id,
+    
+    // Insert a new record into the activity_logs table
+    ActivityLog::create([ 
+        'student_id' => clone $student?->student_id, // Nullsafe operator: Only get ID if student exists
+        'user_id'    => clone $user?->id, // Nullsafe operator: Only get ID if faculty exists         
+        'action'     => 'task_commented', // Categorize the action
+        'description'=> 'Added a comment to task: ' . $task->milestoneTask->task_name, // Human-readable log
+        'loggable_type' => GroupMilestoneTask::class, // Polymorphic relation: Save the Model namespace
+        'loggable_id' => $task->id, // Polymorphic relation: Save the exact Model ID
     ]);
 }
 ```
-**Code Explanation:**
-- `public static function`: Declaring the method as static means we can call it from anywhere in the application (like `ActivityLogService::logTaskCommentAdded()`) without needing to instantiate the class with `new`.
-- `clone $student?->student_id`: The `?->` (nullsafe operator) safely fetches the student's ID. If the `$student` object is null (for instance, if a faculty member made the comment, not a student), it safely returns null instead of throwing a "trying to access property on null" fatal error.
-- `'loggable_type' => GroupMilestoneTask::class`: This relies on Laravel's Polymorphic Relationships. Because activities can belong to many different things (Tasks, Submissions, Group Edits), `loggable_type` stores the model's namespace (e.g. `App\Models\GroupMilestoneTask`) and `loggable_id` stores the specific ID, allowing us to fetch the related object flexibly.
 
 ## 4. Shared Calendar Integration
 
@@ -104,41 +127,50 @@ public static function logTaskCommentAdded(GroupMilestoneTask $task, $user, $stu
 **Core Logic (`app/Http/Controllers/CalendarController.php`):**
 ```php
 public function coordinatorCalendar() {
-    $activeTerm = AcademicTerm::where('is_active', true)->first();
-    $events = [];
+    
+    // Get the current ongoing semester
+    $activeTerm = AcademicTerm::where('is_active', true)->first(); 
+    
+    // Initialize an empty array to hold our calendar data
+    $events = []; 
 
     if ($activeTerm) {
-        // Fetch defense schedules
+        
+        // Fetch defense schedules with their related group data to prevent N+1 queries
         $defenses = DefenseSchedule::where('academic_term_id', $activeTerm->id)->with('group')->get();
-        foreach ($defenses as $defense) {
-            $events[] = [
-                'title' => 'Defense: ' . $defense->group->name,
-                'start' => $defense->schedule_date . 'T' . $defense->start_time,
-                'end' => $defense->schedule_date . 'T' . $defense->end_time,
-                'color' => '#ef4444', // Red for defense
-                'url' => route('coordinator.defense.show', $defense->id)
+        
+        // Loop through the schedules
+        foreach ($defenses as $defense) { 
+            
+            // Construct a JSON-friendly array for FullCalendar.js
+            $events[] = [ 
+                'title' => 'Defense: ' . $defense->group->name, // What to display on the calendar block
+                'start' => $defense->schedule_date . 'T' . $defense->start_time, // ISO8601 formatting for Javascript (e.g. 2026-05-15T14:30)
+                'end' => $defense->schedule_date . 'T' . $defense->end_time, // ISO8601 formatting
+                'color' => '#ef4444', // Red background for defense events
+                'url' => route('coordinator.defense.show', $defense->id) // Make the calendar block clickable
             ];
         }
         
-        // Fetch milestone deadlines
+        // Fetch milestone deadlines, but only for groups in the current active term
+        // Ignore milestones without a strict deadline
         $milestones = GroupMilestone::whereHas('group', function($q) use ($activeTerm) {
             $q->where('academic_term_id', $activeTerm->id);
-        })->whereNotNull('target_date')->get();
+        })->whereNotNull('target_date')->get(); 
         
-        foreach ($milestones as $milestone) {
-            $events[] = [
+        // Loop through the deadlines
+        foreach ($milestones as $milestone) { 
+            
+            // Add them to the FullCalendar array
+            $events[] = [ 
                 'title' => 'Deadline: ' . $milestone->milestoneTemplate->name,
-                'start' => $milestone->target_date,
-                'color' => '#3b82f6', // Blue for milestone
+                'start' => $milestone->target_date, // Simple date format
+                'color' => '#3b82f6', // Blue background for milestone events
             ];
         }
     }
 
-    return view('coordinator.calendar', compact('events'));
+    // Inject the JSON array into the Blade template
+    return view('coordinator.calendar', compact('events')); 
 }
 ```
-**Code Explanation:**
-- `$events = [];`: We initialize an empty array. The goal of this function is to construct a specific JSON-like array structure that the frontend javascript (FullCalendar.js) can read natively.
-- `...->start_time`: FullCalendar expects date times in ISO8601 format. By concatenating the date and time strings with a `T` (`$defense->schedule_date . 'T' . $defense->start_time`), we create strings like `"2026-05-15T14:30:00"`, which Javascript automatically understands.
-- `whereNotNull('target_date')`: Not all milestones have rigid deadlines. This ensures we only try to plot events on the calendar that actually have a physical target date saved in the database.
-- `compact('events')`: A shorthand PHP function that passes the `$events` array down to the view template so it can be injected into the javascript setup block.

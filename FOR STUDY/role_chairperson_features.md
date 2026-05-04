@@ -9,18 +9,24 @@ The Chairperson manages the academic environment, handles user roles, establishe
 **Core Logic (`app/Http/Controllers/RoleController.php`):**
 ```php
 public function update(Request $request, $faculty_id) {
-    $faculty = User::findOrFail($faculty_id);
-    if ($faculty->id === Auth::id() && $request->role !== 'chairperson') {
-         return back()->with('error', 'You cannot change your own role.');
+    
+    // Fetch the faculty member or throw a 404 error if not found
+    $faculty = User::findOrFail($faculty_id); 
+    
+    // Prevent the chairperson from changing their own role and losing admin rights
+    if ($faculty->id === Auth::id() && $request->role !== 'chairperson') { 
+         
+         // Send them back to the previous page with an error message
+         return back()->with('error', 'You cannot change your own role.'); 
     }
-    $faculty->update(['role' => $request->role]);
-    return back()->with('success', 'Role updated successfully.');
+    
+    // Save the new role to the database
+    $faculty->update(['role' => $request->role]); 
+    
+    // Refresh the page with a success message
+    return back()->with('success', 'Role updated successfully.'); 
 }
 ```
-**Code Explanation:**
-- `User::findOrFail($faculty_id);`: We fetch the specific faculty member from the database. If the ID doesn't exist, it automatically throws a 404 error (page not found), stopping execution safely.
-- `if ($faculty->id === Auth::id() && $request->role !== 'chairperson')`: This is a safeguard. It checks if the logged-in Chairperson is trying to change their own role to something else (which would accidentally strip their admin rights).
-- `$faculty->update(['role' => $request->role]);`: Actually saves the new role (like 'adviser' or 'coordinator') into the database.
 
 ## 2. Data Imports (CSV/Excel Uploads)
 
@@ -29,28 +35,47 @@ public function update(Request $request, $faculty_id) {
 **Core Logic (`app/Http/Controllers/ChairpersonStudentController.php`):**
 ```php
 public function upload(Request $request) {
-    $request->validate([
+    
+    // Ensure the uploaded file is specifically a CSV or Text file and under 2MB
+    $request->validate([ 
         'file' => 'required|mimes:csv,txt|max:2048',
     ]);
 
-    $file = file($request->file->getRealPath());
-    $data = array_slice($file, 1); // Skip header
+    // Read the uploaded file into an array of lines
+    $file = file($request->file->getRealPath()); 
+    
+    // Remove the first line (the column headers)
+    $data = array_slice($file, 1); 
 
-    foreach ($data as $line) {
-        $row = str_getcsv($line);
-        if (count($row) >= 3) {
-            // Check if student exists before creating to prevent duplicates
+    // Loop through each student row in the CSV
+    foreach ($data as $line) { 
+        
+        // Split the comma-separated line into an array (ID, Name, Email)
+        $row = str_getcsv($line); 
+        
+        // Ensure the row has at least 3 columns
+        if (count($row) >= 3) { 
+            
+            // Look for this Student ID
+            // Check if student exists before creating to prevent duplicate SQL crashes
             Student::firstOrCreate(
-                ['student_id' => $row[0]],
+                ['student_id' => $row[0]], 
                 [
-                    'name' => $row[1],
-                    'email' => $row[2],
-                    'password' => Hash::make('password123'), // Default password
+                    // Data: Set the Name
+                    'name' => $row[1], 
+                    
+                    // Data: Set the Email
+                    'email' => $row[2], 
+                    
+                    // Data: Encrypt and set default password
+                    'password' => Hash::make('password123'), 
                 ]
             );
         }
     }
-    return redirect()->route('chairperson.students.index')->with('success', 'Students imported successfully.');
+    
+    // Redirect to the student list page
+    return redirect()->route('chairperson.students.index')->with('success', 'Students imported successfully.'); 
 }
 ```
 
@@ -58,12 +83,6 @@ public function upload(Request $request) {
 If a panelist asks: *"What happens if a coordinator accidentally uploads the same student CSV file twice? Does the database crash?"*
 **Your Answer:** *"No, the database won't crash because we handle de-duplication inside the upload loop. We use an Eloquent method called `firstOrCreate`. It looks at the primary key (the `student_id`). If it finds that ID in the database already, it simply skips that row. If it doesn't find the ID, it inserts the new student. This guarantees that re-uploading an old CSV file won't result in fatal Duplicate Entry SQL errors."*
 
-**Code Explanation:**
-- `$request->validate(...)`: Makes sure the uploaded file is strictly a CSV or text file under 2MB.
-- `file(...)`: Reads the uploaded file into an array where each array item is one line of the file.
-- `array_slice($file, 1)`: Removes the first row (the column headers like "Name, Email") so we only process actual student data.
-- `str_getcsv($line)`: Splits the comma-separated text into an array (e.g., `$row[0]` is ID, `$row[1]` is Name).
-- `Student::firstOrCreate(...)`: This looks for a student with the provided `student_id`. If it finds one, it skips. If it doesn't, it creates a new account with the default encrypted password `'password123'`.
 
 ## 3. Class/Offering Management & Student Enrollment
 
@@ -73,30 +92,37 @@ If a panelist asks: *"What happens if a coordinator accidentally uploads the sam
 ```php
 // Creating a new class offering
 public function store(Request $request) {
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'academic_term_id' => 'required|exists:academic_terms,id',
-        'faculty_id' => 'required|exists:users,id', // Assigned Teacher
+    
+    // Validate that all required fields are filled properly
+    $request->validate([ 
+        'name' => 'required|string|max:255', // Class name must be a text string
+        'academic_term_id' => 'required|exists:academic_terms,id', // Term must exist in the database
+        'faculty_id' => 'required|exists:users,id', // Assigned Teacher must exist in the database
     ]);
 
-    Offering::create($request->all());
-    return redirect()->route('chairperson.offerings.index')->with('success', 'Class created successfully.');
+    // Insert the new class section into the database
+    Offering::create($request->all()); 
+    
+    // Redirect to the offerings page
+    return redirect()->route('chairperson.offerings.index')->with('success', 'Class created successfully.'); 
 }
 
 // Enrolling a student into a class
 public function enrollStudent(Request $request, $offeringId) {
-    $request->validate(['student_id' => 'required|exists:students,id']);
     
-    $offering = Offering::findOrFail($offeringId);
-    // Attach via pivot table/relationship
-    $offering->students()->attach($request->student_id);
+    // Ensure the student exists
+    $request->validate(['student_id' => 'required|exists:students,id']); 
     
-    return back()->with('success', 'Student enrolled successfully.');
+    // Find the class section
+    $offering = Offering::findOrFail($offeringId); 
+    
+    // Attach the student to the class using the offering_student pivot table
+    $offering->students()->attach($request->student_id); 
+    
+    // Refresh the page
+    return back()->with('success', 'Student enrolled successfully.'); 
 }
 ```
-**Code Explanation:**
-- `Offering::create($request->all());`: Takes the validated form data (class name, term, and teacher) and inserts it as a new record in the `offerings` table.
-- `$offering->students()->attach($request->student_id);`: Because an Offering can have many Students, and a Student can have many Offerings, this uses Laravel's `attach()` method to insert a record into the middleman pivot table (`offering_student`), linking the two together without duplicating actual student or offering rows.
 
 ## 4. Academic Terms
 
@@ -105,11 +131,14 @@ public function enrollStudent(Request $request, $offeringId) {
 **Core Logic (`app/Http/Controllers/AcademicTermController.php`):**
 ```php
 public function toggleActive(AcademicTerm $academicTerm) {
+    
+    // Forcefully set all OTHER academic terms to inactive (false)
     AcademicTerm::where('id', '!=', $academicTerm->id)->update(['is_active' => false]);
+    
+    // Toggle the selected term to active (true)
     $academicTerm->update(['is_active' => !$academicTerm->is_active]);
-    return back()->with('success', 'Academic term status updated successfully.');
+    
+    // Refresh the page
+    return back()->with('success', 'Academic term status updated successfully.'); 
 }
 ```
-**Code Explanation:**
-- `AcademicTerm::where('id', '!=', $academicTerm->id)->update(['is_active' => false]);`: A mass update query. It targets every academic term in the database *except* the one we are currently trying to toggle, and forcefully sets their `is_active` status to `false`. This guarantees that only one term can ever be active at a time.
-- `$academicTerm->update(['is_active' => !$academicTerm->is_active]);`: Toggles the selected term. If it was false, `!false` makes it true (active).

@@ -10,27 +10,35 @@ Students manage group formations, submit deliverables, track capstone milestones
 ```php
 // Middleware Check
 public function handle(Request $request, Closure $next) {
-    $student = Auth::guard('student')->user();
-    if ($student && Hash::check('password123', $student->password)) { // Default password
+    
+    // Get the logged-in user from the student table
+    $student = Auth::guard('student')->user(); 
+    
+    // Check if their encrypted password matches the default 'password123'
+    if ($student && Hash::check('password123', $student->password)) { 
+        
+        // If it does, stop the request and redirect them to the forced password change page
         return redirect()->route('student.change-password')
             ->with('warning', 'You must change your default password before proceeding.');
     }
-    return $next($request);
+    
+    // If they already changed it, let the request proceed normally
+    return $next($request); 
 }
 
 // Update Password
 public function updatePassword(Request $request) {
-    $student = Auth::guard('student')->user();
-    $student->update(['password' => Hash::make($request->new_password)]);
-    return redirect()->route('student.dashboard');
+    
+    // Get the logged-in student
+    $student = Auth::guard('student')->user(); 
+    
+    // Encrypt the newly typed password and save it to the database
+    $student->update(['password' => Hash::make($request->new_password)]); 
+    
+    // Send them to the dashboard now that they are secure
+    return redirect()->route('student.dashboard'); 
 }
 ```
-**Code Explanation:**
-- `Auth::guard('student')->user()`: Explicitly pulls the user from the 'student' guard (because faculties use a different table/guard).
-- `Hash::check('password123', $student->password)`: Laravel's Hash facade safely checks if their current encrypted password in the database resolves to the literal string `'password123'` (the default). 
-- `return redirect()->route(...)`: If they still have the default password, it interrupts their request and redirects them to the change password page.
-- `return $next($request);`: If they already changed it, the middleware lets the request proceed normally.
-- `Hash::make(...)`: Encrypts the newly submitted password before saving it to the database.
 
 ## 2. Group Formation & Management
 
@@ -39,17 +47,18 @@ public function updatePassword(Request $request) {
 **Core Logic (`app/Http/Controllers/StudentGroupController.php`):**
 ```php
 public function inviteAdviser(Request $request) {
-    $group = Auth::guard('student')->user()->student->group;
-    AdviserInvitation::create([
-        'group_id' => $group->id,
-        'faculty_id' => $request->faculty_id,
-        'status' => 'pending'
+    
+    // Fetch the group that the logged-in student belongs to
+    $group = Auth::guard('student')->user()->student->group; 
+    
+    // Create a new invitation record
+    AdviserInvitation::create([ 
+        'group_id' => $group->id, // Link it to the student's group
+        'faculty_id' => $request->faculty_id, // Link it to the chosen faculty member
+        'status' => 'pending' // Mark it as pending so the faculty sees it on their dashboard
     ]);
 }
 ```
-**Code Explanation:**
-- `$group = ...->student->group`: Fetches the student's relationship records. It gets the logged-in student account, then the related student profile, and then the group that student belongs to.
-- `AdviserInvitation::create(...)`: Inserts a new row linking the group to the requested faculty member with a `pending` status so the faculty member can see it in their dashboard and accept/decline.
 
 ## 3. Project & Proposal Versioning
 
@@ -58,18 +67,23 @@ public function inviteAdviser(Request $request) {
 **Core Logic (`app/Http/Controllers/ProjectSubmissionController.php`):**
 ```php
 public function store(Request $request) {
-    $student = Auth::guard('student')->user()->student;
-    $path = $request->file('file')->store('submissions', 'public');
     
-    // Fetches the max version number and increments it
+    // Get the logged-in student
+    $student = Auth::guard('student')->user()->student; 
+    
+    // Automatically save the uploaded file into the public/submissions folder and get the file path
+    $path = $request->file('file')->store('submissions', 'public'); 
+    
+    // Fetch the MAX version number for this specific document type and increment it by +1
     $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, $request->type);
 
-    ProjectSubmission::create([
-        'student_id' => $student->student_id,
-        'file_path' => $path,
-        'type' => $request->type,
-        'version' => $nextVersion,
-        'status' => 'pending',
+    // Create a brand new record for this version
+    ProjectSubmission::create([ 
+        'student_id' => $student->student_id, // Link to the student
+        'file_path' => $path, // Save the path to the physical file
+        'type' => $request->type, // e.g., 'proposal' or 'final'
+        'version' => $nextVersion, // Save the newly incremented version number
+        'status' => 'pending', // Await adviser approval
     ]);
 }
 ```
@@ -77,11 +91,6 @@ public function store(Request $request) {
 ### 🧠 Defense Tip: How does Document Versioning work?
 If a panelist asks: *"How do you keep track of old files without overwriting them?"*
 **Your Answer:** *"Instead of simply updating the existing database row when a student uploads a revision, the system runs a query to find the `MAX(version)` for that specific document type, adds `+ 1` to it, and creates a brand new row in the `project_submissions` table. Because we create a new row every time, we preserve the old file paths in the database. This is exactly what allows us to load two different versions side-by-side for comparison."*
-
-**Code Explanation:**
-- `$request->file('file')->store('submissions', 'public')`: Laravel automatically takes the uploaded file, generates a unique hash filename, saves it into the `storage/app/public/submissions` folder, and returns the generated file path.
-- `getNextVersionFor(...)`: A custom method on the Model that looks at past submissions for this specific student and document type. E.g., if they have versions 1 and 2 of a "proposal", it calculates the new number as 3.
-- `ProjectSubmission::create(...)`: Saves the record to the database along with the file path and calculated version number.
 
 ## 4. Milestone Kanban & Checklist View
 
@@ -91,16 +100,26 @@ If a panelist asks: *"How do you keep track of old files without overwriting the
 ```php
 // Kanban Task Movement
 public function moveTask(Request $request, $taskId) {
-    $task = GroupMilestoneTask::findOrFail($taskId);
-    $task->update(['status' => $request->status]);
-
-    // Recalculate group milestone overall progress percentage
-    $milestone = $task->groupMilestone;
-    $totalTasks = $milestone->groupMilestoneTasks()->count();
-    $completedTasks = $milestone->groupMilestoneTasks()->where('status', 'done')->count();
     
-    $milestone->update([
-        'progress_percentage' => ($totalTasks > 0) ? round(($completedTasks / $totalTasks) * 100) : 0
+    // Find the task that was dragged on the board
+    $task = GroupMilestoneTask::findOrFail($taskId); 
+    
+    // Update its status column (todo, in_progress, done)
+    $task->update(['status' => $request->status]); 
+
+    // Recalculate group milestone overall progress percentage to keep dashboard fast
+    $milestone = $task->groupMilestone; // Get the parent milestone category
+    
+    // Count how many total tasks exist in this milestone
+    $totalTasks = $milestone->groupMilestoneTasks()->count(); 
+    
+    // Count how many are marked as 'done'
+    $completedTasks = $milestone->groupMilestoneTasks()->where('status', 'done')->count(); 
+    
+    // Save the calculated percentage directly onto the parent milestone row
+    $milestone->update([ 
+        // (Completed / Total) * 100
+        'progress_percentage' => ($totalTasks > 0) ? round(($completedTasks / $totalTasks) * 100) : 0 
     ]);
 }
 ```
@@ -109,9 +128,6 @@ public function moveTask(Request $request, $taskId) {
 If a panelist asks: *"How do your dashboards load the progress percentage without slowing down?"*
 **Your Answer:** *"We don't calculate the percentages on the fly when the dashboard loads. Instead, every time a student drags a Kanban task into the 'Done' column, a backend trigger fires. It calculates `(Completed Tasks / Total Tasks) * 100` and saves that static percentage directly into the parent `group_milestones` table. Because of this, the dashboard just reads a single number instead of recalculating hundreds of tasks every page refresh. It makes the system highly scalable."*
 
-**Code Explanation:**
-- `$task->update(['status' => $request->status])`: When dragging a task on a Kanban board, the frontend sends the new column name (`todo`, `in_progress`, or `done`). This updates it in the DB.
-- **Recalculation block**: After a task moves, we need to update the progress bar. It counts the total tasks in that milestone, counts how many are specifically marked `'done'`, and applies standard math: `(completed / total) * 100`. We round it off and save the percentage.
 
 ## 5. Task Submissions
 
@@ -120,23 +136,22 @@ If a panelist asks: *"How do your dashboards load the progress percentage withou
 **Core Logic (`app/Http/Controllers/TaskSubmissionController.php`):**
 ```php
 public function store(Request $request, GroupMilestoneTask $task) {
+    
+    // Save the physical file to the public/task_submissions folder
     $path = $request->file('submission_file')->store('task_submissions', 'public');
     
-    TaskSubmission::create([
-        'group_milestone_task_id' => $task->id,
-        'student_id' => Auth::guard('student')->user()->student->student_id,
-        'file_path' => $path,
-        'notes' => $request->notes
+    // Create the submission record
+    TaskSubmission::create([ 
+        'group_milestone_task_id' => $task->id, // Link it precisely to the Kanban task
+        'student_id' => Auth::guard('student')->user()->student->student_id, // Link the student
+        'file_path' => $path, // Save the file path
+        'notes' => $request->notes // Save any optional notes typed by the student
     ]);
 
-    // Automatically move task to 'in_progress' or 'done' based on submission
+    // Automatically push the Kanban card forward to 'in_progress' so the student doesn't have to drag it manually
     $task->update(['status' => 'in_progress']);
 }
 ```
-**Code Explanation:**
-- `$request->file('submission_file')->store(...)`: Uploads the physical file.
-- `TaskSubmission::create(...)`: Ties the uploaded file specifically to an exact milestone task (like "Chapter 1 Draft") rather than a general project upload, making it easier for the adviser to review specific objectives.
-- `$task->update(['status' => 'in_progress']);`: Automatically pushes the Kanban card forward so the student doesn't have to drag it manually after uploading.
 
 ## 6. Defense Requests
 
@@ -145,12 +160,12 @@ public function store(Request $request, GroupMilestoneTask $task) {
 **Core Logic (`app/Http/Controllers/StudentDefenseRequestController.php`):**
 ```php
 public function store(Request $request) {
-    DefenseRequest::create([
-        'group_id' => Auth::guard('student')->user()->student->group->id,
-        'preferred_date' => $request->preferred_date,
-        'status' => 'pending', 
+    
+    // Create a new record in the defense_requests table
+    DefenseRequest::create([ 
+        'group_id' => Auth::guard('student')->user()->student->group->id, // Automatically attach the logged-in student's group
+        'preferred_date' => $request->preferred_date, // Save the date they selected from the calendar
+        'status' => 'pending',  // Mark as pending for the Coordinator to review
     ]);
 }
 ```
-**Code Explanation:**
-- `DefenseRequest::create(...)`: Takes the date the student picked from a calendar picker, associates it with their group, and creates a pending request. The coordinator will see this pending row in their dashboard queue to approve and finalize the schedule.

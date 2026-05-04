@@ -9,41 +9,59 @@ The Adviser mentors student groups, provides threaded feedback, evaluates submis
 **Core Logic (`app/Http/Controllers/AdviserController.php`):**
 ```php
 public function dashboard() {
-    $user = Auth::user();
     
-    // Fetch groups and calculate progress on the fly
-    $adviserGroups = Group::with(['groupMilestones', 'groupMilestoneTasks'])
-        ->where('faculty_id', $user->faculty_id)
-        ->get()
-        ->map(function ($group) {
-            $group->progress_percentage = $this->calculateGroupProgress($group);
-            $group->overdue_tasks = $this->getOverdueTasks($group);
-            return $group;
+    // Get the currently logged-in faculty member
+    $user = Auth::user(); 
+    
+    // Fetch groups and calculate progress on the fly using Eager Loading to prevent slow N+1 database queries
+    $adviserGroups = Group::with(['groupMilestones', 'groupMilestoneTasks']) 
+        
+        // Only fetch groups assigned to this adviser
+        ->where('faculty_id', $user->faculty_id) 
+        
+        // Execute the query
+        ->get() 
+        
+        // Loop over each fetched group
+        ->map(function ($group) { 
+            
+            // Dynamically calculate their overall percentage
+            $group->progress_percentage = $this->calculateGroupProgress($group); 
+            
+            // Dynamically check for overdue tasks
+            $group->overdue_tasks = $this->getOverdueTasks($group); 
+            
+            // Return the updated group object
+            return $group; 
         });
 
-    $summaryStats = [
-        'total_groups' => $adviserGroups->count(),
-        'groups_ready_for_defense' => $adviserGroups->filter(fn($g) => $g->progress_percentage >= 60)->count(),
-        'groups_needing_attention' => $adviserGroups->filter(fn($g) => $g->progress_percentage < 40)->count(),
-        'overdue_tasks_total' => $adviserGroups->sum('overdue_tasks'),
+    // Build an array of quick summary statistics for the top widgets
+    $summaryStats = [ 
+        'total_groups' => $adviserGroups->count(), // Total groups
+        'groups_ready_for_defense' => $adviserGroups->filter(fn($g) => $g->progress_percentage >= 60)->count(), // Filter groups above 60% in memory
+        'groups_needing_attention' => $adviserGroups->filter(fn($g) => $g->progress_percentage < 40)->count(), // Filter groups below 40% in memory
+        'overdue_tasks_total' => $adviserGroups->sum('overdue_tasks'), // Add up all overdue tasks across all groups
     ];
 
-    return view('dashboards.adviser', compact('adviserGroups', 'summaryStats'));
+    // Send the data to the Blade template
+    return view('dashboards.adviser', compact('adviserGroups', 'summaryStats')); 
 }
 
 private function calculateGroupProgress($group) {
-    $groupMilestones = $group->groupMilestones;
-    if ($groupMilestones->isEmpty()) return 0;
     
-    $totalProgress = $groupMilestones->sum('progress_percentage');
-    return round($totalProgress / $groupMilestones->count());
+    // Get all milestones for this group
+    $groupMilestones = $group->groupMilestones; 
+    
+    // If they have no milestones, return 0%
+    if ($groupMilestones->isEmpty()) return 0; 
+    
+    // Add up the individual percentages of all milestones
+    $totalProgress = $groupMilestones->sum('progress_percentage'); 
+    
+    // Calculate the average percentage (Total / Count) and round it off
+    return round($totalProgress / $groupMilestones->count()); 
 }
 ```
-**Code Explanation:**
-- `Group::with(['groupMilestones', 'groupMilestoneTasks'])`: Uses Eager Loading to fetch the groups alongside their milestones and tasks in a few queries rather than hundreds, preventing the "N+1 query problem" and ensuring the dashboard loads fast.
-- `map(function ($group))`: Loops over the fetched groups and dynamically attaches temporary properties (`progress_percentage` and `overdue_tasks`) to the objects before sending them to the view.
-- `$adviserGroups->filter(...)`: Uses Laravel Collections filtering. Instead of querying the database multiple times, it filters the already-fetched groups in memory. E.g., it looks at the newly calculated percentage and counts how many groups are above 60% completion.
-- `calculateGroupProgress`: A private helper that takes all milestones for a group, sums up their individual percentages, and averages them out (`sum / count`).
 
 ## 2. Group Invitations & Panel Assignments
 
@@ -52,17 +70,24 @@ private function calculateGroupProgress($group) {
 **Core Logic (`app/Http/Controllers/AdviserController.php`):**
 ```php
 public function respondToPanelInvitation(Request $request, DefensePanel $panel) {
-    if ($request->response === 'accept') {
-        $panel->accept(); // Sets status to 'accepted'
-    } else {
-        $panel->decline(); // Sets status to 'declined'
+    
+    // Check if the faculty clicked the "Accept" button
+    if ($request->response === 'accept') { 
+        
+        // Call the custom model method to change status to 'accepted'
+        $panel->accept(); 
+        
+    } else { // Otherwise, they clicked "Decline"
+        
+        // Call the custom model method to change status to 'declined'
+        $panel->decline(); 
     }
-    return back()->with('success', 'Panel invitation response submitted.');
+    
+    // Refresh the page
+    return back()->with('success', 'Panel invitation response submitted.'); 
 }
 ```
-**Code Explanation:**
-- `DefensePanel $panel`: Utilizes "Route Model Binding". By type-hinting the Model, Laravel automatically fetches the DefensePanel row from the database using the ID passed in the URL.
-- `$panel->accept();`: Calls a custom method defined inside the `DefensePanel` Model class, which internally updates the `status` column to `'accepted'` and saves it.
+
 
 ## 3. Threaded Milestone Feedback
 
@@ -71,12 +96,16 @@ public function respondToPanelInvitation(Request $request, DefensePanel $panel) 
 **Core Logic (`app/Http/Controllers/AdviserController.php`):**
 ```php
 public function storeMilestoneTaskComment(Request $request, Group $group, GroupMilestoneTask $groupMilestoneTask) {
-    TaskComment::create([
-        'group_milestone_task_id' => $groupMilestoneTask->id,
-        'user_id' => Auth::id(), 
-        'body' => $request->body,
-        'parent_id' => $request->parent_id, // Links to parent comment for threading
+    
+    // Create a new comment record
+    TaskComment::create([ 
+        'group_milestone_task_id' => $groupMilestoneTask->id, // Link the comment specifically to this task
+        'user_id' => Auth::id(), // Record the ID of the faculty member commenting
+        'body' => $request->body, // Save the actual comment text
+        'parent_id' => $request->parent_id, // If replying to someone, save their comment ID here (Adjacency List model)
     ]);
+    
+    // Trigger a real-time notification to the students in the group
     NotificationService::adviserCommentOnMilestoneTask(Auth::user(), $groupMilestoneTask);
 }
 ```
@@ -85,10 +114,6 @@ public function storeMilestoneTaskComment(Request $request, Group $group, GroupM
 If a panelist asks: *"How did you design the database to allow infinite replying/nesting on comments?"*
 **Your Answer:** *"We used an 'Adjacency List' database design. Instead of creating a separate table for 'Replies', our `task_comments` table has a `parent_id` column that points back to its own table (a self-referencing relationship). If a comment is a brand new thread, `parent_id` is null. If a user is replying to someone, `parent_id` simply holds the ID of the comment they are replying to. This handles infinite threading natively with only one table."*
 
-**Code Explanation:**
-- `TaskComment::create(...)`: Inserts the comment text into the database. It associates it with the task ID and the currently logged-in faculty user ID.
-- `'parent_id' => $request->parent_id`: This is the key to threaded (nested) comments. If someone clicks "Reply" to an existing comment, the original comment's ID is passed as the `parent_id`. If they are making a brand new comment, it is passed as `null`.
-- `NotificationService::...`: A dedicated service class handles pushing real-time alerts or database notices to the students in the group so they know their adviser left a comment.
 
 ## 4. Defense Rating Sheets
 
@@ -97,18 +122,19 @@ If a panelist asks: *"How did you design the database to allow infinite replying
 **Core Logic (`app/Http/Controllers/RatingSheetController.php`):**
 ```php
 public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
+    
+    // Find the specific panel assignment record for the currently logged-in faculty member. Throw a 404 error if they aren't on the panel.
     $panelMember = $schedule->defensePanels()->where('faculty_id', Auth::id())->firstOrFail();
-    $totalScore = array_sum($request->criteria_scores);
+    
+    // Automatically add up all the individual scores (e.g., 20 + 30 = 50)
+    $totalScore = array_sum($request->criteria_scores); 
 
-    RatingSheet::create([
-        'defense_panel_id' => $panelMember->id,
-        'scores' => json_encode($request->criteria_scores),
-        'total_score' => $totalScore,
-        'comments' => $request->overall_comments,
+    // Insert the final grades into the database
+    RatingSheet::create([ 
+        'defense_panel_id' => $panelMember->id, // Link the grades to this specific panelist
+        'scores' => json_encode($request->criteria_scores), // Store the exact breakdown of scores as a JSON string for flexibility
+        'total_score' => $totalScore, // Save the calculated total score
+        'comments' => $request->overall_comments, // Save any final feedback from the panelist
     ]);
 }
 ```
-**Code Explanation:**
-- `$schedule->defensePanels()->where('faculty_id', Auth::id())->firstOrFail();`: Since multiple faculty members rate the same schedule, we need to find the specific `DefensePanel` assignment record that belongs to the *currently logged-in faculty member*. If they aren't on the panel, it throws a 404 error (`firstOrFail`).
-- `array_sum(...)`: Adds up all the individual criteria scores submitted via the form (e.g., Presentation: 20, Content: 30 = 50 total).
-- `json_encode($request->criteria_scores)`: Since the rubric criteria could change in the future, we store the individual breakdown of scores as a JSON string inside a single column, making the database structure highly flexible.
