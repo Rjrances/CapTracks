@@ -8,6 +8,16 @@ class MilestoneTemplateController extends Controller
     public function index(Request $request)
     {
         $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+        $user = auth()->user();
+        $coordinatedOfferingIds = collect();
+
+        if ($user) {
+            $coordinatedOfferingIds = \App\Models\Offering::where('faculty_id', $user->faculty_id)
+                ->when($activeTerm, function ($query) use ($activeTerm) {
+                    return $query->where('academic_term_id', $activeTerm->id);
+                })
+                ->pluck('id');
+        }
         
         $milestoneTemplates = MilestoneTemplate::with('tasks')->get();
         
@@ -15,6 +25,11 @@ class MilestoneTemplateController extends Controller
         $groupsQuery = \App\Models\Group::with(['members', 'adviser', 'milestones.template']);
         if ($activeTerm) {
             $groupsQuery->where('academic_term_id', $activeTerm->id);
+        }
+        if ($coordinatedOfferingIds->isNotEmpty()) {
+            $groupsQuery->whereIn('offering_id', $coordinatedOfferingIds);
+        } else {
+            $groupsQuery->whereRaw('1 = 0');
         }
         $groups = $groupsQuery->get();
         

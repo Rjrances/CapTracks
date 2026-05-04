@@ -2,13 +2,19 @@
 namespace App\Http\Controllers;
 use App\Models\DefenseSchedule;
 use App\Models\Group;
+use App\Models\AcademicTerm;
 use Illuminate\Support\Facades\Auth;
 class CalendarController extends Controller
 {
     public function coordinatorCalendar()
     {
-        $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+
+        $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'group.offering.teacher', 'panelists'])
             ->whereIn('status', ['scheduled'])
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
             ->orderBy('start_at')
             ->get();
         $calendarEvents = $defenses->map(function ($defense) {
@@ -26,6 +32,7 @@ class CalendarController extends Controller
                     'group' => $defense->group->name ?? 'N/A',
                     'defenseType' => $defense->stage_label ?? 'Defense',
                     'adviser' => $defense->group->adviser->name ?? 'N/A',
+                    'coordinator' => $defense->group->offering->teacher->name ?? 'N/A',
                     'status' => $defense->status,
                     'room' => $defense->room ?? 'TBD',
                     'time' => $startDate->format('g:i A'),

@@ -31,9 +31,14 @@
             <div class="col-12">
                 <div class="card border-success">
                     <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">
-                            <i class="fas fa-chalkboard-teacher me-2"></i>My Coordinated Offerings
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chalkboard-teacher me-2"></i>My Coordinated Offerings
+                            </h5>
+                            @if($activeTerm)
+                                <small class="text-white-50">Showing: {{ $activeTerm->semester }}</small>
+                            @endif
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -49,7 +54,7 @@
                                         <div class="d-flex justify-content-between align-items-center">
                                             <small class="text-muted">
                                                 <i class="fas fa-users me-1"></i>
-                                                {{ $offering->students->count() }} students
+                                                {{ $offering->groups->sum(function ($group) { return $group->members->count(); }) }} students
                                             </small>
                                             <div class="btn-group btn-group-sm">
                                                 <a href="{{ route('coordinator.groups.index') }}?offering={{ $offering->id }}" 

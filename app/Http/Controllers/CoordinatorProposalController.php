@@ -12,18 +12,23 @@ use App\Services\DocumentPreviewService;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\AcademicTerm;
 
 class CoordinatorProposalController extends Controller
 {
     public function index()
     {
         $user = Auth::user();
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
         
         //offerings by coordinator-user
         $coordinatedOfferings = Offering::where('faculty_id', $user->faculty_id)
             ->where(function($query) {
                 $query->whereIn('subject_title', ['Capstone Project I', 'Capstone Project II'])
                       ->orWhereIn('subject_code', ['CS-CAP-401', 'CS-CAP-402']);
+            })
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
             })
             ->with(['academicTerm', 'groups.members'])
             ->get();
@@ -259,11 +264,15 @@ class CoordinatorProposalController extends Controller
     public function getStats()
     {
         $user = Auth::user();
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
         
         $coordinatedOfferings = Offering::where('faculty_id', $user->faculty_id)
             ->where(function($query) {
                 $query->whereIn('subject_title', ['Capstone Project I', 'Capstone Project II'])
                       ->orWhereIn('subject_code', ['CS-CAP-401', 'CS-CAP-402']);
+            })
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
             })
             ->get();
         $offeringIds = $coordinatedOfferings->pluck('id');

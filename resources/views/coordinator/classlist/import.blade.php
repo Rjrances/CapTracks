@@ -12,6 +12,13 @@
         <p class="text-muted mb-0">Upload the same CSV format used by the chairperson bulk import. Choose your offering so enrollment stays scoped to classes you coordinate.</p>
     </div>
 
+    @if($activeTerm)
+        <div class="alert alert-info">
+            <i class="fas fa-calendar me-2"></i>
+            Offering choices are limited to your active-term assignments: <strong>{{ $activeTerm->semester }}</strong>.
+        </div>
+    @endif
+
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
@@ -55,7 +62,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <div class="form-text">Students are imported and enrolled according to the CSV (offer_code column). The offering above scopes this action to your coordinated classes.</div>
+                        <div class="form-text">Students are imported and enrolled according to the CSV (offer_code column). The offering above scopes this action to your active-term coordinated classes.</div>
                     </div>
                     <div class="mb-3">
                         <label for="file" class="form-label">CSV file</label>

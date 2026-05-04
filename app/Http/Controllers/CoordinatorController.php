@@ -77,22 +77,58 @@ class CoordinatorController extends Controller
     }
     public function classlist(Request $request)
     {
+        $user = auth()->user();
         $sortBy = $request->get('sort', 'student_id');
         $sortDirection = $request->get('direction', 'asc');
         $activeTerm = AcademicTerm::where('is_active', true)->first();
-        
-        //course filter
-        $courses = Student::where('semester', $activeTerm ? $activeTerm->semester : '')
-            ->distinct()
-            ->pluck('course')
-            ->filter()
-            ->sort()
-            ->values();
+
+        $coordinatedOfferingIds = Offering::where('faculty_id', $user->faculty_id)
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->pluck('id');
+
+        $coordinatedOfferings = Offering::whereIn('id', $coordinatedOfferingIds)
+            ->orderBy('subject_code')
+            ->get(['id', 'subject_code', 'subject_title']);
+
+        $coordinatedOfferingCount = $coordinatedOfferingIds->count();
+        $coordinatedStudentCount = 0;
+        $totalSemesterStudents = 0;
+        $groupedStudentCount = 0;
+        $ungroupedStudentCount = 0;
+
+        $courses = collect();
+        if ($activeTerm && $coordinatedOfferingIds->isNotEmpty()) {
+            $scopedStudentsQuery = Student::where('semester', $activeTerm->semester)
+                ->whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
+                    $query->whereIn('offerings.id', $coordinatedOfferingIds);
+                });
+
+            $coordinatedStudentCount = (clone $scopedStudentsQuery)->count();
+            $totalSemesterStudents = $coordinatedStudentCount;
+            $groupedStudentCount = (clone $scopedStudentsQuery)->whereHas('groups', function ($query) use ($activeTerm, $coordinatedOfferingIds) {
+                $query->whereIn('offering_id', $coordinatedOfferingIds)
+                    ->where('academic_term_id', $activeTerm->id);
+            })->count();
+            $ungroupedStudentCount = max(0, $totalSemesterStudents - $groupedStudentCount);
+
+            $courses = (clone $scopedStudentsQuery)
+                ->distinct()
+                ->pluck('course')
+                ->filter()
+                ->sort()
+                ->values();
+        }
         
         $students = collect(); //null
-        if ($activeTerm) {
-            $studentsQuery = Student::with(['offerings'])
-                ->where('semester', $activeTerm->semester);
+        if ($activeTerm && $coordinatedOfferingIds->isNotEmpty()) {
+            $studentsQuery = Student::with(['offerings' => function ($query) use ($coordinatedOfferingIds) {
+                $query->whereIn('offerings.id', $coordinatedOfferingIds);
+            }])->where('semester', $activeTerm->semester)
+                ->whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
+                    $query->whereIn('offerings.id', $coordinatedOfferingIds);
+                });
                 
             
             if ($request->filled('name')) {
@@ -104,6 +140,13 @@ class CoordinatorController extends Controller
             if ($request->filled('course')) {
                 $course = $request->input('course');
                 $studentsQuery->where('course', $course);
+            }
+
+            if ($request->filled('offering') && $coordinatedOfferingIds->contains((int) $request->input('offering'))) {
+                $selectedOfferingId = (int) $request->input('offering');
+                $studentsQuery->whereHas('offerings', function ($query) use ($selectedOfferingId) {
+                    $query->where('offerings.id', $selectedOfferingId);
+                });
             }
             
             //Default search
@@ -117,22 +160,39 @@ class CoordinatorController extends Controller
             }
             
             $students = $studentsQuery->orderBy($sortBy, $sortDirection)
-                ->paginate(10)->appends($request->only(['name', 'course', 'search', 'sort', 'direction']));
+                ->paginate(10)->appends($request->only(['name', 'course', 'offering', 'search', 'sort', 'direction']));
         }
         
-        return view('coordinator.classlist.index', compact('students', 'activeTerm', 'courses', 'sortBy', 'sortDirection'));
+        return view('coordinator.classlist.index', compact(
+            'students',
+            'activeTerm',
+            'courses',
+            'sortBy',
+            'sortDirection',
+            'coordinatedStudentCount',
+            'coordinatedOfferingCount',
+            'totalSemesterStudents',
+            'groupedStudentCount',
+            'ungroupedStudentCount',
+            'coordinatedOfferings'
+        ));
     }
 
     public function importStudentsForm(Request $request)
     {
         $user = auth()->user();
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+
         $offerings = Offering::where('faculty_id', $user->faculty_id)
             ->with('academicTerm')
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
             ->orderBy('subject_code')
             ->get();
         $selectedOfferingId = $request->get('offering_id');
 
-        return view('coordinator.classlist.import', compact('offerings', 'selectedOfferingId'));
+        return view('coordinator.classlist.import', compact('offerings', 'selectedOfferingId', 'activeTerm'));
     }
 
     public function importStudents(Request $request)
@@ -142,13 +202,29 @@ class CoordinatorController extends Controller
 
     public function groups(Request $request)
     {
+        $user = auth()->user();
         $activeTerm = AcademicTerm::where('is_active', true)->first();
-        
+
+        $coordinatedOfferingIds = Offering::where('faculty_id', $user->faculty_id)
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->pluck('id');
+
         $query = Group::with(['adviser', 'members']);
-        
-        
+
+        if ($coordinatedOfferingIds->isNotEmpty()) {
+            $query->whereIn('offering_id', $coordinatedOfferingIds);
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
         if ($activeTerm) {
             $query->where('academic_term_id', $activeTerm->id);
+        }
+
+        if ($request->filled('offering') && $coordinatedOfferingIds->contains((int) $request->input('offering'))) {
+            $query->where('offering_id', (int) $request->input('offering'));
         }
         
         if ($request->filled('search')) {
@@ -159,7 +235,7 @@ class CoordinatorController extends Controller
             });
         }
         
-        $groups = $query->paginate(10)->appends($request->only(['search']));
+        $groups = $query->paginate(10)->appends($request->only(['search', 'offering']));
         return view('coordinator.groups.index', compact('groups', 'activeTerm'));
     }
     public function create()
@@ -402,9 +478,13 @@ class CoordinatorController extends Controller
     public function facultyMatrix()
     {
         $user = auth()->user();
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
 
         $coordinatedOfferings = Offering::with(['teacher', 'academicTerm'])
             ->where('faculty_id', $user->faculty_id)
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
             ->get();
 
         $coordinatedOfferingIds = $coordinatedOfferings->pluck('id');

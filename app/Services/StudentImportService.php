@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Imports\StudentsImport;
+use App\Models\AcademicTerm;
 use App\Models\Offering;
 use App\Models\Student;
 use Illuminate\Http\RedirectResponse;
@@ -30,11 +31,16 @@ class StudentImportService
 
         if ($mode === self::MODE_COORDINATOR) {
             $user = $request->user();
+            $activeTerm = AcademicTerm::where('is_active', true)->first();
             $offeringId = $request->get('offering_id');
             if ($offeringId) {
                 $offering = Offering::find($offeringId);
                 if (!$offering || (int) $offering->faculty_id !== (int) $user->faculty_id) {
                     return back()->with('error', 'You can only import for offerings you coordinate.');
+                }
+
+                if ($activeTerm && (int) $offering->academic_term_id !== (int) $activeTerm->id) {
+                    return back()->with('error', 'You can only import students for your active-term coordinated offerings.');
                 }
             }
         }

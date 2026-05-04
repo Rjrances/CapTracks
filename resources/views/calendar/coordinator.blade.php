@@ -367,6 +367,7 @@ function showEventDetails(event) {
                                  <p><strong>Defense Type:</strong> ${event.extendedProps.defenseType || 'N/A'}</p>
                 <p><strong>Group:</strong> ${event.extendedProps.group || 'N/A'}</p>
                 <p><strong>Adviser:</strong> ${event.extendedProps.adviser || 'N/A'}</p>
+                <p><strong>Coordinator:</strong> ${event.extendedProps.coordinator || 'N/A'}</p>
                 <p><strong>Status:</strong> <span class="badge bg-${event.extendedProps.status === 'approved' ? 'success' : event.extendedProps.status === 'scheduled' ? 'success' : 'secondary'}">${event.extendedProps.status.charAt(0).toUpperCase() + event.extendedProps.status.slice(1)}</span></p>
             </div>
             <div class="col-md-6">

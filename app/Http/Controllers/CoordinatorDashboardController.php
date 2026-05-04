@@ -23,38 +23,59 @@ class CoordinatorDashboardController extends Controller
                 return $query->where('academic_term_id', $activeTerm->id);
             })
             ->pluck('id')->toArray();
-        $studentCount = $activeTerm ? Student::where('semester', $activeTerm->semester)->count() : 0;
+        $studentCount = $activeTerm ? Student::where('semester', $activeTerm->semester)
+            ->whereHas('offerings', function($query) use ($coordinatorOfferings) {
+                $query->whereIn('offerings.id', $coordinatorOfferings);
+            })->count() : 0;
         $groupCount = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->count() : 0;
         $facultyCount = User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator', 'chairperson'])
             ->when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('semester', $activeTerm->semester);
             })->count(); 
-        $submissionCount = $activeTerm ? ProjectSubmission::whereHas('student', function($query) use ($activeTerm) {
-            $query->where('semester', $activeTerm->semester);
+        $submissionCount = $activeTerm ? ProjectSubmission::whereHas('student', function($query) use ($activeTerm, $coordinatorOfferings) {
+            $query->where('semester', $activeTerm->semester)
+                ->whereHas('offerings', function($offeringQuery) use ($coordinatorOfferings) {
+                    $offeringQuery->whereIn('offerings.id', $coordinatorOfferings);
+                });
         })->count() : 0;
         $groupsWithAdviser = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->whereNotNull('faculty_id')->count() : 0;
         $groupsWithoutAdviser = $groupCount - $groupsWithAdviser;
         $totalGroupMembers = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->withCount('members')->get()->sum('members_count') : 0;
         $pendingSubmissions = $activeTerm ? ProjectSubmission::where('status', 'pending')
-            ->whereHas('student', function($query) use ($activeTerm) {
-                $query->where('semester', $activeTerm->semester);
+            ->whereHas('student', function($query) use ($activeTerm, $coordinatorOfferings) {
+                $query->where('semester', $activeTerm->semester)
+                    ->whereHas('offerings', function($offeringQuery) use ($coordinatorOfferings) {
+                        $offeringQuery->whereIn('offerings.id', $coordinatorOfferings);
+                    });
             })->count() : 0;
         $approvedSubmissions = $activeTerm ? ProjectSubmission::where('status', 'approved')
-            ->whereHas('student', function($query) use ($activeTerm) {
-                $query->where('semester', $activeTerm->semester);
+            ->whereHas('student', function($query) use ($activeTerm, $coordinatorOfferings) {
+                $query->where('semester', $activeTerm->semester)
+                    ->whereHas('offerings', function($offeringQuery) use ($coordinatorOfferings) {
+                        $offeringQuery->whereIn('offerings.id', $coordinatorOfferings);
+                    });
             })->count() : 0;
         $rejectedSubmissions = $activeTerm ? ProjectSubmission::where('status', 'rejected')
-            ->whereHas('student', function($query) use ($activeTerm) {
-                $query->where('semester', $activeTerm->semester);
+            ->whereHas('student', function($query) use ($activeTerm, $coordinatorOfferings) {
+                $query->where('semester', $activeTerm->semester)
+                    ->whereHas('offerings', function($offeringQuery) use ($coordinatorOfferings) {
+                        $offeringQuery->whereIn('offerings.id', $coordinatorOfferings);
+                    });
             })->count() : 0;
         $milestoneTemplates = MilestoneTemplate::count();
         $activeMilestones = MilestoneTemplate::where('status', 'active')->count();
         $totalTasks = MilestoneTask::count();
         $completedTasks = MilestoneTask::where('is_completed', true)->count();
-        $recentStudents = $activeTerm ? Student::where('semester', $activeTerm->semester)->latest()->take(5)->get() : collect();
+        $recentStudents = $activeTerm ? Student::where('semester', $activeTerm->semester)
+            ->whereHas('offerings', function($query) use ($coordinatorOfferings) {
+                $query->whereIn('offerings.id', $coordinatorOfferings);
+            })->latest()->take(5)->get() : collect();
         $recentGroups = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->with(['adviser', 'members'])->latest()->take(5)->get() : collect();
-        $recentSubmissions = $activeTerm ? ProjectSubmission::whereHas('student', function($query) use ($activeTerm) {
-            $query->where('semester', $activeTerm->semester);
+        $recentSubmissions = $activeTerm ? ProjectSubmission::whereHas('student', function($query) use ($activeTerm, $coordinatorOfferings) {
+            $query->where('semester', $activeTerm->semester)
+                ->whereHas('offerings', function($offeringQuery) use ($coordinatorOfferings) {
+                    $offeringQuery->whereIn('offerings.id', $coordinatorOfferings);
+                });
         })->latest()->take(5)->get() : collect();
         $notifications = Notification::latest()->take(5)->get();
         $pendingInvitations = $activeTerm ? AdviserInvitation::with(['faculty', 'group'])
@@ -73,7 +94,12 @@ class CoordinatorDashboardController extends Controller
         $isTeacherCoordinator = false;
         if ($user && $user->hasRole('coordinator') && $user->offerings()->exists()) {
             $isTeacherCoordinator = true;
-            $coordinatedOfferings = $user->getCoordinatedOfferings();
+            $coordinatedOfferings = $user->offerings()
+                ->with(['academicTerm', 'groups.members'])
+                ->when($activeTerm, function ($query) use ($activeTerm) {
+                    return $query->where('academic_term_id', $activeTerm->id);
+                })
+                ->get();
         }
         $coordinatedOfferings = $coordinatedOfferings ?? collect();
         $isTeacherCoordinator = $isTeacherCoordinator ?? false;

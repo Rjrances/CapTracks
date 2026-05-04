@@ -60,8 +60,13 @@
                                 @else
                                     <div class="alert alert-warning">
                                         <i class="fas fa-exclamation-triangle me-2"></i>
-                                        <strong>No Groups Available:</strong> You don't have any groups assigned to your offerings yet. 
-                                        Please contact the chairperson to assign groups to your offerings.
+                                        @if(($groupAvailability['total_scoped_groups'] ?? 0) > 0 && ($groupAvailability['scheduled_groups'] ?? 0) > 0)
+                                            <strong>No Groups Available for New Schedule:</strong>
+                                            All your scoped groups for the active term already have defense schedules.
+                                        @else
+                                            <strong>No Groups Available:</strong> You don't have any groups assigned to your offerings yet.
+                                            Please contact the chairperson to assign groups to your offerings.
+                                        @endif
                                     </div>
                                 @endif
                                 @error('group_id')
