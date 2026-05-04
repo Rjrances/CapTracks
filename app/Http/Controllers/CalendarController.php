@@ -26,7 +26,7 @@ class CalendarController extends Controller
 
         // Only defenses for this coordinator's own groups can be edited.
         $myGroupIds = Group::whereHas('offering', function ($query) use ($user) {
-            $query->where('teacher_id', $user->id);
+            $query->where('faculty_id', $user->id);
         })->pluck('id')->toArray();
         $calendarEvents = $defenses->map(function ($defense) use ($myGroupIds) {
             $startDate = \Carbon\Carbon::parse($defense->start_at);
