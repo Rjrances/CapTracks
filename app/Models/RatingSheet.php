@@ -12,6 +12,8 @@ class RatingSheet extends Model
         'group_id',
         'criteria',
         'total_score',
+        'recommendation',
+        'recommendation_reason',
         'remarks',
         'submitted_at',
     ];

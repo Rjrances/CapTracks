@@ -4,15 +4,19 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0">Review Submission</h2>
-            <p class="text-muted mb-0">Review and provide feedback on student submission</p>
+            <h2 class="mb-0">{{ ($viewMode ?? 'adviser') === 'panel' ? 'Submission Details' : 'Review Submission' }}</h2>
+            <p class="text-muted mb-0">
+                {{ ($viewMode ?? 'adviser') === 'panel' ? 'Panel view of student submission details' : 'Review and provide feedback on student submission' }}
+            </p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('adviser.project.edit', $submission->id) }}" class="btn btn-warning">
-                <i class="fas fa-edit me-2"></i>Edit Review
-            </a>
-            <a href="{{ route('adviser.project.index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Back to Projects
+            @if(($viewMode ?? 'adviser') !== 'panel')
+                <a href="{{ route('adviser.project.edit', $submission->id) }}" class="btn btn-warning">
+                    <i class="fas fa-edit me-2"></i>Edit Review
+                </a>
+            @endif
+            <a href="{{ ($viewMode ?? 'adviser') === 'panel' ? route('adviser.panel-groups') : route('adviser.groups') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>{{ ($viewMode ?? 'adviser') === 'panel' ? 'Back to Panel Groups' : 'Back to Adviser Groups' }}
             </a>
         </div>
     </div>
@@ -118,34 +122,36 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-clipboard-check me-2"></i>Review Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        @if($submission->status === 'pending')
-                            <button class="btn btn-success" onclick="approveSubmission()">
-                                <i class="fas fa-check me-2"></i>Approve Submission
-                            </button>
-                            <button class="btn btn-danger" onclick="rejectSubmission()">
-                                <i class="fas fa-times me-2"></i>Reject Submission
-                            </button>
-                        @else
-                            <div class="alert alert-info">
-                                <strong>Status:</strong> {{ ucfirst($submission->status) }}
-                                <br>
-                                <small>This submission has already been reviewed.</small>
-                            </div>
-                        @endif
-                        <a href="{{ route('adviser.project.edit', $submission->id) }}" class="btn btn-warning">
-                            <i class="fas fa-edit me-2"></i>Add/Edit Feedback
-                        </a>
+            @if(($viewMode ?? 'adviser') !== 'panel')
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clipboard-check me-2"></i>Review Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            @if($submission->status === 'pending')
+                                <button class="btn btn-success" onclick="approveSubmission()">
+                                    <i class="fas fa-check me-2"></i>Approve Submission
+                                </button>
+                                <button class="btn btn-danger" onclick="rejectSubmission()">
+                                    <i class="fas fa-times me-2"></i>Reject Submission
+                                </button>
+                            @else
+                                <div class="alert alert-info">
+                                    <strong>Status:</strong> {{ ucfirst($submission->status) }}
+                                    <br>
+                                    <small>This submission has already been reviewed.</small>
+                                </div>
+                            @endif
+                            <a href="{{ route('adviser.project.edit', $submission->id) }}" class="btn btn-warning">
+                                <i class="fas fa-edit me-2"></i>Add/Edit Feedback
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endif
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -200,16 +206,18 @@
         </div>
     </div>
 </div>
-<script>
-function approveSubmission() {
-    if (confirm('Are you sure you want to approve this submission?')) {
-        window.location.href = "{{ route('adviser.project.edit', $submission->id) }}?action=approve";
+@if(($viewMode ?? 'adviser') !== 'panel')
+    <script>
+    function approveSubmission() {
+        if (confirm('Are you sure you want to approve this submission?')) {
+            window.location.href = "{{ route('adviser.project.edit', $submission->id) }}?action=approve";
+        }
     }
-}
-function rejectSubmission() {
-    if (confirm('Are you sure you want to reject this submission?')) {
-        window.location.href = "{{ route('adviser.project.edit', $submission->id) }}?action=reject";
+    function rejectSubmission() {
+        if (confirm('Are you sure you want to reject this submission?')) {
+            window.location.href = "{{ route('adviser.project.edit', $submission->id) }}?action=reject";
+        }
     }
-}
-</script>
+    </script>
+@endif
 @endsection 

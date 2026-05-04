@@ -23,6 +23,17 @@
         </div>
     </div>
 
+    <div class="card mb-3">
+        <div class="card-body">
+            <strong>Panel Recommendations:</strong>
+            <div class="mt-2 d-flex gap-2 flex-wrap">
+                <span class="badge bg-success">Pass: {{ $recommendationCounts['pass'] ?? 0 }}</span>
+                <span class="badge bg-warning text-dark">Conditional Pass: {{ $recommendationCounts['conditional_pass'] ?? 0 }}</span>
+                <span class="badge bg-danger">Re-Defend: {{ $recommendationCounts['redefend'] ?? 0 }}</span>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             @if($ratingSheets->isEmpty())
@@ -37,6 +48,29 @@
                             </div>
                             <span class="badge bg-primary">Total: {{ number_format((float) $sheet->total_score, 2) }}</span>
                         </div>
+
+                        <div class="mb-2">
+                            <strong>Recommendation:</strong>
+                            @php
+                                $recommendation = $sheet->recommendation;
+                            @endphp
+                            @if($recommendation === 'pass')
+                                <span class="badge bg-success">Pass</span>
+                            @elseif($recommendation === 'conditional_pass')
+                                <span class="badge bg-warning text-dark">Conditional Pass</span>
+                            @elseif($recommendation === 'redefend')
+                                <span class="badge bg-danger">Re-Defend</span>
+                            @else
+                                <span class="badge bg-secondary">Not Set</span>
+                            @endif
+                        </div>
+
+                        @if($sheet->recommendation_reason)
+                            <div class="mb-2">
+                                <strong>Re-Defend Reason:</strong>
+                                <p class="mb-0">{{ $sheet->recommendation_reason }}</p>
+                            </div>
+                        @endif
 
                         <div class="table-responsive">
                             <table class="table table-sm mb-2">

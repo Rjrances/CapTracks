@@ -16,7 +16,8 @@ class ProjectSubmissionController extends Controller
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->isTeacher()) {
-                return $this->adviserIndex($user, $request);
+                // Adviser project listing is consolidated into Adviser Groups page.
+                return redirect()->route('adviser.groups');
             } else {
                 return $this->studentIndex($user);
             }
@@ -36,17 +37,12 @@ class ProjectSubmissionController extends Controller
         $adviserGroups = Group::with(['members', 'members.submissions'])
             ->where('faculty_id', $user->faculty_id)
             ->get();
-        $panelGroups = Group::with(['members', 'members.submissions'])
-            ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-                $query->where('faculty_id', $user->id);
-            })
-            ->get();
-        $allGroups = $adviserGroups->concat($panelGroups)->unique('id')->values();
+        $panelGroups = collect();
+        $allGroups = $adviserGroups->values();
 
         if ($selectedGroupId) {
             $allGroups = $allGroups->where('id', (int) $selectedGroupId)->values();
             $adviserGroups = $adviserGroups->where('id', (int) $selectedGroupId)->values();
-            $panelGroups = $panelGroups->where('id', (int) $selectedGroupId)->values();
         }
 
         $memberIds = collect();
@@ -141,15 +137,33 @@ class ProjectSubmissionController extends Controller
     public function show($id)
     {
         $submission = ProjectSubmission::findOrFail($id);
+        $viewMode = 'adviser';
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->isTeacher()) {
-                $hasAccess = Group::where('faculty_id', $user->faculty_id)
+                $hasAdviserAccess = Group::where('faculty_id', $user->faculty_id)
                     ->whereHas('members', function($query) use ($submission) {
                         $query->where('students.student_id', $submission->student_id);
                     })->exists();
-                if (!$hasAccess) {
+
+                $hasAcceptedPanelAccess = Group::whereHas('members', function ($query) use ($submission) {
+                        $query->where('students.student_id', $submission->student_id);
+                    })
+                    ->whereHas('defenseSchedules.defensePanels', function ($query) use ($user) {
+                        $query->whereIn('role', ['chair', 'member'])
+                            ->where('status', 'accepted')
+                            ->whereHas('faculty', function ($facultyQuery) use ($user) {
+                                $facultyQuery->where('faculty_id', $user->faculty_id);
+                            });
+                    })
+                    ->exists();
+
+                if (!$hasAdviserAccess && !$hasAcceptedPanelAccess) {
                     abort(403, 'Unauthorized access to this submission.');
+                }
+
+                if ($hasAcceptedPanelAccess && !$hasAdviserAccess) {
+                    $viewMode = 'panel';
                 }
             } else {
                 if ($submission->student_id !== $user->student->student_id) {
@@ -167,7 +181,7 @@ class ProjectSubmissionController extends Controller
                 return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
             }
         }
-        return view('adviser.project.show', compact('submission'));
+        return view('adviser.project.show', compact('submission', 'viewMode'));
     }
     public function edit($id)
     {

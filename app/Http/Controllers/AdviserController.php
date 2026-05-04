@@ -44,8 +44,10 @@ class AdviserController extends Controller
         });
         $panelGroups = Group::with(['academicTerm', 'defenseSchedules.defensePanels'])
             ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-                // defense_panels.faculty_id references users.id
-                $query->where('faculty_id', $user->id);
+                // Only true panel roles should count here.
+                $query->where('faculty_id', $user->id)
+                    ->whereIn('role', ['chair', 'member'])
+                    ->where('status', 'accepted');
             })
             ->get();
         $summaryStats = [
@@ -290,7 +292,9 @@ class AdviserController extends Controller
             return $group;
         });
         $panelGroupsCount = Group::whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->id);
+            $query->where('faculty_id', $user->id)
+                ->whereIn('role', ['chair', 'member'])
+                ->where('status', 'accepted');
         })->count();
         $workspaceStats = [
             'total_adviser_groups' => $allGroups->count(),
@@ -311,17 +315,34 @@ class AdviserController extends Controller
     }
     public function groupDetails(Group $group)
     {
-        if ($group->faculty_id !== Auth::user()->faculty_id) {
+        $user = Auth::user();
+        $isAdviserOwner = $group->faculty_id === $user->faculty_id;
+        $isAcceptedPanelist = $group->defenseSchedules()
+            ->whereHas('defensePanels', function ($query) use ($user) {
+                $query->whereIn('role', ['chair', 'member'])
+                    ->where('status', 'accepted')
+                    ->whereHas('faculty', function ($facultyQuery) use ($user) {
+                        $facultyQuery->where('faculty_id', $user->faculty_id);
+                    });
+            })
+            ->exists();
+
+        if (!$isAdviserOwner && !$isAcceptedPanelist) {
             abort(403, 'Unauthorized');
         }
+
+        $viewerMode = $isAdviserOwner ? 'adviser' : 'panel';
+        $canViewMilestoneDiscussions = $isAdviserOwner;
+
         $group->load([
+            'adviser',
             'groupMilestoneTasks' => function ($query) {
                 $query->with(['milestoneTask', 'groupMilestone.milestoneTemplate'])
                     ->withCount('taskComments');
             },
         ]);
 
-        return view('adviser.group-details', compact('group'));
+        return view('adviser.group-details', compact('group', 'viewerMode', 'canViewMilestoneDiscussions'));
     }
 
     public function milestoneTaskComments(Group $group, GroupMilestoneTask $groupMilestoneTask)
@@ -410,13 +431,19 @@ class AdviserController extends Controller
             'defenseSchedules.defensePanels'
         ])
         ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->id);
+            $query->where('faculty_id', $user->id)
+                ->whereIn('role', ['chair', 'member'])
+                ->where('status', 'accepted');
         })
         ->get()
         ->map(function ($group) use ($user) {
             $group->role_type = 'panel';
             $panelAssignment = $group->defenseSchedules->first()
-                ->defensePanels->where('faculty_id', $user->faculty_id)->first();
+                ->defensePanels
+                ->where('faculty_id', $user->id)
+                ->whereIn('role', ['chair', 'member'])
+                ->where('status', 'accepted')
+                ->first();
             $group->panel_role = $panelAssignment->role ?? 'member';
             $group->defense_schedule = $group->defenseSchedules->first();
             $group->recent_activities = $this->getGroupRecentActivities($group);
@@ -455,16 +482,26 @@ class AdviserController extends Controller
         $panelGroups = Group::with([
             'members', 
             'academicTerm', 
-            'defenseSchedules.defensePanels'
+            'defenseSchedules.defensePanels.faculty'
         ])
         ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->id);
+            $query->whereIn('role', ['chair', 'member'])
+                ->where('status', 'accepted')
+                ->whereHas('faculty', function ($facultyQuery) use ($user) {
+                    $facultyQuery->where('faculty_id', $user->faculty_id);
+                });
         })
         ->get()
         ->map(function ($group) use ($user) {
             $group->role_type = 'panel';
             $panelAssignment = $group->defenseSchedules->first()
-                ->defensePanels->where('faculty_id', $user->faculty_id)->first();
+                ->defensePanels
+                ->filter(function ($panel) use ($user) {
+                    return ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
+                })
+                ->whereIn('role', ['chair', 'member'])
+                ->where('status', 'accepted')
+                ->first();
             $group->panel_role = $panelAssignment->role ?? 'member';
             $group->defense_schedule = $group->defenseSchedules->first();
             return $group;
@@ -491,9 +528,7 @@ class AdviserController extends Controller
             'total_submissions' => $submissions->count(),
             'pending_submissions' => $submissions->where('status', 'pending')->count(),
         ];
-        return view('adviser.project.index', compact('panelGroups', 'submissions', 'submissionsByGroup', 'summaryStats'))
-            ->with('allGroups', $panelGroups)
-            ->with('adviserGroups', collect());
+        return view('adviser.project.panel-submissions', compact('panelGroups', 'submissions', 'submissionsByGroup', 'summaryStats'));
     }
 
     public function panelInvitations()
@@ -501,12 +536,18 @@ class AdviserController extends Controller
         $user = Auth::user();
 
         $pendingPanels = DefensePanel::with(['defenseSchedule.group', 'defenseSchedule.academicTerm'])
-            ->where('faculty_id', $user->id)
+            ->whereHas('faculty', function ($query) use ($user) {
+                $query->where('faculty_id', $user->faculty_id);
+            })
+            ->whereIn('role', ['chair', 'member'])
             ->where('status', 'pending')
             ->get();
 
         $respondedPanels = DefensePanel::with(['defenseSchedule.group', 'defenseSchedule.academicTerm'])
-            ->where('faculty_id', $user->id)
+            ->whereHas('faculty', function ($query) use ($user) {
+                $query->where('faculty_id', $user->faculty_id);
+            })
+            ->whereIn('role', ['chair', 'member'])
             ->whereIn('status', ['accepted', 'declined'])
             ->orderBy('responded_at', 'desc')
             ->limit(20)
@@ -519,7 +560,10 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
 
-        if ($panel->faculty_id !== $user->id) {
+        $panel->loadMissing('faculty');
+        $sameFacultyCode = ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
+
+        if (!$sameFacultyCode) {
             return back()->with('error', 'You are not authorized to respond to this panel invitation.');
         }
 
@@ -533,7 +577,18 @@ class AdviserController extends Controller
 
         if ($request->response === 'accept') {
             $panel->accept();
-            $message = 'Panel invitation accepted successfully!';
+            $schedule = $panel->defenseSchedule;
+
+            $redirect = redirect()
+                ->route('adviser.panel-groups')
+                ->with('success', 'Panel invitation accepted successfully. You can now review submissions and open the rating sheet.');
+
+            if ($schedule) {
+                $redirect->with('panel_rating_sheet_url', route('adviser.rating-sheets.show', $schedule));
+                $redirect->with('panel_group_name', $schedule->group->name ?? 'this group');
+            }
+
+            return $redirect;
         } else {
             $panel->decline();
             $message = 'Panel invitation declined.';

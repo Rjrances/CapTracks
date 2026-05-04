@@ -229,7 +229,8 @@ class DefenseScheduleController extends Controller
                 DefensePanel::create([
                     'defense_schedule_id' => $schedule->id,
                     'faculty_id' => $member['faculty_id'],
-                    'role' => $member['role']
+                    'role' => $member['role'],
+                    'status' => 'pending',
                 ]);
             }
             if ($schedule->group->faculty_id) {
@@ -238,7 +239,10 @@ class DefenseScheduleController extends Controller
                     DefensePanel::create([
                         'defense_schedule_id' => $schedule->id,
                         'faculty_id' => $adviserUser->id,
-                        'role' => 'adviser'
+                        'role' => 'adviser',
+                        // Group adviser is auto-included, not invitation-based.
+                        'status' => 'accepted',
+                        'responded_at' => now(),
                     ]);
                 }
             }
@@ -248,7 +252,10 @@ class DefenseScheduleController extends Controller
                     DefensePanel::create([
                         'defense_schedule_id' => $schedule->id,
                         'faculty_id' => $coordinatorUser->id,
-                        'role' => 'coordinator'
+                        'role' => 'coordinator',
+                        // Subject coordinator is auto-included, not invitation-based.
+                        'status' => 'accepted',
+                        'responded_at' => now(),
                     ]);
                 }
             }
@@ -358,7 +365,8 @@ class DefenseScheduleController extends Controller
                 DefensePanel::create([
                     'defense_schedule_id' => $schedule->id,
                     'faculty_id' => $member['faculty_id'],
-                    'role' => $member['role']
+                    'role' => $member['role'],
+                    'status' => 'pending',
                 ]);
             }
             if ($schedule->group->faculty_id) {
@@ -367,7 +375,9 @@ class DefenseScheduleController extends Controller
                     DefensePanel::create([
                         'defense_schedule_id' => $schedule->id,
                         'faculty_id' => $adviserUser->id,
-                        'role' => 'adviser'
+                        'role' => 'adviser',
+                        'status' => 'accepted',
+                        'responded_at' => now(),
                     ]);
                 }
             }
@@ -377,7 +387,9 @@ class DefenseScheduleController extends Controller
                     DefensePanel::create([
                         'defense_schedule_id' => $schedule->id,
                         'faculty_id' => $coordinatorUser->id,
-                        'role' => 'coordinator'
+                        'role' => 'coordinator',
+                        'status' => 'accepted',
+                        'responded_at' => now(),
                     ]);
                 }
             }
@@ -627,11 +639,14 @@ class DefenseScheduleController extends Controller
             $panelMember = User::find($panel->faculty_id);
             if ($panelMember) {
                 $roleLabel = ucfirst($panel->role);
+                $isInvitedPanelRole = in_array($panel->role, ['chair', 'member'], true);
                 NotificationService::createSimpleNotification(
-                    'Defense Panel Assignment',
-                    "You have been assigned as {$roleLabel} for {$group->name}'s {$stageLabel} defense on {$formattedDate}",
+                    $isInvitedPanelRole ? 'Defense Panel Invitation' : 'Defense Panel Assignment',
+                    $isInvitedPanelRole
+                        ? "You have been invited as {$roleLabel} for {$group->name}'s {$stageLabel} defense on {$formattedDate}. Please respond in Panel Invitations."
+                        : "You have been assigned as {$roleLabel} for {$group->name}'s {$stageLabel} defense on {$formattedDate}",
                     $panelMember->role,
-                    route('coordinator.defense.index'),
+                    $isInvitedPanelRole ? route('adviser.panel-invitations') : route('adviser.dashboard'),
                     $panelMember->id
                 );
             }

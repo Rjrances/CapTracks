@@ -2,6 +2,13 @@
     $user = auth()->user();
     $userName = $user ? $user->name : 'Adviser';
     $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+    $pendingAdviserInvitations = $user
+        ? \App\Models\AdviserInvitation::where('faculty_id', $user->id)->where('status', 'pending')->count()
+        : 0;
+    $pendingPanelInvitations = $user
+        ? \App\Models\DefensePanel::where('faculty_id', $user->id)->where('status', 'pending')->count()
+        : 0;
+    $isPanelSubmissionContext = request()->routeIs('adviser.project.show') && request()->query('context') === 'panel';
 @endphp
 <div class="sidebar bg-dark text-white" style="width: 280px; min-height: 100vh; position: fixed; left: 0; top: 0; z-index: 1000;">
     <div class="p-3 border-bottom border-secondary">
@@ -35,24 +42,37 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('adviser.groups') || request()->routeIs('adviser.all-groups') ? 'active bg-primary' : '' }}"
+                <a class="nav-link text-white {{ request()->routeIs('adviser.groups') ? 'active bg-primary' : '' }}"
                    href="{{ route('adviser.groups') }}">
-                    <i class="fas fa-layer-group me-2"></i>
-                    All My Groups
+                    <i class="fas fa-user-tie me-2"></i>
+                    Adviser Groups
                     </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('adviser.panel-groups') || request()->routeIs('adviser.panel-submissions') || $isPanelSubmissionContext ? 'active bg-primary' : '' }}"
+                   href="{{ route('adviser.panel-groups') }}">
+                    <i class="fas fa-gavel me-2"></i>
+                    Panel Groups
+                </a>
             </li>
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('adviser.invitations') ? 'active bg-primary' : '' }}" 
                    href="{{ route('adviser.invitations') }}">
                     <i class="fas fa-envelope me-2"></i>
-                    Invitations
+                    Adviser Invitations
+                    @if($pendingAdviserInvitations > 0)
+                        <span class="badge bg-warning text-dark ms-2">{{ $pendingAdviserInvitations }}</span>
+                    @endif
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('adviser.proposal.*') ? 'active bg-primary' : '' }}" 
-                   href="{{ route('adviser.proposal.index') }}">
-                    <i class="fas fa-clipboard-check me-2"></i>
-                    Proposal Review
+                <a class="nav-link text-white {{ request()->routeIs('adviser.panel-invitations') ? 'active bg-primary' : '' }}"
+                   href="{{ route('adviser.panel-invitations') }}">
+                    <i class="fas fa-gavel me-2"></i>
+                    Panel Invitations
+                    @if($pendingPanelInvitations > 0)
+                        <span class="badge bg-warning text-dark ms-2">{{ $pendingPanelInvitations }}</span>
+                    @endif
                 </a>
             </li>
             <li class="nav-item mb-2">
@@ -60,13 +80,6 @@
                    href="{{ route('adviser.calendar') }}">
                     <i class="fas fa-calendar me-2"></i>
                     Calendar
-                </a>
-            </li>
-            <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('adviser.activity-log') ? 'active bg-primary' : '' }}"
-                   href="{{ route('adviser.activity-log') }}">
-                    <i class="fas fa-history me-2"></i>
-                    Activity Log
                 </a>
             </li>
         </ul>

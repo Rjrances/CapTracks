@@ -14,7 +14,10 @@
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ route('adviser.invitations') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-envelope me-2"></i>View Invitations
+                        <i class="fas fa-envelope me-2"></i>Adviser Invitations
+                    </a>
+                    <a href="{{ route('adviser.panel-invitations') }}" class="btn btn-outline-info">
+                        <i class="fas fa-gavel me-2"></i>Panel Invitations
                     </a>
                 </div>
             </div>
@@ -284,7 +287,10 @@
                         <p class="text-muted">You don't have any groups assigned as adviser or panel member yet.</p>
                         <div class="d-flex gap-2 justify-content-center">
                             <a href="{{ route('adviser.invitations') }}" class="btn btn-primary">
-                                <i class="fas fa-envelope me-2"></i>Check Invitations
+                                <i class="fas fa-envelope me-2"></i>Check Adviser Invitations
+                            </a>
+                            <a href="{{ route('adviser.panel-invitations') }}" class="btn btn-info">
+                                <i class="fas fa-gavel me-2"></i>Check Panel Invitations
                             </a>
                             <a href="{{ route('adviser.groups') }}" class="btn btn-outline-primary">
                                 <i class="fas fa-briefcase me-2"></i>View My Groups

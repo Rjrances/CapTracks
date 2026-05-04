@@ -12,10 +12,16 @@
                     </div>
                     <div class="d-flex gap-2">
                         <a href="{{ route('adviser.groups') }}" class="btn btn-primary">
-                            <i class="fas fa-layer-group me-2"></i>All My Groups
+                            <i class="fas fa-user-tie me-2"></i>Adviser Groups
+                        </a>
+                        <a href="{{ route('adviser.panel-groups') }}" class="btn btn-outline-info">
+                            <i class="fas fa-gavel me-2"></i>Panel Groups
                         </a>
                         <a href="{{ route('adviser.invitations') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-envelope me-2"></i>View Invitations
+                            <i class="fas fa-envelope me-2"></i>Adviser Invitations
+                        </a>
+                        <a href="{{ route('adviser.panel-invitations') }}" class="btn btn-outline-info">
+                            <i class="fas fa-gavel me-2"></i>Panel Invitations
                         </a>
                     </div>
                 </div>
@@ -55,7 +61,7 @@
             <div class="col-md-4">
                 <div class="card bg-secondary text-white h-100">
                     <div class="card-body text-center">
-                        <h5 class="card-title">Invitations</h5>
+                        <h5 class="card-title">Adviser Invitations</h5>
                         <h3 class="m-0">{{ $summaryStats['pending_invitations'] ?? 0 }}</h3>
                         <small>pending</small>
                     </div>
@@ -153,7 +159,10 @@
                     <div class="card-body">
                         <div class="d-grid gap-2">
                             <a href="{{ route('adviser.invitations') }}" class="btn btn-outline-primary">
-                                <i class="fas fa-envelope me-2"></i>View Invitations
+                                <i class="fas fa-envelope me-2"></i>Adviser Invitations
+                            </a>
+                            <a href="{{ route('adviser.panel-invitations') }}" class="btn btn-outline-info">
+                                <i class="fas fa-gavel me-2"></i>Panel Invitations
                             </a>
                             <a href="{{ route('adviser.groups') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-users me-2"></i>My Groups
@@ -202,7 +211,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">
-                            <i class="fas fa-envelope me-2"></i>Pending Invitations
+                            <i class="fas fa-envelope me-2"></i>Pending Adviser Invitations
                             @if($pendingInvitations->count() > 0)
                                 <span class="badge bg-danger ms-2">{{ $pendingInvitations->count() }}</span>
                             @endif
@@ -263,7 +272,7 @@
                             <div class="text-center py-4">
                                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                 <h6 class="text-muted">No pending invitations</h6>
-                                <p class="text-muted small">Invitations will appear here when students request your guidance.</p>
+                                <p class="text-muted small">Adviser invitations will appear here when students request your guidance.</p>
                             </div>
                         @endif
                     </div>

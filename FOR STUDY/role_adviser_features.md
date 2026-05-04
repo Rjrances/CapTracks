@@ -18,42 +18,37 @@ If panelists ask for the "System Workflow" or "Use Case" of an Adviser or Paneli
 **Core Logic (`app/Http/Controllers/AdviserController.php`):**
 ```php
 public function dashboard() {
-    
-    // Get the currently logged-in faculty member
     $user = Auth::user(); 
     
-    // Fetch groups and calculate progress on the fly using Eager Loading to prevent slow N+1 database queries
+    // Fetch groups assigned to this adviser and dynamically calculate progress
     $adviserGroups = Group::with(['groupMilestones', 'groupMilestoneTasks']) 
-        
-        // Only fetch groups assigned to this adviser
         ->where('faculty_id', $user->faculty_id) 
-        
-        // Execute the query
         ->get() 
-        
-        // Loop over each fetched group
         ->map(function ($group) { 
-            
-            // Dynamically calculate their overall percentage
             $group->progress_percentage = $this->calculateGroupProgress($group); 
-            
-            // Dynamically check for overdue tasks
             $group->overdue_tasks = $this->getOverdueTasks($group); 
-            
-            // Return the updated group object
             return $group; 
         });
 
+    // Fetch groups assigned to this faculty as a panel member
+    $panelGroups = Group::with(['academicTerm', 'defenseSchedules.defensePanels'])
+        ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
+            $query->where('faculty_id', $user->id)
+                  ->whereIn('role', ['chair', 'member'])
+                  ->where('status', 'accepted');
+        })
+        ->get();
+
     // Build an array of quick summary statistics for the top widgets
     $summaryStats = [ 
-        'total_groups' => $adviserGroups->count(), // Total groups
-        'groups_ready_for_defense' => $adviserGroups->filter(fn($g) => $g->progress_percentage >= 60)->count(), // Filter groups above 60% in memory
-        'groups_needing_attention' => $adviserGroups->filter(fn($g) => $g->progress_percentage < 40)->count(), // Filter groups below 40% in memory
-        'overdue_tasks_total' => $adviserGroups->sum('overdue_tasks'), // Add up all overdue tasks across all groups
+        'total_groups' => $adviserGroups->count(),
+        'panel_groups' => $panelGroups->count(), // Count panel assignments correctly
+        'groups_ready_for_defense' => $adviserGroups->filter(fn($g) => $g->progress_percentage >= 60)->count(),
+        'overdue_tasks_total' => $adviserGroups->sum('overdue_tasks'),
     ];
 
     // Send the data to the Blade template
-    return view('dashboards.adviser', compact('adviserGroups', 'summaryStats')); 
+    return view('dashboards.adviser', compact('adviserGroups', 'panelGroups', 'summaryStats')); 
 }
 
 private function calculateGroupProgress($group) {
@@ -131,20 +126,31 @@ If a panelist asks: *"How did you design the database to allow infinite replying
 **Core Logic (`app/Http/Controllers/RatingSheetController.php`):**
 ```php
 public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
+    $user = Auth::user();
     
-    // Find the specific panel assignment record for the currently logged-in faculty member. Throw a 404 error if they aren't on the panel.
-    $panelMember = $schedule->defensePanels()->where('faculty_id', Auth::id())->firstOrFail();
-    
-    // Automatically add up all the individual scores (e.g., 20 + 30 = 50)
-    $totalScore = array_sum($request->criteria_scores); 
+    // Validate that the user is actually on the panel for this schedule
+    $isAssignedPanel = $schedule->defensePanels()->where('faculty_id', $user->id)->exists();
+    if (!$isAssignedPanel) abort(403, 'You are not assigned to this defense panel.');
 
-    // Insert the final grades into the database
-    RatingSheet::create([ 
-        'defense_panel_id' => $panelMember->id, // Link the grades to this specific panelist
-        'scores' => json_encode($request->criteria_scores), // Store the exact breakdown of scores as a JSON string for flexibility
-        'total_score' => $totalScore, // Save the calculated total score
-        'comments' => $request->overall_comments, // Save any final feedback from the panelist
-    ]);
+    // Prepare JSON breakdown array from the request
+    $criteria = collect($request->criteria_names)->values()->map(function ($name, $index) use ($request) {
+        return ['name' => $name, 'score' => (float) ($request->criteria_scores[$index] ?? 0)];
+    })->toArray();
+
+    // Sum total score
+    $totalScore = collect($criteria)->sum('score');
+
+    // Create or update the rating sheet in the database
+    RatingSheet::updateOrCreate(
+        ['defense_schedule_id' => $schedule->id, 'faculty_id' => $user->id],
+        [
+            'group_id' => $schedule->group_id,
+            'criteria' => $criteria, // Laravel handles JSON encoding automatically
+            'total_score' => $totalScore,
+            'remarks' => $request->remarks ?? null,
+            'submitted_at' => now(),
+        ]
+    );
 }
 ```
 
@@ -153,7 +159,8 @@ For complete system coverage, here is every single specific function the Adviser
 
 **Dashboard & General Mentoring (`AdviserController`)**
 - View adviser-specific statistics and calculate real-time group progress (`dashboard`).
-- View all assigned groups (`myGroups`).
+- View all assigned groups as an Adviser (`myGroups`).
+- View a combined list of both Adviser groups and Panel groups (`allGroups`).
 - View group details and members (`groupDetails`).
 - View the Global Activity Log filtered only to their advisees (`activityLog`).
 
