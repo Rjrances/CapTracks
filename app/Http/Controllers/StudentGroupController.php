@@ -121,8 +121,8 @@ class StudentGroupController extends Controller
         //get active term
         $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
         
-        $adviser = User::where('id', $request->adviser_id)
-                      ->withRole('adviser')
+        $adviser = User::withAnyRole(['adviser', 'teacher', 'coordinator'])
+                      ->where('id', $request->adviser_id)
                       ->where('semester', $activeTerm ? $activeTerm->semester : null)
                       ->first();
         if (!$adviser) {

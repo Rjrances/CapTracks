@@ -74,9 +74,8 @@
                                     <select name="adviser_id" id="adviser_id" class="form-select" required>
                                         <option value="">Choose an adviser...</option>
                                         @php
-                                            // Get current active term
                                             $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
-                                            $availableFaculty = \App\Models\User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator'])
+                                            $availableFaculty = \App\Models\User::withAnyRole(['adviser', 'teacher', 'coordinator'])
                                                 ->where('semester', $activeTerm ? $activeTerm->semester : null)
                                                 ->orderBy('name')
                                                 ->get();
