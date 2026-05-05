@@ -444,7 +444,10 @@ class CoordinatorController extends Controller
     {
         $user = auth()->user();
 
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+
         $coordinatedOfferingIds = Offering::where('faculty_id', $user->faculty_id)
+            ->when($activeTerm, fn($q) => $q->where('academic_term_id', $activeTerm->id))
             ->pluck('id');
 
         $studentIds = Student::whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
