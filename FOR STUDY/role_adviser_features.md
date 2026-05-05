@@ -158,16 +158,34 @@ public function submitAdviserRating(Request $request, DefenseSchedule $schedule)
 For complete system coverage, here is every single specific function the Adviser/Teacher can perform across the application:
 
 **Dashboard, General Mentoring & Invitations (`AdviserController`)**
-- `AdviserController`: `dashboard`, `invitations`, `respondToInvitation`, `myGroups`, `groupDetails`, `milestoneTaskComments`, `storeMilestoneTaskComment`, `allGroups`, `panelSubmissions`, `panelInvitations`, `respondToPanelInvitation`, `markAllNotificationsAsRead`, `markNotificationAsRead`, `notifications`, `markMultipleAsRead`, `deleteNotification`, `deleteMultiple`, `activityLog`
+- `dashboard()`: Computes real-time milestone progress metrics for all assigned student groups, rendering the overview UI.
+- `invitations()`: Retrieves all pending group mentorship invites directed specifically to the logged-in faculty member.
+- `respondToInvitation()`: Processes accept/decline inputs for mentorships, updating the `AdviserInvitation` table.
+- `myGroups()` / `allGroups()`: Lists groups specifically mentored by the faculty vs. all groups where they are either a mentor or a panelist.
+- `groupDetails()`: Fetches comprehensive profile data (members, timeline) for a single advisee group.
+- `milestoneTaskComments()`: Loads the threaded discussion view for a specific task card on the Kanban board.
+- `storeMilestoneTaskComment()`: Saves a new nested or parent comment onto a task, executing adjacency list logic.
+- `panelInvitations()` / `respondToPanelInvitation()`: Dedicated methods for viewing and accepting/declining invites to sit on defense grading panels.
+- `notifications()`, `markAllNotificationsAsRead()`, `deleteNotification()`: Standard endpoints to manage the adviser's personal alert feed.
+- `activityLog()`: Shows a granular audit trail of file uploads and task movements made solely by the adviser's assigned groups.
 
 **Proposals & Feedback (`AdviserProposalController`)**
-- `AdviserProposalController`: `index`, `show`, `preview`, `compareVersions`, `edit`, `update`, `getStats`, `bulkUpdate`, `storeComment`
+- `index()` / `show()`: Lists capstone proposals submitted by the adviser's groups that await review.
+- `preview()`: Displays the active proposal PDF/document in the browser.
+- `compareVersions()`: Fetches two historical versions of the same document to help the adviser track student revisions.
+- `edit()` / `update()` / `bulkUpdate()`: Functions allowing the adviser to stamp proposals as "Approved" or "Rejected", individually or en masse.
+- `getStats()`: Fetches numerical summaries of proposal statuses for dashboard display.
+- `storeComment()`: Attaches a feedback thread directly to a submitted project proposal.
 
 **Defenses & Grading (`RatingSheetController`)**
-- `RatingSheetController`: `showAdviserForm`, `submitAdviserRating`, `showCoordinatorRatings`, `finalizeCoordinatorRatings`, `reopenCoordinatorRatings`, `printCoordinatorRatings`
+- `showAdviserForm()`: Loads the dynamic, JSON-driven rubric form for panelists during a live defense.
+- `submitAdviserRating()`: Captures panelist scores, encodes them into a JSON array, calculates the weighted total, and saves it to the `RatingSheet` model.
+- `showCoordinatorRatings()` / `finalizeCoordinatorRatings()` / `reopenCoordinatorRatings()`: Evaluates the aggregated panel grades and provides options to lock or unlock the final group score.
+- `printCoordinatorRatings()`: Generates a printer-friendly layout of the finalized defense grades.
 
 **Calendar & View (`CalendarController`)**
-- `CalendarController`: `adviserCalendar`
+- `adviserCalendar()`: Retrieves all scheduled defenses where the faculty member is assigned (either as an adviser or panelist) and maps them onto the interactive calendar UI.
 
 **Authentication (`AuthController`)**
-- `AuthController`: `showLoginForm`, `login`, `logout`, `showRegisterForm`, `register`, `showChangePasswordForm`, `changePassword`
+- `login()` / `logout()`: Validates credentials against the encrypted `password` column and manages session tokens.
+- `changePassword()`: Receives a new password, hashes it using `bcrypt()`, and updates the user's account row.

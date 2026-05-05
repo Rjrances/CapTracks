@@ -156,21 +156,43 @@ public function bulkUpdate(Request $request) {
 For complete system coverage, here is every single specific function the Coordinator can perform across the application:
 
 **Dashboard & General Actions (`CoordinatorDashboardController` & `CoordinatorController`)**
-- `CoordinatorDashboardController`: `index`
-- `CoordinatorController`: `index`, `classlist`, `importStudentsForm`, `importStudents`, `groups`, `create`, `store`, `show`, `edit`, `assignAdviser`, `update`, `destroy`, `groupMilestones`, `notifications`, `markNotificationAsRead`, `markAllNotificationsAsRead`, `deleteNotification`, `markMultipleAsRead`, `deleteMultiple`, `activityLog`, `facultyMatrix`
+- `index()`: Aggregates total students, active groups, faculty, and submissions specific to the coordinator's assigned sections.
+- `classlist()`: Retrieves all enrolled students explicitly linked to the Coordinator's active offerings.
+- `importStudents()` / `importStudentsForm()`: Allows localized uploading of student CSVs directly into the coordinator's assigned classes.
+- `groups()`, `create()`, `store()`, `show()`, `edit()`, `update()`, `destroy()`: Standard group creation and management lifecycle.
+- `assignAdviser()`: Overrides student choices to manually link a specific faculty member as an adviser to a group.
+- `groupMilestones()`: A read-only view letting coordinators inspect how a specific group is progressing against assigned milestone templates.
+- `notifications()`, `markNotificationAsRead()`, `deleteNotification()`, etc.: Fetches and manipulates alerts directed specifically to the coordinator.
+- `activityLog()`: Queries the `Activity` model to show a real-time audit trail of actions taken by students under the coordinator's supervision.
+- `facultyMatrix()`: Queries the database with `withCount()` to show exactly how many groups and panels each teacher is assigned to, preventing workload burnout.
 
 **Proposal Management (`CoordinatorProposalController`)**
-- `CoordinatorProposalController`: `index`, `show`, `preview`, `compareVersions`, `update`, `bulkUpdate`, `getStats`, `storeComment`
+- `index()` / `show()`: Lists and displays all capstone proposal documents awaiting the coordinator's global approval.
+- `preview()`: Renders an embedded view of the uploaded proposal document.
+- `compareVersions()`: Fetches two `ProjectSubmission` records (e.g., v1 and v2) and displays them side-by-side for delta review.
+- `update()` / `bulkUpdate()`: Approves or rejects a single proposal or an array of proposals via checkboxes in one click.
+- `getStats()`: Generates numerical counts (e.g., 5 Approved, 2 Pending) for the proposal dashboard cards.
+- `storeComment()`: Injects a threaded comment record attached directly to the specific proposal submission.
 
 **Defense Scheduling & Rubrics (`DefenseScheduleController` & `DefenseRubricController`)**
-- `Coordinator\DefenseScheduleController`: `defenseRequestsIndex`, `index`, `create`, `store`, `show`, `edit`, `update`, `destroy`, `getAvailableFaculty`, `createSchedule`, `storeSchedule`, `approve`, `reject`, `markAsCompleted`
-- `Coordinator\DefenseRubricController`: `index`, `create`, `store`, `edit`, `update`
+- `defenseRequestsIndex()`: Lists all groups that have hit 100% milestone completion and formally requested a defense.
+- `index()`, `create()`, `store()`, `show()`, `edit()`, `update()`, `destroy()`: The core CRUD engine for `DefenseSchedule` records (time, room, date).
+- `getAvailableFaculty()`: The auto-assign engine. It executes a complex query to filter out teachers with schedule conflicts, adviser conflicts, or heavy workloads, returning a safe list of available panelists.
+- `createSchedule()` / `storeSchedule()`: Finalizes the schedule request and dispatches `DefensePanel` invitations to the selected faculty members.
+- `approve()` / `reject()`: Processes the student's initial defense request before actual scheduling occurs.
+- `markAsCompleted()`: Toggles the schedule status to 'done', locking further grading modifications.
+- `index()` / `store()` / `update()` *(DefenseRubricController)*: Allows coordinators to define the dynamic JSON grading criteria (e.g., "Presentation 20%", "System Logic 40%") that panelists will use to grade defenses.
 
 **Milestone Templates (`MilestoneTemplateController`)**
-- `MilestoneTemplateController`: `index`, `create`, `store`, `edit`, `update`, `destroy`, `updateStatus`, `storeTask`, `updateTask`, `destroyTask`, `assignToGroup`, `removeAssignmentFromGroup`
+- `index()`, `create()`, `store()`, `edit()`, `update()`, `destroy()`: Manages the overarching `MilestoneTemplate` (e.g., "Chapter 1-3 Requirements").
+- `updateStatus()`: Toggles whether a template is 'active' and visible for group assignment.
+- `storeTask()`, `updateTask()`, `destroyTask()`: Manages the individual checklist items (tasks) contained within a specific template.
+- `assignToGroup()`: The replication logic. It copies a `MilestoneTemplate` and all its `MilestoneTask`s, generating live, trackable records (`GroupMilestone` and `GroupMilestoneTask`) for a specific student group.
+- `removeAssignmentFromGroup()`: Detaches the cloned milestone structure from a group, effectively deleting their progress.
 
 **Calendar & Scheduling (`CalendarController`)**
-- `CalendarController`: `coordinatorCalendar`
+- `coordinatorCalendar()`: Fetches all defense schedules system-wide but dynamically injects a color-code (e.g., green vs gray) into the JSON payload for schedules that specifically belong to the coordinator's assigned groups.
 
 **Authentication (`AuthController`)**
-- `AuthController`: `showLoginForm`, `login`, `logout`, `showRegisterForm`, `register`, `showChangePasswordForm`, `changePassword`
+- `login()` / `logout()`: Validates credentials against the encrypted `password` column and manages session tokens.
+- `changePassword()`: Receives a new password, hashes it using `bcrypt()`, and updates the user's account row.

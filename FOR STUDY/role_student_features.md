@@ -184,27 +184,40 @@ public function store(Request $request) {
 For complete system coverage, here is every single specific function the Student can perform across the application:
 
 **Account & Dashboard Management (`StudentDashboardController`, `StudentPasswordController`, `StudentController`)**
-- `StudentDashboardController`: `index`
-- `StudentPasswordController`: `showChangePasswordForm`, `updatePassword`
-- `StudentController`: `index`, `notifications`, `markNotificationAsRead`, `markAllNotificationsAsRead`, `deleteNotification`, `markMultipleAsRead`, `deleteMultiple`
+- `index()` *(StudentDashboardController)*: Calculates the student's active group progress and retrieves upcoming milestone deadlines to render the dashboard.
+- `updatePassword()` *(StudentPasswordController)*: Hashes and updates the student's default password, lifting the initial login restriction middleware.
+- `notifications()`, `markNotificationAsRead()`, `deleteNotification()` *(StudentController)*: Standard methods for managing the student's personal alert feed.
 
 **Group Management (`StudentGroupController`)**
-- `StudentGroupController`: `show`, `create`, `store`, `edit`, `update`, `index`, `inviteAdviser`, `inviteMember`, `acceptInvitation`, `declineInvitation`, `invitations`, `removeMember`, `requestDefense`, `cancelInvitation`
+- `show()`, `create()`, `store()`, `edit()`, `update()`: Manages the lifecycle of creating a Capstone Group, assigning the current student as the initial leader.
+- `inviteMember()`: Creates a pending `GroupInvitation` for a specific classmate via their Student ID.
+- `acceptInvitation()` / `declineInvitation()`: Processes peer invites, either attaching the student to the group or deleting the invite.
+- `removeMember()` / `cancelInvitation()`: Allows group leaders to kick members or retract pending invitations.
+- `inviteAdviser()`: Dispatches an invitation specifically directed to a faculty member to become the group's mentor.
 
 **Milestone & Task Management (`StudentMilestoneController`, `StudentMilestoneChecklistController`, `TaskSubmissionController`)**
-- `StudentMilestoneController`: `index`, `show`, `edit`, `update`, `destroy`, `moveTask`, `bulkUpdateTasks`, `recomputeProgress`, `updateTask`, `storeTaskComment`, `updateMultipleTasks`, `assignTask`, `unassignTask`
-- `StudentMilestoneChecklistController`: `checklist`
-- `TaskSubmissionController`: `create`, `store`, `show`, `review`
+- `index()` / `show()`: Renders the active milestones and Kanban board assigned to the group.
+- `moveTask()`: Handles the drag-and-drop AJAX request to change a task's status (e.g., from 'todo' to 'done').
+- `bulkUpdateTasks()` / `updateMultipleTasks()`: Allows updating multiple tasks at once via checkboxes.
+- `recomputeProgress()`: A background utility that recalculates the overall milestone percentage based on completed vs pending tasks.
+- `assignTask()` / `unassignTask()`: Attaches or detaches a specific group member to a Kanban card for accountability.
+- `storeTaskComment()`: Saves threaded discussion replies directly onto a task card.
+- `checklist()` *(StudentMilestoneChecklistController)*: Returns a streamlined checklist view of pending milestone items.
+- `store()` / `review()` *(TaskSubmissionController)*: Handles the actual file upload attached to a specific task and renders it for review.
 
 **Proposals & Project Submissions (`StudentProposalController`, `ProjectSubmissionController`)**
-- `StudentProposalController`: `index`, `create`, `store`, `show`, `edit`, `update`, `rollback`, `previewVersion`, `compareVersions`
-- `ProjectSubmissionController`: `index`, `create`, `store`, `show`, `edit`, `update`, `destroy`, `studentPreviewSubmission`, `studentCompareSubmissions`
+- `store()` / `update()`: Handles uploading project documents, automatically calculating the next `version` number to preserve history.
+- `rollback()`: Restores a previous document version if the adviser rejects the newest one.
+- `previewVersion()` / `studentPreviewSubmission()`: Opens the uploaded PDF or document in an embedded browser viewer.
+- `compareVersions()` / `studentCompareSubmissions()`: Loads two versions side-by-side to visually inspect what was changed.
 
 **Defense Management (`StudentDefenseRequestController`)**
-- `StudentDefenseRequestController`: `index`, `create`, `store`, `show`, `cancel`
+- `store()`: Submits a formal request to the coordinator indicating the group is ready to defend, saving the preferred date.
+- `cancel()`: Withdraws the request before the coordinator approves it.
 
 **Calendar & Scheduling (`CalendarController`)**
-- `CalendarController`: `studentCalendar`
+- `studentCalendar()`: Fetches the single, specific, approved defense schedule for the student's group and plots it on the calendar.
 
 **Authentication (`AuthController`)**
-- `AuthController`: `showLoginForm`, `login`, `logout`, `showRegisterForm`, `register`, `showChangePasswordForm`, `changePassword`
+- `login()` / `logout()`: Validates credentials against the encrypted `password` column and manages session tokens.
+- `changePassword()`: Receives a new password, hashes it using `bcrypt()`, and updates the user's account row.

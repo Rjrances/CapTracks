@@ -155,22 +155,39 @@ public function toggleActive(AcademicTerm $academicTerm) {
 For complete system coverage, here is every single specific function the Chairperson can perform across the entire application:
 
 **Dashboard & Global Data (`ChairpersonDashboardController` & `ChairPersonController`)**
-- `ChairpersonDashboardController`: `index`
-- `ChairPersonController`: `getActiveTerm`, `notifications`, `markNotificationAsRead`, `markAllNotificationsAsRead`, `deleteNotification`, `markMultipleAsRead`, `deleteMultiple`
+- `index()`: Aggregates global system statistics (total students, total groups, pending defenses) and loads the primary admin dashboard view.
+- `getActiveTerm()`: A helper method that queries the database for the single `AcademicTerm` where `is_active = true`.
+- `notifications()`: Retrieves all system alerts (e.g., new registrations, term changes) scoped to the Chairperson role.
+- `markNotificationAsRead()` / `markAllNotificationsAsRead()` / `markMultipleAsRead()`: Updates the `is_read` boolean column to true for specific or all notifications, reducing the unread badge count.
+- `deleteNotification()` / `deleteMultiple()`: Permanently removes selected notification records from the database to clear clutter.
 
 **Class / Offering Management (`ChairpersonOfferingController`)**
-- `ChairpersonOfferingController`: `index`, `create`, `store`, `show`, `edit`, `update`, `destroy`, `removeStudent`, `showUnenrolledStudents`, `enrollStudent`, `enrollMultipleStudents`
+- `index()`: Retrieves and paginates all class offerings (sections) for the active term.
+- `create()` / `store()`: Renders the offering creation form and validates input (Course name, Teacher ID) before inserting a new `Offering` record into the database.
+- `show()` / `edit()` / `update()`: Fetches a specific class offering allowing the chairperson to modify the assigned teacher or course code.
+- `destroy()`: Deletes an offering and safely cascades or detaches related student enrollments.
+- `showUnenrolledStudents()`: Executes a query on the `students` table, filtering out anyone who is already attached to an offering in the current active term.
+- `enrollStudent()` / `enrollMultipleStudents()`: Uses Eloquent's `attach()` method to link one or multiple `student_id`s to the `offering_student` pivot table.
+- `removeStudent()`: Uses Eloquent's `detach()` method to safely remove a student from a class section without deleting their account.
 
 **User & Role Management (`ChairpersonFacultyController`, `ChairpersonStudentController`, `RoleController`)**
-- `ChairpersonFacultyController`: `index`, `create`, `createManual`, `store`, `storeManual`, `upload`, `edit`, `update`, `assignCoordinator`, `removeCoordinator`, `destroy`
-- `ChairpersonStudentController`: `index`, `export`, `edit`, `update`, `destroy`, `bulkDelete`, `upload`
-- `RoleController`: `index`, `update`
+- `index()`: Lists all faculty or students with search and pagination features.
+- `createManual()` / `storeManual()`: Allows manual form entry to create a single faculty account (generating a default encrypted password).
+- `upload()`: The mass-import engine. Reads a CSV/Excel file, slices the headers, and loops through the rows using `firstOrCreate()` to insert hundreds of users instantly without duplicate SQL crashes.
+- `export()`: Compiles the student database into a downloadable CSV file.
+- `edit()` / `update()`: Modifies basic profile details (Name, ID, Email) for an existing user.
+- `assignCoordinator()` / `removeCoordinator()`: Quick-action toggles that directly update the `role` column in the `users` table.
+- `destroy()` / `bulkDelete()`: Deletes a specific user or an array of user IDs passed via a checkbox form.
+- `update()` *(RoleController)*: Modifies a user's global permission level (e.g. promoting a Teacher to an Adviser), including a failsafe to prevent the Chairperson from accidentally demoting themselves.
 
 **Academic Terms (`AcademicTermController`)**
-- `AcademicTermController`: `index`, `create`, `store`, `show`, `edit`, `update`, `destroy`, `toggleActive`, `toggleArchived`
+- `index()`, `create()`, `store()`, `show()`, `edit()`, `update()`, `destroy()`: Standard CRUD operations for semester management.
+- `toggleActive()`: The critical semester switch. When called, it first runs an `update(['is_active' => false])` on all terms, then sets the selected term to `true`. This guarantees only one semester is active at a time.
+- `toggleArchived()`: Marks historical terms as archived, filtering them out of active dropdown menus system-wide.
 
 **Calendar & Scheduling (`CalendarController`)**
-- `CalendarController`: `chairpersonCalendar`
+- `chairpersonCalendar()`: Queries the `DefenseSchedule` model to fetch all scheduled defense events across the entire institution, formatting them into a JSON array for the FullCalendar JS library.
 
 **Authentication (`AuthController`)**
-- `AuthController`: `showLoginForm`, `login`, `logout`, `showRegisterForm`, `register`, `showChangePasswordForm`, `changePassword`
+- `login()` / `logout()`: Validates credentials against the encrypted `password` column and manages session tokens.
+- `changePassword()`: Receives a new password, hashes it using `bcrypt()`, and updates the user's account row.
