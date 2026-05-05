@@ -16,7 +16,7 @@ CapTrack’s technical stack combines the Laravel PHP framework for robust, secu
 The researchers employed the Laravel framework to develop the core CapTrack web application, leveraging its capabilities as a free, open-source, and highly secure PHP framework. Laravel utilizes an MVC (Model-View-Controller) architecture that offers a comprehensive range of built-in components such as Eloquent ORM for database interaction and robust routing. This design facilitates efficient and scalable development, allowing for the creation of high-performance business logic—such as conflict resolution algorithms and task management systems—from a single, maintainable codebase.
 
 ### Blade Templating Engine - Frontend Web Development
-The researchers selected Laravel’s native Blade templating engine for frontend web development, specifically to create the distinct dashboards used for managing students, processing faculty invitations, and tracking milestones. Blade allows developers to seamlessly inject dynamic PHP data directly into the HTML structure without the performance overhead of external JavaScript frameworks. Its flexibility and tight integration with the backend empowered the team to develop a scalable, responsive, and highly user-friendly platform tailored to the specific administrative tasks of Chairperson, Coordinators, Advisers, and Students.
+The researchers selected Laravel’s native Blade templating engine for frontend web development, specifically to create the distinct dashboards used for managing students, processing faculty invitations, grading defenses, and tracking milestones. Blade allows developers to seamlessly inject dynamic PHP data directly into the HTML structure without the performance overhead of external JavaScript frameworks. Its flexibility and tight integration with the backend empowered the team to develop a scalable, responsive, and highly user-friendly platform tailored to the specific administrative tasks of Chairpersons, Coordinators, Advisers, Students, and Defense Panelists.
 
 ### State Management
 #### Multi-Guard Authentication
@@ -254,21 +254,28 @@ public function autoAssignPanel(DefenseRequest $request) {
 ```
 
 ### Manage Routine and Milestone Requirements
-This feature empowers coordinators to efficiently oversee and maintain structured routines and requirement schedules for student groups. This feature allows coordinators to create "Milestone Blueprints". They can conveniently add, edit, or delete requirements, categorizing them into chapters or tasks. Once saved, these blueprints are automatically distributed to all active groups, ensuring precise management tailored to institutional standards.
+This feature empowers coordinators to efficiently oversee and maintain structured routines and requirement schedules for student groups. Coordinators can create "Milestone Templates" and conveniently add, edit, or delete requirements, categorizing them into tasks. Once saved, these templates can be manually assigned to active groups, ensuring precise management tailored to institutional standards and project phases.
 
-**Code Snippet of Distributing Milestone Blueprints:**
+**Code Snippet of Assigning Milestone Templates:**
 *[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
-*Figure 12: Code snippet of Routine Requirement Distribution*
+*Figure 12: Code snippet of Coordinator Milestone Assignment*
 ```php
-public function distributeBlueprint(MilestoneBlueprint $blueprint) {
-    $activeGroups = CapstoneGroup::where('status', 'active')->get();
+public function assignToGroup(Request $request) {
+    $template = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
+    $group = Group::findOrFail($request->group_id);
     
-    foreach ($activeGroups as $group) {
-        GroupMilestone::create([
-            'group_id' => $group->id,
-            'title' => $blueprint->title,
-            'description' => $blueprint->description,
-            'deadline' => $blueprint->default_deadline
+    $groupMilestone = GroupMilestone::create([
+        'group_id' => $group->id,
+        'milestone_template_id' => $template->id,
+        'title' => $template->name,
+        'status' => 'not_started',
+    ]);
+
+    foreach ($template->tasks as $task) {
+        GroupMilestoneTask::create([
+            'group_milestone_id' => $groupMilestone->id,
+            'milestone_task_id' => $task->id,
+            'status' => 'pending',
         ]);
     }
 }

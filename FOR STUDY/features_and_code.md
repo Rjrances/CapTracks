@@ -7,7 +7,7 @@ This document provides a comprehensive overview of the CapTracks application fea
 ## 1. Authentication & User Management
 
 ### Feature: Multi-Guard Login & Profile Management
-The system handles login across multiple roles (Student, Adviser, Coordinator, Chairperson) using separate guards or role columns.
+The system handles login across multiple roles (Student, Adviser, Coordinator, Chairperson, Panelist) using separate guards or role columns.
 
 **Key Routes:**
 - `GET/POST /login` (AuthController)
@@ -195,7 +195,7 @@ public function store(Request $request) {
 ```
 
 ### Feature: Milestone Tracking
-Students track their progress through checklists and milestone tasks.
+Students track their progress through checklists and milestone tasks assigned by their coordinator.
 
 **Key Routes:**
 - `Resource /student/milestones` (StudentMilestoneController)
@@ -203,7 +203,31 @@ Students track their progress through checklists and milestone tasks.
 
 ---
 
-## 6. Shared & Cross-Role Features
+## 6. Panelist Features
+
+### Feature: Defense Rubric Grading & Evaluation
+Panelists are assigned to defense schedules and can use dynamic JSON-based rubrics to grade group performances.
+
+**Key Routes:**
+- `GET /panelist/dashboard` (PanelistController)
+- `POST /panelist/defense/{defense}/grade`
+
+**Code Reference (`PanelistController.php`):**
+```php
+public function storeGrade(Request $request, DefenseSchedule $defense) {
+    // Process JSON rubric structure and store grades
+    $rubricData = $request->input('rubric_data');
+    $defense->grades()->create([
+        'panelist_id' => Auth::id(),
+        'score' => $rubricData['total_score'],
+        'details' => json_encode($rubricData)
+    ]);
+}
+```
+
+---
+
+## 7. Shared & Cross-Role Features
 
 ### Feature: Activity Logging
 The system tracks important actions (submissions, milestone completions, comments) and displays an activity log for advisers and coordinators.
@@ -240,4 +264,4 @@ public function markNotificationAsRead(Notification $notification) {
 ---
 
 ### Summary
-The `CapTracks` application is a robust Laravel monolithic application heavily utilizing Eloquent ORM, customized Middlewares for access control (e.g., `checkrole`), grouped Routing, and Blade templating to provide distinct portals for Students, Advisers, Coordinators, and Chairpersons.
+The `CapTracks` application is a robust Laravel monolithic application heavily utilizing Eloquent ORM, customized Middlewares for access control (e.g., `checkrole`), grouped Routing, and Blade templating to provide distinct portals for Students, Advisers, Coordinators, Chairpersons, and Panelists.

@@ -17,7 +17,7 @@ This document covers **everything**. It traces the exact chronological journey o
 
 ## 🟢 Phase 2: Class Initialization (The Coordinator)
 8. **Dashboard Access:** Coordinator logs in and checks their Classlist to verify all students were successfully enrolled by the Chairperson.
-9. **Blueprinting:** Coordinator creates a Milestone Template ("Chapter 1"). They add specific requirements to it ("Draft Intro", "Gantt Chart") and flag some as 'required'.
+9. **Milestone Setup:** Coordinator creates a Milestone Template ("Proposal Defense"). They add specific requirements to it ("Chapter 1 Draft", "Chapter 2 Draft"). The Coordinator then explicitly **assigns** this template to specific active groups, establishing their initial progress requirements.
 10. **Workload Monitoring:** Coordinator opens the Faculty Matrix. The system executes complex `withCount` queries in the background to count exactly how many groups and panels every teacher is currently handling *this active semester*.
 
 ---
