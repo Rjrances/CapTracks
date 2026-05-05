@@ -1,4 +1,5 @@
 @extends('layouts.chairperson')
+@section('title', 'Import Students')
 @section('content')
 <style>
 .btn-loading {

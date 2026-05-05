@@ -1,6 +1,7 @@
 @extends('layouts.chairperson')
+@section('title', 'Chairperson Dashboard')
 @section('content')
-<div class="container mt-5">
+<div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-0">

@@ -1,4 +1,5 @@
 @extends('layouts.chairperson')
+@section('title', 'Create Academic Term')
 @section('content')
 <div class="container">
     <div class="row justify-content-center">

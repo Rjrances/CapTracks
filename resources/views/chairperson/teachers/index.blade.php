@@ -1,4 +1,5 @@
 @extends('layouts.chairperson')
+@section('title', 'Faculty Management')
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">

@@ -1,4 +1,5 @@
 @extends('layouts.chairperson')
+@section('title', 'Edit Offering')
 @section('content')
 <div class="container-fluid">
     <div class="row">
