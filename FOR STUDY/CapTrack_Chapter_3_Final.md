@@ -38,6 +38,21 @@ Within CapTrack, state management and user isolation are achieved through Larave
 ],
 ```
 
+#### Role-Based Access Control (Spatie)
+While Multi-Guard Authentication isolates Students from Faculty at the database level, the system utilizes the `spatie/laravel-permission` package to enforce granular, role-based access control (RBAC) among the different Faculty types. By assigning specific roles (e.g., Coordinator, Chairperson, Adviser) to the faculty users, developers can securely lock route groups and controller methods using Spatie's `role` middleware. This approach prevents unauthorized elevation of privileges and ensures that a standard Teacher cannot access the Chairperson's administrative dashboard or the Coordinator's defense scheduling tools.
+
+**Code Snippet of Spatie Role Middleware Integration:**
+*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Figure 2b: Spatie Role Middleware in Laravel Routing*
+```php
+// Only users with the 'coordinator' role can access these routes
+Route::middleware(['auth', 'role:coordinator'])->prefix('coordinator')->group(function () {
+    Route::get('/dashboard', [CoordinatorDashboardController::class, 'index']);
+    Route::get('/groups/create', [CoordinatorController::class, 'create']);
+    Route::post('/defense-requests/{request}/approve', [DefenseScheduleController::class, 'approve']);
+});
+```
+
 #### Eloquent Relationships and ORM
 In addition to the Multi-Guard system, Eloquent ORM plays a key role in CapTrack’s state management strategy. Eloquent leverages the principles of Active Record implementation to offer a simpler, more declarative approach to managing and propagating database state throughout the application’s models. By defining precise relationship mappings (`HasMany`, `BelongsToMany`, `MorphMany`), developers can ensure that changes in state (like a student uploading a file) instantly trigger efficient updates in parent objects (like the project’s overall progress) without extensive boilerplate SQL code.
 

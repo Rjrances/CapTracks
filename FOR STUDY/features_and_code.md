@@ -272,4 +272,4 @@ public function markNotificationAsRead(Notification $notification) {
 ---
 
 ### Summary
-The `CapTracks` application is a robust Laravel monolithic application heavily utilizing Eloquent ORM, customized Middlewares for access control (e.g., `checkrole`), grouped Routing, and Blade templating to provide distinct portals for Students, Advisers, Coordinators, Chairpersons, and Panelists.
+The `CapTracks` application is a robust Laravel monolithic application heavily utilizing Eloquent ORM, the `spatie/laravel-permission` package for role-based access control middleware (e.g., `role:coordinator`), grouped Routing, and Blade templating to provide distinct portals for Students, Advisers, Coordinators, Chairpersons, and Panelists.
