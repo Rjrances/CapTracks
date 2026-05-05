@@ -102,7 +102,7 @@
     <div class="mt-auto p-3 border-top border-secondary">
         @php
             $hasAdviserRole = $user && (
-                $user->adviserInvitations()->where('status', 'pending')->exists()
+                \App\Models\AdviserInvitation::where('faculty_id', $user->id)->where('status', 'pending')->exists()
                 || \App\Models\Group::where('faculty_id', $user->faculty_id)->exists()
             );
         @endphp

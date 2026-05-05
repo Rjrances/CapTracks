@@ -150,7 +150,7 @@ class AuthController extends Controller
     private function attemptFacultyLogin(Request $request)
     {
         $userAccount = UserAccount::where('faculty_id', $request->school_id)->first();
-        if (!$userAccount || !$userAccount->user) {
+        if (!$userAccount) {
             return null;
         }
 
@@ -159,10 +159,34 @@ class AuthController extends Controller
             return $passwordError;
         }
 
-        Auth::login($userAccount->user);
+        $resolvedUser = $this->resolveFacultyUserForLogin($userAccount);
+        if (!$resolvedUser) {
+            return back()->withErrors(['school_id' => 'No matching faculty profile found for this account.']);
+        }
+
+        Auth::login($resolvedUser);
         $request->session()->regenerate();
 
-        return $this->redirectBasedOnRole($userAccount->user->primary_role);
+        return $this->redirectBasedOnRole($resolvedUser->primary_role);
+    }
+
+    private function resolveFacultyUserForLogin(UserAccount $userAccount): ?User
+    {
+        $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+
+        if ($activeTerm) {
+            $activeTermUser = User::where('faculty_id', $userAccount->faculty_id)
+                ->where('semester', $activeTerm->semester)
+                ->first();
+
+            if ($activeTermUser) {
+                return $activeTermUser;
+            }
+        }
+
+        return User::where('faculty_id', $userAccount->faculty_id)
+            ->latest('id')
+            ->first();
     }
 
     private function attemptStudentLogin(Request $request)

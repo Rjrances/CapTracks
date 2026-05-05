@@ -57,7 +57,7 @@ class User extends Authenticatable
     }
     public function adviserInvitations()
     {
-        return $this->hasMany(\App\Models\AdviserInvitation::class, 'faculty_id');
+        return $this->hasMany(\App\Models\AdviserInvitation::class, 'faculty_id', 'id');
     }
     public function student()
     {
