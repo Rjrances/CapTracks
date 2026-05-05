@@ -161,6 +161,8 @@ class MilestoneTemplateController extends Controller
             'milestone_template_id' => $template->id,
             'title'                 => $template->name,
             'description'           => $template->description,
+            // Keep both fields in sync; existing views may read either target_date or due_date.
+            'target_date'           => $request->due_date,
             'due_date'              => $request->due_date,
             'progress_percentage'   => 0,
             'status'                => 'not_started',

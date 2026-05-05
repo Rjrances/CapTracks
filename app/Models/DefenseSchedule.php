@@ -14,12 +14,15 @@ class DefenseSchedule extends Model
         'end_at',
         'room',
         'remarks',
-        'status'
+        'status',
+        'milestone_gate_overridden',
+        'milestone_override_reason',
     ];
     protected $casts = [
         'start_at' => 'datetime',
         'end_at' => 'datetime',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'milestone_gate_overridden' => 'boolean',
     ];
     public function group()
     {
@@ -45,6 +48,11 @@ class DefenseSchedule extends Model
     public function ratingSheets()
     {
         return $this->hasMany(RatingSheet::class);
+    }
+
+    public function evaluationSummary()
+    {
+        return $this->hasOne(DefenseEvaluationSummary::class, 'defense_schedule_id');
     }
 
     public function getFormattedDateTimeAttribute()

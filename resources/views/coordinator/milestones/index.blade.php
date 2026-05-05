@@ -211,7 +211,7 @@
                                                                         {{ $milestone->template ? $milestone->template->name : 'Unknown' }}
                                                                     </span>
                                                                     <small class="text-muted text-nowrap">
-                                                                        Due: {{ $milestone->target_date ? \Carbon\Carbon::parse($milestone->target_date)->format('M d') : 'Not set' }}
+                                                                        Due: {{ ($milestone->due_date ?? $milestone->target_date) ? \Carbon\Carbon::parse($milestone->due_date ?? $milestone->target_date)->format('M d') : 'Not set' }}
                                                                     </small>
                                                                 </div>
                                                             @endforeach

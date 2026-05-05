@@ -6,6 +6,9 @@
             <a href="{{ route('coordinator.defense.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Create Schedule
             </a>
+            <a href="{{ route('coordinator.defense-rubrics.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-list-check me-2"></i>Manage Rubrics
+            </a>
         </x-coordinator.intro>
 
             @if(session('success'))
@@ -303,6 +306,9 @@
                                             </td>
                                             <td>
                                                 <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ route('coordinator.rating-sheets.show', $schedule) }}" class="btn btn-outline-info btn-sm">
+                                                        <i class="fas fa-clipboard-check"></i> Ratings
+                                                    </a>
                                                     <a href="{{ route('coordinator.defense.edit', $schedule) }}" class="btn btn-outline-primary btn-sm">
                                                         <i class="fas fa-edit"></i> Edit
                                                     </a>

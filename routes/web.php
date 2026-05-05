@@ -28,6 +28,7 @@ use App\Http\Controllers\StudentDefenseRequestController;
 use App\Http\Controllers\AdviserController;
 use App\Http\Controllers\AdviserProposalController;
 use App\Http\Controllers\RatingSheetController;
+use App\Http\Controllers\Coordinator\DefenseRubricController;
 
 // Health check route for Railway
 Route::get('/health', function () {
@@ -77,6 +78,11 @@ Route::middleware(['auth', 'role:coordinator|adviser'])->prefix('coordinator')->
     Route::resource('defense', DefenseScheduleController::class);
     Route::match(['get', 'post'], '/defense/available-faculty', [DefenseScheduleController::class, 'getAvailableFaculty'])->name('defense.available-faculty');
     Route::patch('/defense/{defenseSchedule}/complete', [DefenseScheduleController::class, 'markAsCompleted'])->name('defense.complete');
+    Route::middleware(['role:coordinator'])->group(function () {
+        Route::resource('defense-rubrics', DefenseRubricController::class)
+            ->except(['show', 'destroy'])
+            ->parameters(['defense-rubrics' => 'defenseRubric']);
+    });
 
     // Groups
     Route::get('/groups', [CoordinatorController::class, 'groups'])->name('groups.index');
@@ -342,5 +348,10 @@ Route::middleware(['auth', 'role:coordinator'])->prefix('coordinator')->name('co
     Route::put('/defense-requests/{defenseSchedule}/update-schedule', [DefenseScheduleController::class, 'updateSchedule'])->name('defense-requests.update-schedule');
     Route::post('/defense-requests/{defenseRequest}/approve', [DefenseScheduleController::class, 'approve'])->name('defense-requests.approve');
     Route::post('/defense-requests/{defenseRequest}/reject', [DefenseScheduleController::class, 'reject'])->name('defense-requests.reject');
+    Route::get('/panel-rating-sheets/{schedule}', [RatingSheetController::class, 'showAdviserForm'])->name('rating-sheets.rate.show');
+    Route::post('/panel-rating-sheets/{schedule}', [RatingSheetController::class, 'submitAdviserRating'])->name('rating-sheets.rate.submit');
     Route::get('/rating-sheets/{schedule}', [RatingSheetController::class, 'showCoordinatorRatings'])->name('rating-sheets.show');
+    Route::get('/rating-sheets/{schedule}/print', [RatingSheetController::class, 'printCoordinatorRatings'])->name('rating-sheets.print');
+    Route::post('/rating-sheets/{schedule}/finalize', [RatingSheetController::class, 'finalizeCoordinatorRatings'])->name('rating-sheets.finalize');
+    Route::post('/rating-sheets/{schedule}/reopen', [RatingSheetController::class, 'reopenCoordinatorRatings'])->name('rating-sheets.reopen');
 });

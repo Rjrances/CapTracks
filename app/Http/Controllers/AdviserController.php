@@ -436,14 +436,45 @@ class AdviserController extends Controller
         ->get()
         ->map(function ($group) use ($user) {
             $group->role_type = 'panel';
-            $panelAssignment = $group->defenseSchedules->first()
-                ->defensePanels
+            $matchedSchedule = $group->defenseSchedules
+                ->first(function ($schedule) use ($user) {
+                    return $schedule->defensePanels
+                        ->where('faculty_id', $user->id)
+                        ->whereIn('role', ['chair', 'member'])
+                        ->where('status', 'accepted')
+                        ->isNotEmpty();
+                });
+            if ($matchedSchedule) {
+                $matchedSchedule = $group->defenseSchedules
+                    ->filter(function ($schedule) use ($user) {
+                        return $schedule->defensePanels
+                            ->where('faculty_id', $user->id)
+                            ->whereIn('role', ['chair', 'member'])
+                            ->where('status', 'accepted')
+                            ->isNotEmpty();
+                    })
+                    ->sortByDesc(function ($schedule) {
+                        $statusWeight = match ((string) $schedule->status) {
+                            'in_progress' => 3,
+                            'scheduled' => 2,
+                            'completed' => 1,
+                            default => 0,
+                        };
+                        $timeWeight = optional($schedule->start_at)->timestamp ?? 0;
+
+                        return ($statusWeight * 10_000_000_000) + $timeWeight;
+                    })
+                    ->first();
+            }
+            $matchedSchedule = $matchedSchedule ?? $group->defenseSchedules->sortByDesc('id')->first();
+
+            $panelAssignment = collect($matchedSchedule?->defensePanels ?? [])
                 ->where('faculty_id', $user->id)
                 ->whereIn('role', ['chair', 'member'])
                 ->where('status', 'accepted')
                 ->first();
             $group->panel_role = $panelAssignment->role ?? 'member';
-            $group->defense_schedule = $group->defenseSchedules->first();
+            $group->defense_schedule = $matchedSchedule;
             $group->recent_activities = $this->getGroupRecentActivities($group);
             return $group;
         });
@@ -492,8 +523,43 @@ class AdviserController extends Controller
         ->get()
         ->map(function ($group) use ($user) {
             $group->role_type = 'panel';
-            $panelAssignment = $group->defenseSchedules->first()
-                ->defensePanels
+            $matchedSchedule = $group->defenseSchedules
+                ->first(function ($schedule) use ($user) {
+                    return $schedule->defensePanels
+                        ->whereIn('role', ['chair', 'member'])
+                        ->where('status', 'accepted')
+                        ->filter(function ($panel) use ($user) {
+                            return ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
+                        })
+                        ->isNotEmpty();
+                });
+            if ($matchedSchedule) {
+                $matchedSchedule = $group->defenseSchedules
+                    ->filter(function ($schedule) use ($user) {
+                        return $schedule->defensePanels
+                            ->whereIn('role', ['chair', 'member'])
+                            ->where('status', 'accepted')
+                            ->filter(function ($panel) use ($user) {
+                                return ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
+                            })
+                            ->isNotEmpty();
+                    })
+                    ->sortByDesc(function ($schedule) {
+                        $statusWeight = match ((string) $schedule->status) {
+                            'in_progress' => 3,
+                            'scheduled' => 2,
+                            'completed' => 1,
+                            default => 0,
+                        };
+                        $timeWeight = optional($schedule->start_at)->timestamp ?? 0;
+
+                        return ($statusWeight * 10_000_000_000) + $timeWeight;
+                    })
+                    ->first();
+            }
+            $matchedSchedule = $matchedSchedule ?? $group->defenseSchedules->sortByDesc('id')->first();
+
+            $panelAssignment = collect($matchedSchedule?->defensePanels ?? [])
                 ->filter(function ($panel) use ($user) {
                     return ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
                 })
@@ -501,7 +567,7 @@ class AdviserController extends Controller
                 ->where('status', 'accepted')
                 ->first();
             $group->panel_role = $panelAssignment->role ?? 'member';
-            $group->defense_schedule = $group->defenseSchedules->first();
+            $group->defense_schedule = $matchedSchedule;
             return $group;
         });
         $memberIds = collect();

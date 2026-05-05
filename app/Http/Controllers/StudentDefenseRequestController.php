@@ -6,9 +6,15 @@ use App\Models\DefenseSchedule;
 use App\Models\DefenseRequest;
 use App\Models\Group;
 use App\Models\MilestoneTemplate;
+use App\Services\DefenseMilestoneGateService;
 use Illuminate\Support\Facades\Auth;
 class StudentDefenseRequestController extends Controller
 {
+    public function __construct(
+        private readonly DefenseMilestoneGateService $defenseMilestoneGateService
+    ) {
+    }
+
     public function index()
     {
         $student = $this->getAuthenticatedStudent();
@@ -57,6 +63,11 @@ class StudentDefenseRequestController extends Controller
         
         // Get defense type from URL parameter
         $defenseType = $request->get('defense_type', 'proposal');
+        $gate = $this->defenseMilestoneGateService->evaluate($group, $defenseType);
+        if (!$gate['eligible']) {
+            return redirect()->route('student.defense-requests.index')
+                ->withErrors(['milestone' => $gate['message'] . ' Student requests are blocked until this milestone is complete.']);
+        }
         
         return view('student.defense-requests.create', compact('group', 'milestoneTemplates', 'defenseType'));
     }
@@ -79,6 +90,11 @@ class StudentDefenseRequestController extends Controller
         if (!$this->canCreateDefenseRequest($group->id)) {
             return redirect()->route('student.defense-requests.index')
                 ->withErrors(['pending' => 'You already have an active defense process. Please wait until the current one is completed.']);
+        }
+        $gate = $this->defenseMilestoneGateService->evaluate($group, $request->defense_type);
+        if (!$gate['eligible']) {
+            return redirect()->route('student.defense-requests.index')
+                ->withErrors(['milestone' => $gate['message'] . ' Student requests are blocked until this milestone is complete.']);
         }
         try {
             $defenseRequest = DefenseRequest::create([

@@ -11,6 +11,7 @@ class RatingSheet extends Model
         'faculty_id',
         'group_id',
         'criteria',
+        'individual_scores',
         'total_score',
         'recommendation',
         'recommendation_reason',
@@ -20,6 +21,7 @@ class RatingSheet extends Model
 
     protected $casts = [
         'criteria' => 'array',
+        'individual_scores' => 'array',
         'submitted_at' => 'datetime',
         'total_score' => 'decimal:2',
     ];

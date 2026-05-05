@@ -124,7 +124,7 @@
     </div>
         @include('partials.footer')
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    @include('partials.global-alert-modal')
+    @include('partials.delete-confirm-modal')
     @stack('scripts')
     <script>
     function markNotificationAsRead(notificationId) {
@@ -227,3 +227,5 @@
     </style>
 </body>
 </html>
+
+

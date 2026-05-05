@@ -10,11 +10,17 @@ use App\Models\User;
 use App\Models\AcademicTerm;
 use App\Models\Offering;
 use App\Services\NotificationService;
+use App\Services\DefenseMilestoneGateService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 class DefenseScheduleController extends Controller
 {
+    public function __construct(
+        private readonly DefenseMilestoneGateService $defenseMilestoneGateService
+    ) {
+    }
+
     public function defenseRequestsIndex()
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
@@ -209,7 +215,8 @@ class DefenseScheduleController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'panel_members' => 'required|array|size:2',
             'panel_members.*.faculty_id' => 'required|distinct|exists:users,id',
-            'panel_members.*.role' => 'required|in:chair,member'
+            'panel_members.*.role' => 'required|in:chair,member',
+            'milestone_override_reason' => 'nullable|string|max:1000',
         ]);
         $panelValidationError = $this->validatePanelComposition($validated['panel_members']);
         if ($panelValidationError) {
@@ -230,6 +237,16 @@ class DefenseScheduleController extends Controller
         }
         if ((int) $group->academic_term_id !== (int) $activeTerm->id) {
             abort(403, 'You can only create defense schedules for groups in the active term.');
+        }
+        $gate = $this->defenseMilestoneGateService->evaluate($group, $validated['stage']);
+        $gateOverridden = false;
+        if (!$gate['eligible']) {
+            if (blank($validated['milestone_override_reason'] ?? null)) {
+                return back()->withErrors([
+                    'milestone_override_reason' => $gate['message'] . ' Add override reason to schedule anyway.',
+                ])->withInput();
+            }
+            $gateOverridden = true;
         }
 
         $ineligiblePick = $this->panelMembersMustNotIncludeAdviserOrCoordinator($group, $validated['panel_members']);
@@ -266,7 +283,9 @@ class DefenseScheduleController extends Controller
                 'start_at' => $startAt,
                 'end_at' => $endAt,
                 'room' => $validated['room'],
-                'status' => 'scheduled'
+                'status' => 'scheduled',
+                'milestone_gate_overridden' => $gateOverridden,
+                'milestone_override_reason' => $gateOverridden ? $validated['milestone_override_reason'] : null,
             ]);
             foreach ($validated['panel_members'] as $member) {
                 DefensePanel::create([
@@ -355,7 +374,8 @@ class DefenseScheduleController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'panel_members' => 'required|array|size:2',
             'panel_members.*.faculty_id' => 'required|distinct|exists:users,id',
-            'panel_members.*.role' => 'required|in:chair,member'
+            'panel_members.*.role' => 'required|in:chair,member',
+            'milestone_override_reason' => 'nullable|string|max:1000',
         ]);
         $panelValidationError = $this->validatePanelComposition($validated['panel_members']);
         if ($panelValidationError) {
@@ -366,6 +386,16 @@ class DefenseScheduleController extends Controller
         $group = Group::with('offering')->findOrFail($validated['group_id']);
         if (!in_array($group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only edit defense schedules for groups in your offerings.');
+        }
+        $gate = $this->defenseMilestoneGateService->evaluate($group, $validated['stage']);
+        $gateOverridden = false;
+        if (!$gate['eligible']) {
+            if (blank($validated['milestone_override_reason'] ?? null)) {
+                return back()->withErrors([
+                    'milestone_override_reason' => $gate['message'] . ' Add override reason to schedule anyway.',
+                ])->withInput();
+            }
+            $gateOverridden = true;
         }
 
         $ineligiblePick = $this->panelMembersMustNotIncludeAdviserOrCoordinator($group, $validated['panel_members']);
@@ -401,7 +431,9 @@ class DefenseScheduleController extends Controller
                 'academic_term_id' => $validated['academic_term_id'],
                 'start_at' => $startAt,
                 'end_at' => $endAt,
-                'room' => $validated['room']
+                'room' => $validated['room'],
+                'milestone_gate_overridden' => $gateOverridden,
+                'milestone_override_reason' => $gateOverridden ? $validated['milestone_override_reason'] : null,
             ]);
             DefensePanel::where('defense_schedule_id', $schedule->id)->delete();
             foreach ($validated['panel_members'] as $member) {
@@ -747,11 +779,23 @@ class DefenseScheduleController extends Controller
             'scheduled_time' => 'required',
             'room' => 'required|string|max:255',
             'coordinator_notes' => 'nullable|string|max:1000',
+            'milestone_override_reason' => 'nullable|string|max:1000',
             'adviser_id' => 'required|exists:users,id',
             'subject_coordinator_id' => 'required|exists:users,id',
             'panelist_1_id' => 'required|exists:users,id|different:panelist_2_id',
             'panelist_2_id' => 'required|exists:users,id|different:panelist_1_id',
         ]);
+        $defenseRequest->loadMissing('group.groupMilestones.milestoneTemplate');
+        $gate = $this->defenseMilestoneGateService->evaluate($defenseRequest->group, $defenseRequest->defense_type);
+        $gateOverridden = false;
+        if (!$gate['eligible']) {
+            if (blank($request->milestone_override_reason)) {
+                return back()->withErrors([
+                    'milestone_override_reason' => $gate['message'] . ' Add override reason to schedule anyway.',
+                ])->withInput();
+            }
+            $gateOverridden = true;
+        }
 
         $startAt = Carbon::parse($request->scheduled_date . ' ' . $request->scheduled_time);
         $endAt = $startAt->copy()->addHours(2);
@@ -765,6 +809,8 @@ class DefenseScheduleController extends Controller
             'room' => $request->room,
             'academic_term_id' => $defenseRequest->group->academic_term_id,
             'coordinator_notes' => $request->coordinator_notes,
+            'milestone_gate_overridden' => $gateOverridden,
+            'milestone_override_reason' => $gateOverridden ? $request->milestone_override_reason : null,
         ]);
 
         $this->createDefensePanel($defenseSchedule, $request);

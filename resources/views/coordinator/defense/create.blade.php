@@ -101,6 +101,19 @@
                                 @enderror
                             </div>
                         </div>
+                        <div class="mb-3">
+                            <label for="milestone_override_reason" class="form-label">Milestone Override Reason (required only if milestone is incomplete)</label>
+                            <textarea
+                                name="milestone_override_reason"
+                                id="milestone_override_reason"
+                                rows="2"
+                                class="form-control @error('milestone_override_reason') is-invalid @enderror"
+                                placeholder="Explain why this defense must proceed even if required milestone is not completed.">{{ old('milestone_override_reason') }}</textarea>
+                            @error('milestone_override_reason')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Students are blocked from requesting when milestone is incomplete. Coordinators may override with documented reason.</small>
+                        </div>
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
