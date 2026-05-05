@@ -4,12 +4,7 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">
-                    <i class="fas fa-calendar me-2"></i>
-                    Defense Calendar
-                </h2>
-            </div>
+            <div class="d-flex justify-content-between align-items-center mb-4"></div>
             <div class="calendar-container">
                 <div class="calendar-header">
                     <h2 class="calendar-title">

@@ -4,7 +4,6 @@
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 900px;">
         <div class="mb-4" style="margin-bottom: 1.2rem !important;">
-            <h1 class="fw-bold mb-1 text-center" style="font-size:2.5rem; margin-bottom:0.1rem;">Group Details</h1>
             <div class="text-muted text-center" style="font-size:1.1rem; margin-bottom:0;">{{ $group->name }}</div>
             @if(($viewerMode ?? 'adviser') === 'panel')
                 <div class="text-muted text-center small mt-1">Panel view: mentoring discussions are hidden.</div>

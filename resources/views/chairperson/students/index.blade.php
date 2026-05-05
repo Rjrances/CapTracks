@@ -6,9 +6,6 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 class="mb-0">
-                        <i class="fas fa-users me-2"></i>Student Management
-                    </h2>
                     <p class="text-muted mb-0">
                         View and manage students for the active term
                         @if($activeTerm)

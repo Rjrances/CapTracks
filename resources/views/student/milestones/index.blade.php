@@ -4,7 +4,6 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h2 mb-1">My Milestones</h1>
             <p class="text-muted mb-0">Track your capstone project progress with Kanban boards</p>
         </div>
         <div class="d-flex gap-2">

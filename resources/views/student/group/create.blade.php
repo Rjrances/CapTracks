@@ -4,7 +4,6 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0">Create New Group</h2>
             @if(isset($offering))
                 <p class="text-muted mb-0">
                     <i class="fas fa-book me-1"></i>

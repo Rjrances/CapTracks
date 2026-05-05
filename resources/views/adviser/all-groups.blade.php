@@ -6,10 +6,6 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1 class="h2 mb-1 text-dark fw-bold">
-                        <i class="fas fa-layer-group me-3 text-primary"></i>
-                        All My Groups
-                    </h1>
                     <p class="text-muted mb-0">View all groups where you are involved as adviser or panel member</p>
                 </div>
                 <div class="d-flex gap-2">

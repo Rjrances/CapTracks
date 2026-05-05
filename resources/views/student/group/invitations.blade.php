@@ -3,7 +3,6 @@
 @section('content')
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Group Invitations</h2>
         <a href="{{ route('student.group') }}" class="btn btn-outline-primary">
             <i class="fas fa-arrow-left me-2"></i>Back to Group
         </a>

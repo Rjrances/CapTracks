@@ -6,9 +6,6 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 class="mb-0">
-                        <i class="fas fa-user-plus me-2"></i>Add Students to Offering
-                    </h2>
                     <p class="text-muted mb-0">
                         Adding students to: <strong>{{ $offering->subject_title }} ({{ $offering->subject_code }})</strong>
                     </p>

@@ -4,7 +4,6 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0">Project Submissions</h2>
             <p class="text-muted mb-0">Review and provide feedback on student submissions</p>
         </div>
         <a href="{{ route('adviser.groups') }}" class="btn btn-outline-secondary">

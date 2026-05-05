@@ -4,7 +4,6 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0">Panel Groups</h2>
             <p class="text-muted mb-0">Your accepted chair/member groups with submissions and rating actions</p>
         </div>
         <a href="{{ route('adviser.dashboard') }}" class="btn btn-outline-secondary">

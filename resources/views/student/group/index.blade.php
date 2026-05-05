@@ -2,7 +2,6 @@
 @section('title', 'My Groups')
 @section('content')
 <div class="container mt-5">
-    <h2 class="fw-bold mb-4">My Group</h2>
     @if(isset($groups) && count($groups))
         <div class="row g-4">
             @foreach($groups as $group)

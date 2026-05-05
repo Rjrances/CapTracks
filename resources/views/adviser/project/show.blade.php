@@ -4,7 +4,6 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0">{{ ($viewMode ?? 'adviser') === 'panel' ? 'Submission Details' : 'Review Submission' }}</h2>
             <p class="text-muted mb-0">
                 {{ ($viewMode ?? 'adviser') === 'panel' ? 'Panel view of student submission details' : 'Review and provide feedback on student submission' }}
             </p>

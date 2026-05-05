@@ -4,7 +4,6 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-1">Quick File Uploads</h2>
             <p class="text-muted mb-0">Upload supplementary project documents quickly and easily</p>
         </div>
         <div class="d-flex gap-2">

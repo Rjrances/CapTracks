@@ -9,13 +9,6 @@
             <div class="mb-3">
                 <i class="fas fa-key fa-3x text-warning"></i>
             </div>
-            <h2 class="fw-bold mb-2">
-                @if($isFirstTime)
-                    Set Your Password
-                @else
-                    Change Your Password
-                @endif
-            </h2>
             <p class="text-muted">
                 @if($isFirstTime)
                     Please set your password to continue using the system.

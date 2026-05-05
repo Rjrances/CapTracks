@@ -2,7 +2,6 @@
 @section('title', 'Submission Details')
 @section('content')
 <div class="container mt-5">
-    <h2 class="mb-4">Submission Details</h2>
     <div class="card">
         <div class="card-body">
             <p><strong>Type:</strong> <span class="text-capitalize">{{ $submission->type }}</span></p>
