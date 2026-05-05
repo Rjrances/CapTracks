@@ -190,5 +190,9 @@ For complete system coverage, here is every single specific function the Coordin
 - Edit, update, or destroy an existing schedule (`update`, `destroy`).
 - Mark a defense officially as completed (`markAsCompleted`).
 
-**Notifications**
+**Notifications & Authentication (`AuthController`)**
 - View, mark read, or bulk-delete notifications (`markMultipleAsRead`, `deleteMultiple`).
+- Handle authentication actions like login, logout, and password management (`login`, `logout`, `changePassword`).
+
+**Calendar & View (`CalendarController`)**
+- View the coordinator's calendar which color-codes their assigned groups among global schedules (`coordinatorCalendar`).

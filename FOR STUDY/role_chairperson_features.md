@@ -175,3 +175,10 @@ For complete system coverage, here is every single specific function the Chairpe
 - Create, edit, or delete Semesters/Terms (`store`, `destroy`).
 - Toggle the active semester, automatically deactivating the rest (`toggleActive`).
 - Archive historical terms (`toggleArchived`).
+
+**Calendar & Scheduling (`CalendarController`)**
+- View the global defense calendar to monitor all schedules (`chairpersonCalendar`).
+
+**Notifications & Authentication (`ChairPersonController` & `AuthController`)**
+- View, mark read, or bulk-delete system notifications (`notifications`, `markNotificationAsRead`, `markMultipleAsRead`, `deleteMultiple`).
+- Handle authentication actions like login, logout, and password management (`login`, `logout`, `changePassword`).

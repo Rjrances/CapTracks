@@ -210,7 +210,11 @@ For complete system coverage, here is every single specific function the Student
 - Preview their own documents or compare two versions side-by-side (`previewVersion`, `compareVersions`).
 - Upload ad-hoc project submissions (e.g. final drafts) and delete them if unapproved (`store`, `destroy`).
 
-**Defense Management (`StudentDefenseRequestController`)**
+**Defense Management & View (`StudentDefenseRequestController` & `CalendarController`)**
 - Check eligibility for defense.
 - Submit a formal defense request picking a preferred date/time (`store`).
 - Cancel a pending defense request (`cancel`).
+- View the student calendar displaying their specific defense schedule (`studentCalendar`).
+
+**Authentication (`AuthController`)**
+- Handle authentication actions like login, logout, and password management (`login`, `logout`, `changePassword`).

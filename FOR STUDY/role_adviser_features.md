@@ -178,7 +178,11 @@ For complete system coverage, here is every single specific function the Adviser
 - Bulk approve/reject proposals with shared comments (`bulkUpdate`).
 - Leave threaded comments on project proposals (`storeComment`).
 
-**Defenses & Grading (`RatingSheetController`)**
+**Defenses & Grading (`RatingSheetController` & `CalendarController`)**
 - View panel submissions (`panelSubmissions`).
 - Open the digital grading form for a scheduled defense (`showAdviserForm`).
 - Submit rubric scores which are converted to JSON (`submitAdviserRating`).
+- View the adviser calendar displaying their specific defense assignments (`adviserCalendar`).
+
+**Authentication (`AuthController`)**
+- Handle authentication actions like login, logout, and password management (`login`, `logout`, `changePassword`).
