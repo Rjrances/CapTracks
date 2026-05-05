@@ -14,7 +14,7 @@ This document maps the project scope "MUST HAVES" and "NICE TO HAVES" against wh
 ### 🟢 Capstone Milestone Tracker - ORTIZ
 - [x] **Visual progress tracking:** Kanban boards and checklist views implemented.
 - [x] **Includes Gantt chart or progress bar:** Progress bars automatically calculate percentage based on completed tasks.
-- [x] **Milestones based on Capstone Must Haves:** Configurable by Coordinators via `MilestoneTemplateController`.
+- [x] **Milestones based on Capstone Must Haves:** Configured and manually assigned to specific groups by Coordinators via `MilestoneTemplateController`.
 - [x] **Tasks assigned to specific members:** Implemented inside `GroupMilestoneTask`.
 - [x] **Task completion contributes to percentage:** Auto-recalculation logic exists in `StudentMilestoneController`.
 - [x] **Comments on individual tasks:** Threaded comments implemented (`TaskComment`).

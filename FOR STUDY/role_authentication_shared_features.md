@@ -125,7 +125,7 @@ public static function logTaskCommentAdded(GroupMilestoneTask $task, $user, $stu
         'student_id' => clone $student?->student_id, // Nullsafe operator: Only get ID if student exists
         'user_id'    => clone $user?->id, // Nullsafe operator: Only get ID if faculty exists         
         'action'     => 'task_commented', // Categorize the action
-        'description'=> 'Added a comment to task: ' . $task->milestoneTask->task_name, // Human-readable log
+        'description'=> 'Added a comment to task: ' . $task->milestoneTask->name, // Human-readable log
         'loggable_type' => GroupMilestoneTask::class, // Polymorphic relation: Save the Model namespace
         'loggable_id' => $task->id, // Polymorphic relation: Save the exact Model ID
     ]);
