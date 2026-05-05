@@ -20,7 +20,13 @@
         </div>
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
+                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+        @if($errors->has('assign'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ $errors->first('assign') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
@@ -225,11 +231,21 @@
                                                         <span class="text-muted">-</span>
                                                     @endif
                                                 </td>
-                                                <td>
-                                                    <a href="{{ route('coordinator.groups.milestones', $group->id) }}" 
-                                                       class="btn btn-sm btn-outline-primary text-nowrap">
-                                                        <i class="fas fa-eye"></i> Details
-                                                    </a>
+                                                 <td>
+                                                    <div class="d-flex gap-1">
+                                                        <a href="{{ route('coordinator.groups.milestones', $group->id) }}" 
+                                                           class="btn btn-sm btn-outline-primary text-nowrap">
+                                                            <i class="fas fa-eye"></i> Details
+                                                        </a>
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-success text-nowrap"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#assignModal"
+                                                                data-group-id="{{ $group->id }}"
+                                                                data-group-name="{{ $group->name }}">
+                                                            <i class="fas fa-plus"></i> Assign
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -282,14 +298,64 @@
         </div>
     </div>
 </div>
+
+{{-- Assign Milestone Modal --}}
+<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignModalLabel">
+                    <i class="fas fa-flag me-2 text-success"></i>Assign Milestone
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ route('coordinator.milestones.assignToGroup') }}" method="POST">
+                @csrf
+                <input type="hidden" name="group_id" id="modalGroupId">
+                <div class="modal-body">
+                    <p class="text-muted mb-3">
+                        Assigning to: <strong id="modalGroupName"></strong>
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Milestone Template <span class="text-danger">*</span></label>
+                        <select name="milestone_template_id" class="form-select" required>
+                            <option value="">— Select a template —</option>
+                            @foreach($milestoneTemplates as $template)
+                                <option value="{{ $template->id }}">
+                                    {{ $template->name }} ({{ $template->tasks->count() }} tasks)
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Due Date <span class="text-muted small">(optional)</span></label>
+                        <input type="date" name="due_date" class="form-control" min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-1"></i>Assign Milestone
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 @push('scripts')
 <script>
     $(document).ready(function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
+        // Populate modal with group info when opened
+        $('#assignModal').on('show.bs.modal', function(event) {
+            const button = $(event.relatedTarget);
+            $('#modalGroupId').val(button.data('group-id'));
+            $('#modalGroupName').text(button.data('group-name'));
         });
+
+        // Tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
     });
 </script>
 @endpush

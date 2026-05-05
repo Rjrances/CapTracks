@@ -1,6 +1,9 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\MilestoneTemplate;
+use App\Models\GroupMilestone;
+use App\Models\GroupMilestoneTask;
+use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 class MilestoneTemplateController extends Controller
@@ -105,5 +108,49 @@ class MilestoneTemplateController extends Controller
         return redirect()
             ->route('coordinator.milestones.edit', $milestone)
             ->with('success', 'Task deleted successfully.');
+    }
+
+    public function assignToGroup(Request $request)
+    {
+        $request->validate([
+            'group_id'            => 'required|exists:groups,id',
+            'milestone_template_id' => 'required|exists:milestone_templates,id',
+            'due_date'            => 'nullable|date|after:today',
+        ]);
+
+        $template = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
+        $group    = Group::findOrFail($request->group_id);
+
+        // Prevent assigning the same template twice to the same group
+        $alreadyAssigned = GroupMilestone::where('group_id', $group->id)
+            ->where('milestone_template_id', $template->id)
+            ->exists();
+
+        if ($alreadyAssigned) {
+            return redirect()->route('coordinator.milestones.index')
+                ->withErrors(['assign' => ""{$template->name}" is already assigned to {$group->name}."]);
+        }
+
+        $groupMilestone = GroupMilestone::create([
+            'group_id'              => $group->id,
+            'milestone_template_id' => $template->id,
+            'title'                 => $template->name,
+            'description'           => $template->description,
+            'due_date'              => $request->due_date,
+            'progress_percentage'   => 0,
+            'status'                => 'not_started',
+        ]);
+
+        foreach ($template->tasks as $task) {
+            GroupMilestoneTask::create([
+                'group_milestone_id' => $groupMilestone->id,
+                'milestone_task_id'  => $task->id,
+                'status'             => 'pending',
+                'is_completed'       => false,
+            ]);
+        }
+
+        return redirect()->route('coordinator.milestones.index')
+            ->with('success', ""{$template->name}" assigned to {$group->name} with {$template->tasks->count()} tasks.");
     }
 }
