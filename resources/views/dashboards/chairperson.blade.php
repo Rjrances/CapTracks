@@ -71,6 +71,41 @@
             </div>
         </div>
     </div>
+    @if($activeTerm)
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Defense Statistics ({{ $activeTerm->semester }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="border-end">
+                                <h3 class="text-primary mb-1">{{ $stats['totalDefenses'] ?? 0 }}</h3>
+                                <p class="text-muted mb-0">Total Defenses</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-end">
+                                <h3 class="text-success mb-1">{{ $stats['completedDefenses'] ?? 0 }}</h3>
+                                <p class="text-muted mb-0">Completed</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div>
+                                <h3 class="text-warning mb-1">{{ $stats['pendingReviews'] ?? 0 }}</h3>
+                                <p class="text-muted mb-0">Pending</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
     <!-- Statistics Cards -->
     <div class="row mb-4">
         <div class="col-md-3 mb-3">
@@ -126,105 +161,6 @@
             </div>
         </div>
     </div>
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-gradient-info text-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-bell me-2"></i>Latest Notifications
-                        </h5>
-                        <span class="badge bg-light text-dark">{{ $notifications->count() }}</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    @if($notifications->count() > 0)
-                        <div class="list-group list-group-flush">
-                            @foreach($notifications as $notification)
-                                <div class="list-group-item px-0 border-0">
-                                    <div class="d-flex align-items-start">
-                                        <div class="me-3">
-                                            <i class="fas fa-{{ $notification->icon ?? 'info-circle' }} text-primary"></i>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <h6 class="mb-1">{{ $notification->title }}</h6>
-                                            <p class="text-muted small mb-1">{{ $notification->message ?? '' }}</p>
-                                            <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="text-center py-3">
-                            <i class="fas fa-bell fa-2x text-muted mb-2"></i>
-                            <p class="text-muted small mb-0">No notifications</p>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-gradient-success text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-bolt me-2"></i>Quick Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-book me-2"></i>Manage Offerings
-                        </a>
-                        <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-chalkboard-teacher me-2"></i>View Teachers
-                        </a>
-                        <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-warning">
-                            <i class="fas fa-user-tag me-2"></i>Manage Coordinator Access
-                        </a>
-                        <a href="{{ route('chairperson.students.index') }}" class="btn btn-outline-info">
-                            <i class="fas fa-user-graduate me-2"></i>View Students
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    @if($activeTerm)
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-gradient-warning text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-bar me-2"></i>Defense Statistics ({{ $activeTerm->semester }})
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md-4">
-                            <div class="border-end">
-                                <h3 class="text-primary mb-1">{{ $stats['totalDefenses'] ?? 0 }}</h3>
-                                <p class="text-muted mb-0">Total Defenses</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border-end">
-                                <h3 class="text-success mb-1">{{ $stats['completedDefenses'] ?? 0 }}</h3>
-                                <p class="text-muted mb-0">Completed</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div>
-                                <h3 class="text-warning mb-1">{{ $stats['pendingReviews'] ?? 0 }}</h3>
-                                <p class="text-muted mb-0">Pending</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    @endif
 </div>
 
 <style>
