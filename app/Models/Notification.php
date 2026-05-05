@@ -54,11 +54,14 @@ class Notification extends Model
         $targetIds = array_values(array_unique($targetIds));
 
         return $query->where(function (Builder $notificationQuery) use ($targetIds) {
-            $notificationQuery->where('role', 'student');
-
-            if (!empty($targetIds)) {
-                $notificationQuery->orWhereIn('user_id', $targetIds);
-            }
+            $notificationQuery->where('role', 'student')
+                ->where(function ($q) use ($targetIds) {
+                    if (!empty($targetIds)) {
+                        $q->whereNull('user_id')->orWhereIn('user_id', $targetIds);
+                    } else {
+                        $q->whereNull('user_id');
+                    }
+                });
         });
     }
 
