@@ -13,8 +13,10 @@
 <div class="sidebar bg-dark text-white" style="width: 280px; min-height: 100vh; position: fixed; left: 0; top: 0; z-index: 1000;">
     <div class="p-3 border-bottom border-secondary">
         <div class="d-flex align-items-center">
-            <div style="width:32px; height:32px; margin-right:10px;"></div>
-            <a class="navbar-brand fw-bold text-white text-decoration-none" href="{{ route('adviser.dashboard') }}">
+            <div class="ct-badge me-2">
+                <span>CT</span>
+            </div>
+            <a class="navbar-brand fw-bold text-white text-decoration-none mb-0" href="{{ route('adviser.dashboard') }}">
                 CapTrack
             </a>
         </div>
@@ -100,6 +102,21 @@
     </div>
 </div>
 <style>
+.ct-badge {
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.4);
+}
 .sidebar .nav-link {
     border-radius: 6px;
     transition: all 0.3s ease;
