@@ -183,38 +183,28 @@ public function store(Request $request) {
 ## 7. Exhaustive Feature & Endpoint List (All Functions)
 For complete system coverage, here is every single specific function the Student can perform across the application:
 
-**Account Management (`StudentDashboardController` & `StudentPasswordController`)**
-- View Student Dashboard with real-time progress and upcoming deadlines (`index`).
-- Change default password (forced on first login) (`updatePassword`).
+**Account & Dashboard Management (`StudentDashboardController`, `StudentPasswordController`, `StudentController`)**
+- `StudentDashboardController`: `index`
+- `StudentPasswordController`: `showChangePasswordForm`, `updatePassword`
+- `StudentController`: `index`, `notifications`, `markNotificationAsRead`, `markAllNotificationsAsRead`, `deleteNotification`, `markMultipleAsRead`, `deleteMultiple`
 
 **Group Management (`StudentGroupController`)**
-- Create a Capstone Group (`store`).
-- Invite classmates to join the group (`inviteMember`).
-- Accept or decline group invitations from others (`acceptInvitation`, `declineInvitation`).
-- Cancel a pending invite or remove a member (`cancelInvitation`, `removeMember`).
-- Invite a faculty member to be the Adviser (`inviteAdviser`).
+- `StudentGroupController`: `show`, `create`, `store`, `edit`, `update`, `index`, `inviteAdviser`, `inviteMember`, `acceptInvitation`, `declineInvitation`, `invitations`, `removeMember`, `requestDefense`, `cancelInvitation`
 
-**Milestone & Task Management (`StudentMilestoneController` & `StudentMilestoneChecklistController` & `TaskSubmissionController`)**
-- View the milestones and checklists assigned by the Coordinator.
-- Move task cards across the Kanban board (`moveTask`).
-- Bulk update task statuses (`bulkUpdateTasks`).
-- Edit task details (due dates, notes) (`updateTask`).
-- Assign a task to a specific groupmate (`assignTask`, `unassignTask`).
-- Post or reply to comments on a task (`storeTaskComment`).
-- Upload files directly to a specific task (`store` in TaskSubmissionController).
+**Milestone & Task Management (`StudentMilestoneController`, `StudentMilestoneChecklistController`, `TaskSubmissionController`)**
+- `StudentMilestoneController`: `index`, `show`, `edit`, `update`, `destroy`, `moveTask`, `bulkUpdateTasks`, `recomputeProgress`, `updateTask`, `storeTaskComment`, `updateMultipleTasks`, `assignTask`, `unassignTask`
+- `StudentMilestoneChecklistController`: `checklist`
+- `TaskSubmissionController`: `create`, `store`, `show`, `review`
 
-**Proposals & Project Submissions (`StudentProposalController` & `ProjectSubmissionController`)**
-- Upload a formal Capstone Proposal (`store`).
-- Upload new file versions for an existing proposal (`update`).
-- Rollback to a previous proposal version (`rollback`).
-- Preview their own documents or compare two versions side-by-side (`previewVersion`, `compareVersions`).
-- Upload ad-hoc project submissions (e.g. final drafts) and delete them if unapproved (`store`, `destroy`).
+**Proposals & Project Submissions (`StudentProposalController`, `ProjectSubmissionController`)**
+- `StudentProposalController`: `index`, `create`, `store`, `show`, `edit`, `update`, `rollback`, `previewVersion`, `compareVersions`
+- `ProjectSubmissionController`: `index`, `create`, `store`, `show`, `edit`, `update`, `destroy`, `studentPreviewSubmission`, `studentCompareSubmissions`
 
-**Defense Management & View (`StudentDefenseRequestController` & `CalendarController`)**
-- Check eligibility for defense.
-- Submit a formal defense request picking a preferred date/time (`store`).
-- Cancel a pending defense request (`cancel`).
-- View the student calendar displaying their specific defense schedule (`studentCalendar`).
+**Defense Management (`StudentDefenseRequestController`)**
+- `StudentDefenseRequestController`: `index`, `create`, `store`, `show`, `cancel`
+
+**Calendar & Scheduling (`CalendarController`)**
+- `CalendarController`: `studentCalendar`
 
 **Authentication (`AuthController`)**
-- Handle authentication actions like login, logout, and password management (`login`, `logout`, `changePassword`).
+- `AuthController`: `showLoginForm`, `login`, `logout`, `showRegisterForm`, `register`, `showChangePasswordForm`, `changePassword`

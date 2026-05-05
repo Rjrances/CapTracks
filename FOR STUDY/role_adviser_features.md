@@ -157,32 +157,17 @@ public function submitAdviserRating(Request $request, DefenseSchedule $schedule)
 ## 5. Exhaustive Feature & Endpoint List (All Functions)
 For complete system coverage, here is every single specific function the Adviser/Teacher can perform across the application:
 
-**Dashboard & General Mentoring (`AdviserController`)**
-- View adviser-specific statistics and calculate real-time group progress (`dashboard`).
-- View all assigned groups as an Adviser (`myGroups`).
-- View a combined list of both Adviser groups and Panel groups (`allGroups`).
-- View group details and members (`groupDetails`).
-- View the Global Activity Log filtered only to their advisees (`activityLog`).
+**Dashboard, General Mentoring & Invitations (`AdviserController`)**
+- `AdviserController`: `dashboard`, `invitations`, `respondToInvitation`, `myGroups`, `groupDetails`, `milestoneTaskComments`, `storeMilestoneTaskComment`, `allGroups`, `panelSubmissions`, `panelInvitations`, `respondToPanelInvitation`, `markAllNotificationsAsRead`, `markNotificationAsRead`, `notifications`, `markMultipleAsRead`, `deleteNotification`, `deleteMultiple`, `activityLog`
 
-**Invitations (`AdviserController`)**
-- View pending group mentorship invitations (`invitations`).
-- Accept or decline mentorship invitations (`respondToInvitation`).
-- View pending Defense Panel invitations (`panelInvitations`).
-- Accept or decline Defense Panel invitations (`respondToPanelInvitation`).
+**Proposals & Feedback (`AdviserProposalController`)**
+- `AdviserProposalController`: `index`, `show`, `preview`, `compareVersions`, `edit`, `update`, `getStats`, `bulkUpdate`, `storeComment`
 
-**Milestones & Feedback (`AdviserController` & `AdviserProposalController`)**
-- View task threads for a specific milestone (`milestoneTaskComments`).
-- Post or reply to nested task comments (`storeMilestoneTaskComment`).
-- View all proposals for their mentored groups (`index`).
-- Preview proposals and compare versions side-by-side (`preview`, `compareVersions`).
-- Bulk approve/reject proposals with shared comments (`bulkUpdate`).
-- Leave threaded comments on project proposals (`storeComment`).
+**Defenses & Grading (`RatingSheetController`)**
+- `RatingSheetController`: `showAdviserForm`, `submitAdviserRating`, `showCoordinatorRatings`, `finalizeCoordinatorRatings`, `reopenCoordinatorRatings`, `printCoordinatorRatings`
 
-**Defenses & Grading (`RatingSheetController` & `CalendarController`)**
-- View panel submissions (`panelSubmissions`).
-- Open the digital grading form for a scheduled defense (`showAdviserForm`).
-- Submit rubric scores which are converted to JSON (`submitAdviserRating`).
-- View the adviser calendar displaying their specific defense assignments (`adviserCalendar`).
+**Calendar & View (`CalendarController`)**
+- `CalendarController`: `adviserCalendar`
 
 **Authentication (`AuthController`)**
-- Handle authentication actions like login, logout, and password management (`login`, `logout`, `changePassword`).
+- `AuthController`: `showLoginForm`, `login`, `logout`, `showRegisterForm`, `register`, `showChangePasswordForm`, `changePassword`

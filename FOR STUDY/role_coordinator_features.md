@@ -155,44 +155,22 @@ public function bulkUpdate(Request $request) {
 ## 5. Exhaustive Feature & Endpoint List (All Functions)
 For complete system coverage, here is every single specific function the Coordinator can perform across the application:
 
-**Dashboard & Analytics (`CoordinatorDashboardController` & `CoordinatorController`)**
-- View active semester statistics (Groups, Defenses, Milestones).
-- View `classlist` for assigned offerings.
-- Mass import students via CSV specifically for their classes (`importStudents`).
-- View the `facultyMatrix` to monitor teacher workload.
-- View global `activityLog` specifically filtered to their assigned students.
-
-**Group Management (`CoordinatorController`)**
-- View paginated list of all active groups (`groups`).
-- Manually create, edit, update, or destroy a group (`store`, `update`, `destroy`).
-- Force-assign an adviser to a group (`assignAdviser`).
-- View a group's read-only milestones (`groupMilestones`).
+**Dashboard & General Actions (`CoordinatorDashboardController` & `CoordinatorController`)**
+- `CoordinatorDashboardController`: `index`
+- `CoordinatorController`: `index`, `classlist`, `importStudentsForm`, `importStudents`, `groups`, `create`, `store`, `show`, `edit`, `assignAdviser`, `update`, `destroy`, `groupMilestones`, `notifications`, `markNotificationAsRead`, `markAllNotificationsAsRead`, `deleteNotification`, `markMultipleAsRead`, `deleteMultiple`, `activityLog`, `facultyMatrix`
 
 **Proposal Management (`CoordinatorProposalController`)**
-- View all proposals for their capstone offerings (`index`).
-- View specific proposal details and version history (`show`).
-- Preview documents in-browser (`preview`).
-- Compare two versions of a proposal side-by-side (`compareVersions`).
-- Bulk update (approve/reject) multiple proposals at once (`bulkUpdate`).
-- Add threaded comments to a proposal (`storeComment`).
+- `CoordinatorProposalController`: `index`, `show`, `preview`, `compareVersions`, `update`, `bulkUpdate`, `getStats`, `storeComment`
+
+**Defense Scheduling & Rubrics (`DefenseScheduleController` & `DefenseRubricController`)**
+- `Coordinator\DefenseScheduleController`: `defenseRequestsIndex`, `index`, `create`, `store`, `show`, `edit`, `update`, `destroy`, `getAvailableFaculty`, `createSchedule`, `storeSchedule`, `approve`, `reject`, `markAsCompleted`
+- `Coordinator\DefenseRubricController`: `index`, `create`, `store`, `edit`, `update`
 
 **Milestone Templates (`MilestoneTemplateController`)**
-- Create, edit, update, or delete a Milestone Template (`store`, `update`, `destroy`).
-- Add required tasks to a milestone.
-- Manually assign a Milestone Template to a specific active group (`assignToGroup`).
-- Toggle template status (`updateStatus`).
+- `MilestoneTemplateController`: `index`, `create`, `store`, `edit`, `update`, `destroy`, `updateStatus`, `storeTask`, `updateTask`, `destroyTask`, `assignToGroup`, `removeAssignmentFromGroup`
 
-**Defense Scheduling (`DefenseScheduleController`)**
-- View all pending student defense requests (`defenseRequestsIndex`).
-- Approve or reject a defense request (`approve`, `reject`).
-- Generate a defense schedule (`createSchedule`, `storeSchedule`).
-- Use the auto-assign panel engine (`getAvailableFaculty`).
-- Edit, update, or destroy an existing schedule (`update`, `destroy`).
-- Mark a defense officially as completed (`markAsCompleted`).
+**Calendar & Scheduling (`CalendarController`)**
+- `CalendarController`: `coordinatorCalendar`
 
-**Notifications & Authentication (`AuthController`)**
-- View, mark read, or bulk-delete notifications (`markMultipleAsRead`, `deleteMultiple`).
-- Handle authentication actions like login, logout, and password management (`login`, `logout`, `changePassword`).
-
-**Calendar & View (`CalendarController`)**
-- View the coordinator's calendar which color-codes their assigned groups among global schedules (`coordinatorCalendar`).
+**Authentication (`AuthController`)**
+- `AuthController`: `showLoginForm`, `login`, `logout`, `showRegisterForm`, `register`, `showChangePasswordForm`, `changePassword`
