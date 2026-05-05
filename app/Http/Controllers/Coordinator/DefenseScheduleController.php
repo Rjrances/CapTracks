@@ -689,7 +689,9 @@ class DefenseScheduleController extends Controller
                         ? "You have been invited as {$roleLabel} for {$group->name}'s {$stageLabel} defense on {$formattedDate}. Please respond in Panel Invitations."
                         : "You have been assigned as {$roleLabel} for {$group->name}'s {$stageLabel} defense on {$formattedDate}",
                     $panelMember->role,
-                    $isInvitedPanelRole ? route('adviser.panel-invitations') : route('adviser.dashboard'),
+                    $isInvitedPanelRole
+                        ? route('adviser.panel-invitations')
+                        : $this->getDashboardRouteForRole($panelMember->role),
                     $panelMember->id
                 );
             }
@@ -856,8 +858,10 @@ class DefenseScheduleController extends Controller
     private function sendPanelNotifications(DefenseSchedule $defenseSchedule)
     {
         $panelists = $defenseSchedule->defensePanels()->whereIn('role', ['chair', 'member'])->get();
+
         foreach ($panelists as $panelist) {
             $panelUser = User::find($panelist->faculty_id);
+
             if (!$panelUser) {
                 continue;
             }
@@ -866,10 +870,23 @@ class DefenseScheduleController extends Controller
                 'Defense Panel Assignment',
                 'You have been assigned to a defense panel for ' . $defenseSchedule->group->name,
                 $panelUser->role,
-                route('adviser.dashboard'),
+                $this->getDashboardRouteForRole($panelUser->role),
                 $panelUser->id
             );
         }
+    }
+
+    /**
+     * Returns the correct dashboard route for a given user role.
+     * Prevents coordinators/chairpersons from being sent to the adviser dashboard.
+     */
+    private function getDashboardRouteForRole(string $userRole): string
+    {
+        return match ($userRole) {
+            'coordinator' => route('coordinator.dashboard'),
+            'chairperson' => route('chairperson.dashboard'),
+            default       => route('adviser.dashboard'),
+        };
     }
 
     private function hasActiveScheduleForGroup($groupId)
