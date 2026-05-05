@@ -24,9 +24,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
-        @if($errors->has('assign'))
+        @if($errors->any())
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ $errors->first('assign') }}
+                <i class="fas fa-exclamation-circle me-2"></i>
+                @if($errors->has('assign'))
+                    {{ $errors->first('assign') }}
+                @else
+                    {{ $errors->first() }}
+                @endif
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
@@ -345,17 +350,13 @@
 @endsection
 @push('scripts')
 <script>
-    $(document).ready(function() {
-        // Populate modal with group info when opened
-        $('#assignModal').on('show.bs.modal', function(event) {
-            const button = $(event.relatedTarget);
-            $('#modalGroupId').val(button.data('group-id'));
-            $('#modalGroupName').text(button.data('group-name'));
-        });
-
-        // Tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function(el) { return new bootstrap.Tooltip(el); });
+    // Populate modal with group info when opened
+    document.getElementById('assignModal').addEventListener('show.bs.modal', function(event) {
+        var button = event.relatedTarget;
+        var groupId   = button.getAttribute('data-group-id');
+        var groupName = button.getAttribute('data-group-name');
+        document.getElementById('modalGroupId').value       = groupId;
+        document.getElementById('modalGroupName').textContent = groupName;
     });
 </script>
 @endpush
