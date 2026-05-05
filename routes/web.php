@@ -239,8 +239,6 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     // Milestones
     Route::get('/milestones', [StudentMilestoneController::class, 'index'])->name('milestones');
     Route::get('/milestones/checklist', [StudentMilestoneChecklistController::class, 'checklist'])->name('milestones.checklist');
-    Route::get('/milestones/create', [StudentMilestoneController::class, 'create'])->name('milestones.create');
-    Route::post('/milestones', [StudentMilestoneController::class, 'store'])->name('milestones.store');
     Route::get('/milestones/{milestone}', [StudentMilestoneController::class, 'show'])->name('milestones.show');
     Route::get('/milestones/{milestone}/edit', [StudentMilestoneController::class, 'edit'])->name('milestones.edit');
     Route::put('/milestones/{milestone}', [StudentMilestoneController::class, 'update'])->name('milestones.update');

@@ -44,18 +44,6 @@ class StudentMilestoneController extends Controller
             'recentSubmissions'
         ));
     }
-    public function create()
-    {
-        // Milestones are now assigned by the coordinator only.
-        return redirect()->route('student.milestones')
-            ->with('info', 'Milestones are assigned by your coordinator. Please contact them if you need a milestone assigned to your group.');
-    }
-    public function store(Request $request)
-    {
-        // Milestones are now assigned by the coordinator only.
-        return redirect()->route('student.milestones')
-            ->with('info', 'Milestones are assigned by your coordinator. Please contact them if you need a milestone assigned to your group.');
-    }
     public function show($milestoneId)
     {
         $student = $this->getAuthenticatedStudent();
