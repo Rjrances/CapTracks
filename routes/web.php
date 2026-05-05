@@ -354,4 +354,12 @@ Route::middleware(['auth', 'role:coordinator'])->prefix('coordinator')->name('co
     Route::get('/rating-sheets/{schedule}/print', [RatingSheetController::class, 'printCoordinatorRatings'])->name('rating-sheets.print');
     Route::post('/rating-sheets/{schedule}/finalize', [RatingSheetController::class, 'finalizeCoordinatorRatings'])->name('rating-sheets.finalize');
     Route::post('/rating-sheets/{schedule}/reopen', [RatingSheetController::class, 'reopenCoordinatorRatings'])->name('rating-sheets.reopen');
+
+    // Coordinator acting as Adviser — Adviser Invitations
+    Route::get('/adviser-invitations', [AdviserController::class, 'invitations'])->name('adviser-invitations');
+    Route::post('/adviser-invitations/{invitation}/respond', [AdviserController::class, 'respondToInvitation'])->name('adviser-invitations.respond');
+
+    // Coordinator acting as Adviser — Panel Invitations
+    Route::get('/panel-invitations', [AdviserController::class, 'panelInvitations'])->name('panel-invitations');
+    Route::post('/panel-invitations/{panel}/respond', [AdviserController::class, 'respondToPanelInvitation'])->name('panel-invitations.respond');
 });

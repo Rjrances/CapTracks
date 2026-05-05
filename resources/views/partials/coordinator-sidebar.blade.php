@@ -100,6 +100,15 @@
         </ul>
     </nav>
     <div class="mt-auto p-3 border-top border-secondary">
+        @php
+            $hasAdviserRole = \App\Models\Group::where('faculty_id', $user->faculty_id)->exists()
+                || \App\Models\AdviserInvitation::where('faculty_id', $user->id)->where('status', 'pending')->exists();
+        @endphp
+        @if($hasAdviserRole)
+            <a href="{{ route('adviser.dashboard') }}" class="btn btn-outline-info btn-sm w-100 mb-3">
+                <i class="fas fa-exchange-alt me-2"></i>Switch to Adviser View
+            </a>
+        @endif
         <div class="d-flex align-items-center justify-content-between">
             <div class="small">
                 <div class="text-muted">{{ $userName }}</div>

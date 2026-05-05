@@ -86,6 +86,11 @@
         </ul>
     </nav>
     <div class="mt-auto p-3 border-top border-secondary">
+        @if($user && $user->primary_role === 'coordinator')
+            <a href="{{ route('coordinator.dashboard') }}" class="btn btn-outline-warning btn-sm w-100 mb-3">
+                <i class="fas fa-exchange-alt me-2"></i>Switch to Coordinator View
+            </a>
+        @endif
         <div class="d-flex align-items-center justify-content-between">
             <div class="small">
                 <div class="text-muted">{{ $userName }}</div>

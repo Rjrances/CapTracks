@@ -204,16 +204,24 @@ class RatingSheetController extends Controller
             ->orderBy('start_at')
             ->first();
 
-        $ratingRouteName = request()->routeIs('coordinator.*')
+        // After submitting, coordinators go back to the overview/results page.
+        // Panelists/advisers go back to their own rating form view.
+        $isCoordinatorRoute = request()->routeIs('coordinator.*');
+        $redirectRoute = $isCoordinatorRoute
+            ? 'coordinator.rating-sheets.show'
+            : 'adviser.rating-sheets.show';
+
+        // If there is a next unrated schedule, the "next" link uses the rating form route.
+        $nextRatingRoute = $isCoordinatorRoute
             ? 'coordinator.rating-sheets.rate.show'
             : 'adviser.rating-sheets.show';
 
         $redirect = redirect()
-            ->route($ratingRouteName, $schedule)
+            ->route($redirectRoute, $schedule)
             ->with('success', 'Rating sheet submitted successfully.');
 
         if ($nextSchedule) {
-            $redirect->with('next_rating_sheet_url', route($ratingRouteName, $nextSchedule));
+            $redirect->with('next_rating_sheet_url', route($nextRatingRoute, $nextSchedule));
             $redirect->with('next_rating_group_name', $nextSchedule->group->name ?? 'next group');
         }
 
