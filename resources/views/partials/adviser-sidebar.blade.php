@@ -21,16 +21,15 @@
             </a>
         </div>
     </div>
-    <div class="p-3 border-bottom border-secondary">
-        <h6 class="text-muted mb-2">Current Term</h6>
+    <div class="px-3 py-2 border-bottom border-secondary text-center">
         @if($activeTerm)
-            <div class="d-flex align-items-center">
-                <span class="badge bg-success me-2">Active</span>
-                <span class="small">{{ $activeTerm->semester }}</span>
+            <div class="d-flex align-items-center justify-content-center gap-2">
+                <span class="badge bg-success">Active</span>
+                <span class="small text-white-50">{{ $activeTerm->semester }}</span>
             </div>
         @else
-            <div class="text-warning small">
-                <i class="fas fa-exclamation-triangle"></i> No active term
+            <div class="text-warning small text-center">
+                <i class="fas fa-exclamation-triangle me-1"></i>No active term
             </div>
         @endif
     </div>
