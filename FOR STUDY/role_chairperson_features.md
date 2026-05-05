@@ -151,7 +151,93 @@ public function toggleActive(AcademicTerm $academicTerm) {
 }
 ```
 
-## 5. Exhaustive Feature & Endpoint List (All Functions)
+## 5. Critical Code Line-by-Line Breakdown (For 1000% Defense Readiness)
+
+If your panelists want you to explain the code line-by-line, memorize these three most complex and critical Chairperson functions.
+
+### A. Mass Importing Students via CSV (`ChairpersonStudentController@upload`)
+Panel Question: *"Explain line-by-line how you prevent duplicate students from crashing the database during a CSV upload."*
+
+```php
+public function upload(Request $request) {
+    // LINE 1: Validate that the uploaded file is strictly a CSV or TXT file, max 2MB.
+    $request->validate(['file' => 'required|mimes:csv,txt|max:2048']);
+
+    // LINE 2: Read the physical file from the server's temporary path into an array of lines.
+    $file = file($request->file->getRealPath()); 
+    
+    // LINE 3: Remove the first line (index 0) because it usually contains column headers (e.g., "ID, Name, Email").
+    $data = array_slice($file, 1); 
+
+    // LINE 4: Loop through every remaining line in the CSV file array.
+    foreach ($data as $line) { 
+        
+        // LINE 5: Parse the comma-separated string into a PHP array (e.g., [0] => ID, [1] => Name, [2] => Email).
+        $row = str_getcsv($line); 
+        
+        // LINE 6: Check if the row actually has data (at least 3 columns) to avoid blank line errors.
+        if (count($row) >= 3) { 
+            
+            // LINE 7: 'firstOrCreate' is an Eloquent method. First, it searches the DB for 'student_id' matching $row[0].
+            // If it finds it, it skips. If it DOES NOT find it, it executes an INSERT query with the array below.
+            Student::firstOrCreate(
+                ['student_id' => $row[0]], 
+                [
+                    // LINE 8: Map the second column to the 'name' database field.
+                    'name' => $row[1], 
+                    
+                    // LINE 9: Map the third column to the 'email' database field.
+                    'email' => $row[2], 
+                    
+                    // LINE 10: Run the default string 'password123' through the Bcrypt hashing algorithm.
+                    'password' => Hash::make('password123'), 
+                ]
+            );
+        }
+    }
+    // LINE 11: Redirect the user back to the index page with a success flash message.
+    return redirect()->route('chairperson.students.index')->with('success', 'Students imported successfully.'); 
+}
+```
+
+### B. Toggling the Active Semester (`AcademicTermController@toggleActive`)
+Panel Question: *"Explain line-by-line how you ensure only one semester is active at a time."*
+
+```php
+public function toggleActive(AcademicTerm $academicTerm) {
+    // LINE 1: Execute a raw UPDATE query targeting ALL academic terms where the ID does NOT match the selected one.
+    // LINE 2: Set 'is_active' to false for all of those other terms. This is the bulk deactivation step.
+    AcademicTerm::where('id', '!=', $academicTerm->id)->update(['is_active' => false]);
+    
+    // LINE 3: Take the specific term the user clicked on, flip its current boolean status (e.g., false becomes true).
+    $academicTerm->update(['is_active' => !$academicTerm->is_active]);
+    
+    // LINE 4: Redirect the user back to the previous page with a success message.
+    return back()->with('success', 'Academic term status updated successfully.'); 
+}
+```
+
+### C. Enrolling a Student into a Class (`ChairpersonOfferingController@enrollStudent`)
+Panel Question: *"Explain line-by-line how a student is attached to a class section using Pivot Tables."*
+
+```php
+public function enrollStudent(Request $request, $offeringId) {
+    // LINE 1: Validate the incoming request to ensure the submitted 'student_id' exists in the 'students' table.
+    $request->validate(['student_id' => 'required|exists:students,id']); 
+    
+    // LINE 2: Query the 'Offerings' table to find the specific class section using the ID from the URL, throwing a 404 if not found.
+    $offering = Offering::findOrFail($offeringId); 
+    
+    // LINE 3: Access the Many-to-Many 'students()' relationship defined in the Offering model.
+    // LINE 4: Call the 'attach()' method, which automatically creates a new row in the 'offering_student' pivot table linking both IDs.
+    $offering->students()->attach($request->student_id); 
+    
+    // LINE 5: Redirect back to the class roster page.
+    return back()->with('success', 'Student enrolled successfully.'); 
+}
+```
+
+## 6. Exhaustive Feature & Endpoint List (All Functions)
 For complete system coverage, here is every single specific function the Chairperson can perform across the entire application:
 
 **Dashboard & Global Data (`ChairpersonDashboardController` & `ChairPersonController`)**

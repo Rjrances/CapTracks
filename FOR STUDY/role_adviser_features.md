@@ -154,7 +154,94 @@ public function submitAdviserRating(Request $request, DefenseSchedule $schedule)
 }
 ```
 
-## 5. Exhaustive Feature & Endpoint List (All Functions)
+## 6. Critical Code Line-by-Line Breakdown (For 1000% Defense Readiness)
+
+If your panelists want you to explain the code line-by-line, memorize these three most complex and critical Adviser functions.
+
+### A. Submitting JSON Rating Sheets (`RatingSheetController@submitAdviserRating`)
+Panel Question: *"Explain line-by-line how you save dynamic grading criteria without creating separate database tables for every single row on a rubric."*
+
+```php
+public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
+    // LINE 1: Get the currently authenticated faculty member.
+    $user = Auth::user();
+    
+    // LINE 2: Verify the user is actually assigned to this specific defense panel to prevent unauthorized grading.
+    $isAssignedPanel = $schedule->defensePanels()->where('faculty_id', $user->id)->exists();
+    if (!$isAssignedPanel) abort(403, 'You are not assigned to this defense panel.');
+
+    // LINE 3: Combine the incoming arrays (criteria_names and criteria_scores) into a single collection.
+    $criteria = collect($request->criteria_names)->values()->map(function ($name, $index) use ($request) {
+        // LINE 4: Map each name to its corresponding score, casting the score to a float (decimal).
+        return ['name' => $name, 'score' => (float) ($request->criteria_scores[$index] ?? 0)];
+    })->toArray(); // LINE 5: Convert the final collection back into a raw PHP array.
+
+    // LINE 6: Calculate the sum of all individual criteria scores to get the final grade.
+    $totalScore = collect($criteria)->sum('score');
+
+    // LINE 7: Use Eloquent's updateOrCreate to either insert a new grading sheet or overwrite an existing one for this faculty member.
+    RatingSheet::updateOrCreate(
+        ['defense_schedule_id' => $schedule->id, 'faculty_id' => $user->id], // LINE 8: The unique identifiers (Where to update).
+        [
+            'group_id' => $schedule->group_id, // LINE 9: The data to update.
+            // LINE 10: Here is the magic. Laravel automatically encodes the PHP array into a raw JSON string because of the $casts array in the RatingSheet model.
+            'criteria' => $criteria, 
+            'total_score' => $totalScore,
+            'remarks' => $request->remarks ?? null,
+            'submitted_at' => now(), // LINE 11: Timestamp the submission.
+        ]
+    );
+}
+```
+
+### B. Threaded Kanban Comments (`AdviserController@storeMilestoneTaskComment`)
+Panel Question: *"Explain line-by-line how the database knows if a comment is a reply to another comment."*
+
+```php
+public function storeMilestoneTaskComment(Request $request, Group $group, GroupMilestoneTask $groupMilestoneTask) {
+    // LINE 1: Insert a new row into the 'task_comments' table using the Adjacency List model structure.
+    TaskComment::create([ 
+        // LINE 2: Link the comment explicitly to the Kanban task the adviser clicked on.
+        'group_milestone_task_id' => $groupMilestoneTask->id, 
+        
+        // LINE 3: Record the adviser's faculty ID as the author of the comment.
+        'user_id' => Auth::id(), 
+        
+        // LINE 4: Save the actual text content of the message.
+        'body' => $request->body, 
+        
+        // LINE 5: If the user clicked 'Reply', $request->parent_id contains the ID of the comment they replied to. 
+        // If it's a new standalone comment, parent_id is NULL. This single column allows infinite nesting threads.
+        'parent_id' => $request->parent_id, 
+    ]);
+    
+    // LINE 6: Dispatch an alert via the NotificationService to tell the students they received feedback.
+    NotificationService::adviserCommentOnMilestoneTask(Auth::user(), $groupMilestoneTask);
+}
+```
+
+### C. Calculating Dashboard Progress (`AdviserController@calculateGroupProgress`)
+Panel Question: *"Explain line-by-line how the dashboard dynamically calculates the overall completion percentage of a group."*
+
+```php
+private function calculateGroupProgress($group) {
+    // LINE 1: Retrieve all active milestone templates assigned to this specific group.
+    $groupMilestones = $group->groupMilestones; 
+    
+    // LINE 2: Fail-safe check: If the group has no milestones assigned yet, their progress is mathematically 0%.
+    if ($groupMilestones->isEmpty()) return 0; 
+    
+    // LINE 3: Use Laravel's collection sum() to add up the pre-calculated 'progress_percentage' from each individual milestone category.
+    // E.g., Chapter 1 (100%) + Chapter 2 (50%) = Total 150
+    $totalProgress = $groupMilestones->sum('progress_percentage'); 
+    
+    // LINE 4: Divide the sum by the total number of milestones (e.g., 150 / 2 = 75%).
+    // LINE 5: Round the result to avoid decimal places on the dashboard UI.
+    return round($totalProgress / $groupMilestones->count()); 
+}
+```
+
+## 7. Exhaustive Feature & Endpoint List (All Functions)
 For complete system coverage, here is every single specific function the Adviser/Teacher can perform across the application:
 
 **Dashboard, General Mentoring & Invitations (`AdviserController`)**
