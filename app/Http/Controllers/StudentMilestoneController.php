@@ -46,66 +46,15 @@ class StudentMilestoneController extends Controller
     }
     public function create()
     {
-        $student = $this->getAuthenticatedStudent();
-        if (!$student) {
-            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
-        }
-        $group = $student->groups()->first();
-        if (!$group) {
-            return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
-        }
-        $isGroupLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
-        if (!$isGroupLeader) {
-            return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can create milestones.']);
-        }
-        $milestoneTemplates = MilestoneTemplate::with('tasks')->get();
-        return view('student.milestones.create', compact(
-            'student',
-            'group',
-            'milestoneTemplates'
-        ));
+        // Milestones are now assigned by the coordinator only.
+        return redirect()->route('student.milestones')
+            ->with('info', 'Milestones are assigned by your coordinator. Please contact them if you need a milestone assigned to your group.');
     }
     public function store(Request $request)
     {
-        $student = $this->getAuthenticatedStudent();
-        if (!$student) {
-            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
-        }
-        $group = $student->groups()->first();
-        if (!$group) {
-            return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
-        }
-        $isGroupLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
-        if (!$isGroupLeader) {
-            return redirect()->route('student.milestones')->withErrors(['auth' => 'Only group leaders can create milestones.']);
-        }
-        $request->validate([
-            'milestone_template_id' => 'required|exists:milestone_templates,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'due_date' => 'nullable|date|after:today',
-        ]);
-        $milestoneTemplate = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
-        $groupMilestone = GroupMilestone::create([
-            'group_id' => $group->id,
-            'milestone_template_id' => $milestoneTemplate->id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'due_date' => $request->due_date,
-            'progress_percentage' => 0,
-        ]);
-        foreach ($milestoneTemplate->tasks as $templateTask) {
-            GroupMilestoneTask::create([
-                'group_milestone_id' => $groupMilestone->id,
-                'milestone_task_id' => $templateTask->id,
-                'title' => $templateTask->title,
-                'description' => $templateTask->description,
-                'status' => 'pending',
-                'is_completed' => false,
-            ]);
-        }
+        // Milestones are now assigned by the coordinator only.
         return redirect()->route('student.milestones')
-            ->with('success', 'Milestone created successfully!');
+            ->with('info', 'Milestones are assigned by your coordinator. Please contact them if you need a milestone assigned to your group.');
     }
     public function show($milestoneId)
     {
