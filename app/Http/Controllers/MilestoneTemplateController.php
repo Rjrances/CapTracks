@@ -128,7 +128,7 @@ class MilestoneTemplateController extends Controller
 
         if ($alreadyAssigned) {
             return redirect()->route('coordinator.milestones.index')
-                ->withErrors(['assign' => ""{$template->name}" is already assigned to {$group->name}."]);
+                ->withErrors(['assign' => "\"{$template->name}\" is already assigned to {$group->name}."]);
         }
 
         $groupMilestone = GroupMilestone::create([
@@ -151,6 +151,6 @@ class MilestoneTemplateController extends Controller
         }
 
         return redirect()->route('coordinator.milestones.index')
-            ->with('success', ""{$template->name}" assigned to {$group->name} with {$template->tasks->count()} tasks.");
+            ->with('success', "\"{$template->name}\" assigned to {$group->name} with {$template->tasks->count()} tasks.");
     }
 }
