@@ -1,23 +1,15 @@
 @extends('layouts.coordinator')
-@section('title', 'Create Milestone Template - Coordinator Dashboard')
+@section('title', 'Create Milestone Template')
 @section('content')
+<div class="container-fluid mb-3">
+        <x-coordinator.intro description="Add a reusable milestone phase with tasks for groups you coordinate.">
+            <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to templates
+            </a>
+        </x-coordinator.intro>
+</div>
 <div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 800px;">
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h1 class="h3 mb-1">Create Milestone Template</h1>
-                        <p class="text-muted mb-0">Create a new milestone template for capstone projects</p>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Templates
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
@@ -86,6 +78,21 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                                 <div class="form-text">Set the initial status for this template</div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="sequence_order" class="form-label">Sequence step</label>
+                                <input type="number"
+                                       min="1"
+                                       max="255"
+                                       class="form-control @error('sequence_order') is-invalid @enderror"
+                                       id="sequence_order"
+                                       name="sequence_order"
+                                       value="{{ old('sequence_order') }}"
+                                       placeholder="e.g. 1 = Proposal, 2 = 60%, 3 = 100%">
+                                @error('sequence_order')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                                <div class="form-text">Leave blank if this template is not part of the main proposal → 60% → 100% sequence. Each active template in the sequence should have a unique step number.</div>
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary">

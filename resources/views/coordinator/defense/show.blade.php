@@ -1,25 +1,17 @@
 @extends('layouts.coordinator')
-@section('title', 'Defense Schedule Details')
+@section('title')
+Defense — {{ $defenseSchedule->group->name }}
+@endsection
 @section('content')
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="mb-0">
-                        <i class="fas fa-eye me-2"></i>Defense Schedule Details
-                    </h2>
-                    <p class="text-muted mb-0">View complete information for {{ $defenseSchedule->group->name }}'s defense</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('coordinator.defense.edit', $defenseSchedule->id) }}" class="btn btn-primary">
-                        <i class="fas fa-edit me-2"></i>Edit Schedule
-                    </a>
-                    <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Schedules
-                    </a>
-                </div>
-            </div>
+        <x-coordinator.intro :description="'Schedule, panel, and logistics for the defense of '.$defenseSchedule->group->name.'.'">
+            <a href="{{ route('coordinator.defense.edit', $defenseSchedule->id) }}" class="btn btn-primary">
+                <i class="fas fa-edit me-2"></i>Edit schedule
+            </a>
+            <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Defense management
+            </a>
+        </x-coordinator.intro>
             <div class="row mb-4">
                 <div class="col-md-8">
                     <div class="card">
@@ -253,8 +245,6 @@
                     </div>
                 </div>
             @endif
-        </div>
-    </div>
 </div>
 <style>
 .card {

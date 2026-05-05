@@ -126,6 +126,7 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
     Route::delete('milestones/{milestone}/tasks/{task}', [MilestoneTemplateController::class, 'destroyTask'])->name('milestones.tasks.destroy');
     // Assign Milestone to Group
     Route::post('milestones/assign-to-group', [MilestoneTemplateController::class, 'assignToGroup'])->name('milestones.assignToGroup');
+    Route::delete('groups/{group}/milestone-assignments/{groupMilestone}', [MilestoneTemplateController::class, 'removeAssignmentFromGroup'])->name('milestones.removeFromGroup');
 });
 
 // Chairperson Routes

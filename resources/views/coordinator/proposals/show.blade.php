@@ -1,21 +1,13 @@
 @extends('layouts.coordinator')
 
-@section('title', 'View Proposal')
-
+@section('title', 'Proposal review')
 @section('content')
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-bold mb-0">
-                    <i class="fas fa-eye me-2"></i>View Proposal
-                </h2>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('coordinator.proposals.index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-1"></i>Back to Proposals
-                    </a>
-                </div>
-            </div>
+        <x-coordinator.intro description="Review submission details, attached files, and status for this student proposal.">
+            <a href="{{ route('coordinator.proposals.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to proposals
+            </a>
+        </x-coordinator.intro>
 
             <div class="row">
                 <div class="col-md-8">
@@ -365,7 +357,5 @@
                     @endif
                 </div>
             </div>
-        </div>
-    </div>
 </div>
 @endsection

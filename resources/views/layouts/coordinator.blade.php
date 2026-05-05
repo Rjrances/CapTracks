@@ -14,7 +14,11 @@
         <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom px-4 py-2">
             <div class="container-fluid">
                 <div class="navbar-brand">
-                    <h5 class="mb-0">@yield('title', 'Coordinator Dashboard')</h5>
+                    @hasSection('hide_navbar_title')
+                        <span class="visually-hidden">@yield('title', 'Coordinator Dashboard')</span>
+                    @else
+                        <h5 class="mb-0">@yield('title', 'Coordinator Dashboard')</h5>
+                    @endif
                 </div>
                 <div class="navbar-nav ms-auto">
                     <div class="nav-item dropdown">
@@ -95,6 +99,11 @@
                 </div>
             </div>
         </nav>
+        @hasSection('page_header')
+            <div class="coordinator-page-header border-bottom bg-white px-4 py-3">
+                @yield('page_header')
+            </div>
+        @endif
         <div class="p-4">
             @yield('content')
         </div>

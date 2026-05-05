@@ -3,14 +3,14 @@
 @section('title', 'Import students')
 
 @section('content')
-<div class="container-fluid py-4" style="max-width: 720px;">
-    <div class="mb-4">
-        <a href="{{ route('coordinator.classlist.index') }}" class="btn btn-outline-secondary btn-sm mb-2">
-            <i class="fas fa-arrow-left me-1"></i>Back to class list
-        </a>
-        <h1 class="fw-bold mb-1">Import students</h1>
-        <p class="text-muted mb-0">Upload the same CSV format used by the chairperson bulk import. Choose your offering so enrollment stays scoped to classes you coordinate.</p>
-    </div>
+<div class="container-fluid py-2">
+        <x-coordinator.intro description="Upload enrollment CSV for an offering you coordinate (same format as chairperson bulk import).">
+            <a href="{{ route('coordinator.classlist.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Class list
+            </a>
+        </x-coordinator.intro>
+</div>
+<div class="container-fluid py-2" style="max-width: 720px;">
 
     @if($activeTerm)
         <div class="alert alert-info">

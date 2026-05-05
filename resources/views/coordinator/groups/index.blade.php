@@ -1,20 +1,15 @@
 @extends('layouts.coordinator')
-@section('title', 'Groups')
+@section('title', 'Groups & Progress Management')
 @section('content')
-<div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
-    <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h1 class="h3 mb-1">Groups & Progress Management</h1>
-                        <p class="text-muted mb-0">Monitor groups, track progress, and manage capstone projects</p>
-                    </div>
-                    <div class="d-flex gap-2">
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="container-fluid">
+        <x-coordinator.intro description="View rosters, adviser assignments, and group progress for the current term.">
+            <a href="{{ route('coordinator.dashboard') }}" class="btn btn-outline-primary">
+                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+            </a>
+            <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-flag me-2"></i>Milestones
+            </a>
+        </x-coordinator.intro>
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
@@ -187,22 +182,19 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <div class="row text-center">
+                        <div class="text-center mb-4">
+                            <h6 class="text-muted mb-1">Total Students</h6>
+                            <h3 class="text-info mb-0">{{ $groups->sum(function($group) { return $group->members->count(); }) }}</h3>
+                        </div>
+                        <div class="row text-center g-2">
                             <div class="col-6">
-                                <div class="border-end">
-                                    <h4 class="text-primary mb-0">{{ $groups->where('faculty_id', '!=', null)->count() }}</h4>
-                                    <small class="text-muted">With Adviser</small>
-                                </div>
+                                <h4 class="text-primary mb-0">{{ $groups->where('faculty_id', '!=', null)->count() }}</h4>
+                                <small class="text-muted">With Adviser</small>
                             </div>
                             <div class="col-6">
                                 <h4 class="text-warning mb-0">{{ $groups->where('faculty_id', null)->count() }}</h4>
                                 <small class="text-muted">No Adviser</small>
                             </div>
-                        </div>
-                        <hr>
-                        <div class="text-center">
-                            <h6 class="text-muted">Total Students</h6>
-                            <h3 class="text-info">{{ $groups->sum(function($group) { return $group->members->count(); }) }}</h3>
                         </div>
                     </div>
                 </div>
@@ -222,6 +214,5 @@
                 </div>
             </div>
         </div>
-    </div>
 </div>
 @endsection 

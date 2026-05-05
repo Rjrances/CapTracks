@@ -2,20 +2,12 @@
 @section('title', 'Defense Calendar')
 @section('content')
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">
-                    <i class="fas fa-calendar me-2"></i>
-                    Defense Calendar
-                </h2>
-                <div>
-                    <a href="{{ route('coordinator.defense.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>
-                        Schedule Defense
-                    </a>
-                </div>
-                         </div>
+        <x-coordinator.intro description="Defense dates and schedules for groups under your coordinated offerings.">
+            <a href="{{ route('coordinator.defense.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>
+                Schedule Defense
+            </a>
+        </x-coordinator.intro>
                        <div class="calendar-container">
                           <div class="calendar-header">
                               <h2 class="calendar-title">
@@ -96,11 +88,7 @@
                                </tbody>
                            </table>
                        </div>
-                   </div>
-               </div>
-         </div>
-     </div>
- </div>
+</div>
 <div class="modal fade" id="defenseModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">

@@ -336,7 +336,13 @@ class CoordinatorController extends Controller
     }
     public function groupMilestones($id)
     {
-        $group = Group::with(['adviser', 'members', 'groupMilestones.milestoneTemplate'])->findOrFail($id);
+        $group = Group::with([
+            'adviser',
+            'members',
+            'groupMilestones.milestoneTemplate',
+            'groupMilestones.groupTasks.milestoneTask',
+        ])->findOrFail($id);
+
         return view('coordinator.groups.milestones', compact('group'));
     }
     public function notifications()

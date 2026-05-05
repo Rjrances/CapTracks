@@ -1,17 +1,12 @@
 @extends('layouts.coordinator')
 @section('title', 'Class List')
 @section('content')
-<div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
-    <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4" style="margin-bottom: 1.2rem !important;">
-            <div>
-                <h1 class="fw-bold mb-1" style="font-size:2.2rem; margin-bottom:0.1rem;">Class List</h1>
-                <div class="text-muted" style="font-size:1.1rem; margin-bottom:0;">View and manage students in your coordinated offerings</div>
-            </div>
+<div class="container-fluid">
+        <x-coordinator.intro description="Rosters and enrollment for students in offerings you coordinate this term.">
             <a href="{{ route('coordinator.classlist.import') }}" class="btn btn-outline-primary">
                 <i class="fas fa-file-upload me-1"></i>Import students
             </a>
-        </div>
+        </x-coordinator.intro>
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
@@ -69,8 +64,12 @@
                 </div>
             </div>
         </div>
-        
-        <div class="mb-4">
+
+        <div class="card mb-4">
+            <div class="card-header py-3">
+                <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h6>
+            </div>
+            <div class="card-body">
             <form method="GET" action="{{ route('coordinator.classlist.index') }}" class="row g-3">
                 <div class="col-md-3">
                     <label for="name" class="form-label">Filter by Name:</label>
@@ -113,108 +112,117 @@
                     </div>
                 </div>
             </form>
+            </div>
         </div>
-        
+
         @if ($activeTerm)
-            <div class="mb-3 fw-semibold" style="font-size:1.1rem;">Students in Your Coordinated Offerings <span class="text-primary">({{ $activeTerm->semester }})</span></div>
-            @if ($students->isEmpty())
-                <div class="text-center text-muted">No students found in your coordinated offerings for this semester.</div>
-            @else
-                <div class="table-responsive">
-                    <table class="table table-borderless align-middle mb-0 bg-white rounded-3" style="overflow:hidden;">
-                        <thead class="bg-light border-bottom">
-                            <tr>
-                                <th>
-                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'student_id', 'direction' => request('sort') == 'student_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
-                                       class="text-decoration-none text-dark">
-                                        Student ID
-                                        @if(request('sort') == 'student_id')
-                                            @if(request('direction') == 'asc')
-                                                <i class="fas fa-sort-up"></i>
-                                            @else
-                                                <i class="fas fa-sort-down"></i>
-                                            @endif
-                                        @else
-                                            <i class="fas fa-sort text-muted"></i>
-                                        @endif
-                                    </a>
-                                </th>
-                                <th>
-                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
-                                       class="text-decoration-none text-dark">
-                                        Name
-                                        @if(request('sort') == 'name')
-                                            @if(request('direction') == 'asc')
-                                                <i class="fas fa-sort-up"></i>
-                                            @else
-                                                <i class="fas fa-sort-down"></i>
-                                            @endif
-                                        @else
-                                            <i class="fas fa-sort text-muted"></i>
-                                        @endif
-                                    </a>
-                                </th>
-                                <th>
-                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'email', 'direction' => request('sort') == 'email' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
-                                       class="text-decoration-none text-dark">
-                                        Email
-                                        @if(request('sort') == 'email')
-                                            @if(request('direction') == 'asc')
-                                                <i class="fas fa-sort-up"></i>
-                                            @else
-                                                <i class="fas fa-sort-down"></i>
-                                            @endif
-                                        @else
-                                            <i class="fas fa-sort text-muted"></i>
-                                        @endif
-                                    </a>
-                                </th>
-                                <th>
-                                    <a href="{{ request()->fullUrlWithQuery(['sort' => 'course', 'direction' => request('sort') == 'course' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
-                                       class="text-decoration-none text-dark">
-                                        Course
-                                        @if(request('sort') == 'course')
-                                            @if(request('direction') == 'asc')
-                                                <i class="fas fa-sort-up"></i>
-                                            @else
-                                                <i class="fas fa-sort-down"></i>
-                                            @endif
-                                        @else
-                                            <i class="fas fa-sort text-muted"></i>
-                                        @endif
-                                    </a>
-                                </th>
-                                <th>Offer Codes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($students as $student)
-                                <tr style="border-bottom:1px solid #f0f0f0;">
-                                    <td class="fw-semibold">{{ $student->student_id }}</td>
-                                    <td>{{ $student->name }}</td>
-                                    <td class="text-lowercase">{{ $student->email }}</td>
-                                    <td>{{ $student->course }}</td>
-                                    <td>
-                                        @if($student->offerings && $student->offerings->count() > 0)
-                                            <div class="d-flex flex-wrap gap-1">
-                                                @foreach($student->offerings as $offering)
-                                                    <span class="badge bg-primary">{{ $offering->offer_code }}</span>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <span class="text-muted small">No enrollments</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+            <div class="card">
+                <div class="card-header py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user-graduate me-2"></i>Students in your coordinated offerings
+                        <span class="text-muted fw-normal">({{ $activeTerm->semester }})</span>
+                    </h6>
                 </div>
-                <div class="mt-4 pt-3 border-0 flex justify-center w-100 d-flex justify-content-center">
-                    {{ $students->withQueryString()->links('pagination::bootstrap-5') }}
+                <div class="card-body p-0">
+                    @if ($students->isEmpty())
+                        <div class="text-center text-muted py-5">No students found in your coordinated offerings for this semester.</div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>
+                                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'student_id', 'direction' => request('sort') == 'student_id' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                               class="text-decoration-none text-dark">
+                                                Student ID
+                                                @if(request('sort') == 'student_id')
+                                                    @if(request('direction') == 'asc')
+                                                        <i class="fas fa-sort-up"></i>
+                                                    @else
+                                                        <i class="fas fa-sort-down"></i>
+                                                    @endif
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'name', 'direction' => request('sort') == 'name' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                               class="text-decoration-none text-dark">
+                                                Name
+                                                @if(request('sort') == 'name')
+                                                    @if(request('direction') == 'asc')
+                                                        <i class="fas fa-sort-up"></i>
+                                                    @else
+                                                        <i class="fas fa-sort-down"></i>
+                                                    @endif
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'email', 'direction' => request('sort') == 'email' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                               class="text-decoration-none text-dark">
+                                                Email
+                                                @if(request('sort') == 'email')
+                                                    @if(request('direction') == 'asc')
+                                                        <i class="fas fa-sort-up"></i>
+                                                    @else
+                                                        <i class="fas fa-sort-down"></i>
+                                                    @endif
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'course', 'direction' => request('sort') == 'course' && request('direction') == 'asc' ? 'desc' : 'asc']) }}"
+                                               class="text-decoration-none text-dark">
+                                                Course
+                                                @if(request('sort') == 'course')
+                                                    @if(request('direction') == 'asc')
+                                                        <i class="fas fa-sort-up"></i>
+                                                    @else
+                                                        <i class="fas fa-sort-down"></i>
+                                                    @endif
+                                                @else
+                                                    <i class="fas fa-sort text-muted"></i>
+                                                @endif
+                                            </a>
+                                        </th>
+                                        <th>Offer Codes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($students as $student)
+                                        <tr>
+                                            <td class="fw-semibold">{{ $student->student_id }}</td>
+                                            <td>{{ $student->name }}</td>
+                                            <td class="text-lowercase">{{ $student->email }}</td>
+                                            <td>{{ $student->course }}</td>
+                                            <td>
+                                                @if($student->offerings && $student->offerings->count() > 0)
+                                                    <div class="d-flex flex-wrap gap-1">
+                                                        @foreach($student->offerings as $offering)
+                                                            <span class="badge bg-primary">{{ $offering->offer_code }}</span>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted small">No enrollments</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex justify-content-center py-3 px-3 border-top">
+                            {{ $students->withQueryString()->links('pagination::bootstrap-5') }}
+                        </div>
+                    @endif
                 </div>
-            @endif
+            </div>
         @endif
-    </div>
 </div>
 @endsection

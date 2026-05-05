@@ -2,21 +2,11 @@
 @section('title', 'Create Defense Schedule')
 @section('content')
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="mb-0">
-                        <i class="fas fa-plus me-2"></i>Create Defense Schedule
-                    </h2>
-                    <p class="text-muted mb-0">Schedule a defense for a group in your offerings</p>
-                </div>
-                <div>
-                    <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Schedules
-                    </a>
-                </div>
-            </div>
+        <x-coordinator.intro description="Set date, room, and panel for a defense in one of your coordinated offerings.">
+            <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Defense management
+            </a>
+        </x-coordinator.intro>
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>
                 <strong>Note:</strong> You can only create defense schedules for groups that belong to your coordinated offerings (capstone offer codes). 
@@ -205,8 +195,6 @@
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {

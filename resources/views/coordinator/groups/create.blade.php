@@ -1,9 +1,16 @@
 @extends('layouts.coordinator')
-@section('title', 'Create Group')
+@section('title', 'Create group')
 @section('content')
+<div class="container-fluid mb-3">
+        <x-coordinator.intro description="Register a new capstone group linked to your coordinated offerings.">
+            <a href="{{ route('coordinator.groups.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Back to groups
+            </a>
+        </x-coordinator.intro>
+</div>
 <div class="d-flex justify-content-center align-items-start" style="min-height: 80vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm p-5 w-100" style="max-width: 600px;">
-        <h1 class="fw-bold mb-4" style="font-size:2rem;">Create New Group</h1>
+        <h2 class="fw-bold mb-4 h4">New group</h2>
         <form method="POST" action="{{ route('coordinator.groups.store') }}">
             @csrf
             <div class="mb-3">

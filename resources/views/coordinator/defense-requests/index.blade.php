@@ -1,22 +1,14 @@
 @extends('layouts.coordinator')
 
-@section('title', 'Defense Requests')
+@section('title', 'Pending Defense Requests')
 
 @section('content')
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="mb-0">
-                        <i class="fas fa-inbox me-2"></i>Pending Defense Requests
-                    </h2>
-                    <p class="text-muted mb-0">Review and process defense requests from your assigned offerings.</p>
-                </div>
-                <a href="{{ route('coordinator.dashboard') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                </a>
-            </div>
+        <x-coordinator.intro description="Student-requested defenses awaiting scheduling or approval for offerings you coordinate.">
+            <a href="{{ route('coordinator.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Dashboard
+            </a>
+        </x-coordinator.intro>
 
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -100,7 +92,5 @@
                     @endif
                 </div>
             </div>
-        </div>
-    </div>
 </div>
 @endsection

@@ -81,4 +81,58 @@ class GroupMilestone extends Model
         }
         return now()->diffInDays($this->target_date, false);
     }
+
+    public function totalTasksCount(): int
+    {
+        return $this->relationLoaded('groupTasks')
+            ? $this->groupTasks->count()
+            : $this->groupTasks()->count();
+    }
+
+    public function completedTasksCount(): int
+    {
+        if ($this->relationLoaded('groupTasks')) {
+            return $this->groupTasks
+                ->filter(fn (GroupMilestoneTask $t) => $t->status === 'done' || $t->is_completed)
+                ->count();
+        }
+
+        return $this->groupTasks()
+            ->where(function ($q) {
+                $q->where('status', 'done')->orWhere('is_completed', true);
+            })
+            ->count();
+    }
+
+    /**
+     * Label + badge class for coordinator read-only view (aligned with task + percent progress).
+     *
+     * @return array{label: string, class: string}
+     */
+    public function coordinatorDisplayStatus(): array
+    {
+        $pct = (int) $this->progress_percentage;
+        $total = $this->totalTasksCount();
+        $done = $this->completedTasksCount();
+
+        if ($total > 0) {
+            if ($done >= $total) {
+                return ['label' => 'Completed', 'class' => 'success'];
+            }
+            if ($done > 0 || $pct > 0) {
+                return ['label' => 'In progress', 'class' => 'info'];
+            }
+
+            return ['label' => 'Not started', 'class' => 'secondary'];
+        }
+
+        if ($pct >= 100) {
+            return ['label' => 'Completed', 'class' => 'success'];
+        }
+        if ($pct > 0) {
+            return ['label' => 'In progress', 'class' => 'info'];
+        }
+
+        return ['label' => 'Not started', 'class' => 'secondary'];
+    }
 }

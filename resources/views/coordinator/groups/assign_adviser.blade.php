@@ -1,17 +1,24 @@
 @extends('layouts.coordinator')
-@section('title', 'Assign Adviser')
+@section('title')
+Assign adviser — {{ $group->name }}
+@endsection
 @section('content')
-<div class="container mt-5">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
+<div class="container-fluid">
+        <x-coordinator.intro description="Choose a faculty adviser for this group; coordinators for the same offering cannot be assigned.">
+            <a href="{{ route('coordinator.groups.show', $group->id) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Back to group
+            </a>
+        </x-coordinator.intro>
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a href="{{ route('coordinator.groups.index') }}">Groups</a></li>
             <li class="breadcrumb-item"><a href="{{ route('coordinator.groups.show', $group->id) }}">{{ $group->name }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Assign Adviser</li>
+            <li class="breadcrumb-item active" aria-current="page">Assign adviser</li>
         </ol>
     </nav>
     <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <h2 class="card-title mb-3">Assign Adviser to: {{ $group->name }}</h2>
+            <h2 class="card-title mb-3 h5">Assign adviser</h2>
             <p><strong>Current Adviser:</strong> {{ $group->adviser ? $group->adviser->name : '—' }}</p>
             @if($group->offering)
                 <div class="alert alert-info mb-3">

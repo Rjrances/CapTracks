@@ -1,16 +1,16 @@
 @extends('layouts.coordinator')
 
-@section('title', 'Compiled Rating Sheets')
+@section('title')
+Rating sheets — {{ $schedule->group->name }}
+@endsection
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h4 class="mb-0">Compiled Rating Sheets</h4>
-            <small class="text-muted">{{ $schedule->group->name }} - {{ $schedule->stage_label }}</small>
-        </div>
-        <a href="{{ route('coordinator.defense.show', $schedule) }}" class="btn btn-outline-secondary">Back to Schedule</a>
-    </div>
+        <x-coordinator.intro :description="'Aggregated panel scores and recommendations for '.$schedule->group->name.' — '.$schedule->stage_label.'.'">
+            <a href="{{ route('coordinator.defense.show', $schedule) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Defense details
+            </a>
+        </x-coordinator.intro>
 
     <div class="card mb-3">
         <div class="card-body">

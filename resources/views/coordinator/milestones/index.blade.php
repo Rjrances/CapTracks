@@ -1,23 +1,13 @@
 @extends('layouts.coordinator')
-@section('title', 'Milestones - Coordinator Dashboard')
+@section('title', 'Milestone Templates')
 @section('content')
 <div class="container-fluid">
+        <x-coordinator.intro description="Define milestone phases, then assign one active step per group in order.">
+            <a href="{{ route('coordinator.milestones.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Create New Template
+            </a>
+        </x-coordinator.intro>
     <div class="bg-white rounded-4 shadow-sm pt-3 px-4 pb-5">
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h1 class="h3 mb-1">Milestones Overview</h1>
-                        <p class="text-muted mb-0">View milestone templates and group assignments</p>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('coordinator.milestones.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Create New Template
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -38,7 +28,7 @@
         @if($activeTerm)
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="alert alert-info">
+                    <div class="alert alert-info mb-0">
                         <i class="fas fa-calendar me-2"></i>
                         Showing milestone assignments for: <strong>{{ $activeTerm->semester }}</strong>
                     </div>
@@ -60,6 +50,7 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>Template Name</th>
+                                            <th>Step</th>
                                             <th>Description</th>
                                             <th>Tasks</th>
                                             <th>Status</th>
@@ -72,6 +63,13 @@
                                             <tr>
                                                 <td>
                                                     <strong>{{ $template->name }}</strong>
+                                                </td>
+                                                <td>
+                                                    @if($template->sequence_order !== null)
+                                                        <span class="badge bg-secondary">{{ $template->sequence_order }}</span>
+                                                    @else
+                                                        <span class="text-muted">—</span>
+                                                    @endif
                                                 </td>
                                                 <td>{{ Str::limit($template->description, 100) }}</td>
                                                 <td>
@@ -239,15 +237,25 @@
                                                  <td>
                                                     <div class="d-flex gap-1">
                                                         <a href="{{ route('coordinator.groups.milestones', $group->id) }}" 
-                                                           class="btn btn-sm btn-outline-primary text-nowrap">
-                                                            <i class="fas fa-eye"></i> Details
+                                                           class="btn btn-sm btn-outline-primary text-nowrap"
+                                                           title="Review this group’s milestone assignments and unassign if needed">
+                                                            <i class="fas fa-clipboard-list me-1"></i>Assignments
                                                         </a>
+                                                        @php
+                                                            $assignMeta = $groupAssignmentMeta[$group->id] ?? ['can_assign' => true, 'block_message' => null, 'allowed_template_id' => null, 'sequencing_enabled' => false];
+                                                        @endphp
                                                         <button type="button"
                                                                 class="btn btn-sm btn-success text-nowrap"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#assignModal"
                                                                 data-group-id="{{ $group->id }}"
-                                                                data-group-name="{{ $group->name }}">
+                                                                data-group-name="{{ $group->name }}"
+                                                                data-sequencing-enabled="{{ $assignMeta['sequencing_enabled'] ? '1' : '0' }}"
+                                                                data-allowed-template-id="{{ $assignMeta['allowed_template_id'] ?? '' }}"
+                                                                @if(!$assignMeta['can_assign'])
+                                                                    disabled
+                                                                    title="{{ $assignMeta['block_message'] }}"
+                                                                @endif>
                                                             <i class="fas fa-plus"></i> Assign
                                                         </button>
                                                     </div>
@@ -318,15 +326,16 @@
                 @csrf
                 <input type="hidden" name="group_id" id="modalGroupId">
                 <div class="modal-body">
-                    <p class="text-muted mb-3">
+                    <p class="text-muted mb-2">
                         Assigning to: <strong id="modalGroupName"></strong>
                     </p>
+                    <p class="small text-muted mb-3" id="assignModalHint"></p>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Milestone Template <span class="text-danger">*</span></label>
-                        <select name="milestone_template_id" class="form-select" required>
+                        <select name="milestone_template_id" id="assignTemplateSelect" class="form-select" required>
                             <option value="">— Select a template —</option>
                             @foreach($milestoneTemplates as $template)
-                                <option value="{{ $template->id }}">
+                                <option value="{{ $template->id }}" data-template-name="{{ e($template->name) }}">
                                     {{ $template->name }} ({{ $template->tasks->count() }} tasks)
                                 </option>
                             @endforeach
@@ -355,8 +364,38 @@
         var button = event.relatedTarget;
         var groupId   = button.getAttribute('data-group-id');
         var groupName = button.getAttribute('data-group-name');
-        document.getElementById('modalGroupId').value       = groupId;
+        var sequencing = button.getAttribute('data-sequencing-enabled') === '1';
+        var allowedId = button.getAttribute('data-allowed-template-id');
+        document.getElementById('modalGroupId').value = groupId;
         document.getElementById('modalGroupName').textContent = groupName;
+
+        var select = document.getElementById('assignTemplateSelect');
+        var hint = document.getElementById('assignModalHint');
+        Array.from(select.options).forEach(function(opt) {
+            if (!opt.value) {
+                opt.disabled = false;
+                return;
+            }
+            if (sequencing && allowedId) {
+                opt.disabled = opt.value !== allowedId;
+            } else {
+                opt.disabled = false;
+            }
+        });
+        if (sequencing && allowedId) {
+            select.value = allowedId;
+            var sel = select.options[select.selectedIndex];
+            var n = sel ? sel.getAttribute('data-template-name') : '';
+            hint.textContent = n ? ('Next in sequence: "' + n + '"') : '';
+        } else {
+            select.selectedIndex = 0;
+            hint.textContent = '';
+        }
+    });
+    document.getElementById('assignModal').addEventListener('hidden.bs.modal', function() {
+        var select = document.getElementById('assignTemplateSelect');
+        Array.from(select.options).forEach(function(opt) { opt.disabled = false; });
+        document.getElementById('assignModalHint').textContent = '';
     });
 </script>
 @endpush

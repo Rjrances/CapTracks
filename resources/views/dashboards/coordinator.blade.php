@@ -1,25 +1,18 @@
 @extends('layouts.coordinator')
+@section('title', 'Coordinator Dashboard')
 @section('content')
-<div class="d-flex justify-content-center align-items-center" style="min-height: 90vh; background: transparent;">
-    <div class="bg-white rounded-4 shadow-sm pt-3 px-5 pb-5 w-100" style="max-width: 1200px;">
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h1 class="h3 mb-1">Welcome, {{ auth()->check() ? auth()->user()->name : 'Coordinator' }}!</h1>
-                        <p class="text-muted mb-0">Manage capstone projects, groups, and academic activities</p>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('coordinator.groups.index') }}" class="btn btn-primary">
-                            <i class="fas fa-users me-2"></i>Manage Groups
-                        </a>
-                        <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-flag me-2"></i>Milestones
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="container-fluid">
+        @php
+            $coordinatorName = auth()->check() ? auth()->user()->name : 'Coordinator';
+        @endphp
+        <x-coordinator.intro :description="'Welcome, '.$coordinatorName.' — manage capstone projects, groups, and academic activities for the current term.'">
+            <a href="{{ route('coordinator.groups.index') }}" class="btn btn-primary">
+                <i class="fas fa-users me-2"></i>Manage Groups
+            </a>
+            <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-flag me-2"></i>Milestones
+            </a>
+        </x-coordinator.intro>
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}
@@ -334,6 +327,5 @@
                 </div>
             </div>
         </div>
-    </div>
 </div>
 @endsection

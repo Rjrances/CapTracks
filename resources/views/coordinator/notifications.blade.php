@@ -1,22 +1,15 @@
 @extends('layouts.coordinator')
+@section('title', 'Notifications')
 @section('content')
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="h3 mb-1">Notifications</h1>
-                    <p class="text-muted mb-0">Manage and view all system notifications</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-outline-primary" onclick="markAllAsRead()">
-                        <i class="fas fa-check-double me-2"></i>Mark All as Read
-                    </button>
-                    <button class="btn btn-outline-secondary" onclick="refreshNotifications()">
-                        <i class="fas fa-sync-alt me-2"></i>Refresh
-                    </button>
-                </div>
-            </div>
+        <x-coordinator.intro description="Alerts, assignments, and system messages for your coordinator account.">
+            <button type="button" class="btn btn-outline-primary" onclick="markAllAsRead()">
+                <i class="fas fa-check-double me-2"></i>Mark All as Read
+            </button>
+            <button type="button" class="btn btn-outline-secondary" onclick="refreshNotifications()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+            </button>
+        </x-coordinator.intro>
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('success') }}
@@ -141,8 +134,6 @@
                     </div>
                 </div>
             @endif
-        </div>
-    </div>
 </div>
 <script>
 function updateSelectedCount() {

@@ -1,12 +1,16 @@
 @extends('layouts.coordinator')
-@section('title', 'Edit Group')
+@section('title', 'Edit group')
 @section('content')
+<div class="container-fluid mb-3">
+        <x-coordinator.intro description="Update the display name or description for this capstone group.">
+            <a href="{{ route('coordinator.groups.show', $group->id) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Back to group
+            </a>
+        </x-coordinator.intro>
+</div>
 <div class="d-flex justify-content-center align-items-start" style="min-height: 80vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm p-5 w-100" style="max-width: 600px;">
-        <div class="mb-4" style="margin-bottom: 1.2rem !important;">
-            <h1 class="fw-bold mb-1" style="font-size:2rem; margin-bottom:0.1rem;">Edit Group</h1>
-            <div class="text-muted" style="font-size:1.1rem; margin-bottom:0;">Update group information</div>
-        </div>
+        <h2 class="fw-bold mb-4 h4">Edit details</h2>
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 {{ session('success') }}

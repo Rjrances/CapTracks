@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 use App\Models\MilestoneTemplate;
 use App\Models\GroupMilestone;
 use App\Models\GroupMilestoneTask;
+use App\Services\MilestoneAssignmentService;
+use App\Services\NotificationService;
 use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -35,8 +37,17 @@ class MilestoneTemplateController extends Controller
             $groupsQuery->whereRaw('1 = 0');
         }
         $groups = $groupsQuery->get();
-        
-        return view('coordinator.milestones.index', compact('milestoneTemplates', 'groups', 'activeTerm'));
+
+        $groupAssignmentMeta = $groups->mapWithKeys(function (Group $group) {
+            return [$group->id => MilestoneAssignmentService::assignmentMeta($group)];
+        });
+
+        return view('coordinator.milestones.index', compact(
+            'milestoneTemplates',
+            'groups',
+            'activeTerm',
+            'groupAssignmentMeta'
+        ));
     }
     public function create()
     {
@@ -48,7 +59,11 @@ class MilestoneTemplateController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive,draft',
+            'sequence_order' => 'nullable|integer|min:1|max:255',
         ]);
+        if ($request->input('sequence_order') === '' || $request->input('sequence_order') === null) {
+            $data['sequence_order'] = null;
+        }
         MilestoneTemplate::create($data);
         return redirect()->route('coordinator.milestones.index')->with('success', 'Milestone created successfully.');
     }
@@ -63,7 +78,11 @@ class MilestoneTemplateController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive,draft',
+            'sequence_order' => 'nullable|integer|min:1|max:255',
         ]);
+        if ($request->input('sequence_order') === '' || $request->input('sequence_order') === null) {
+            $data['sequence_order'] = null;
+        }
         $milestone->update($data);
         return redirect()->route('coordinator.milestones.index')->with('success', 'Milestone updated successfully.');
     }
@@ -131,6 +150,12 @@ class MilestoneTemplateController extends Controller
                 ->withErrors(['assign' => "\"{$template->name}\" is already assigned to {$group->name}."]);
         }
 
+        $assignmentError = MilestoneAssignmentService::validateAssignment($group, $template);
+        if ($assignmentError !== null) {
+            return redirect()->route('coordinator.milestones.index')
+                ->withErrors(['assign' => $assignmentError]);
+        }
+
         $groupMilestone = GroupMilestone::create([
             'group_id'              => $group->id,
             'milestone_template_id' => $template->id,
@@ -150,7 +175,36 @@ class MilestoneTemplateController extends Controller
             ]);
         }
 
+        $group->load(['members.account']);
+        NotificationService::coordinatorAssignedMilestoneToGroup($group, $groupMilestone, $template);
+
         return redirect()->route('coordinator.milestones.index')
             ->with('success', "\"{$template->name}\" assigned to {$group->name} with {$template->tasks->count()} tasks.");
+    }
+
+    public function removeAssignmentFromGroup(Group $group, GroupMilestone $groupMilestone)
+    {
+        abort_unless($this->coordinatorMayAccessGroup($group), 403);
+        abort_if((int) $groupMilestone->group_id !== (int) $group->getKey(), 404);
+
+        $templateName = $groupMilestone->milestoneTemplate?->name ?? $groupMilestone->title ?? 'Milestone';
+        $groupMilestone->delete();
+
+        return redirect()->back()->with('success', "Removed \"{$templateName}\" assignment from {$group->name}.");
+    }
+
+    private function coordinatorMayAccessGroup(Group $group): bool
+    {
+        $user = auth()->user();
+        if (! $user) {
+            return false;
+        }
+        $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+        $offeringIds = \App\Models\Offering::query()
+            ->where('faculty_id', $user->faculty_id)
+            ->when($activeTerm, fn ($q) => $q->where('academic_term_id', $activeTerm->id))
+            ->pluck('id');
+
+        return $offeringIds->contains($group->offering_id);
     }
 }

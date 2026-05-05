@@ -2,14 +2,7 @@
 @section('title', 'Faculty Matrix')
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-0">
-                <i class="fas fa-table me-2"></i>Faculty Matrix
-            </h2>
-            <p class="text-muted mb-0">Role visibility across your coordinated groups and defense panels</p>
-        </div>
-    </div>
+        <x-coordinator.intro description="See how advisers and panel roles map across your coordinated groups and defenses." />
 
     <div class="row mb-4">
         <div class="col-md-3">

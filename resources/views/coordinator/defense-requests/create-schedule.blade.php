@@ -1,19 +1,19 @@
 @extends('layouts.coordinator')
-@section('title', 'Create Defense Schedule')
+@section('title', 'Schedule from request')
 @section('content')
-<div class="container mt-5">
+<div class="container-fluid">
+        <x-coordinator.intro description="Approve this student request by picking date, room, and panel—same rules as creating a defense from scratch.">
+            <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Defense management
+            </a>
+        </x-coordinator.intro>
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="fas fa-calendar-plus me-2"></i>Schedule Defense
-                        </h5>
-                        <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-arrow-left me-1"></i>Back to Defense Management
-                        </a>
-                    </div>
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>Schedule defense
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info mb-4">

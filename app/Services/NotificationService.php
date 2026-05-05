@@ -1,7 +1,9 @@
 <?php
 namespace App\Services;
 use App\Models\Group;
+use App\Models\GroupMilestone;
 use App\Models\GroupMilestoneTask;
+use App\Models\MilestoneTemplate;
 use App\Models\Student;
 use App\Models\User;
 use App\Models\Notification;
@@ -214,6 +216,30 @@ class NotificationService
             $redirectUrl ?? route('student.proposal'),
             $student->id
         );
+    }
+
+    /**
+     * Notify each group member when a coordinator assigns a milestone template to their group.
+     */
+    public static function coordinatorAssignedMilestoneToGroup(
+        Group $group,
+        GroupMilestone $groupMilestone,
+        MilestoneTemplate $template
+    ): void {
+        $group->loadMissing(['members.account']);
+        $milestoneName = $template->name;
+        $groupName = $group->name;
+        $redirectUrl = route('student.milestones.show', $groupMilestone->getKey());
+        $title = 'New milestone assigned';
+        $description = "Your coordinator assigned the milestone \"{$milestoneName}\" to {$groupName}.";
+
+        foreach ($group->members as $member) {
+            $userId = self::studentNotificationUserId($member);
+            if ($userId === null) {
+                continue;
+            }
+            self::createSimpleNotification($title, $description, 'student', $redirectUrl, $userId);
+        }
     }
 
     /**

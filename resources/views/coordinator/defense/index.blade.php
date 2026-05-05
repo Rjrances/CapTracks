@@ -2,21 +2,11 @@
 @section('title', 'Defense Management')
 @section('content')
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="mb-0">
-                        <i class="fas fa-gavel me-2"></i>Defense Management
-                    </h2>
-                    <p class="text-muted mb-0">Manage defense requests and schedules for capstone projects</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('coordinator.defense.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Create Schedule
-                    </a>
-                </div>
-            </div>
+        <x-coordinator.intro description="Pending requests, schedules, and defense activity for your coordinated groups.">
+            <a href="{{ route('coordinator.defense.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Create Schedule
+            </a>
+        </x-coordinator.intro>
 
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -351,8 +341,6 @@
                     @endif
                 </div>
             </div>
-        </div>
-    </div>
 </div>
 
 <div class="modal fade" id="rejectModal" tabindex="-1">

@@ -2,21 +2,11 @@
 @section('title', 'Edit Defense Schedule')
 @section('content')
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="mb-0">
-                        <i class="fas fa-edit me-2"></i>Edit Defense Schedule
-                    </h2>
-                    <p class="text-muted mb-0">Modify defense schedule for {{ $defenseSchedule->group->name }}</p>
-                </div>
-                <div>
-                    <a href="{{ route('coordinator.defense.show', $defenseSchedule->id) }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Details
-                    </a>
-                </div>
-            </div>
+        <x-coordinator.intro :description="'Update date, room, or panel for the defense of '.$defenseSchedule->group->name.'.'">
+            <a href="{{ route('coordinator.defense.show', $defenseSchedule->id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to details
+            </a>
+        </x-coordinator.intro>
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>
                 <strong>Note:</strong> You can only edit defense schedules for groups that belong to your coordinated offerings (capstone offer codes).
@@ -219,8 +209,6 @@
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {

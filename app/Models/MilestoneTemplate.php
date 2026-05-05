@@ -5,7 +5,10 @@ use Illuminate\Database\Eloquent\Model;
 class MilestoneTemplate extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'description', 'status'];
+    protected $fillable = ['name', 'description', 'status', 'sequence_order'];
+    protected $casts = [
+        'sequence_order' => 'integer',
+    ];
     public function tasks()
     {
         return $this->hasMany(MilestoneTask::class)->orderBy('order');

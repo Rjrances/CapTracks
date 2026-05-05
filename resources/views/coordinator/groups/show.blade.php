@@ -1,16 +1,26 @@
 @extends('layouts.coordinator')
-@section('title', 'Group Details')
+@section('title')
+{{ $group->name }}
+@endsection
 @section('content')
-<div class="container mt-5">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
+<div class="container-fluid">
+        <x-coordinator.intro :description="'Members, adviser assignment, and status for this capstone group ('.($group->offering->subject_code ?? 'offering').').'">
+            <a href="{{ route('coordinator.groups.index') }}" class="btn btn-outline-primary">
+                <i class="fas fa-users me-2"></i>All groups
+            </a>
+            <a href="{{ route('coordinator.groups.milestones', $group->id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-flag me-2"></i>Milestones
+            </a>
+        </x-coordinator.intro>
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a href="{{ route('coordinator.groups.index') }}">Groups</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ $group->name }}</li>
         </ol>
     </nav>
     <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <h2 class="card-title mb-3">{{ $group->name }}</h2>
+            <h2 class="card-title mb-3 h4">{{ $group->name }}</h2>
             <p class="card-text text-muted mb-2">{{ $group->description ?: 'No description provided.' }}</p>
             <p><strong>Adviser:</strong> 
                 @if($group->adviser)
