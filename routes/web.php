@@ -64,7 +64,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/classes', [ClassController::class, 'store'])->name('classes.store');
 
     // Coordinator Routes
-Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinator')->name('coordinator.')->group(function () {
+Route::middleware(['auth', 'role:coordinator|adviser'])->prefix('coordinator')->name('coordinator.')->group(function () {
     // Coordinator Dashboard
     Route::get('/dashboard', [CoordinatorDashboardController::class, 'index'])->name('dashboard');
 
@@ -130,7 +130,7 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
 });
 
 // Chairperson Routes
-Route::middleware(['checkrole:chairperson'])->prefix('chairperson')->name('chairperson.')->group(function () {
+Route::middleware(['auth', 'role:chairperson'])->prefix('chairperson')->name('chairperson.')->group(function () {
     Route::get('/dashboard', [ChairpersonDashboardController::class, 'index'])->name('dashboard');
 
     // Roles
@@ -337,7 +337,7 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
 });
 
 // Coordinator Defense Request Management
-Route::middleware(['auth', 'checkrole:coordinator'])->prefix('coordinator')->name('coordinator.')->group(function () {
+Route::middleware(['auth', 'role:coordinator'])->prefix('coordinator')->name('coordinator.')->group(function () {
     Route::get('/defense-requests', [DefenseScheduleController::class, 'defenseRequestsIndex'])->name('defense-requests.index');
     Route::get('/defense-requests/{defenseRequest}/create-schedule', [DefenseScheduleController::class, 'createSchedule'])->name('defense-requests.create-schedule');
     Route::post('/defense-requests/{defenseRequest}/store-schedule', [DefenseScheduleController::class, 'storeSchedule'])->name('defense-requests.store-schedule');

@@ -109,6 +109,8 @@ class UserSeeder extends Seeder
                 'semester' => $semester
             ]);
 
+            $user->assignRoles([$member['role']]);
+
             // Create UserAccount
             UserAccount::create([
                 'faculty_id' => $user->faculty_id,

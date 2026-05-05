@@ -23,7 +23,10 @@ class RoleSeeder extends Seeder
         ];
 
         foreach ($roles as $roleData) {
-            Role::firstOrCreate($roleData);
+            Role::firstOrCreate(
+                ['name' => $roleData['name'], 'guard_name' => 'web'],
+                ['name' => $roleData['name'], 'guard_name' => 'web']
+            );
         }
 
         echo "Created " . count($roles) . " roles\n";

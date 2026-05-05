@@ -24,7 +24,7 @@ class ChairpersonFacultyController extends Controller
         
         $query = User::query()
             ->with('roles')
-            ->whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator', 'chairperson']);
+            ->withAnyRole(['teacher', 'adviser', 'panelist', 'coordinator', 'chairperson']);
         
         if ($activeTerm) {
             $query->where('semester', $activeTerm->semester);
@@ -98,6 +98,7 @@ class ChairpersonFacultyController extends Controller
             'faculty_id'           => $facultyId,
             'semester'             => $activeTerm ? $activeTerm->semester : 'Unknown',
         ]);
+        $user->assignRoles([$request->role]);
 
         //create account
         \App\Models\UserAccount::create([
@@ -157,6 +158,7 @@ class ChairpersonFacultyController extends Controller
             'faculty_id' => $facultyId,
             'semester' => $activeTerm ? $activeTerm->semester : 'Unknown',
         ]);
+        $user->assignRoles(['teacher']);
 
         //create account
         \App\Models\UserAccount::create([
@@ -283,6 +285,7 @@ class ChairpersonFacultyController extends Controller
             $updateData['must_change_password'] = false;
         }
         $faculty->update($updateData);
+        $faculty->assignRoles([$request->role]);
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member updated successfully.');
     }
 

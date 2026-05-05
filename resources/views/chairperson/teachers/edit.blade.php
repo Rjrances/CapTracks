@@ -84,11 +84,11 @@
                                             id="role" 
                                             class="form-select @error('role') is-invalid @enderror" 
                                             required>
-                                        <option value="teacher" {{ old('role', $teacher->role) == 'teacher' ? 'selected' : '' }}>Teacher</option>
-                                        <option value="adviser" {{ old('role', $teacher->role) == 'adviser' ? 'selected' : '' }}>Adviser</option>
-                                        <option value="panelist" {{ old('role', $teacher->role) == 'panelist' ? 'selected' : '' }}>Panelist</option>
-                                        <option value="coordinator" {{ old('role', $teacher->role) == 'coordinator' ? 'selected' : '' }}>Coordinator</option>
-                                        <option value="chairperson" {{ old('role', $teacher->role) == 'chairperson' ? 'selected' : '' }}>Chairperson</option>
+                                        <option value="teacher" {{ old('role', $teacher->primary_role) == 'teacher' ? 'selected' : '' }}>Teacher</option>
+                                        <option value="adviser" {{ old('role', $teacher->primary_role) == 'adviser' ? 'selected' : '' }}>Adviser</option>
+                                        <option value="panelist" {{ old('role', $teacher->primary_role) == 'panelist' ? 'selected' : '' }}>Panelist</option>
+                                        <option value="coordinator" {{ old('role', $teacher->primary_role) == 'coordinator' ? 'selected' : '' }}>Coordinator</option>
+                                        <option value="chairperson" {{ old('role', $teacher->primary_role) == 'chairperson' ? 'selected' : '' }}>Chairperson</option>
                                     </select>
                                     @error('role')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -136,7 +136,7 @@
                                     </label>
                                     <input type="text" 
                                            class="form-control bg-light" 
-                                           value="{{ ucfirst($teacher->role) }}" 
+                                           value="{{ ucfirst($teacher->primary_role ?? 'N/A') }}" 
                                            readonly>
                                     <small class="text-muted">Role can be changed above</small>
                                 </div>

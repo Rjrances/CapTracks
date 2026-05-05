@@ -47,7 +47,7 @@ class StudentGroupController extends Controller
             $q->where('group_members.student_id', $student->student_id);
         })->with(['adviser', 'members', 'adviserInvitations.faculty', 'offering'])->first() : null;
         
-        $availableFaculty = User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator'])
+        $availableFaculty = User::withAnyRole(['adviser', 'panelist', 'teacher', 'coordinator'])
             ->when($group && $group->academicTerm, function($query) use ($group) {
                 return $query->where('semester', $group->academicTerm->semester);
             })
@@ -122,7 +122,7 @@ class StudentGroupController extends Controller
         $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
         
         $adviser = User::where('id', $request->adviser_id)
-                      ->where('role', 'adviser')
+                      ->withRole('adviser')
                       ->where('semester', $activeTerm ? $activeTerm->semester : null)
                       ->first();
         if (!$adviser) {
@@ -223,7 +223,7 @@ class StudentGroupController extends Controller
             );
         }
         
-        $availableFaculty = User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator'])
+        $availableFaculty = User::withAnyRole(['adviser', 'panelist', 'teacher', 'coordinator'])
             ->where('semester', $group->academicTerm->semester)
             ->orderBy('name')
             ->get();

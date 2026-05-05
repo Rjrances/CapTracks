@@ -264,7 +264,7 @@ class CoordinatorController extends Controller
     public function assignAdviser($id)
     {
         $group = Group::with(['adviser', 'members', 'offering'])->findOrFail($id);
-        $availableFaculty = User::whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])
+        $availableFaculty = User::withAnyRole(['teacher', 'adviser', 'panelist', 'coordinator'])
             ->where('semester', $group->academicTerm->semester)
             ->where(function($query) use ($group) {
                 $query->whereDoesntHave('offerings', function($q) use ($group) {

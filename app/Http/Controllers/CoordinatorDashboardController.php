@@ -28,7 +28,7 @@ class CoordinatorDashboardController extends Controller
                 $query->whereIn('offerings.id', $coordinatorOfferings);
             })->count() : 0;
         $groupCount = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->count() : 0;
-        $facultyCount = User::whereIn('role', ['adviser', 'panelist', 'teacher', 'coordinator', 'chairperson'])
+        $facultyCount = User::withAnyRole(['adviser', 'panelist', 'teacher', 'coordinator', 'chairperson'])
             ->when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('semester', $activeTerm->semester);
             })->count(); 

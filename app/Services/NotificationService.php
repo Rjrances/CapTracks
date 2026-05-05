@@ -93,7 +93,7 @@ class NotificationService
     }
     public static function newAdviserInvitation(User $adviser, string $groupName, ?string $redirectUrl = null)
     {
-        $role = $adviser->role ?? 'teacher';
+        $role = $adviser->primary_role ?? 'teacher';
         try {
             return Notification::create([
                 'title' => 'New Teacher Invitation',
@@ -128,7 +128,7 @@ class NotificationService
         return self::createSimpleNotification(
             'Assigned as group adviser',
             $description,
-            $adviser->role ?? 'teacher',
+            $adviser->primary_role ?? 'teacher',
             $redirectUrl ?? route('adviser.groups.details', $group),
             $adviser->id
         );

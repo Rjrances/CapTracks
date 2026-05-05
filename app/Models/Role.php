@@ -1,13 +1,8 @@
 <?php
 namespace App\Models;
-use Illuminate\Database\Eloquent\Model;
-class Role extends Model
+use Spatie\Permission\Models\Role as SpatieRole;
+class Role extends SpatieRole
 {
-    protected $fillable = ['name'];
-    public function users()
-    {
-        return $this->belongsToMany(User::class, 'user_roles', 'role', 'user_id')
-                    ->withTimestamps();
-    }
+    protected $fillable = ['name', 'guard_name'];
 }
     

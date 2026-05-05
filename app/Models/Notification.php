@@ -15,7 +15,7 @@ class Notification extends Model
 
     public function scopeVisibleToWebUser(Builder $query, User $user): Builder
     {
-        $roles = self::resolveWebUserAudienceRoles($user->role);
+        $roles = self::resolveWebUserAudienceRoles($user->primary_role);
 
         return $query->where(function (Builder $notificationQuery) use ($user, $roles) {
             $notificationQuery->whereIn('role', $roles)
@@ -27,7 +27,7 @@ class Notification extends Model
     {
         $roles = array_values(array_unique(array_merge(
             ['coordinator'],
-            self::resolveWebUserAudienceRoles($user->role)
+            self::resolveWebUserAudienceRoles($user->primary_role)
         )));
 
         return $query->where(function (Builder $notificationQuery) use ($user, $roles) {

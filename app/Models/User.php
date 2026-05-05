@@ -2,9 +2,11 @@
 namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Builder;
+use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
-    use Notifiable;
+    use Notifiable, HasRoles;
     protected $fillable = [
         'faculty_id',
         'name',
@@ -25,6 +27,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'birthday' => 'date',
     ];
+    protected $guard_name = 'web';
 
     public function getAuthPassword()
     {
@@ -38,12 +41,6 @@ class User extends Authenticatable
     public function account()
     {
         return $this->hasOne(UserAccount::class, 'faculty_id', 'faculty_id');
-    }
-    
-    public function roles()
-    {
-        return $this->belongsToMany(Role::class, 'user_roles', 'user_id', 'role', 'id', 'name')
-                    ->withTimestamps();
     }
     
     public function userRoles()
@@ -75,17 +72,6 @@ class User extends Authenticatable
         return $this->belongsToMany(DefenseSchedule::class, 'defense_panels', 'faculty_id', 'defense_schedule_id')
                     ->withPivot('role')
                     ->withTimestamps();
-    }
-    public function hasRole($role): bool
-    {
-        return $this->role === $role;
-    }
-    public function hasAnyRole($roles): bool
-    {
-        if (is_string($roles)) {
-            $roles = explode(',', $roles);
-        }
-        return in_array($this->role, $roles);
     }
     public function isChairperson(): bool
     {
@@ -120,30 +106,34 @@ class User extends Authenticatable
     }
     public function getPrimaryRoleAttribute()
     {
-        return $this->role;
+        $roleNames = $this->getRoleNames()->toArray();
+
+        if (in_array('coordinator', $roleNames)) {
+            return 'coordinator';
+        }
+
+        return $roleNames[0] ?? null;
     }
     public function updateRoleBasedOnOfferings()
     {
         $hasOfferings = $this->offerings()->exists();
-        $currentRole = $this->role;
-        
-        if ($hasOfferings && $this->role !== 'coordinator') {
-            $oldRole = $this->role;
-            $this->role = 'coordinator';
-            $this->save();
-            \Log::info("User {$this->name} (ID: {$this->id}) role updated from '{$oldRole}' to 'coordinator' - has offerings");
+
+        if ($hasOfferings && !$this->hasRole('coordinator')) {
+            $this->assignRole('coordinator');
+            \Log::info("User {$this->name} (ID: {$this->id}) role updated to 'coordinator' - has offerings");
             return true;
         }
-        
+
         return false;
     }
     public function getRoleDisplayNameAttribute()
     {
-        return ucfirst($this->role);
+        $primaryRole = $this->primary_role;
+        return $primaryRole ? ucfirst($primaryRole) : 'No role assigned';
     }
     public function getEffectiveRolesAttribute()
     {
-        return [$this->role];
+        return $this->all_roles;
     }
     public function getEffectiveRolesStringAttribute()
     {
@@ -156,9 +146,7 @@ class User extends Authenticatable
     
     public function getAllRolesAttribute()
     {
-        $assignedRoles = $this->roles()->pluck('name')->toArray();
-        $primaryRole = $this->role ? [$this->role] : [];
-        return array_unique(array_merge($primaryRole, $assignedRoles));
+        return $this->getRoleNames()->toArray();
     }
     
     public function getAllRolesStringAttribute()
@@ -178,18 +166,23 @@ class User extends Authenticatable
         if (is_string($roles)) {
             $roles = [$roles];
         }
-        
-        $this->roles()->detach();
-        
-        foreach ($roles as $role) {
-            $roleModel = Role::where('name', $role)->first();
-            if ($roleModel) {
-                $this->roles()->attach($roleModel->id);
-            }
-        }
-        
-        if (!empty($roles)) {
-            $this->update(['role' => $roles[0]]);
-        }
+
+        $roles = array_values(array_unique(array_filter($roles)));
+
+        $this->syncRoles($roles);
+    }
+
+    public function scopeWithAnyRole(Builder $query, array $roles): Builder
+    {
+        return $query->whereHas('roles', function (Builder $roleQuery) use ($roles) {
+            $roleQuery->whereIn('name', $roles);
+        });
+    }
+
+    public function scopeWithRole(Builder $query, string $role): Builder
+    {
+        return $query->whereHas('roles', function (Builder $roleQuery) use ($role) {
+            $roleQuery->where('name', $role);
+        });
     }
 }

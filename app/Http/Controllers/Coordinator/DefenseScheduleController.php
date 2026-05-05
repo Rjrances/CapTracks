@@ -725,9 +725,11 @@ class DefenseScheduleController extends Controller
         $defenseRequest->load(['group.adviser', 'group.members']);
         
         //panelist selection
-        $availableFaculty = User::whereIn('role', ['teacher'])
+        $availableFaculty = User::withAnyRole(['teacher'])
             ->where('id', '!=', $defenseRequest->group->adviser->id)
-            ->where('role', '!=', 'chairperson')
+            ->whereDoesntHave('roles', function ($query) {
+                $query->where('name', 'chairperson');
+            })
             ->where('id', '!=', auth()->user()->id)
             ->get();
         

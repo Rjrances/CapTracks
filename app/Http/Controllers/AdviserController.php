@@ -249,10 +249,8 @@ class AdviserController extends Controller
         if ($request->status === 'accepted') {
             $invitation->group->update(['faculty_id' => Auth::user()->faculty_id]);
             $user = Auth::user();
-            if ($user->role !== 'adviser') {
-                if ($user->role === 'teacher') {
-                    $user->update(['role' => 'adviser']);
-                }
+            if (!$user->hasRole('adviser') && $user->hasRole('teacher')) {
+                $user->assignRole('adviser');
             }
             Notification::create([
                 'title' => 'Adviser Invitation Accepted',

@@ -10,7 +10,7 @@ class UpdateAdviserRoles extends Command
     public function handle()
     {
         $this->info('Updating adviser roles for existing users...');
-        $usersToUpdate = User::where('role', 'teacher')
+        $usersToUpdate = User::withRole('teacher')
             ->whereExists(function ($query) {
                 $query->select(\DB::raw(1))
                       ->from('groups')
@@ -24,13 +24,13 @@ class UpdateAdviserRoles extends Command
         $this->info("Found {$usersToUpdate->count()} users to update:");
         foreach ($usersToUpdate as $user) {
             $this->info("  - {$user->name} ({$user->email}) - updating from 'teacher' to 'adviser'");
-            $user->update(['role' => 'adviser']);
+            $user->assignRoles(['adviser']);
         }
         $this->info('Adviser roles updated successfully!');
         $this->info("\nSummary:");
-        $this->info("- Users with 'teacher' role: " . User::where('role', 'teacher')->count());
-        $this->info("- Users with 'adviser' role: " . User::where('role', 'adviser')->count());
-        $this->info("- Users with 'coordinator' role: " . User::where('role', 'coordinator')->count());
-        $this->info("- Users with 'chairperson' role: " . User::where('role', 'chairperson')->count());
+        $this->info("- Users with 'teacher' role: " . User::withRole('teacher')->count());
+        $this->info("- Users with 'adviser' role: " . User::withRole('adviser')->count());
+        $this->info("- Users with 'coordinator' role: " . User::withRole('coordinator')->count());
+        $this->info("- Users with 'chairperson' role: " . User::withRole('chairperson')->count());
     }
 }

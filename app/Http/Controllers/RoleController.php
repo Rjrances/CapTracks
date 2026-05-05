@@ -47,7 +47,7 @@ class RoleController extends Controller
         
         //get user roles
         $allUsers = User::with('roles')
-            ->select('id', 'name', 'email', 'faculty_id', 'department', 'role')
+            ->select('id', 'name', 'email', 'faculty_id', 'department')
             ->when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('semester', $activeTerm->semester);
             })
@@ -62,13 +62,13 @@ class RoleController extends Controller
             }
             
             //faculty count sem
-            $query = User::whereIn('role', ['chairperson', 'coordinator', 'adviser', 'panelist', 'teacher']);
+            $query = User::withAnyRole(['chairperson', 'coordinator', 'adviser', 'panelist', 'teacher']);
             
             if ($activeTerm) {
                 $query->where('semester', $activeTerm->semester);
             }
             
-            $role['user_count'] = $query->where('role', $roleKey)->count();
+            $role['user_count'] = $query->withRole($roleKey)->count();
         }
         
         return view('chairperson.roles.index', compact('roles', 'allUsers', 'activeTerm', 'sortBy', 'sortDirection'));

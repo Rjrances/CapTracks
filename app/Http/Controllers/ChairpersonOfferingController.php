@@ -30,7 +30,7 @@ class ChairpersonOfferingController extends Controller
     public function create()
     {
         $activeTerm = $this->getActiveTerm();
-        $teachers = User::whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])
+        $teachers = User::withAnyRole(['teacher', 'adviser', 'panelist', 'coordinator'])
             ->when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('semester', $activeTerm->semester);
             })
@@ -69,8 +69,7 @@ class ChairpersonOfferingController extends Controller
         $teacher = User::where('faculty_id', $data['faculty_id'])->first();
         
         if ($teacher && !$teacher->hasRole('coordinator')) {
-            $teacher->role = 'coordinator';
-            $teacher->save();
+            $teacher->assignRole('coordinator');
             \Log::info("Automatically assigned coordinator role to teacher {$teacher->name} for offering {$offering->subject_code}");
         }
         $message = 'Offering added successfully. Teacher automatically assigned as coordinator.';
@@ -87,7 +86,7 @@ class ChairpersonOfferingController extends Controller
     public function edit($id)
     {
         $offering = Offering::with(['teacher', 'academicTerm', 'students'])->where('id', $id)->firstOrFail();
-        $teachers = User::whereIn('role', ['teacher', 'adviser', 'panelist', 'coordinator'])
+        $teachers = User::withAnyRole(['teacher', 'adviser', 'panelist', 'coordinator'])
             ->when($offering->academicTerm, function($query) use ($offering) {
                 return $query->where('semester', $offering->academicTerm->semester);
             })
@@ -123,8 +122,7 @@ class ChairpersonOfferingController extends Controller
         if ($newTeacherId != $oldTeacherId) {
             $newTeacher = User::where('faculty_id', $newTeacherId)->first();
             if ($newTeacher && !$newTeacher->hasRole('coordinator')) {
-                $newTeacher->role = 'coordinator';
-                $newTeacher->save();
+                $newTeacher->assignRole('coordinator');
                 \Log::info("Automatically assigned coordinator role to teacher {$newTeacher->name} for offering {$offering->subject_code}");
             }
         }
