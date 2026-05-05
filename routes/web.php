@@ -120,6 +120,10 @@ Route::middleware(['auth', 'checkrole:coordinator,adviser'])->prefix('coordinato
     // Milestone Templates Management
     Route::resource('milestones', MilestoneTemplateController::class);
     Route::patch('milestones/{milestone}/status', [MilestoneTemplateController::class, 'updateStatus'])->name('milestones.updateStatus');
+    // Milestone Tasks Management
+    Route::post('milestones/{milestone}/tasks', [MilestoneTemplateController::class, 'storeTask'])->name('milestones.tasks.store');
+    Route::patch('milestones/{milestone}/tasks/{task}', [MilestoneTemplateController::class, 'updateTask'])->name('milestones.tasks.update');
+    Route::delete('milestones/{milestone}/tasks/{task}', [MilestoneTemplateController::class, 'destroyTask'])->name('milestones.tasks.destroy');
 });
 
 // Chairperson Routes

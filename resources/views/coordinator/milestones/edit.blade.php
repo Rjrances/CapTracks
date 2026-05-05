@@ -103,17 +103,64 @@
         </div>
         <div class="row mt-4">
             <div class="col-12">
-                <div class="card bg-light">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tasks me-2"></i>Tasks
+                            <span class="badge bg-info ms-2">{{ $milestone->tasks->count() }}</span>
+                        </h5>
+                    </div>
                     <div class="card-body">
-                        <h6 class="card-title">
-                            <i class="fas fa-info-circle me-2"></i>Managing Milestone Templates
-                        </h6>
-                        <p class="card-text mb-2">
-                            <strong>Template Details:</strong> Update the name, description, and status of your milestone template.
-                        </p>
-                        <p class="card-text mb-0">
-                            <strong>Status:</strong> Only "Active" templates will be available for groups to use when creating their milestones.
-                        </p>
+                        @if($milestone->tasks->count() > 0)
+                            <ul class="list-group list-group-flush mb-3">
+                                @foreach($milestone->tasks as $task)
+                                    <li class="list-group-item px-0">
+                                        <form action="{{ route('coordinator.milestones.tasks.update', [$milestone->id, $task->id]) }}"
+                                              method="POST"
+                                              class="d-flex align-items-center gap-2">
+                                            @csrf
+                                            @method('PATCH')
+                                            <i class="fas fa-grip-vertical text-muted"></i>
+                                            <input type="text"
+                                                   name="name"
+                                                   value="{{ $task->name }}"
+                                                   class="form-control form-control-sm"
+                                                   required>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">
+                                                <i class="fas fa-save me-1"></i>Save
+                                            </button>
+                                            <form action="{{ route('coordinator.milestones.tasks.destroy', [$milestone->id, $task->id]) }}"
+                                                  method="POST"
+                                                  class="d-inline m-0"
+                                                  onsubmit="return confirm('Delete this task?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </form>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="text-muted text-center py-2">No tasks yet. Add one below.</p>
+                        @endif
+
+                        {{-- Add new task --}}
+                        <form action="{{ route('coordinator.milestones.tasks.store', $milestone->id) }}"
+                              method="POST"
+                              class="d-flex gap-2 mt-2">
+                            @csrf
+                            <input type="text"
+                                   name="name"
+                                   class="form-control"
+                                   placeholder="New task name (e.g. Chapter 1 - Introduction)"
+                                   required>
+                            <button type="submit" class="btn btn-success text-nowrap">
+                                <i class="fas fa-plus me-1"></i>Add Task
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>

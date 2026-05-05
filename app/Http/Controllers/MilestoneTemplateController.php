@@ -51,6 +51,7 @@ class MilestoneTemplateController extends Controller
     }
     public function edit(MilestoneTemplate $milestone)
     {
+        $milestone->load('tasks');
         return view('coordinator.milestones.edit', compact('milestone'));
     }
     public function update(Request $request, MilestoneTemplate $milestone)
@@ -76,5 +77,33 @@ class MilestoneTemplateController extends Controller
         $milestone->status = $request->status;
         $milestone->save();
         return Response::json(['success' => true]);
+    }
+
+    public function storeTask(Request $request, MilestoneTemplate $milestone)
+    {
+        $request->validate(['name' => 'required|string|max:255']);
+        $milestone->tasks()->create(['name' => $request->name]);
+        return redirect()
+            ->route('coordinator.milestones.edit', $milestone)
+            ->with('success', 'Task added successfully.');
+    }
+
+    public function updateTask(Request $request, MilestoneTemplate $milestone, \App\Models\MilestoneTask $task)
+    {
+        abort_if($task->milestone_template_id !== $milestone->id, 403);
+        $request->validate(['name' => 'required|string|max:255']);
+        $task->update(['name' => $request->name]);
+        return redirect()
+            ->route('coordinator.milestones.edit', $milestone)
+            ->with('success', 'Task updated successfully.');
+    }
+
+    public function destroyTask(MilestoneTemplate $milestone, \App\Models\MilestoneTask $task)
+    {
+        abort_if($task->milestone_template_id !== $milestone->id, 403);
+        $task->delete();
+        return redirect()
+            ->route('coordinator.milestones.edit', $milestone)
+            ->with('success', 'Task deleted successfully.');
     }
 }
