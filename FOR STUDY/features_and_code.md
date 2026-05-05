@@ -209,19 +209,27 @@ Students track their progress through checklists and milestone tasks assigned by
 Panelists are assigned to defense schedules and can use dynamic JSON-based rubrics to grade group performances.
 
 **Key Routes:**
-- `GET /panelist/dashboard` (PanelistController)
-- `POST /panelist/defense/{defense}/grade`
+- `GET /adviser/dashboard` (AdviserController)
+- `POST /adviser/rating-sheets/{schedule}` (RatingSheetController)
 
-**Code Reference (`PanelistController.php`):**
+**Code Reference (`RatingSheetController.php`):**
 ```php
-public function storeGrade(Request $request, DefenseSchedule $defense) {
+public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
     // Process JSON rubric structure and store grades
-    $rubricData = $request->input('rubric_data');
-    $defense->grades()->create([
-        'panelist_id' => Auth::id(),
-        'score' => $rubricData['total_score'],
-        'details' => json_encode($rubricData)
-    ]);
+    $criteria = collect($request->criteria_names)->values()->map(function ($name, $index) use ($request) {
+        return ['name' => $name, 'score' => (float) ($request->criteria_scores[$index] ?? 0)];
+    })->toArray();
+    
+    $totalScore = collect($criteria)->sum('score');
+    
+    RatingSheet::updateOrCreate(
+        ['defense_schedule_id' => $schedule->id, 'faculty_id' => Auth::id()],
+        [
+            'group_id' => $schedule->group_id,
+            'criteria' => $criteria,
+            'total_score' => $totalScore
+        ]
+    );
 }
 ```
 

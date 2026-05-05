@@ -308,17 +308,21 @@ For formal project defenses, CapTrack replaces traditional paper grading sheets 
 *[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
 *Figure 14: Code snippet of Dynamic Rubric Parsing*
 ```php
-public function storeGrade(Request $request, $scheduleId) {
-    $criteriaScores = $request->input('criteria');
-    $totalScore = array_sum($criteriaScores);
+public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
+    $criteria = collect($request->criteria_names)->values()->map(function ($name, $index) use ($request) {
+        return ['name' => $name, 'score' => (float) ($request->criteria_scores[$index] ?? 0)];
+    })->toArray();
     
-    RatingSheet::create([
-        'defense_schedule_id' => $scheduleId,
-        'faculty_id' => Auth::id(),
-        'group_id' => $request->group_id,
-        'criteria' => json_encode($criteriaScores),
-        'total_score' => $totalScore
-    ]);
+    $totalScore = collect($criteria)->sum('score');
+    
+    RatingSheet::updateOrCreate(
+        ['defense_schedule_id' => $schedule->id, 'faculty_id' => Auth::id()],
+        [
+            'group_id' => $schedule->group_id,
+            'criteria' => $criteria,
+            'total_score' => $totalScore
+        ]
+    );
 }
 ```
 

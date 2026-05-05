@@ -195,8 +195,7 @@ For complete system coverage, here is every single specific function the Student
 - Invite a faculty member to be the Adviser (`inviteAdviser`).
 
 **Milestone & Task Management (`StudentMilestoneController` & `StudentMilestoneChecklistController` & `TaskSubmissionController`)**
-- View the checklist of required templates (`checklist`).
-- Initialize a milestone from a template (`store`).
+- View the milestones and checklists assigned by the Coordinator.
 - Move task cards across the Kanban board (`moveTask`).
 - Bulk update task statuses (`bulkUpdateTasks`).
 - Edit task details (due dates, notes) (`updateTask`).

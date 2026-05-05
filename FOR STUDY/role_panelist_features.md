@@ -42,7 +42,7 @@ Panelists receive system notifications to stay updated on their assignments.
 ---
 
 ## Technical Context
-*   **Controller:** `PanelistController.php`, `RatingSheetController.php`
-*   **Middleware:** `checkrole:panelist`
-*   **Key Models:** `User` (where `role` = 'panelist'), `DefenseSchedule`, `DefensePanel`, `RatingSheet`
-*   **Views:** `resources/views/panelist/` directory
+*   **Controller:** `AdviserController.php` (for dashboard & invitations), `RatingSheetController.php` (for grading)
+*   **Middleware:** `auth` (Shared with other faculty roles)
+*   **Key Models:** `User`, `DefenseSchedule`, `DefensePanel`, `RatingSheet`
+*   **Views:** `resources/views/adviser/` directory (Adviser dashboard doubles as Panelist dashboard)

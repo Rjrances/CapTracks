@@ -8,7 +8,7 @@ During a capstone defense, panelists frequently ask about database design, norma
 CapTracks separates students from faculty/staff to maintain strict role boundaries.
 
 ### **`users` (Faculty & Staff)**
-- **Purpose:** Stores information for Advisers, Coordinators, and Chairpersons.
+- **Purpose:** Stores information for Advisers, Coordinators, Chairpersons, and Panelists.
 - **Relationships:**
   - `hasMany(Group::class)`: A faculty member can advise many groups.
   - `hasMany(DefensePanel::class)`: A faculty member can sit on many defense panels.
@@ -55,7 +55,7 @@ CapTracks separates students from faculty/staff to maintain strict role boundari
 ---
 
 ## 4. Milestones & Task Tracking
-The system uses a "Blueprint" vs "Instance" pattern. The Coordinator makes a template, and when a group is formed, it copies that template into the group's own specific workspace.
+The system uses a "Template" vs "Instance" pattern. The Coordinator creates a template, and manually assigns that template to specific active groups, copying the tasks into the group's workspace.
 
 ### **Templates (The Blueprints)**
 - **`milestone_templates`**: The overarching phase (e.g., "Chapter 1").

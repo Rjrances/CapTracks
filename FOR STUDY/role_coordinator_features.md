@@ -100,24 +100,36 @@ If panelists ask, *"How does your system know who to suggest for a defense panel
 
 **Core Logic (`app/Http/Controllers/MilestoneTemplateController.php`):**
 ```php
-public function store(Request $request) {
+public function assignToGroup(Request $request) {
     
-    // Create the main Milestone category (e.g., "Chapter 1")
-    $milestone = MilestoneTemplate::create([ 
-        'name' => $request->name, // Set the milestone name
-        'order' => $request->order, // Set the sorting order
-        'is_active' => true // Mark it as active
+    // Find the requested template and the specific group
+    $template = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
+    $group = Group::findOrFail($request->group_id);
+
+    // Prevent duplicate assignments
+    if (GroupMilestone::where('group_id', $group->id)->where('milestone_template_id', $template->id)->exists()) {
+        return back()->withErrors(['assign' => 'Already assigned.']);
+    }
+
+    // Create the active milestone for the group based on the template
+    $groupMilestone = GroupMilestone::create([
+        'group_id' => $group->id,
+        'milestone_template_id' => $template->id,
+        'title' => $template->name,
+        'status' => 'not_started',
     ]);
 
-    // Loop through the specific tasks inside this milestone
-    foreach ($request->tasks as $taskData) { 
-        
-        // Use the Eloquent relationship to insert tasks linked to this milestone
-        $milestone->tasks()->create([ 
-            'task_name' => $taskData['name'], // Set the specific task name
-            'is_required' => $taskData['required'] ?? false // Check if the task is mandatory
+    // Copy all the template tasks into the active group milestone
+    foreach ($template->tasks as $task) {
+        GroupMilestoneTask::create([
+            'group_milestone_id' => $groupMilestone->id,
+            'milestone_task_id' => $task->id,
+            'status' => 'pending',
         ]);
     }
+
+    // Send a notification to the student group
+    NotificationService::coordinatorAssignedMilestoneToGroup($group, $groupMilestone, $template);
 }
 ```
 
@@ -164,9 +176,10 @@ For complete system coverage, here is every single specific function the Coordin
 - Bulk update (approve/reject) multiple proposals at once (`bulkUpdate`).
 - Add threaded comments to a proposal (`storeComment`).
 
-**Milestone Blueprints (`MilestoneTemplateController`)**
+**Milestone Templates (`MilestoneTemplateController`)**
 - Create, edit, update, or delete a Milestone Template (`store`, `update`, `destroy`).
 - Add required tasks to a milestone.
+- Manually assign a Milestone Template to a specific active group (`assignToGroup`).
 - Toggle template status (`updateStatus`).
 
 **Defense Scheduling (`DefenseScheduleController`)**
