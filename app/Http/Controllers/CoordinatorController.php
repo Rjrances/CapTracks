@@ -467,7 +467,12 @@ class CoordinatorController extends Controller
             ->paginate(20)
             ->appends($request->only('student_id'));
 
-        $studentsForFilter = Student::whereIn('student_id', $studentIds)
+        // Dropdown only lists students who actually have logged activity.
+        $studentsWithActivity = ActivityLog::whereIn('student_id', $studentIds)
+            ->pluck('student_id')
+            ->unique();
+
+        $studentsForFilter = Student::whereIn('student_id', $studentsWithActivity)
             ->orderBy('name')
             ->get(['student_id', 'name']);
 
