@@ -59,13 +59,6 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('chairperson.roles.*') ? 'active bg-primary' : '' }}" 
-                   href="{{ route('chairperson.roles.index') }}">
-                    <i class="fas fa-user-tag me-2"></i>
-                    Roles
-                </a>
-            </li>
-            <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('chairperson.calendar') ? 'active bg-primary' : '' }}" 
                    href="{{ route('chairperson.calendar') }}">
                     <i class="fas fa-calendar me-2"></i>

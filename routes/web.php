@@ -11,7 +11,6 @@ use App\Http\Controllers\ChairpersonDashboardController;
 use App\Http\Controllers\ChairpersonOfferingController;
 use App\Http\Controllers\ChairpersonFacultyController;
 use App\Http\Controllers\ChairpersonStudentController;
-use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\MilestoneTemplateController;
 use App\Http\Controllers\AcademicTermController;
@@ -133,10 +132,6 @@ Route::middleware(['auth', 'role:coordinator|adviser'])->prefix('coordinator')->
 Route::middleware(['auth', 'role:chairperson'])->prefix('chairperson')->name('chairperson.')->group(function () {
     Route::get('/dashboard', [ChairpersonDashboardController::class, 'index'])->name('dashboard');
 
-    // Roles
-    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
-    Route::post('/roles/{faculty_id}', [RoleController::class, 'update'])->name('roles.update');
-
     // Offerings
     Route::get('/offerings', [ChairpersonOfferingController::class, 'index'])->name('offerings.index');
     Route::get('/offerings/create', [ChairpersonOfferingController::class, 'create'])->name('offerings.create');
@@ -160,6 +155,8 @@ Route::middleware(['auth', 'role:chairperson'])->prefix('chairperson')->name('ch
     Route::post('/teachers/manual', [ChairpersonFacultyController::class, 'storeManual'])->name('teachers.store-manual');
     Route::get('/teachers/{id}/edit', [ChairpersonFacultyController::class, 'edit'])->name('teachers.edit');
     Route::put('/teachers/{id}', [ChairpersonFacultyController::class, 'update'])->name('teachers.update');
+    Route::post('/teachers/{id}/assign-coordinator', [ChairpersonFacultyController::class, 'assignCoordinator'])->name('teachers.assign-coordinator');
+    Route::post('/teachers/{id}/remove-coordinator', [ChairpersonFacultyController::class, 'removeCoordinator'])->name('teachers.remove-coordinator');
     Route::delete('/teachers/{id}', [ChairpersonFacultyController::class, 'destroy'])->name('teachers.delete');
 
     // Student Management

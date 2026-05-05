@@ -10,8 +10,8 @@
             <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-outline-primary">
                 <i class="fas fa-book me-2"></i>Manage Offerings
             </a>
-            <a href="{{ route('chairperson.roles.index') }}" class="btn btn-outline-warning">
-                <i class="fas fa-user-tag me-2"></i>Manage Roles
+            <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-warning">
+                <i class="fas fa-user-tag me-2"></i>Manage Coordinator Access
             </a>
         </div>
     </div>
@@ -179,8 +179,8 @@
                         <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-chalkboard-teacher me-2"></i>View Teachers
                         </a>
-                        <a href="{{ route('chairperson.roles.index') }}" class="btn btn-outline-warning">
-                            <i class="fas fa-user-tag me-2"></i>Manage Roles
+                        <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-user-tag me-2"></i>Manage Coordinator Access
                         </a>
                         <a href="{{ route('chairperson.students.index') }}" class="btn btn-outline-info">
                             <i class="fas fa-user-graduate me-2"></i>View Students

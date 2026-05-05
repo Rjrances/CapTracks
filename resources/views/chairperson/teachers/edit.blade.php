@@ -77,26 +77,6 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="role" class="form-label fw-bold">
-                                        <i class="fas fa-user-tag me-1"></i>Role *
-                                    </label>
-                                    <select name="role" 
-                                            id="role" 
-                                            class="form-select @error('role') is-invalid @enderror" 
-                                            required>
-                                        <option value="teacher" {{ old('role', $teacher->primary_role) == 'teacher' ? 'selected' : '' }}>Teacher</option>
-                                        <option value="adviser" {{ old('role', $teacher->primary_role) == 'adviser' ? 'selected' : '' }}>Adviser</option>
-                                        <option value="panelist" {{ old('role', $teacher->primary_role) == 'panelist' ? 'selected' : '' }}>Panelist</option>
-                                        <option value="coordinator" {{ old('role', $teacher->primary_role) == 'coordinator' ? 'selected' : '' }}>Coordinator</option>
-                                        <option value="chairperson" {{ old('role', $teacher->primary_role) == 'chairperson' ? 'selected' : '' }}>Chairperson</option>
-                                    </select>
-                                    @error('role')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
                                     <label for="department" class="form-label fw-bold">
                                         <i class="fas fa-building me-1"></i>Department
                                     </label>
@@ -138,7 +118,7 @@
                                            class="form-control bg-light" 
                                            value="{{ ucfirst($teacher->primary_role ?? 'N/A') }}" 
                                            readonly>
-                                    <small class="text-muted">Role can be changed above</small>
+                                    <small class="text-muted">Coordinator access is managed on the Teachers page.</small>
                                 </div>
                             </div>
                         </div>
@@ -146,6 +126,11 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-1"></i>Update Teacher
                             </button>
+                            @if($teacher->hasRole('coordinator'))
+                                <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#removeCoordinatorModal">
+                                    <i class="fas fa-user-minus me-1"></i>Remove Coordinator Access
+                                </button>
+                            @endif
                             <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-1"></i>Back to Teachers
                             </a>
@@ -156,4 +141,32 @@
         </div>
     </div>
 </div>
+
+@if($teacher->hasRole('coordinator'))
+<div class="modal fade" id="removeCoordinatorModal" tabindex="-1" aria-labelledby="removeCoordinatorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="removeCoordinatorModalLabel">
+                    <i class="fas fa-user-minus text-warning me-2"></i>Remove Coordinator Access
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Are you sure you want to remove coordinator access for:</p>
+                <p class="fw-bold mb-0">{{ $teacher->name }} ({{ $teacher->faculty_id }})</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ route('chairperson.teachers.remove-coordinator', $teacher->faculty_id) }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-user-minus me-1"></i>Confirm Remove
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @endsection

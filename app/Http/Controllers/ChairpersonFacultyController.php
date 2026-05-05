@@ -270,14 +270,12 @@ class ChairpersonFacultyController extends Controller
                     }
                 }
             ],
-            'role' => 'required|in:teacher,adviser,panelist,coordinator,chairperson',
             'department' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8',
         ]);
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
-            'role' => $request->role,
             'department' => $request->department,
         ];
         if ($request->filled('password')) {
@@ -285,8 +283,47 @@ class ChairpersonFacultyController extends Controller
             $updateData['must_change_password'] = false;
         }
         $faculty->update($updateData);
-        $faculty->assignRoles([$request->role]);
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member updated successfully.');
+    }
+
+    public function assignCoordinator($id)
+    {
+        $activeTerm = $this->getActiveTerm();
+        $faculty = User::where('faculty_id', $id)
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
+            ->firstOrFail();
+
+        if ($faculty->hasRole('coordinator')) {
+            return redirect()->route('chairperson.teachers.index')
+                ->with('success', "{$faculty->name} is already assigned as coordinator.");
+        }
+
+        $faculty->assignRole('coordinator');
+
+        return redirect()->route('chairperson.teachers.index')
+            ->with('success', "{$faculty->name} has been assigned as coordinator.");
+    }
+
+    public function removeCoordinator($id)
+    {
+        $activeTerm = $this->getActiveTerm();
+        $faculty = User::where('faculty_id', $id)
+            ->when($activeTerm, function($query) use ($activeTerm) {
+                return $query->where('semester', $activeTerm->semester);
+            })
+            ->firstOrFail();
+
+        if (!$faculty->hasRole('coordinator')) {
+            return redirect()->route('chairperson.teachers.edit', $faculty->faculty_id)
+                ->with('success', "{$faculty->name} does not have coordinator access.");
+        }
+
+        $faculty->removeRole('coordinator');
+
+        return redirect()->route('chairperson.teachers.edit', $faculty->faculty_id)
+            ->with('success', "Coordinator access removed for {$faculty->name}.");
     }
 
     public function destroy($id)

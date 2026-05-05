@@ -86,21 +86,8 @@
                             @endif
                         </a>
                     </th>
-                    <th>
-                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'role', 'direction' => request('sort') == 'role' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
-                           class="text-white text-decoration-none">
-                            Role
-                            @if(request('sort') == 'role')
-                                @if(request('direction') == 'asc')
-                                    <i class="fas fa-sort-up"></i>
-                                @else
-                                    <i class="fas fa-sort-down"></i>
-                                @endif
-                            @else
-                                <i class="fas fa-sort text-muted"></i>
-                            @endif
-                        </a>
-                    </th>
+                    <th>Roles</th>
+                    <th>Coordinator Access</th>
                     <th>
                         <a href="{{ request()->fullUrlWithQuery(['sort' => 'department', 'direction' => request('sort') == 'department' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" 
                            class="text-white text-decoration-none">
@@ -152,6 +139,20 @@
                                     $badgeColor = $roleColors[$role] ?? 'secondary';
                                 @endphp
                                 <span class="badge bg-{{ $badgeColor }}">{{ ucfirst($role) }}</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($teacher->hasRole('coordinator'))
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>Assigned
+                                </span>
+                            @else
+                                <form action="{{ route('chairperson.teachers.assign-coordinator', $teacher->faculty_id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-user-plus me-1"></i>Assign Coordinator
+                                    </button>
+                                </form>
                             @endif
                         </td>
                         <td>{{ $teacher->department ?? 'N/A' }}</td>
