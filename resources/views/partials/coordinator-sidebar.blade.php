@@ -101,8 +101,10 @@
     </nav>
     <div class="mt-auto p-3 border-top border-secondary">
         @php
-            $hasAdviserRole = \App\Models\Group::where('faculty_id', $user->faculty_id)->exists()
-                || \App\Models\AdviserInvitation::where('faculty_id', $user->id)->where('status', 'pending')->exists();
+            $hasAdviserRole = $user && (
+                $user->adviserInvitations()->where('status', 'pending')->exists()
+                || \App\Models\Group::where('faculty_id', $user->faculty_id)->exists()
+            );
         @endphp
         @if($hasAdviserRole)
             <a href="{{ route('adviser.dashboard') }}" class="btn btn-outline-info btn-sm w-100 mb-3">
