@@ -64,7 +64,27 @@
                                                 </td>
                                                 <td>{{ Str::limit($template->description, 100) }}</td>
                                                 <td>
-                                                    <span class="badge bg-info">{{ $template->tasks->count() }} tasks</span>
+                                                    <button class="badge bg-info border-0 text-white"
+                                                            style="cursor:pointer;"
+                                                            type="button"
+                                                            data-bs-toggle="collapse"
+                                                            data-bs-target="#tasks-{{ $template->id }}"
+                                                            title="Click to see tasks">
+                                                        {{ $template->tasks->count() }} tasks
+                                                        <i class="fas fa-chevron-down ms-1" style="font-size:10px;"></i>
+                                                    </button>
+                                                    <div class="collapse mt-2" id="tasks-{{ $template->id }}">
+                                                        <ul class="list-unstyled mb-0 small">
+                                                            @forelse($template->tasks as $task)
+                                                                <li class="py-1 border-bottom">
+                                                                    <i class="fas fa-check-circle text-success me-1"></i>
+                                                                    {{ $task->name }}
+                                                                </li>
+                                                            @empty
+                                                                <li class="text-muted">No tasks defined.</li>
+                                                            @endforelse
+                                                        </ul>
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     @if($template->status === 'active')
