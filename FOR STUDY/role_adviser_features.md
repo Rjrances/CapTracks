@@ -154,35 +154,125 @@ public function submitAdviserRating(Request $request, DefenseSchedule $schedule)
 }
 ```
 
-## 5. Exhaustive Feature & Endpoint List (All Functions)
+## 6. Critical Code Line-by-Line Breakdown (For 1000% Defense Readiness)
+
+If your panelists want you to explain the code line-by-line, memorize these three most complex and critical Adviser functions.
+
+### A. Submitting JSON Rating Sheets (`RatingSheetController@submitAdviserRating`)
+Panel Question: *"Explain line-by-line how you save dynamic grading criteria without creating separate database tables for every single row on a rubric."*
+
+```php
+public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
+    // LINE 1: Get the currently authenticated faculty member.
+    $user = Auth::user();
+    
+    // LINE 2: Verify the user is actually assigned to this specific defense panel to prevent unauthorized grading.
+    $isAssignedPanel = $schedule->defensePanels()->where('faculty_id', $user->id)->exists();
+    if (!$isAssignedPanel) abort(403, 'You are not assigned to this defense panel.');
+
+    // LINE 3: Combine the incoming arrays (criteria_names and criteria_scores) into a single collection.
+    $criteria = collect($request->criteria_names)->values()->map(function ($name, $index) use ($request) {
+        // LINE 4: Map each name to its corresponding score, casting the score to a float (decimal).
+        return ['name' => $name, 'score' => (float) ($request->criteria_scores[$index] ?? 0)];
+    })->toArray(); // LINE 5: Convert the final collection back into a raw PHP array.
+
+    // LINE 6: Calculate the sum of all individual criteria scores to get the final grade.
+    $totalScore = collect($criteria)->sum('score');
+
+    // LINE 7: Use Eloquent's updateOrCreate to either insert a new grading sheet or overwrite an existing one for this faculty member.
+    RatingSheet::updateOrCreate(
+        ['defense_schedule_id' => $schedule->id, 'faculty_id' => $user->id], // LINE 8: The unique identifiers (Where to update).
+        [
+            'group_id' => $schedule->group_id, // LINE 9: The data to update.
+            // LINE 10: Here is the magic. Laravel automatically encodes the PHP array into a raw JSON string because of the $casts array in the RatingSheet model.
+            'criteria' => $criteria, 
+            'total_score' => $totalScore,
+            'remarks' => $request->remarks ?? null,
+            'submitted_at' => now(), // LINE 11: Timestamp the submission.
+        ]
+    );
+}
+```
+
+### B. Threaded Kanban Comments (`AdviserController@storeMilestoneTaskComment`)
+Panel Question: *"Explain line-by-line how the database knows if a comment is a reply to another comment."*
+
+```php
+public function storeMilestoneTaskComment(Request $request, Group $group, GroupMilestoneTask $groupMilestoneTask) {
+    // LINE 1: Insert a new row into the 'task_comments' table using the Adjacency List model structure.
+    TaskComment::create([ 
+        // LINE 2: Link the comment explicitly to the Kanban task the adviser clicked on.
+        'group_milestone_task_id' => $groupMilestoneTask->id, 
+        
+        // LINE 3: Record the adviser's faculty ID as the author of the comment.
+        'user_id' => Auth::id(), 
+        
+        // LINE 4: Save the actual text content of the message.
+        'body' => $request->body, 
+        
+        // LINE 5: If the user clicked 'Reply', $request->parent_id contains the ID of the comment they replied to. 
+        // If it's a new standalone comment, parent_id is NULL. This single column allows infinite nesting threads.
+        'parent_id' => $request->parent_id, 
+    ]);
+    
+    // LINE 6: Dispatch an alert via the NotificationService to tell the students they received feedback.
+    NotificationService::adviserCommentOnMilestoneTask(Auth::user(), $groupMilestoneTask);
+}
+```
+
+### C. Calculating Dashboard Progress (`AdviserController@calculateGroupProgress`)
+Panel Question: *"Explain line-by-line how the dashboard dynamically calculates the overall completion percentage of a group."*
+
+```php
+private function calculateGroupProgress($group) {
+    // LINE 1: Retrieve all active milestone templates assigned to this specific group.
+    $groupMilestones = $group->groupMilestones; 
+    
+    // LINE 2: Fail-safe check: If the group has no milestones assigned yet, their progress is mathematically 0%.
+    if ($groupMilestones->isEmpty()) return 0; 
+    
+    // LINE 3: Use Laravel's collection sum() to add up the pre-calculated 'progress_percentage' from each individual milestone category.
+    // E.g., Chapter 1 (100%) + Chapter 2 (50%) = Total 150
+    $totalProgress = $groupMilestones->sum('progress_percentage'); 
+    
+    // LINE 4: Divide the sum by the total number of milestones (e.g., 150 / 2 = 75%).
+    // LINE 5: Round the result to avoid decimal places on the dashboard UI.
+    return round($totalProgress / $groupMilestones->count()); 
+}
+```
+
+## 7. Exhaustive Feature & Endpoint List (All Functions)
 For complete system coverage, here is every single specific function the Adviser/Teacher can perform across the application:
 
-**Dashboard & General Mentoring (`AdviserController`)**
-- View adviser-specific statistics and calculate real-time group progress (`dashboard`).
-- View all assigned groups as an Adviser (`myGroups`).
-- View a combined list of both Adviser groups and Panel groups (`allGroups`).
-- View group details and members (`groupDetails`).
-- View the Global Activity Log filtered only to their advisees (`activityLog`).
+**Dashboard, General Mentoring & Invitations (`AdviserController`)**
+- `dashboard()`: Computes real-time milestone progress metrics for all assigned student groups, rendering the overview UI.
+- `invitations()`: Retrieves all pending group mentorship invites directed specifically to the logged-in faculty member.
+- `respondToInvitation()`: Processes accept/decline inputs for mentorships, updating the `AdviserInvitation` table.
+- `myGroups()` / `allGroups()`: Lists groups specifically mentored by the faculty vs. all groups where they are either a mentor or a panelist.
+- `groupDetails()`: Fetches comprehensive profile data (members, timeline) for a single advisee group.
+- `milestoneTaskComments()`: Loads the threaded discussion view for a specific task card on the Kanban board.
+- `storeMilestoneTaskComment()`: Saves a new nested or parent comment onto a task, executing adjacency list logic.
+- `panelInvitations()` / `respondToPanelInvitation()`: Dedicated methods for viewing and accepting/declining invites to sit on defense grading panels.
+- `notifications()`, `markAllNotificationsAsRead()`, `deleteNotification()`: Standard endpoints to manage the adviser's personal alert feed.
+- `activityLog()`: Shows a granular audit trail of file uploads and task movements made solely by the adviser's assigned groups.
 
-**Invitations (`AdviserController`)**
-- View pending group mentorship invitations (`invitations`).
-- Accept or decline mentorship invitations (`respondToInvitation`).
-- View pending Defense Panel invitations (`panelInvitations`).
-- Accept or decline Defense Panel invitations (`respondToPanelInvitation`).
+**Proposals & Feedback (`AdviserProposalController`)**
+- `index()` / `show()`: Lists capstone proposals submitted by the adviser's groups that await review.
+- `preview()`: Displays the active proposal PDF/document in the browser.
+- `compareVersions()`: Fetches two historical versions of the same document to help the adviser track student revisions.
+- `edit()` / `update()` / `bulkUpdate()`: Functions allowing the adviser to stamp proposals as "Approved" or "Rejected", individually or en masse.
+- `getStats()`: Fetches numerical summaries of proposal statuses for dashboard display.
+- `storeComment()`: Attaches a feedback thread directly to a submitted project proposal.
 
-**Milestones & Feedback (`AdviserController` & `AdviserProposalController`)**
-- View task threads for a specific milestone (`milestoneTaskComments`).
-- Post or reply to nested task comments (`storeMilestoneTaskComment`).
-- View all proposals for their mentored groups (`index`).
-- Preview proposals and compare versions side-by-side (`preview`, `compareVersions`).
-- Bulk approve/reject proposals with shared comments (`bulkUpdate`).
-- Leave threaded comments on project proposals (`storeComment`).
+**Defenses & Grading (`RatingSheetController`)**
+- `showAdviserForm()`: Loads the dynamic, JSON-driven rubric form for panelists during a live defense.
+- `submitAdviserRating()`: Captures panelist scores, encodes them into a JSON array, calculates the weighted total, and saves it to the `RatingSheet` model.
+- `showCoordinatorRatings()` / `finalizeCoordinatorRatings()` / `reopenCoordinatorRatings()`: Evaluates the aggregated panel grades and provides options to lock or unlock the final group score.
+- `printCoordinatorRatings()`: Generates a printer-friendly layout of the finalized defense grades.
 
-**Defenses & Grading (`RatingSheetController` & `CalendarController`)**
-- View panel submissions (`panelSubmissions`).
-- Open the digital grading form for a scheduled defense (`showAdviserForm`).
-- Submit rubric scores which are converted to JSON (`submitAdviserRating`).
-- View the adviser calendar displaying their specific defense assignments (`adviserCalendar`).
+**Calendar & View (`CalendarController`)**
+- `adviserCalendar()`: Retrieves all scheduled defenses where the faculty member is assigned (either as an adviser or panelist) and maps them onto the interactive calendar UI.
 
 **Authentication (`AuthController`)**
-- Handle authentication actions like login, logout, and password management (`login`, `logout`, `changePassword`).
+- `login()` / `logout()`: Validates credentials against the encrypted `password` column and manages session tokens.
+- `changePassword()`: Receives a new password, hashes it using `bcrypt()`, and updates the user's account row.
