@@ -14,19 +14,20 @@ class StudentDashboardController extends Controller
 {
     public function index()
     {
-        if (Auth::check()) {
+        // Check student guard FIRST — a coordinator may also be logged in on the web guard
+        // simultaneously, and Auth::check() (web) would win if checked first, causing a false
+        // "Student record not found" error even when a valid student session exists.
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
+        } elseif (Auth::check()) {
             $user = Auth::user();
             $student = $user->student;
         } else {
-            if (Auth::guard('student')->check()) {
-                $studentAccount = Auth::guard('student')->user();
-                $student = $studentAccount->student;
-            } else {
-                return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
-            }
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
 
-        // Check if student exists
+        // Check if student record exists
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Student record not found. Please contact administrator.']);
         }

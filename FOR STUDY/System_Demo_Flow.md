@@ -7,7 +7,22 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 ---
 
 ## 🛠️ Pre-Demo Setup (Do this BEFORE you present)
-1. **Prepare 3 Browsers/Tabs:** Have an Incognito window ready so you can log in as a Chairperson, a Coordinator, and a Student simultaneously without having to log in and out repeatedly.
+
+> **How browser sessions work in CapTrack:**
+> - The `student` guard and the `web` (faculty) guard use **separate session keys** — so a student and a faculty/coordinator can be logged in at the same time in the same browser with no conflict.
+> - **Two accounts of the same type** (e.g., two students, or two faculty) **share one session** — logging in as the second one will immediately log out the first. Use a separate browser or Incognito for those.
+
+| What you need open | How to do it |
+|---|---|
+| Student + Coordinator | Same browser, different tabs ✅ |
+| Student + Adviser | Same browser, different tabs ✅ |
+| Coordinator + Chairperson | Need Incognito or a second browser ⚠️ |
+| Two different students | Need Incognito or a second browser ⚠️ |
+
+1. **Tab Setup:**
+   - **Tab 1 (Normal browser):** Log in as the **Student**.
+   - **Tab 2 (Normal browser):** Log in as the **Coordinator** — same browser works because they use different guards.
+   - **Incognito window (or Edge/Firefox):** Log in as the **Chairperson** or **Panelist** — needed because they share the `web` guard with the Coordinator.
 2. **Prepare a Dummy File:** Have a sample PDF on your desktop named `Chapter_1_Draft.pdf` ready to upload.
 3. **Prepare a CSV:** Have a small CSV file with 2 fake students ready to demonstrate the import.
 4. **Reset the Kanban board** so at least one task is in "Pending" — so you can drag it live during the demo.
