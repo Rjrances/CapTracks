@@ -5,8 +5,12 @@
     $pendingAdviserInvitations = $user
         ? \App\Models\AdviserInvitation::where('faculty_id', $user->id)->where('status', 'pending')->count()
         : 0;
+    // Match AdviserController@panelInvitations: chair/member roles only (not adviser/coordinator rows)
     $pendingPanelInvitations = $user
-        ? \App\Models\DefensePanel::where('faculty_id', $user->id)->where('status', 'pending')->count()
+        ? \App\Models\DefensePanel::where('faculty_id', $user->id)
+            ->whereIn('role', ['chair', 'member'])
+            ->where('status', 'pending')
+            ->count()
         : 0;
     $isPanelSubmissionContext = request()->routeIs('adviser.project.show') && request()->query('context') === 'panel';
 @endphp
@@ -57,22 +61,26 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('adviser.invitations') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white d-flex align-items-center justify-content-between gap-2 {{ request()->routeIs('adviser.invitations') ? 'active bg-primary' : '' }}"
                    href="{{ route('adviser.invitations') }}">
-                    <i class="fas fa-envelope me-2"></i>
-                    Adviser Invitations
+                    <span class="d-flex align-items-center text-truncate">
+                        <i class="fas fa-envelope me-2 flex-shrink-0"></i>
+                        Adviser Invitations
+                    </span>
                     @if($pendingAdviserInvitations > 0)
-                        <span class="badge bg-warning text-dark ms-2">{{ $pendingAdviserInvitations }}</span>
+                        <span class="sidebar-invitation-badge flex-shrink-0">{{ $pendingAdviserInvitations > 99 ? '99+' : $pendingAdviserInvitations }}</span>
                     @endif
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('adviser.panel-invitations') ? 'active bg-primary' : '' }}"
+                <a class="nav-link text-white d-flex align-items-center justify-content-between gap-2 {{ request()->routeIs('adviser.panel-invitations') ? 'active bg-primary' : '' }}"
                    href="{{ route('adviser.panel-invitations') }}">
-                    <i class="fas fa-gavel me-2"></i>
-                    Panel Invitations
+                    <span class="d-flex align-items-center text-truncate">
+                        <i class="fas fa-gavel me-2 flex-shrink-0"></i>
+                        Panel Invitations
+                    </span>
                     @if($pendingPanelInvitations > 0)
-                        <span class="badge bg-warning text-dark ms-2">{{ $pendingPanelInvitations }}</span>
+                        <span class="sidebar-invitation-badge flex-shrink-0">{{ $pendingPanelInvitations > 99 ? '99+' : $pendingPanelInvitations }}</span>
                     @endif
                 </a>
             </li>
@@ -91,17 +99,9 @@
                 <i class="fas fa-exchange-alt me-2"></i>Switch to Coordinator View
             </a>
         @endif
-        <div class="d-flex align-items-center justify-content-between">
-            <div class="small">
-                <div class="text-muted">{{ $userName }}</div>
-                <div class="text-muted">Teacher</div>
-            </div>
-            <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                @csrf
-                <button class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </form>
+        <div class="small">
+            <div class="text-muted">{{ $userName }}</div>
+            <div class="text-muted">Teacher</div>
         </div>
     </div>
 </div>
@@ -135,5 +135,26 @@
 }
 .sidebar {
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+.sidebar-invitation-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border-radius: 9999px;
+    color: #fff;
+    background: linear-gradient(145deg, #dc3545 0%, #b02a37 100%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.sidebar .nav-link.active .sidebar-invitation-badge {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
 }
 </style>

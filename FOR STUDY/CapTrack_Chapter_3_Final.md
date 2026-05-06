@@ -351,6 +351,8 @@ The development testing phase confirms that all features of the application are 
 
 #### Test Cases
 
+<div style="font-family: 'Arial MT', Arial, sans-serif;">
+
 **TEST CASE 1: CHAIRPERSON (ADMIN)**
 | Test Module | Test Scenario | Expected Result | Actual Result | Status |
 | :--- | :--- | :--- | :--- | :--- |
@@ -383,6 +385,8 @@ The development testing phase confirms that all features of the application are 
 | File Upload | Submit Chapter 2 revision | Version increments to MAX + 1 | Version updated | PASSED |
 | Kanban Drag | Move task to 'Done' column | Milestone percentage mathematically increases | Percentage increased | PASSED |
 | Request Defense| Submit desired date/time | Request goes to Coordinator dashboard | Request sent | PASSED |
+
+</div>
 
 ---
 

@@ -58,18 +58,10 @@ class AdviserController extends Controller
             'overdue_tasks_total' => $adviserGroups->sum('overdue_tasks'),
             'pending_invitations' => $pendingInvitations->count()
         ];
-        $notifications = Notification::query()
-            ->visibleToWebUser($user)
-            ->latest()
-            ->take(5)
-            ->get();
-        $recentActivities = $this->getRecentActivities($user);
         return view('dashboards.adviser', compact(
             'activeTerm', 
             'pendingInvitations', 
             'adviserGroups', 
-            'notifications', 
-            'recentActivities',
             'summaryStats'
         ));
     }
@@ -115,63 +107,6 @@ class AdviserController extends Controller
             }
         }
         return null;
-    }
-    private function getRecentActivities($user)
-    {
-        $adviserGroups = Group::with(['members'])
-            ->where('faculty_id', $user->faculty_id)
-            ->get();
-
-        if ($adviserGroups->isEmpty()) {
-            return collect();
-        }
-
-        $groupNamesById = $adviserGroups->pluck('name', 'id');
-        $studentIds = $adviserGroups->flatMap(function ($group) {
-            return $group->members->pluck('student_id');
-        })->unique()->values();
-
-        $submissionActivities = ProjectSubmission::with('student')
-            ->whereIn('student_id', $studentIds)
-            ->latest('submitted_at')
-            ->take(10)
-            ->get()
-            ->map(function ($submission) use ($adviserGroups) {
-                $student = $submission->student;
-                $group = $adviserGroups->first(function ($groupItem) use ($submission) {
-                    return $groupItem->members->contains('student_id', $submission->student_id);
-                });
-
-                return (object) [
-                    'title' => ($group ? $group->name : 'Group') . ' submitted ' . ($submission->title ?? ucfirst($submission->type)),
-                    'description' => 'Uploaded by ' . ($student->name ?? 'Unknown student'),
-                    'icon' => 'file-alt',
-                    'created_at' => $submission->submitted_at ?? $submission->created_at,
-                ];
-            });
-
-        $milestoneActivities = $adviserGroups->flatMap(function ($group) use ($groupNamesById) {
-            return $group->groupMilestones()
-                ->with('milestoneTemplate')
-                ->where('status', 'completed')
-                ->latest('updated_at')
-                ->take(5)
-                ->get()
-                ->map(function ($milestone) use ($groupNamesById) {
-                    return (object) [
-                        'title' => $groupNamesById[$milestone->group_id] . ' completed a milestone',
-                        'description' => $milestone->milestoneTemplate->name ?? $milestone->title ?? 'Milestone completed',
-                        'icon' => 'check-circle',
-                        'created_at' => $milestone->updated_at,
-                    ];
-                });
-        });
-
-        return $submissionActivities
-            ->concat($milestoneActivities)
-            ->sortByDesc('created_at')
-            ->take(8)
-            ->values();
     }
     private function getOverdueTasks($group)
     {

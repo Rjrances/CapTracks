@@ -29,13 +29,15 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
     }
     public function map($row): array
     {
+        $offerCode = trim((string) ($row['offer_code'] ?? ''));
+
         return [
             'student_id' => (string) $row['student_id'], // Force to string to handle Excel numeric conversion
             'name' => trim($row['name'] ?? ''),
             'email' => trim($row['email'] ?? ''),
             'semester' => trim($row['semester'] ?? ''),
             'course' => trim($row['course'] ?? ''),
-            'offer_code' => trim($row['offer_code'] ?? ''),
+            'offer_code' => $offerCode === '' ? null : $offerCode,
         ];
     }
     public function model(array $row)
@@ -91,6 +93,10 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
                 $data['student_id'] = str_pad($data['student_id'], 10, '0', STR_PAD_LEFT);
             }
         }
+        if (isset($data['offer_code']) && trim((string) $data['offer_code']) === '') {
+            $data['offer_code'] = null;
+        }
+
         return $data;
     }
     public function customValidationMessages(): array

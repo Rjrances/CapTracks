@@ -48,7 +48,6 @@ class CoordinatorController extends Controller
             'groupsWithAdviser' => Group::whereNotNull('faculty_id')->count(),
             'groupsWithoutAdviser' => Group::whereNull('faculty_id')->count(),
         ];
-        $recentActivities = collect();
         $recentGroups = Group::with(['adviser', 'members'])
             ->latest()
             ->take(5)
@@ -66,7 +65,6 @@ class CoordinatorController extends Controller
             'activeTerm',
             'notifications',
             'stats',
-            'recentActivities',
             'recentGroups',
             'recentSubmissions',
             'pendingInvitations',

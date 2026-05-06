@@ -109,83 +109,8 @@
             </div>
         </div>
         <div class="row mb-4">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fas fa-clock me-2"></i>Recent Activities
-                            </h5>
-                            <a href="{{ route('coordinator.groups.index') }}" class="btn btn-sm btn-outline-primary">
-                                View All
-                            </a>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        @if(isset($recentActivities) && $recentActivities->count() > 0)
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Activity</th>
-                                            <th>Type</th>
-                                            <th>Details</th>
-                                            <th>Time</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($recentActivities as $activity)
-                                            <tr>
-                                                <td>
-                                                    <div class="fw-semibold">{{ $activity->title }}</div>
-                                                    <small class="text-muted">{{ $activity->description }}</small>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-primary">{{ $activity->type }}</span>
-                                                </td>
-                                                <td>
-                                                    <small class="text-muted">Activity details</small>
-                                                </td>
-                                                <td>
-                                                    <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <div class="text-center py-4">
-                                <i class="fas fa-clock fa-3x text-muted mb-3"></i>
-                                <h6 class="text-muted">No recent activities</h6>
-                                <p class="text-muted small">Activities will appear here as they occur.</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-bolt me-2"></i>Quick Actions
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <a href="{{ route('coordinator.groups.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i>Create Group
-                            </a>
-                            <a href="{{ route('coordinator.classlist.index') }}" class="btn btn-outline-success">
-                                <i class="fas fa-list me-2"></i>View Class List
-                            </a>
-                            <a href="{{ route('coordinator.defense-requests.index') }}" class="btn btn-outline-warning">
-                                <i class="fas fa-inbox me-2"></i>Pending Defense Requests
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card mb-3">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="card h-100">
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
@@ -221,7 +146,9 @@
                         @endif
                     </div>
                 </div>
-                <div class="card">
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
                     <div class="card-header">
                         <h5 class="mb-0">
                             <i class="fas fa-chart-line me-2"></i>System Status

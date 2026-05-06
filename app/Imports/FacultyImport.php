@@ -39,6 +39,7 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
             'semester' => $semester,
         ]);
         $user->save();
+        $user->assignRoles([strtolower($roleName)]);
 
         // Create faculty account
         UserAccount::create([

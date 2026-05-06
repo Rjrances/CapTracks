@@ -87,7 +87,6 @@ class CoordinatorDashboardController extends Controller
             ->latest()
             ->take(5)
             ->get() : collect();
-        $recentActivities = $this->getRecentActivities($activeTerm);
         $upcomingDeadlines = $this->getUpcomingDeadlines();
         $user = auth()->user();
         $coordinatedOfferings = collect();
@@ -124,52 +123,10 @@ class CoordinatorDashboardController extends Controller
             'recentSubmissions',
             'notifications',
             'pendingInvitations',
-            'recentActivities',
             'upcomingDeadlines',
             'coordinatedOfferings',
             'isTeacherCoordinator'
         ));
-    }
-    private function getRecentActivities($selectedTerm = null)
-    {
-        $activities = collect();
-        
-        if ($selectedTerm) {
-            $recentGroups = Group::where('academic_term_id', $selectedTerm->id)->latest()->take(3)->get();
-            foreach ($recentGroups as $group) {
-                $activities->push((object)[
-                    'title' => "New group created: {$group->name}",
-                    'description' => "Group with {$group->members->count()} members",
-                    'icon' => 'users',
-                    'created_at' => $group->created_at,
-                    'type' => 'group_created'
-                ]);
-            }
-        }
-        
-        $recentSubs = ProjectSubmission::latest()->take(3)->get();
-        foreach ($recentSubs as $submission) {
-            $student = $submission->getStudentData();
-            $activities->push((object)[
-                'title' => "New submission: {$submission->type}",
-                'description' => "Submitted by " . ($student ? $student->name : 'Unknown'),
-                'icon' => 'file-alt',
-                'created_at' => $submission->created_at,
-                'type' => 'submission'
-            ]);
-        }
-        
-        $recentInvites = AdviserInvitation::with(['group', 'faculty'])->latest()->take(3)->get();
-        foreach ($recentInvites as $invitation) {
-            $activities->push((object)[
-                'title' => "Adviser invitation sent",
-                'description' => "{$invitation->faculty->name} invited to {$invitation->group->name}",
-                'icon' => 'envelope',
-                'created_at' => $invitation->created_at,
-                'type' => 'invitation'
-            ]);
-        }
-        return $activities->sortByDesc('created_at')->take(8);
     }
     private function getUpcomingDeadlines()
     {

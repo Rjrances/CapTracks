@@ -1,8 +1,14 @@
 @php
+    $pendingGroupInvitationsCount = 0;
     if (\Illuminate\Support\Facades\Auth::guard('student')->check()) {
         $studentAccount = \Illuminate\Support\Facades\Auth::guard('student')->user();
         $student = $studentAccount->student;
         $studentName = $student->name ?? 'Student';
+        if ($student) {
+            $pendingGroupInvitationsCount = \App\Models\GroupInvitation::where('student_id', $student->student_id)
+                ->where('status', 'pending')
+                ->count();
+        }
     } else {
         $studentName = 'Guest';
     }
@@ -59,10 +65,15 @@
             
             @if(!$studentHasGroup)
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('student.group.invitations') || request()->is('student/group/invitations') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white d-flex align-items-center justify-content-between gap-2 {{ request()->routeIs('student.group.invitations') || request()->is('student/group/invitations') ? 'active bg-primary' : '' }}"
                    href="{{ route('student.group.invitations') }}">
-                    <i class="fas fa-envelope me-2"></i>
-                    Group Invitations
+                    <span class="d-flex align-items-center text-truncate">
+                        <i class="fas fa-envelope me-2 flex-shrink-0"></i>
+                        Group Invitations
+                    </span>
+                    @if($pendingGroupInvitationsCount > 0)
+                        <span class="sidebar-invitation-badge flex-shrink-0">{{ $pendingGroupInvitationsCount > 99 ? '99+' : $pendingGroupInvitationsCount }}</span>
+                    @endif
                 </a>
             </li>
             @endif
@@ -134,5 +145,26 @@
 }
 .sidebar {
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+.sidebar-invitation-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border-radius: 9999px;
+    color: #fff;
+    background: linear-gradient(145deg, #dc3545 0%, #b02a37 100%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.sidebar .nav-link.active .sidebar-invitation-badge {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
 }
 </style>

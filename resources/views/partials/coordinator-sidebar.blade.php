@@ -2,6 +2,22 @@
     $user = auth()->user();
     $userName = $user ? $user->name : 'Coordinator';
     $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+    $coordinatorOfferingIds = $user
+        ? $user->offerings()
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->pluck('id')
+            ->toArray()
+        : [];
+    // Same scope as Coordinator\DefenseScheduleController@defenseRequestsIndex
+    $pendingDefenseRequestsCount = ($user && count($coordinatorOfferingIds) > 0)
+        ? \App\Models\DefenseRequest::where('status', 'pending')
+            ->whereHas('group', function ($q) use ($coordinatorOfferingIds) {
+                $q->whereIn('offering_id', $coordinatorOfferingIds);
+            })
+            ->count()
+        : 0;
 @endphp
 <div class="sidebar bg-dark text-white" style="width: 280px; min-height: 100vh; position: fixed; left: 0; top: 0; z-index: 1000;">
     <div class="p-3 border-bottom border-secondary">
@@ -64,15 +80,14 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('coordinator.defense.*') || request()->routeIs('coordinator.defense-requests.*') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white d-flex align-items-center justify-content-between gap-2 {{ request()->routeIs('coordinator.defense.*') || request()->routeIs('coordinator.defense-requests.*') ? 'active bg-primary' : '' }}"
                    href="{{ route('coordinator.defense.index') }}">
-                    <i class="fas fa-gavel me-2"></i>
-                    Defense Management
-                    @php
-                        $pendingRequests = \App\Models\DefenseRequest::where('status', 'pending')->count();
-                    @endphp
-                    @if($pendingRequests > 0)
-                        <span class="badge bg-warning text-dark ms-2">{{ $pendingRequests }}</span>
+                    <span class="d-flex align-items-center text-truncate">
+                        <i class="fas fa-gavel me-2 flex-shrink-0"></i>
+                        Defense Management
+                    </span>
+                    @if($pendingDefenseRequestsCount > 0)
+                        <span class="sidebar-invitation-badge flex-shrink-0">{{ $pendingDefenseRequestsCount > 99 ? '99+' : $pendingDefenseRequestsCount }}</span>
                     @endif
                 </a>
             </li>
@@ -111,17 +126,9 @@
                 <i class="fas fa-exchange-alt me-2"></i>Switch to Adviser View
             </a>
         @endif
-        <div class="d-flex align-items-center justify-content-between">
-            <div class="small">
-                <div class="text-muted">{{ $userName }}</div>
-                <div class="text-muted">Coordinator</div>
-            </div>
-            <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                @csrf
-                <button class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </form>
+        <div class="small">
+            <div class="text-muted">{{ $userName }}</div>
+            <div class="text-muted">Coordinator</div>
         </div>
     </div>
 </div>
@@ -155,6 +162,27 @@
 }
 .sidebar {
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+.sidebar-invitation-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border-radius: 9999px;
+    color: #fff;
+    background: linear-gradient(145deg, #dc3545 0%, #b02a37 100%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.sidebar .nav-link.active .sidebar-invitation-badge {
+    background: rgba(255, 255, 255, 0.22);
+    color: #fff;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
 }
 </style>
 
