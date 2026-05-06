@@ -7,12 +7,6 @@
             <p class="text-muted mb-0">Kanban board for milestone tasks</p>
         </div>
         <div class="d-flex gap-2">
-            <form action="{{ route('student.milestones.recompute-progress', $groupMilestone->id) }}" method="POST" class="d-inline">
-                @csrf
-                <button type="submit" class="btn btn-outline-info">
-                <i class="fas fa-sync-alt me-2"></i>Recompute Progress
-                </button>
-            </form>
             <a href="{{ route('student.project') }}" class="btn btn-outline-primary">
                 <i class="fas fa-file-upload me-2"></i>View Project Submissions
             </a>
@@ -318,7 +312,9 @@ function moveTask(taskId, newStatus) {
     .then(data => {
         if (data.success) {
             showAlert('Task moved successfully!', 'success');
-            updateProgressBars();
+            // Use the progress value already returned by moveTask — no extra request needed
+            updateProgressBarUI(data.milestone_progress);
+            updateColumnCounts();
         } else {
             showAlert('Failed to move task: ' + data.message, 'danger');
             setTimeout(() => location.reload(), 1000);
@@ -329,40 +325,43 @@ function moveTask(taskId, newStatus) {
         setTimeout(() => location.reload(), 1000);
     });
 }
-function updateProgressBars() {
-    fetch(`/student/milestones/{{ $groupMilestone->id }}/recompute-progress`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json',
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            const progressBar = document.querySelector('.progress-bar');
-            const progressText = document.querySelector('.h4');
-            if (progressBar && progressText) {
-                progressBar.style.width = data.progress + '%';
-                progressBar.setAttribute('aria-valuenow', data.progress);
-                progressText.textContent = data.progress + '%';
-                const progressContainer = progressBar.closest('.progress');
-                progressBar.className = 'progress-bar';
-                if (data.progress >= 80) {
-                    progressBar.classList.add('bg-success');
-                    progressText.className = 'h4 mb-0 text-success';
-                } else if (data.progress >= 50) {
-                    progressBar.classList.add('bg-warning');
-                    progressText.className = 'h4 mb-0 text-warning';
-                } else {
-                    progressBar.classList.add('bg-danger');
-                    progressText.className = 'h4 mb-0 text-danger';
-                }
-            }
+
+function updateProgressBarUI(progress) {
+    // Use tag selector 'h4', NOT '.h4' (class selector) — the element has no h4 CSS class
+    const progressBar = document.querySelector('.progress-bar');
+    const progressText = document.querySelector('h4.mb-0');
+
+    if (!progressBar || !progressText) {
+        return;
+    }
+
+    progressBar.style.width = progress + '%';
+    progressBar.setAttribute('aria-valuenow', progress);
+    progressText.textContent = progress + '%';
+    progressBar.className = 'progress-bar';
+
+    if (progress >= 80) {
+        progressBar.classList.add('bg-success');
+        progressText.className = 'mb-0 text-success';
+    } else if (progress >= 50) {
+        progressBar.classList.add('bg-warning');
+        progressText.className = 'mb-0 text-warning';
+    } else {
+        progressBar.classList.add('bg-danger');
+        progressText.className = 'mb-0 text-danger';
+    }
+}
+
+function updateColumnCounts() {
+    document.querySelectorAll('.kanban-column').forEach(column => {
+        const count = column.querySelectorAll('.task-card').length;
+        const badge = column.querySelector('.card-header .badge');
+        if (badge) {
+            badge.textContent = count;
         }
     });
 }
+
 function recomputeProgress() {
     fetch(`/student/milestones/{{ $groupMilestone->id }}/recompute-progress`, {
         method: 'POST',
@@ -375,8 +374,7 @@ function recomputeProgress() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showAlert('Progress recomputed successfully!', 'success');
-            updateProgressBars();
+            updateProgressBarUI(data.progress);
         } else {
             showAlert('Failed to recompute progress: ' + data.message, 'danger');
         }
