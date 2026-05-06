@@ -66,12 +66,10 @@
                     @foreach($tasks['pending'] as $task)
                         @include('student.milestones.partials.task-card', ['task' => $task, 'isGroupLeader' => $isGroupLeader, 'student' => $student])
                     @endforeach
-                    @if($tasks['pending']->count() === 0)
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-inbox fa-2x mb-2"></i>
-                            <p class="mb-0">No pending tasks</p>
-                        </div>
-                    @endif
+                    <div class="kanban-empty-state text-center text-muted py-4" style="{{ $tasks['pending']->count() === 0 ? '' : 'display:none;' }}">
+                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                        <p class="mb-0">No pending tasks</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -89,12 +87,10 @@
                     @foreach($tasks['doing'] as $task)
                         @include('student.milestones.partials.task-card', ['task' => $task, 'isGroupLeader' => $isGroupLeader, 'student' => $student])
                     @endforeach
-                    @if($tasks['doing']->count() === 0)
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-spinner fa-2x mb-2"></i>
-                            <p class="mb-0">No tasks in progress</p>
-                        </div>
-                    @endif
+                    <div class="kanban-empty-state text-center text-muted py-4" style="{{ $tasks['doing']->count() === 0 ? '' : 'display:none;' }}">
+                        <i class="fas fa-spinner fa-2x mb-2"></i>
+                        <p class="mb-0">No tasks in progress</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -112,12 +108,10 @@
                     @foreach($tasks['done'] as $task)
                         @include('student.milestones.partials.task-card', ['task' => $task, 'isGroupLeader' => $isGroupLeader, 'student' => $student])
                     @endforeach
-                    @if($tasks['done']->count() === 0)
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-check-circle fa-2x mb-2"></i>
-                            <p class="mb-0">No completed tasks</p>
-                        </div>
-                    @endif
+                    <div class="kanban-empty-state text-center text-muted py-4" style="{{ $tasks['done']->count() === 0 ? '' : 'display:none;' }}">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                        <p class="mb-0">No completed tasks</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -354,10 +348,19 @@ function updateProgressBarUI(progress) {
 
 function updateColumnCounts() {
     document.querySelectorAll('.kanban-column').forEach(column => {
-        const count = column.querySelectorAll('.task-card').length;
+        const taskCards = column.querySelectorAll('.task-card');
+        const count = taskCards.length;
+
+        // Update the badge count
         const badge = column.querySelector('.card-header .badge');
         if (badge) {
             badge.textContent = count;
+        }
+
+        // Show or hide the empty state placeholder based on card count
+        const emptyState = column.querySelector('.kanban-empty-state');
+        if (emptyState) {
+            emptyState.style.display = count === 0 ? '' : 'none';
         }
     });
 }

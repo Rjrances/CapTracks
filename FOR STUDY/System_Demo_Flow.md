@@ -1,8 +1,8 @@
-# 🚀 CapTrack Live Defense Demo Flow (With Exact Scripts)
+# 🚀 CapTrack Live Defense Demo Flow — Full Script
 
-When you are standing in front of the panel and it is time to demonstrate the system, do not just click around randomly. You need to tell a **story**. 
+When you are standing in front of the panel and it is time to demonstrate the system, do not just click around randomly. You need to tell a **story**.
 
-Follow this exact step-by-step workflow. **Read the text inside the quotation marks out loud to the panel** as you perform the actions on the screen.
+Follow this exact step-by-step workflow. **Read the text inside the quotation marks out loud to the panel** as you perform the actions on the screen. Lines labeled `[ACTION]` are what you DO; lines labeled `[SAY]` are what you SPEAK.
 
 ---
 
@@ -10,83 +10,184 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 1. **Prepare 3 Browsers/Tabs:** Have an Incognito window ready so you can log in as a Chairperson, a Coordinator, and a Student simultaneously without having to log in and out repeatedly.
 2. **Prepare a Dummy File:** Have a sample PDF on your desktop named `Chapter_1_Draft.pdf` ready to upload.
 3. **Prepare a CSV:** Have a small CSV file with 2 fake students ready to demonstrate the import.
+4. **Reset the Kanban board** so at least one task is in "Pending" — so you can drag it live during the demo.
 
 ---
 
 ## 🎬 Phase 1: The Setup (Chairperson)
 *Start your presentation as the highest admin to show how a semester begins.*
 
-**1. Login as Chairperson.**
-> *"Good morning panelists. To begin our demonstration, I am logging in as the Chairperson to set up the system for the new semester."*
+**Step 1 — Login as Chairperson**
 
-**2. CSV Import:** Go to the Student list and upload your sample CSV file.
-> *"To populate our system quickly, the Chairperson can mass-import students via CSV. Now, you might wonder: what if I accidentally upload the exact same file twice? Will the database crash with duplicate errors?*
-> 
-> *(Click Upload)*
-> 
-> *The database will not crash because we handle de-duplication inside the backend using Eloquent's `firstOrCreate` method. As the system loops through the CSV rows, it checks the Student ID. If it finds the ID already exists, it skips it. If it doesn't, it inserts the new student and encrypts their default password automatically."*
+> [SAY] *"Good morning, panelists. To begin our demonstration, I will be showing you the full lifecycle of a capstone project inside our system, CapTrack, starting from the very first step — the Chairperson setting up the semester."*
 
-**3. Create a Class:** Go to Offerings, create a quick class section, assign a Coordinator to it, and manually enroll one of your newly imported students.
+[ACTION] Navigate to the login page. Type in the Chairperson credentials.
+
+> [SAY] *"The Chairperson is the highest-level administrator in the system. Think of this account as the one who turns on the lights before everyone else arrives."*
+
+[ACTION] Click Login.
+
+---
+
+**Step 2 — CSV Import**
+
+[ACTION] Navigate to the Student Management page.
+
+> [SAY] *"The first thing a Chairperson does at the start of a new semester is populate the system with students. Manually entering hundreds of students one by one is not practical, so we built a CSV import feature."*
+
+[ACTION] Click "Import Students" and upload your prepared CSV file.
+
+> [SAY] *"Now, a question that might come to mind is — what happens if the Chairperson accidentally uploads the same file twice? Will the database crash with duplicate errors?"*
+
+[ACTION] Upload the same CSV file a second time.
+
+> [SAY] *"It does not crash. We handle de-duplication inside the backend using Eloquent's `firstOrCreate` method. As the controller loops through each row in the CSV, it checks if a student with that ID already exists. If yes, it skips the row entirely. If no, it inserts the new student and automatically encrypts their default password. No duplicates, no errors."*
+
+---
+
+**Step 3 — Create a Class Offering**
+
+[ACTION] Go to Offerings and create a new class section. Assign a Coordinator to it. Enroll one of the newly imported students.
+
+> [SAY] *"With students in the system, the Chairperson can now create a class offering — essentially a section — and assign a Coordinator to manage it. We will come back to what the Coordinator can do in a moment."*
 
 ---
 
 ## 👨‍🎓 Phase 2: The Core Workflow (Student)
-*Switch to your Incognito tab and log in as the student you just created.*
+*Switch to your Incognito tab and log in as the student you just enrolled.*
 
-**1. Forced Password Change:** Log in with `password123`. 
-> *"I am now logging in as one of the newly imported students using the default password. However, notice how the system immediately blocks me and forces a password change.*
-> 
-> *We implemented a security Middleware for this. Whenever a user logs in, the backend runs a Hash Check. If their encrypted password matches the default 'password123', the middleware intercepts the page load and redirects them here. Once I change it, the Hash Check fails, and I am allowed into the dashboard."*
+**Step 4 — Forced Password Change (Security Middleware)**
 
-**2. Form a Group:** Create a capstone group and send an invitation to an Adviser.
+[ACTION] Open the incognito tab. Go to the student login page. Type in the student ID and the default password `password123`. Click Login.
 
-**3. The Kanban Board:** Open the Milestones page. Drag a task card from 'Pending' to 'Done'. Show them the progress bar immediately updating. 
-> *"Here is the student's Kanban board. When I drag a task to 'Done', the progress percentage updates immediately.*
-> 
-> *To prevent our dashboard from slowing down, we don't calculate these percentages on the fly every time the page loads. Instead, an asynchronous backend trigger fires when the card drops. It counts the total tasks, calculates the math `(Done / Total) * 100`, and saves a static integer directly into the database. This keeps the system highly scalable."*
+> [SAY] *"I am now logging in as one of our newly imported students using the default password assigned to them. Watch what happens."*
 
-**4. Document Versioning:** Go to Proposals. Upload `Chapter_1_Draft.pdf`. 
-> *"When a student uploads a document, we don't want them to accidentally overwrite or delete their past revisions.*
-> 
-> *(Click Upload)*
-> 
-> *Instead of updating the existing database row, our `ProjectSubmissionController` finds the highest version number the student already has, and automatically adds `+1` to it. It then creates a brand new row for Version 2. This ensures the old file is never overwritten, allowing the adviser to compare Version 1 against Version 2 side-by-side later."*
+[ACTION] The system redirects to the Change Password page.
+
+> [SAY] *"Notice that the system immediately blocks the student from accessing the dashboard and forces them to change their password first. This is not just a frontend trick — we implemented a security Middleware in Laravel for this. Every time any user logs in, the middleware runs a Hash Check in the background. It takes the stored encrypted password and checks if it matches the hash of our default 'password123'. If it matches, the middleware intercepts the request and redirects the user here, before they can see anything. Once the student changes their password, that Hash Check will fail on the next login, and they are granted full access. This ensures no student can ever operate the system under a default, insecure credential."*
+
+[ACTION] Set a new password and log in.
+
+---
+
+**Step 5 — Form a Group and Invite an Adviser**
+
+[ACTION] Navigate to My Group. Create a new group. Then go to the Invite Adviser section and send an invitation to a faculty member.
+
+> [SAY] *"Once inside, the student's first task is to form their capstone group and invite a faculty adviser. The invitation is sent as a notification inside the system, and the adviser will be able to accept or decline it from their own dashboard."*
+
+---
+
+**Step 6 — The Kanban Board (AUTO-PROGRESS — MOST IMPORTANT DEMO)**
+
+[ACTION] Navigate to Milestones. Open a milestone. The Kanban board is now visible with columns: Pending, In Progress, and Completed.
+
+> [SAY] *"This is the heart of the student experience — the Milestone Kanban Board. Each card represents a requirement that the group must complete for their capstone project. The coordinator assigns these tasks to the group, and the students manage them here."*
+
+[ACTION] Slowly drag a task card from the "Pending" column to the "Completed" column.
+
+> [SAY] *"Watch the top-right corner as I drag this task to 'Completed'."*
+
+[ACTION] Release the card. The progress percentage and progress bar update immediately without any page reload.
+
+> [SAY] *"The progress percentage updated instantly — no page refresh needed. Let me explain what just happened behind the scenes, because this is an architecture decision we are proud of."*
+
+> [SAY] *"When I dropped that card, our frontend sent a single asynchronous PATCH request to the backend. The backend updated the task's status in the database and then immediately calculated the new progress: it counts the total number of tasks in this milestone, counts how many are in the 'Done' column, and computes the percentage. That new number is saved directly into the milestone record and returned in the same API response. The frontend reads that number from the response and updates the progress bar on the spot — with zero extra network calls. No page reload, no second request. One drag, one call, one update. This makes the system feel fast and real-time, and it keeps the database consistent even if multiple students are working simultaneously."*
+
+---
+
+**Step 7 — Document Versioning**
+
+[ACTION] Navigate to Project Proposals. Click "Upload" and submit the `Chapter_1_Draft.pdf`.
+
+> [SAY] *"Now the student uploads their Chapter 1 draft for adviser review. But here is where our system is different from a basic file upload."*
+
+[ACTION] Upload the same file again, simulating a revised version.
+
+> [SAY] *"Instead of overwriting the existing file, our `ProjectSubmissionController` checks the highest version number already on record for this student, adds one to it, and creates a brand new database row. So Version 1 is never touched. Version 2 is stored separately. The adviser can now open both versions side-by-side and compare the student's revisions over time. This version history is permanent and cannot be deleted by the student."*
 
 ---
 
 ## 👨‍🏫 Phase 3: Management & Auto-Assign (Coordinator)
-*Switch tabs to the Coordinator who handles the logistics.*
+*Switch tabs to the Coordinator account.*
 
-**1. Faculty Matrix:** Go to the Faculty Matrix dashboard.
-> *"I am now logged in as the Coordinator. On this dashboard, the coordinator can monitor the workload of every teacher. We use Laravel's native `withCount` method to aggregate these numbers directly in SQL, avoiding the 'N+1 Query Problem' and keeping the page lightning fast."*
+**Step 8 — Faculty Matrix Dashboard**
 
-**2. Approve the Proposal:** Go to the Proposal list and approve the student's document.
+[ACTION] Log in as the Coordinator. Navigate to the Faculty Matrix dashboard.
 
-**3. The Auto-Assign Algorithm (CRITICAL):** Go to Defense Scheduling. Pretend the student requested a defense. Click "Schedule Panel" and open the dropdown.
-> *"When a student is ready to defend, the Coordinator uses our Auto-Assign algorithm to find panelists.* 
-> 
-> *(Point to the dropdown list)*
-> 
-> *The system doesn't just show every teacher. First, it looks at the requested date and completely filters out any faculty who already have a defense scheduled at this exact time, preventing double-booking.*
-> 
-> *Next, it automatically removes the group's adviser to prevent a conflict of interest. Finally, it counts how many groups the remaining eligible teachers are assigned to, and sorts them from lowest to highest. It gives the Coordinator the top 3 least-busy teachers to ensure workload is balanced fairly across the department."*
+> [SAY] *"I am now logged in as the Coordinator, who manages the operational side of the capstone program. On this dashboard, the Coordinator can see at a glance how many groups every faculty member is currently advising."*
+
+> [SAY] *"What makes this fast is how we query it. We use Laravel's `withCount` method, which translates into a single SQL query using an aggregated subquery. The database does the counting for us at the SQL level — we are not looping through records in PHP, which would be extremely slow for large departments. This eliminates what is known as the 'N+1 Query Problem'."*
+
+---
+
+**Step 9 — Approve a Proposal**
+
+[ACTION] Go to Proposal Submissions. Find the student's uploaded document. Click Approve.
+
+> [SAY] *"The Coordinator reviews and approves the student's submitted proposal. Once approved, the student is notified inside the system and can proceed to the next stage."*
+
+---
+
+**Step 10 — The Auto-Assign Algorithm (CRITICAL FEATURE)**
+
+[ACTION] Navigate to Defense Scheduling. Find a group that has requested a defense. Click "Schedule Panel" and open the faculty dropdown.
+
+> [SAY] *"This is one of the most technically significant features we built — the Auto-Assign Panel algorithm."*
+
+> [SAY] *"When a group is ready to defend, the Coordinator needs to pick three faculty members to sit on the panel. But they cannot just pick anyone. There are three rules our system enforces automatically:"*
+
+> [SAY] *"First — no double booking. The system checks the requested defense date and time, and completely filters out any faculty who already have a defense scheduled at that exact slot. You will not see them in this list at all."*
+
+> [SAY] *"Second — no conflict of interest. The group's own adviser is automatically removed from the selectable pool. An adviser cannot be a panelist for their own advisee."*
+
+> [SAY] *"Third — workload balancing. The remaining eligible faculty are sorted from the least number of assigned groups to the most. The top of this list shows the three least-busy teachers, so the Coordinator naturally gravitates toward balanced assignments."*
+
+[ACTION] Select three panelists from the top of the list and save the schedule.
+
+> [SAY] *"All three rules are enforced by the backend query — not by the UI. Even if someone tried to bypass the frontend, the controller would reject the invalid selection. The system is secure at the data layer."*
 
 ---
 
 ## 📝 Phase 4: The Final Grade (Adviser / Panelist)
-*Log out and log in as one of the teachers you assigned to the panel.*
+*Log in as one of the assigned panelists.*
 
-**1. The Live Defense:** Go to the Active Defenses calendar.
+**Step 11 — Dynamic JSON Grading Rubric**
 
-**2. Dynamic JSON Rubric:** Open the Grading Sheet. Input some scores into the criteria (Grammar, Logic, etc.) and submit.
-> *"Finally, I am logged in as a Panelist grading the live defense. As I input scores for Grammar, Methodology, and Delivery...*
-> 
-> *(Click Submit)*
-> 
-> *...the system calculates the total grade. However, we did not hardcode these criteria as columns in our database. Instead, the backend takes this entire form and converts it into a raw JSON string, saving it into a single text column. This dynamic JSON architecture means the university can completely change their grading rubrics next semester, and our database will instantly support it without breaking or requiring SQL migrations."*
+[ACTION] Log in as a Panelist. Navigate to Active Defenses. Open the Grading Sheet for the group.
+
+> [SAY] *"I am now logged in as one of the panelists assigned to this defense. After the group presents, I need to submit my grades using this rubric."*
+
+[ACTION] Fill in scores for the visible criteria — Methodology, Presentation, Delivery, etc. Click Submit.
+
+> [SAY] *"As I submit this grading sheet, I want to highlight something about how we store this data, because it is a deliberate architectural decision."*
+
+> [SAY] *"We did not create a separate database column for every grading criterion — Grammar, Methodology, Delivery, and so on. If we did that, and the university changed their rubric next semester, we would need to run a database migration just to add or remove columns. That is fragile and not scalable."*
+
+> [SAY] *"Instead, our backend takes the entire submitted form and serializes it into a single JSON string, which is saved into one text column in the database. The criteria names, the weights, the scores — all of it lives inside that JSON blob. This means the university can completely overhaul their grading criteria next semester, and our system will support it immediately without touching the database schema."*
 
 ---
 
 ## 🏁 The Closing Statement
-End the demo by saying:
-> *"As you can see, panelists, CapTrack is not just a tracking system. It is a fully automated project management pipeline that secures student data natively, balances faculty workload algorithmically, and provides a highly flexible JSON architecture. Thank you, and we are now ready for your questions."*
+
+[ACTION] Return to the student's dashboard. Show the final progress bar and defense schedule card.
+
+> [SAY] *"As you can see, panelists, CapTrack is not just a task tracker. It is a fully automated capstone management pipeline that secures student data at the middleware layer, auto-calculates progress in real time using a single-request architecture, versions documents without overwriting history, balances faculty workload algorithmically, and stores grading data in a flexible JSON format that can adapt to any rubric."*
+
+> [SAY] *"Every design decision we made was driven by one question: 'What happens when this scales to hundreds of students and dozens of faculty?' We believe CapTrack answers that question. Thank you, panelists, and we are now open for your questions."*
+
+---
+
+## ❓ Anticipated Panel Questions & Answers
+
+**Q: "What happens if two students drag the same task at the same time?"**
+> *"Each drag-and-drop fires an independent PATCH request scoped to a specific task ID. The backend validates the task, updates its status, and recalculates progress atomically on the server side. The last write wins at the database level, and the next page load will reflect the correct state."*
+
+**Q: "How do you prevent students from accessing other groups' data?"**
+> *"Every controller method first retrieves the authenticated student, then retrieves only the groups that student belongs to, and scopes all queries through that group. A student cannot pass in a different group ID and get data — the backend ignores it because the query is always filtered by the session's authenticated user."*
+
+**Q: "Why did you use Laravel instead of building it from scratch?"**
+> *"Laravel provides a proven security foundation — CSRF protection, SQL injection prevention through Eloquent's parameterized queries, and authentication guards. Building those from scratch introduces risk. We used the framework for its security and infrastructure, and focused our development effort on the business logic that is unique to capstone management."*
+
+**Q: "How does the system handle a coordinator who is also an adviser?"**
+> *"We implemented a Switch View mechanism. A faculty member with dual roles — coordinator and adviser — sees a toggle in their sidebar. When they switch to Coordinator View, only coordinator features are visible. When they switch to Adviser View, only adviser features are visible. The backend checks the role on every request, so there is no permission bleed between the two contexts."*
