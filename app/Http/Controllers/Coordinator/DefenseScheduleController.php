@@ -276,7 +276,23 @@ class DefenseScheduleController extends Controller
 
         try {
             DB::beginTransaction();
+            $requestedDefenseType = match ($validated['stage']) {
+                'proposal' => 'proposal',
+                '60' => '60_percent',
+                '100' => '100_percent',
+                default => null,
+            };
+            $linkedDefenseRequest = DefenseRequest::query()
+                ->where('group_id', $validated['group_id'])
+                ->whereIn('status', ['pending', 'approved'])
+                ->when($requestedDefenseType, function ($query) use ($requestedDefenseType) {
+                    $query->where('defense_type', $requestedDefenseType);
+                })
+                ->orderByDesc('requested_at')
+                ->first();
+
             $schedule = DefenseSchedule::create([
+                'defense_request_id' => $linkedDefenseRequest?->id,
                 'group_id' => $validated['group_id'],
                 'stage' => $validated['stage'],
                 'academic_term_id' => $validated['academic_term_id'],
@@ -320,6 +336,12 @@ class DefenseScheduleController extends Controller
                         'responded_at' => now(),
                     ]);
                 }
+            }
+            if ($linkedDefenseRequest) {
+                $linkedDefenseRequest->update([
+                    'status' => 'scheduled',
+                    'responded_at' => now(),
+                ]);
             }
             DB::commit();
             $this->sendDefenseScheduleNotifications($schedule);
@@ -491,6 +513,17 @@ class DefenseScheduleController extends Controller
 
             if ($defenseSchedule->defense_request_id) {
                 DefenseRequest::where('id', $defenseSchedule->defense_request_id)->delete();
+            } else {
+                // Recovery path for legacy schedules created without defense_request_id linkage.
+                DefenseRequest::where('group_id', $defenseSchedule->group_id)
+                    ->where('status', 'approved')
+                    ->whereDoesntHave('defenseSchedule')
+                    ->orderByDesc('requested_at')
+                    ->limit(1)
+                    ->update([
+                        'status' => 'pending',
+                        'responded_at' => null,
+                    ]);
             }
 
             DefensePanel::where('defense_schedule_id', $id)->delete();
@@ -833,7 +866,9 @@ class DefenseScheduleController extends Controller
             'status' => 'approved',
             'responded_at' => now(),
         ]);
-        return back()->with('success', 'Defense request approved successfully!');
+        return redirect()
+            ->route('coordinator.defense.create')
+            ->with('success', 'Defense request approved. You can now create the defense schedule.');
     }
 
     public function reject(Request $request, DefenseRequest $defenseRequest)

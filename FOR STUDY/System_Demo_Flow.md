@@ -123,12 +123,36 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 
 ---
 
-## 👨‍🏫 Phase 3: Management & Auto-Assign (Coordinator)
+## 📋 Phase 3: First Review (Adviser)
+*Switch to the Adviser's tab — the assigned faculty adviser reviews the proposal FIRST before the Coordinator.*
+
+> **Browser note:** The Adviser uses the `web` guard (same as Coordinator). If they are different people, log the Adviser in on a separate Incognito window, or log out the Coordinator first.
+
+**Step 8 — Adviser Reviews the Proposal**
+
+[ACTION] Log in as the Adviser (e.g., Engr. Vicente Patalita III). Navigate to **Proposal Review** in the sidebar.
+
+> [SAY] *"I am now logged in as the group's assigned faculty adviser. When the student submitted their proposal, the system automatically set its status to 'Under Review' and routed it here — to the adviser's inbox. The adviser is the first line of review."*
+
+[ACTION] Open the student's submitted proposal. Click "Preview" to open the document inline.
+
+> [SAY] *"The adviser can read the full document without downloading it. They can also open two versions side-by-side using our Version Compare feature, which pulls both files from storage and renders them in a split-pane view — useful for comparing what changed between revisions."*
+
+[ACTION] Fill in a feedback comment. Select **Approved**. Click Submit.
+
+> [SAY] *"Once the adviser submits, two things happen simultaneously: the proposal status updates to 'approved' in the database, and the student receives an in-system notification immediately. If the adviser had rejected it, the comment they wrote becomes the revision instruction the student sees on their dashboard."*
+
+> [SAY] *"The adviser can only see proposals from groups they are assigned to. The backend query filters strictly by `faculty_id` — Adviser A cannot see or approve Adviser B's students. Access is scoped at the database layer, not just hidden in the UI."*
+
+---
+
+## 👨‍🏫 Phase 4: Management & Auto-Assign (Coordinator)
 *Switch tabs to the Coordinator account.*
 
-**Step 8 — Faculty Matrix Dashboard**
+**Step 9 — Faculty Matrix Dashboard**
 
 [ACTION] Log in as the Coordinator. Navigate to the Faculty Matrix dashboard.
+
 
 > [SAY] *"I am now logged in as the Coordinator, who manages the operational side of the capstone program. On this dashboard, the Coordinator can see at a glance how many groups every faculty member is currently advising."*
 
@@ -136,7 +160,19 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 
 ---
 
-**Step 9 — Approve a Proposal**
+**Step 9 — Assign a Milestone to the Group**
+
+[ACTION] Go to Milestones. Find the student's group in the group list. Select a milestone template from the dropdown (e.g., "Chapter 1 — Proposal") and set a due date. Click Assign.
+
+> [SAY] *"Before the student can begin working on tasks, the Coordinator must assign a milestone template to their group. A milestone template is a pre-built checklist — created by the Coordinator — that contains all the tasks the group must complete for that phase of their project. When I click Assign here, the system does two things: it creates a new milestone record linked to this group, and it automatically generates a task card for every item inside that template. The students do not build their own task list — the Coordinator defines the requirements, and the system provisions them instantly."*
+
+> [SAY] *"Another rule the system enforces: the same template cannot be assigned to the same group twice. If I try to assign 'Chapter 1' again, the backend checks the `group_milestones` table for an existing match and rejects the duplicate. This prevents accidental double-assignment."*
+
+[ACTION] The group now shows the assigned milestone. The student's Kanban board is now populated.
+
+---
+
+**Step 10 — Approve a Proposal**
 
 [ACTION] Go to Proposal Submissions. Find the student's uploaded document. Click Approve.
 
@@ -144,7 +180,8 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 
 ---
 
-**Step 10 — The Auto-Assign Algorithm (CRITICAL FEATURE)**
+**Step 11 — The Auto-Assign Algorithm (CRITICAL FEATURE)**
+
 
 [ACTION] Navigate to Defense Scheduling. Find a group that has requested a defense. Click "Schedule Panel" and open the faculty dropdown.
 
@@ -167,7 +204,7 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 ## 📝 Phase 4: The Final Grade (Adviser / Panelist)
 *Log in as one of the assigned panelists.*
 
-**Step 11 — Dynamic JSON Grading Rubric**
+**Step 12 — Dynamic JSON Grading Rubric**
 
 [ACTION] Log in as a Panelist. Navigate to Active Defenses. Open the Grading Sheet for the group.
 

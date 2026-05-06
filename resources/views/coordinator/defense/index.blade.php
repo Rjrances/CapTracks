@@ -143,7 +143,6 @@
                                         <th>Defense Type</th>
                                         <th>Status</th>
                                         <th>Requested</th>
-                                        <th>Student Message</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -184,21 +183,8 @@
                                                 <small class="text-muted">{{ $request->requested_at->format('h:i A') }}</small>
                                             </td>
                                             <td>
-                                                @if($request->student_message)
-                                                    <div class="text-truncate" style="max-width: 200px;" title="{{ $request->student_message }}">
-                                                        {{ $request->student_message }}
-                                                    </div>
-                                                @else
-                                                    <span class="text-muted">No message</span>
-                                                @endif
-                                            </td>
-                                            <td>
                                                 @if($request->status === 'pending')
                                                     <div class="btn-group btn-group-sm" role="group">
-                                                        <a href="{{ route('coordinator.defense-requests.create-schedule', $request) }}" 
-                                                           class="btn btn-success btn-sm">
-                                                            <i class="fas fa-calendar-plus"></i> Schedule
-                                                        </a>
                                                         <button type="button" class="btn btn-warning btn-sm" 
                                                                 onclick="approveRequest({{ $request->id }})">
                                                             <i class="fas fa-check"></i> Approve
@@ -209,20 +195,7 @@
                                                         </button>
                                                     </div>
                                                 @elseif($request->status === 'approved')
-                                                    <div class="btn-group btn-group-sm" role="group">
-                                                        @if(!$hasActiveGroupSchedule)
-                                                            <a href="{{ route('coordinator.defense-requests.create-schedule', $request) }}" 
-                                                               class="btn btn-success btn-sm">
-                                                                <i class="fas fa-calendar-plus"></i> Create Schedule
-                                                            </a>
-                                                        @else
-                                                            <span class="badge bg-secondary">Schedule Exists</span>
-                                                        @endif
-                                                        <button type="button" class="btn btn-danger btn-sm" 
-                                                                onclick="rejectRequest({{ $request->id }})">
-                                                            <i class="fas fa-times"></i> Reject
-                                                        </button>
-                                                    </div>
+                                                    <span class="badge bg-success">Approved</span>
                                                 @elseif($request->status === 'scheduled')
                                                     <span class="badge bg-success">Scheduled</span>
                                                     @if($request->defenseSchedule)
@@ -297,7 +270,22 @@
                                                 @if($schedule->defensePanels->count() > 0)
                                                     <div class="small">
                                                         @foreach($schedule->defensePanels as $panel)
-                                                            <div>{{ $panel->faculty->name }} ({{ ucfirst($panel->role) }})</div>
+                                                            @php
+                                                                $confirmationLabel = match($panel->status) {
+                                                                    'accepted' => 'Confirmed',
+                                                                    'declined' => 'Declined',
+                                                                    default => 'Waiting for confirmation',
+                                                                };
+                                                                $confirmationBadgeClass = match($panel->status) {
+                                                                    'accepted' => 'bg-success',
+                                                                    'declined' => 'bg-danger',
+                                                                    default => 'bg-warning text-dark',
+                                                                };
+                                                            @endphp
+                                                            <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
+                                                                <span>{{ $panel->faculty->name }} ({{ ucfirst($panel->role) }})</span>
+                                                                <span class="badge {{ $confirmationBadgeClass }}">{{ $confirmationLabel }}</span>
+                                                            </div>
                                                         @endforeach
                                                     </div>
                                                 @else
@@ -305,10 +293,31 @@
                                                 @endif
                                             </td>
                                             <td>
+                                                @php
+                                                    $hasConfirmedChair = $schedule->defensePanels->where('role', 'chair')->where('status', 'accepted')->isNotEmpty();
+                                                    $hasConfirmedMember = $schedule->defensePanels->where('role', 'member')->where('status', 'accepted')->isNotEmpty();
+                                                    $canOpenRatings = $hasConfirmedChair && $hasConfirmedMember;
+                                                    $missingRoles = [];
+                                                    if (!$hasConfirmedChair) {
+                                                        $missingRoles[] = 'Chair';
+                                                    }
+                                                    if (!$hasConfirmedMember) {
+                                                        $missingRoles[] = 'Member';
+                                                    }
+                                                    $ratingsBlockReason = empty($missingRoles)
+                                                        ? null
+                                                        : 'Waiting for confirmation: ' . implode(' and ', $missingRoles) . '.';
+                                                @endphp
                                                 <div class="btn-group btn-group-sm" role="group">
-                                                    <a href="{{ route('coordinator.rating-sheets.show', $schedule) }}" class="btn btn-outline-info btn-sm">
-                                                        <i class="fas fa-clipboard-check"></i> Ratings
-                                                    </a>
+                                                    @if($canOpenRatings)
+                                                        <a href="{{ route('coordinator.rating-sheets.show', $schedule) }}" class="btn btn-outline-info btn-sm">
+                                                            <i class="fas fa-clipboard-check"></i> Ratings
+                                                        </a>
+                                                    @else
+                                                        <button type="button" class="btn btn-outline-secondary btn-sm" disabled title="{{ $ratingsBlockReason }}">
+                                                            <i class="fas fa-lock me-1"></i> Ratings Locked
+                                                        </button>
+                                                    @endif
                                                     <a href="{{ route('coordinator.defense.edit', $schedule) }}" class="btn btn-outline-primary btn-sm">
                                                         <i class="fas fa-edit"></i> Edit
                                                     </a>
@@ -327,6 +336,9 @@
                                                         <i class="fas fa-trash"></i> Delete
                                                     </button>
                                                 </div>
+                                                @if(!$canOpenRatings && $ratingsBlockReason)
+                                                    <div class="small text-muted mt-1">{{ $ratingsBlockReason }}</div>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach
@@ -347,6 +359,28 @@
                     @endif
                 </div>
             </div>
+</div>
+
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Approve Defense Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="approveForm" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <p class="mb-0">Are you sure you want to approve this defense request?</p>
+                    <small class="text-muted">You will be redirected to create the defense schedule after approval.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Approve Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="rejectModal" tabindex="-1">
@@ -376,20 +410,10 @@
 
 <script>
 function approveRequest(requestId) {
-    if (confirm('Are you sure you want to approve this defense request?')) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/coordinator/defense-requests/${requestId}/approve`;
-        
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = '_token';
-        csrfToken.value = '{{ csrf_token() }}';
-        
-        form.appendChild(csrfToken);
-        document.body.appendChild(form);
-        form.submit();
-    }
+    const modal = new bootstrap.Modal(document.getElementById('approveModal'));
+    const form = document.getElementById('approveForm');
+    form.action = `/coordinator/defense-requests/${requestId}/approve`;
+    modal.show();
 }
 
 function rejectRequest(requestId) {

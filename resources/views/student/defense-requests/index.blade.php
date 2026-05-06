@@ -96,16 +96,34 @@
                                     </td>
                                     <td>
                                         @php
-                                            $statusClass = match($request->status) {
-                                                'pending' => 'warning',
-                                                'approved' => 'success',
-                                                'rejected' => 'danger',
-                                                'scheduled' => 'primary',
-                                                default => 'secondary'
-                                            };
+                                            $isFinalized = (bool) optional($request->defenseSchedule)->evaluationSummary;
+                                            $finalRecommendation = optional(optional($request->defenseSchedule)->evaluationSummary)->final_recommendation;
+                                            if ($isFinalized) {
+                                                $statusClass = match($finalRecommendation) {
+                                                    'pass' => 'success',
+                                                    'conditional_pass' => 'warning',
+                                                    'redefend' => 'danger',
+                                                    default => 'secondary',
+                                                };
+                                                $statusLabel = match($finalRecommendation) {
+                                                    'pass' => 'Completed - Pass',
+                                                    'conditional_pass' => 'Completed - Conditional Pass',
+                                                    'redefend' => 'Completed - Re-defend',
+                                                    default => 'Completed',
+                                                };
+                                            } else {
+                                                $statusClass = match($request->status) {
+                                                    'pending' => 'warning',
+                                                    'approved' => 'success',
+                                                    'rejected' => 'danger',
+                                                    'scheduled' => 'primary',
+                                                    default => 'secondary'
+                                                };
+                                                $statusLabel = ucfirst($request->status);
+                                            }
                                         @endphp
                                         <span class="badge bg-{{ $statusClass }}">
-                                            {{ ucfirst($request->status) }}
+                                            {{ $statusLabel }}
                                         </span>
                                     </td>
                                     <td>
@@ -181,7 +199,7 @@
             <div class="row">
                 <div class="col-md-6">
                     <h6>1. Submit Request</h6>
-                    <p class="text-muted small">Choose your defense type and preferred date/time</p>
+                    <p class="text-muted small">Send a readiness request to notify your coordinator</p>
                     <h6>2. Coordinator Review</h6>
                     <p class="text-muted small">Your coordinator will review and approve/reject</p>
                 </div>

@@ -105,6 +105,44 @@
             </div>
         </div>
         @if($canViewMilestoneDiscussions ?? false)
+            {{-- Milestone Kanban Boards --}}
+            <div class="mb-4">
+                <div class="fw-bold mb-2" style="font-size:1.2rem;">
+                    <i class="fas fa-columns me-2"></i>Milestone Kanban Boards
+                </div>
+                <div class="bg-light rounded-3 p-3">
+                    @php $milestones = $group->groupMilestoneTasks->pluck('groupMilestone')->unique('id')->filter(); @endphp
+                    @forelse($group->groupMilestones ?? collect() as $gm)
+                        <div class="d-flex align-items-center justify-content-between p-2 bg-white rounded mb-2 border">
+                            <div>
+                                <strong>{{ $gm->milestoneTemplate->name ?? $gm->title ?? 'Milestone' }}</strong>
+                                <div class="small text-muted">
+                                    Progress: {{ $gm->progress_percentage }}%
+                                    &nbsp;|&nbsp;
+                                    <span class="badge bg-{{ $gm->progress_percentage >= 100 ? 'success' : ($gm->progress_percentage >= 50 ? 'warning text-dark' : 'secondary') }}">
+                                        {{ $gm->status_text }}
+                                    </span>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px; width: 200px;">
+                                    <div class="progress-bar bg-{{ $gm->progress_percentage >= 100 ? 'success' : ($gm->progress_percentage >= 50 ? 'warning' : 'secondary') }}"
+                                         style="width: {{ $gm->progress_percentage }}%"></div>
+                                </div>
+                            </div>
+                            <a href="{{ route('adviser.groups.milestone-kanban', [$group, $gm]) }}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-columns me-1"></i>View Kanban
+                            </a>
+                        </div>
+                    @empty
+                        <div class="text-muted text-center">
+                            <i class="fas fa-columns fa-2x mb-2 d-block"></i>
+                            No milestones assigned to this group yet.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+
+            {{-- Milestone Task Discussions --}}
             <div class="mb-4">
                 <div class="fw-bold mb-2" style="font-size:1.2rem;">
                     <i class="fas fa-tasks me-2"></i>Milestone tasks (discussion)

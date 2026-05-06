@@ -26,7 +26,7 @@ class StudentDefenseRequestController extends Controller
             return redirect()->route('student.group')->withErrors(['group' => 'You must be part of a group to request defenses.']);
         }
         $defenseRequests = DefenseRequest::where('group_id', $group->id)
-            ->with(['group', 'defenseSchedule.defensePanels.faculty'])
+            ->with(['group', 'defenseSchedule.defensePanels.faculty', 'defenseSchedule.evaluationSummary'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -83,9 +83,6 @@ class StudentDefenseRequestController extends Controller
         }
         $request->validate([
             'defense_type' => 'required|in:proposal,60_percent,100_percent',
-            'student_message' => 'nullable|string|max:1000',
-            'preferred_date' => 'required|date|after:today',
-            'preferred_time' => 'required|date_format:H:i',
         ]);
         if (!$this->canCreateDefenseRequest($group->id)) {
             return redirect()->route('student.defense-requests.index')
@@ -100,7 +97,7 @@ class StudentDefenseRequestController extends Controller
             $defenseRequest = DefenseRequest::create([
                 'group_id' => $group->id,
                 'defense_type' => $request->defense_type,
-                'student_message' => $request->student_message,
+                'student_message' => null,
                 'status' => 'pending',
                 'requested_at' => now(),
             ]);
@@ -130,6 +127,7 @@ class StudentDefenseRequestController extends Controller
             abort(403, 'Unauthorized access to this defense request.');
         }
         $defenseRequest->load(['defenseSchedule.defensePanels.faculty']);
+        $defenseRequest->loadMissing('defenseSchedule.evaluationSummary');
         return view('student.defense-requests.show', compact('defenseRequest'));
     }
     public function cancel(DefenseRequest $defenseRequest)

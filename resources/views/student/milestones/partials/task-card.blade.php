@@ -73,12 +73,7 @@
                             <i class="fas fa-upload"></i>
                         </a>
                     @endif
-                    @if($task->submissions->count() > 0)
-                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#submissionsModal{{ $task->id }}" title="View Submissions">
-                            <i class="fas fa-eye"></i>
-                            <span class="badge bg-primary ms-1">{{ $task->submissions->count() }}</span>
-                        </button>
-                    @endif
+
                 </div>
             </div>
             <div class="ms-2">

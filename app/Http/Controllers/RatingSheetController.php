@@ -7,6 +7,7 @@ use App\Models\DefenseSchedule;
 use App\Models\RatingSheet;
 use App\Services\DefenseEvaluationService;
 use App\Services\DefenseRubricService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,6 +26,9 @@ class RatingSheetController extends Controller
             return $redirect;
         }
         $schedule->loadMissing('group.members');
+        if (!$this->isRatingWindowOpen($schedule)) {
+            abort(403, $this->ratingWindowBlockReason($schedule));
+        }
 
         $isAssignedPanel = $schedule->defensePanels()
             ->whereIn('role', ['coordinator', 'chair', 'member'])
@@ -84,6 +88,9 @@ class RatingSheetController extends Controller
     public function submitAdviserRating(Request $request, DefenseSchedule $schedule)
     {
         $user = Auth::user();
+        if (!$this->isRatingWindowOpen($schedule)) {
+            return back()->withErrors(['rating' => $this->ratingWindowBlockReason($schedule)]);
+        }
 
         $isAssignedPanel = $schedule->defensePanels()
             ->whereIn('role', ['coordinator', 'chair', 'member'])
@@ -239,6 +246,11 @@ class RatingSheetController extends Controller
         if (!in_array($schedule->group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only view ratings for schedules in your offerings.');
         }
+        if (!$this->isRatingWindowOpen($schedule)) {
+            return redirect()
+                ->route('coordinator.defense.index')
+                ->with('error', $this->ratingWindowBlockReason($schedule));
+        }
 
         $ratingSheets = RatingSheet::with('faculty')
             ->where('defense_schedule_id', $schedule->id)
@@ -299,6 +311,27 @@ class RatingSheetController extends Controller
             'loggable_type' => DefenseSchedule::class,
             'loggable_id' => $schedule->id,
         ]);
+
+        $schedule->loadMissing('group.members.account', 'evaluationSummary');
+        $finalLabel = match($schedule->evaluationSummary->final_recommendation ?? null) {
+            'pass' => 'Pass',
+            'conditional_pass' => 'Conditional Pass',
+            'redefend' => 'Re-defend',
+            default => 'Completed',
+        };
+        foreach (($schedule->group->members ?? collect()) as $member) {
+            $studentAccountId = optional($member->account)->id;
+            if (!$studentAccountId) {
+                continue;
+            }
+            NotificationService::createSimpleNotification(
+                'Defense result finalized',
+                "Your {$schedule->stage_label} defense result is finalized: {$finalLabel}.",
+                'student',
+                route('student.defense-requests.index'),
+                (int) $studentAccountId
+            );
+        }
 
         return redirect()
             ->route('coordinator.rating-sheets.show', $schedule)
@@ -420,7 +453,17 @@ class RatingSheetController extends Controller
                 return ($groupScore + $individualScore) / 2;
             })->values();
 
-            $finalScore = $panelScores->count() > 0 ? (float) $panelScores->avg() : 0;
+            if ($panelScores->count() === 0) {
+                return [
+                    'student_id' => $member->student_id,
+                    'student_name' => $member->name,
+                    'final_score' => null,
+                    'grade_label' => 'N/A',
+                    'status' => 'Pending',
+                ];
+            }
+
+            $finalScore = (float) $panelScores->avg();
 
             return [
                 'student_id' => $member->student_id,
@@ -451,6 +494,37 @@ class RatingSheetController extends Controller
         }
 
         return 'Failed';
+    }
+
+    private function isRatingWindowOpen(DefenseSchedule $schedule): bool
+    {
+        $schedule->loadMissing('defensePanels');
+        $hasConfirmedChair = $schedule->defensePanels
+            ->where('role', 'chair')
+            ->where('status', 'accepted')
+            ->isNotEmpty();
+        $hasConfirmedMember = $schedule->defensePanels
+            ->where('role', 'member')
+            ->where('status', 'accepted')
+            ->isNotEmpty();
+
+        return $hasConfirmedChair && $hasConfirmedMember;
+    }
+
+    private function ratingWindowBlockReason(DefenseSchedule $schedule): string
+    {
+        $schedule->loadMissing('defensePanels');
+        $missing = [];
+        if ($schedule->defensePanels->where('role', 'chair')->where('status', 'accepted')->isEmpty()) {
+            $missing[] = 'Chair';
+        }
+        if ($schedule->defensePanels->where('role', 'member')->where('status', 'accepted')->isEmpty()) {
+            $missing[] = 'Member';
+        }
+
+        return empty($missing)
+            ? 'Ratings are not available yet.'
+            : 'Ratings open only after confirmation from: ' . implode(' and ', $missing) . '.';
     }
 
     private function redirectToPreferredScheduleIfNeeded(DefenseSchedule $schedule, $user)

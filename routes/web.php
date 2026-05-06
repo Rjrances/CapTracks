@@ -299,6 +299,7 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::get('/all-groups', [AdviserController::class, 'myGroups'])->name('all-groups');
     Route::get('/panel-groups', [AdviserController::class, 'panelSubmissions'])->name('panel-groups');
     Route::get('/groups/{group}', [AdviserController::class, 'groupDetails'])->name('groups.details');
+    Route::get('/groups/{group}/milestones/{groupMilestone}/kanban', [AdviserController::class, 'showGroupMilestoneKanban'])->name('groups.milestone-kanban');
     Route::get('/groups/{group}/milestone-tasks/{groupMilestoneTask}/comments', [AdviserController::class, 'milestoneTaskComments'])->name('groups.milestone-task-comments');
     Route::post('/groups/{group}/milestone-tasks/{groupMilestoneTask}/comments', [AdviserController::class, 'storeMilestoneTaskComment'])->name('groups.milestone-task-comments.store');
     Route::get('/panel-submissions', [AdviserController::class, 'panelSubmissions'])->name('panel-submissions');

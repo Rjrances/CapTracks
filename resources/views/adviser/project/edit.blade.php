@@ -113,26 +113,6 @@
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-bolt me-2"></i>Quick Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-success" onclick="setStatus('approved')">
-                            <i class="fas fa-check me-2"></i>Quick Approve
-                        </button>
-                        <button type="button" class="btn btn-danger" onclick="setStatus('rejected')">
-                            <i class="fas fa-times me-2"></i>Quick Reject
-                        </button>
-                        <button type="button" class="btn btn-warning" onclick="setStatus('pending')">
-                            <i class="fas fa-clock me-2"></i>Mark Pending
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5 class="mb-0">
                         <i class="fas fa-clipboard me-2"></i>Feedback Templates
                     </h5>
                 </div>

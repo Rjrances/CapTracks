@@ -10,6 +10,7 @@ use App\Models\ProjectSubmission;
 use App\Models\AcademicTerm;
 use App\Models\ActivityLog;
 use App\Models\GroupMilestoneTask;
+use App\Models\GroupMilestone;
 use App\Models\Notification;
 use App\Models\TaskComment;
 use App\Services\ActivityLogService;
@@ -269,6 +270,7 @@ class AdviserController extends Controller
 
         $group->load([
             'adviser',
+            'groupMilestones.milestoneTemplate',
             'groupMilestoneTasks' => function ($query) {
                 $query->with(['milestoneTask', 'groupMilestone.milestoneTemplate'])
                     ->withCount('taskComments');
@@ -710,5 +712,41 @@ class AdviserController extends Controller
             ->paginate(20);
 
         return view('adviser.activity-log', compact('logs'));
+    }
+    public function showGroupMilestoneKanban(Group $group, GroupMilestone $groupMilestone)
+    {
+        $user = Auth::user();
+
+        // Only the assigned adviser of this group can view
+        if ((int) $group->faculty_id !== (int) $user->faculty_id) {
+            abort(403, 'You are not the adviser of this group.');
+        }
+
+        // Ensure the milestone belongs to this group
+        if ((int) $groupMilestone->group_id !== (int) $group->id) {
+            abort(404);
+        }
+
+        $groupMilestone->load(['milestoneTemplate']);
+
+        $tasks = $groupMilestone->groupTasks()
+            ->with(['milestoneTask', 'assignedStudent'])
+            ->withCount('taskComments')
+            ->get();
+
+        $tasksByStatus = [
+            'pending' => $tasks->where('status', 'pending'),
+            'doing'   => $tasks->where('status', 'doing'),
+            'done'    => $tasks->where('status', 'done'),
+        ];
+
+        $progress = $groupMilestone->progress_percentage;
+
+        return view('adviser.milestones.kanban', compact(
+            'group',
+            'groupMilestone',
+            'tasksByStatus',
+            'progress'
+        ));
     }
 } 

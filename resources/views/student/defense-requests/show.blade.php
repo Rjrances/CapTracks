@@ -113,6 +113,42 @@
                             </div>
                         </div>
                     @endif
+                    @if(optional($defenseRequest->defenseSchedule)->evaluationSummary)
+                        @php
+                            $summary = $defenseRequest->defenseSchedule->evaluationSummary;
+                            $finalRecommendation = $summary->final_recommendation;
+                            $resultBadgeClass = match($finalRecommendation) {
+                                'pass' => 'bg-success',
+                                'conditional_pass' => 'bg-warning text-dark',
+                                'redefend' => 'bg-danger',
+                                default => 'bg-secondary',
+                            };
+                            $resultLabel = match($finalRecommendation) {
+                                'pass' => 'Pass',
+                                'conditional_pass' => 'Conditional Pass',
+                                'redefend' => 'Re-defend',
+                                default => 'Completed',
+                            };
+                        @endphp
+                        <hr>
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>Final Result</h6>
+                                <div class="alert alert-success">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                        <span class="badge {{ $resultBadgeClass }}">{{ $resultLabel }}</span>
+                                        <span><strong>Final Average:</strong> {{ number_format((float) $summary->final_average_score, 2) }}</span>
+                                    </div>
+                                    <small class="text-muted d-block">
+                                        Finalized on {{ optional($summary->finalized_at)->format('F d, Y h:i A') ?? 'N/A' }}
+                                    </small>
+                                    @if($summary->final_notes)
+                                        <div class="mt-2"><strong>Final Notes:</strong> {{ $summary->final_notes }}</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
             @if($defenseRequest->defenseSchedule)
@@ -273,6 +309,17 @@
                                     <h6 class="mb-1">Schedule Created</h6>
                                     <small class="text-muted">
                                         {{ $defenseRequest->defenseSchedule->created_at->format('M d, Y h:i A') }}
+                                    </small>
+                                </div>
+                            </div>
+                        @endif
+                        @if(optional($defenseRequest->defenseSchedule)->evaluationSummary)
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-success"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Result Finalized</h6>
+                                    <small class="text-muted">
+                                        {{ optional($defenseRequest->defenseSchedule->evaluationSummary->finalized_at)->format('M d, Y h:i A') ?? 'N/A' }}
                                     </small>
                                 </div>
                             </div>

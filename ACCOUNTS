@@ -1,8 +1,44 @@
-10014 / password - chairperson 
+============================================================
+  CAPTRACKS DEMO ACCOUNTS — After demo:setup + CSV import
+============================================================
 
-10011 / password - coordinator
+CHAIRPERSON (created by demo:setup command)
+  ID: 10001  |  Password: password
+  Name: Mr. John Leeroy Gadiane
 
-2024000001 / password - student
+------------------------------------------------------------
+FACULTY — imported from public/teachers.csv
+  Default password for all: password123  (first-time login forced)
 
-10013 / password - Teacher/Adviser
+  10002  Mr. Roderick Bandalan       - Teacher
+  10003  Engr. Violdan Bayocot       - Adviser
+  10004  Mr. Temothy Homecillo       - Coordinator
+  10005  Engr. Vicente Patalita III  - Adviser
+  10006  Engr. Alyssa Tan            - Teacher
+  10007  Mr. James Aliazon           - Adviser
+  10008  Mrs. Josephine Petralba     - Panelist
+  10009  Engr. Carmel Tejana         - Adviser
+  10010  Mr. Eric Magto              - Panelist
+  10011  Dr. Jovelyn Cuizon          - Panelist
+  10012  Mr. Ahdzleebee Formentera   - Coordinator
+  10013  Ms. Khiara Rubia            - Coordinator
 
+------------------------------------------------------------
+STUDENTS — imported from public/students.csv (113 students)
+  IDs:   2026010001 to 2026010114
+  Password: first-time login flow (set password on first login)
+  Sample: 2026010062 - Rances, Rainer Josh
+
+============================================================
+  SETUP PROCEDURE
+============================================================
+
+1. Backup current DB (export via phpMyAdmin or Adminer)
+2. php artisan migrate:fresh
+3. php artisan demo:setup         ← seeds roles + term + chairperson
+4. Log in as 10001 / password
+5. Import public/teachers.csv     ← Faculty Management → Import
+6. Import public/students.csv     ← Student Management → Import
+7. Create offerings manually in UI
+8. Enroll students into offerings
+9. Create groups, assign advisers, set up Kanban for demo

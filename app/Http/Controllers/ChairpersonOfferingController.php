@@ -199,7 +199,7 @@ class ChairpersonOfferingController extends Controller
                     \Log::error("Error enrolling student ID {$studentId}: " . $e->getMessage());
                 }
             }
-            $message = "Successfully enrolled {$enrolledCount} student(s): " . implode(', ', $enrolledNames);
+            $message = "Successfully enrolled {$enrolledCount} student(s) into {$offering->subject_code}.";
             if (!empty($errors)) {
                 $message .= "\nErrors occurred with some students: " . implode('; ', $errors);
                 return redirect()->route('chairperson.offerings.show', $offeringId)

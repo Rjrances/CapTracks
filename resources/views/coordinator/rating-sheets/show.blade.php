@@ -124,10 +124,10 @@ Rating sheets — {{ $schedule->group->name }}
                             <tr>
                                 <td>{{ $result['student_name'] }}</td>
                                 <td>{{ $result['student_id'] }}</td>
-                                <td>{{ number_format((float) $result['final_score'], 2) }}</td>
+                                <td>{{ is_null($result['final_score']) ? 'N/A' : number_format((float) $result['final_score'], 2) }}</td>
                                 <td>{{ $result['grade_label'] }}</td>
                                 <td>
-                                    <span class="badge {{ $result['status'] === 'Passed' ? 'bg-success' : 'bg-danger' }}">
+                                    <span class="badge {{ $result['status'] === 'Passed' ? 'bg-success' : ($result['status'] === 'Pending' ? 'bg-secondary' : 'bg-danger') }}">
                                         {{ $result['status'] }}
                                     </span>
                                 </td>
