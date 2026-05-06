@@ -302,3 +302,107 @@ For complete system coverage, here is every single specific function the Coordin
 **Authentication (`AuthController`)**
 - `login()` / `logout()`: Validates credentials against the encrypted `password` column and manages session tokens.
 - `changePassword()`: Receives a new password, hashes it using `bcrypt()`, and updates the user's account row.
+
+---
+
+## 8. 🎤 The "Cheat Sheet" Defense Script
+## 8. 🎤 The "Cheat Sheet" Defense Script
+If a panelist points at these functions and asks you to explain them line-by-line without reading the syntax, use these exact scripts:
+
+### A. Auto-Assign Algorithm (`DefenseScheduleController@getAvailableFaculty`)
+**The Code:**
+```php
+public function autoAssignPanel(DefenseRequest $request) {
+    // Check calendar for active conflicts
+    $conflicts = DefenseSchedule::where('schedule_date', $request->date)->pluck('faculty_id');
+    $adviserId = $request->group->adviser_id;
+    
+    // Filter the faculty
+    $availableFaculty = Faculty::whereNotIn('id', $conflicts)
+        ->where('id', '!=', $adviserId)
+        ->withCount('assignedGroups')
+        ->orderBy('assigned_groups_count', 'asc')
+        ->get();
+        
+    return $availableFaculty;
+}
+```
+**Panel Question:** *"Explain how your Auto-Assign algorithm works without double-booking teachers."*
+* **The Goal:** To automatically find 3 available panelists for a student group.
+* **The Process:** Query the database to remove anyone who already has a defense at that exact time, and remove the group's adviser.
+
+> *"Sir, the goal of this function is to automatically find available panelists for a defense.*
+> *First, the system looks at the requested date and filters out any faculty members who already have a defense scheduled at that exact time.*
+> *Next, we identify the group's current adviser. The system removes both the busy teachers and the group's adviser to prevent a conflict of interest.*
+> *Finally, the system counts how many groups the remaining teachers are assigned to, sorts them from lowest to highest, and selects the top options to balance workload."*
+
+### B. Faculty Matrix & Load Monitoring (`CoordinatorController@facultyMatrix`)
+**The Code:**
+```php
+public function facultyMatrix() {
+    $activeTerm = AcademicTerm::where('is_active', true)->first(); 
+    $facultyLoad = User::whereIn('role', ['adviser', 'coordinator', 'chairperson', 'teacher'])
+        ->withCount([ 
+            'advisingGroups' => function($q) use ($activeTerm) { 
+                $q->where('academic_term_id', $activeTerm->id); 
+            },
+            'defensePanels' => function($q) use ($activeTerm) { 
+                $q->whereHas('defenseSchedule', function($sq) use ($activeTerm) {
+                    $sq->where('academic_term_id', $activeTerm->id); 
+                });
+            }
+        ])->get();
+    return view('coordinator.faculty-matrix', compact('facultyLoad', 'activeTerm')); 
+}
+```
+**Panel Question:** *"How do you count the faculty workload without slowing down the page with hundreds of database queries?"*
+* **The Goal:** To show how many groups and panels each teacher is handling this semester.
+* **The Process:** Use Laravel's `withCount` to count relationships natively in SQL instead of looping through them in PHP.
+
+> *"Sir, to prevent performance issues, we do not fetch every single group and panel record. Instead, we use Laravel's `withCount` method. This allows the database itself to count the 'advisingGroups' and 'defensePanels' relationships that belong only to the active semester. It returns a single clean number for each teacher. This avoids the 'N+1 Query Problem' and keeps the matrix dashboard extremely fast."*
+
+### C. Milestone Template Cloning (`MilestoneTemplateController@assignToGroup`)
+**The Code:**
+```php
+public function assignToGroup(Request $request) {
+    $template = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
+    $group = Group::findOrFail($request->group_id);
+
+    $groupMilestone = GroupMilestone::create([
+        'group_id' => $group->id,
+        'milestone_template_id' => $template->id,
+        'title' => $template->name,
+        'status' => 'not_started',
+    ]);
+
+    foreach ($template->tasks as $task) {
+        GroupMilestoneTask::create([
+            'group_milestone_id' => $groupMilestone->id,
+            'milestone_task_id' => $task->id,
+            'status' => 'pending',
+        ]);
+    }
+}
+```
+**Panel Question:** *"Explain how a blueprint template is turned into trackable tasks for a specific student group."*
+* **The Goal:** To assign a milestone blueprint to a group.
+* **The Process:** Create a new `GroupMilestone`, then loop through the template's tasks and duplicate them as `GroupMilestoneTask`s.
+
+> *"Sir, the goal of this function is to clone a master template so students can start tracking their progress.*
+> *First, it fetches the requested template and the target student group. It creates a brand new `GroupMilestone` record linked specifically to that group.*
+> *Then, it loops through every single task contained in the master template. Inside the loop, it creates a new `GroupMilestoneTask` for each one, setting its status to 'pending'. This essentially duplicates the blueprint and turns it into an active Kanban board for the students."*
+
+### D. Bulk Updating Proposals (`CoordinatorProposalController@bulkUpdate`)
+**The Code:**
+```php
+public function bulkUpdate(Request $request) {
+    ProjectSubmission::whereIn('id', $request->submission_ids) 
+                     ->update(['status' => $request->status]); 
+    return back()->with('success', 'Selected proposals updated successfully.'); 
+}
+```
+**Panel Question:** *"How does the system handle approving 50 proposals at the exact same time?"*
+* **The Goal:** To mass-approve or mass-reject project proposals.
+* **The Process:** Use SQL's `WHERE IN` clause to execute a single bulk update query instead of looping.
+
+> *"Sir, instead of running a slow `foreach` loop that triggers 50 separate database queries, we use a single optimized SQL command. The system takes the array of IDs from the checkboxes, uses the `whereIn` clause to target all matching rows in the database simultaneously, and instantly updates their status to 'approved'. It takes only one query regardless of how many proposals are selected."*

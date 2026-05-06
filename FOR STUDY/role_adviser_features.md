@@ -276,3 +276,78 @@ For complete system coverage, here is every single specific function the Adviser
 **Authentication (`AuthController`)**
 - `login()` / `logout()`: Validates credentials against the encrypted `password` column and manages session tokens.
 - `changePassword()`: Receives a new password, hashes it using `bcrypt()`, and updates the user's account row.
+
+---
+
+## 8. 🎤 The "Cheat Sheet" Defense Script
+## 8. 🎤 The "Cheat Sheet" Defense Script
+If a panelist points at these functions and asks you to explain them line-by-line without reading the syntax, use these exact scripts:
+
+### A. Dynamic JSON Grading Rubrics (`RatingSheetController@submitAdviserRating`)
+**The Code:**
+```php
+public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
+    $user = Auth::user();
+    
+    $criteria = collect($request->criteria_names)->values()->map(function ($name, $index) use ($request) {
+        return ['name' => $name, 'score' => (float) ($request->criteria_scores[$index] ?? 0)];
+    })->toArray();
+
+    $totalScore = collect($criteria)->sum('score');
+
+    RatingSheet::updateOrCreate(
+        ['defense_schedule_id' => $schedule->id, 'faculty_id' => $user->id],
+        [
+            'group_id' => $schedule->group_id,
+            'criteria' => $criteria, // JSON conversion here
+            'total_score' => $totalScore,
+            'submitted_at' => now(),
+        ]
+    );
+}
+```
+**Panel Question:** *"How do you handle different rubric criteria without having to migrate the database schema every semester?"*
+* **The Goal:** To allow flexible grading sheets without hardcoding criteria columns in MySQL.
+* **The Process:** Loop through the criteria, calculate the total score, and convert the entire array into a JSON string.
+
+> *"Sir, instead of creating hardcoded database columns for 'Grammar', 'Methodology', and 'Delivery', we utilized a dynamic JSON architecture.*
+> *When an adviser submits their grading sheet, the system takes all of their specific sub-scores and criteria names and loops through them to calculate the total weighted score.*
+> *Then, the system converts that entire array into a raw JSON string and saves it into a single text column in the `rating_sheets` table. This means the university can completely change their grading rubrics next semester, and our database will instantly support it without requiring any structural SQL migrations."*
+
+### B. Dashboard Progress Calculation (`AdviserController@calculateGroupProgress`)
+**The Code:**
+```php
+private function calculateGroupProgress($group) {
+    $groupMilestones = $group->groupMilestones; 
+    if ($groupMilestones->isEmpty()) return 0; 
+    
+    $totalProgress = $groupMilestones->sum('progress_percentage'); 
+    return round($totalProgress / $groupMilestones->count()); 
+}
+```
+**Panel Question:** *"Explain how the dashboard calculates the overall completion percentage of a group."*
+* **The Goal:** To calculate an accurate average of all milestone progress bars combined.
+* **The Process:** Fetch all milestones, sum their individual percentages, and divide by the total number of milestones.
+
+> *"Sir, the goal of this function is to generate the group's global progress percentage for the adviser's dashboard.*
+> *First, it fetches all active milestones assigned to the group. It uses the `sum()` function to add together all of their individual pre-calculated percentages—for example, adding 100% from Chapter 1 and 50% from Chapter 2.*
+> *Then, it divides that total by the number of milestones to find the average, and rounds the result to provide a clean number for the UI."*
+
+### C. Threaded Kanban Comments (`AdviserController@storeMilestoneTaskComment`)
+**The Code:**
+```php
+public function storeMilestoneTaskComment(Request $request, Group $group, GroupMilestoneTask $groupMilestoneTask) {
+    TaskComment::create([ 
+        'group_milestone_task_id' => $groupMilestoneTask->id, 
+        'user_id' => Auth::id(), 
+        'body' => $request->body, 
+        'parent_id' => $request->parent_id, 
+    ]);
+}
+```
+**Panel Question:** *"How does the database know if a comment is a reply to another comment without making a second table?"*
+* **The Goal:** To allow infinite nested replies on task feedback.
+* **The Process:** Use an Adjacency List architecture where `parent_id` points to another comment in the exact same table.
+
+> *"Sir, we achieved infinite threading by using an 'Adjacency List' database design. When an adviser creates a comment, the system saves the task ID and the text.*
+> *If the comment is a reply to a student, the `parent_id` column saves the ID of the student's comment. If it's a brand new standalone comment, the `parent_id` is simply left NULL. This self-referencing structure allows us to build infinite conversation threads using only a single table."*

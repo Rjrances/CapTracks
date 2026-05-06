@@ -412,6 +412,28 @@ The average satisfaction scores in the table were calculated using a weighted fo
 | The algorithm for assigning panel members is accurate and efficient. | 9 | 6 | 1 | 0 | 0 | 16 | 4.53 |
 | The response time for threaded comments and task updates is quick. | 11 | 5 | 0 | 0 | 0 | 16 | 4.68 |
 
+#### Survey Questionnaire Instrument (For Google Forms Setup)
+*Note for researchers: Use the exact structure below when creating the Google Form to ensure the data matches the table above.*
+
+**Section 1: User Demographics**
+*   **Name (Optional):** [Short Answer Text]
+*   **What is your role in the CapTrack system?** [Multiple Choice]
+    *   Student
+    *   Capstone Coordinator
+    *   Faculty / Adviser
+    *   Chairperson
+
+**Section 2: System Usability Evaluation**
+*Instruction: Please rate your level of agreement with the following statements regarding your experience using the CapTrack system. (Grid/Linear Scale: 5 - Strongly Agree, 4 - Agree, 3 - Neutral, 2 - Disagree, 1 - Strongly Disagree)*
+
+1. The application does not crash or freeze during CSV uploads or heavy data processing.
+2. The Kanban dashboard is easy to navigate and understand.
+3. The design and layout of the app are visually appealing and user-friendly.
+4. All features I used in the application functioned as expected without errors.
+5. The response time for downloading versioned documents is quick and reliable.
+6. The algorithm for assigning panel members is accurate and efficiently prevents scheduling conflicts.
+7. The response time for threaded comments and task status updates is quick and responsive.
+
 #### Summary of Usability Testing
 The usability testing involved sixteen (16) participants and evaluated various aspects of the CapTrack application. The results suggest that the application performs well across most metrics. Specifically:
 

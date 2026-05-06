@@ -277,3 +277,85 @@ For complete system coverage, here is every single specific function the Chairpe
 **Authentication (`AuthController`)**
 - `login()` / `logout()`: Validates credentials against the encrypted `password` column and manages session tokens.
 - `changePassword()`: Receives a new password, hashes it using `bcrypt()`, and updates the user's account row.
+
+---
+
+## 7. 🎤 The "Cheat Sheet" Defense Script
+## 7. 🎤 The "Cheat Sheet" Defense Script
+If a panelist points at these functions and asks you to explain them line-by-line without reading the syntax, use these exact scripts:
+
+### A. CSV Mass Import (`ChairpersonStudentController@upload`)
+**The Code:**
+```php
+public function upload(Request $request) {
+    $file = file($request->file->getRealPath()); 
+    $data = array_slice($file, 1); // remove headers
+
+    foreach ($data as $line) { 
+        $row = str_getcsv($line); 
+        if (count($row) >= 3) { 
+            Student::firstOrCreate(
+                ['student_id' => $row[0]], 
+                ['name' => $row[1], 'email' => $row[2], 'password' => Hash::make('password123')]
+            );
+        }
+    }
+    return redirect()->route('chairperson.students.index'); 
+}
+```
+**Panel Question:** *"What happens if a coordinator accidentally uploads the same student CSV file twice? Does the database crash with duplicate errors?"*
+* **The Goal:** To mass-import hundreds of students quickly without breaking the database.
+* **The Process:** Loop through each row and check if the `student_id` already exists using Eloquent's `firstOrCreate`.
+
+> *"Sir, the database will not crash because we handle de-duplication inside the backend upload loop.* 
+> *The most important part is the Eloquent method called `firstOrCreate`. For every row, the system looks at the primary key, which is the Student ID. If it finds that ID in the database already, it simply skips that row entirely. If it doesn't find the ID, it inserts the new student and encrypts their default password. This prevents fatal Duplicate Entry SQL errors."*
+
+### B. Toggling the Active Semester (`AcademicTermController@toggleActive`)
+**The Code:**
+```php
+public function toggleActive(AcademicTerm $academicTerm) {
+    AcademicTerm::where('id', '!=', $academicTerm->id)->update(['is_active' => false]);
+    $academicTerm->update(['is_active' => !$academicTerm->is_active]);
+    return back()->with('success', 'Academic term status updated successfully.'); 
+}
+```
+**Panel Question:** *"How do you ensure only one semester is active at a time?"*
+* **The Goal:** To switch the active academic term globally.
+* **The Process:** Force all other terms to false before setting the requested term to true.
+
+> *"Sir, to guarantee there is only ever one active semester, the system executes a raw UPDATE query targeting all academic terms where the ID does NOT match the one selected, and forces their `is_active` status to false. Once the rest are deactivated, it takes the specific term the user clicked on and updates it to true."*
+
+### C. Enrolling a Student (Pivot Tables) (`ChairpersonOfferingController@enrollStudent`)
+**The Code:**
+```php
+public function enrollStudent(Request $request, $offeringId) {
+    $request->validate(['student_id' => 'required|exists:students,id']); 
+    $offering = Offering::findOrFail($offeringId); 
+    
+    $offering->students()->attach($request->student_id); 
+    
+    return back()->with('success', 'Student enrolled successfully.'); 
+}
+```
+**Panel Question:** *"Explain how a student is attached to a class section using Pivot Tables."*
+* **The Goal:** To link a student to a class offering (section).
+* **The Process:** Use Eloquent's `attach()` method to create a Many-to-Many record.
+
+> *"Sir, the relationship between Students and Offerings is Many-to-Many. When a chairperson enrolls a student, the system fetches the class offering and accesses its `students()` relationship. It then calls the `attach()` method, which automatically creates a new row in the `offering_student` pivot table, linking the two IDs securely."*
+
+### D. Role Management Override Prevention (`RoleController@update`)
+**The Code:**
+```php
+public function update(Request $request, $faculty_id) {
+    $faculty = User::findOrFail($faculty_id); 
+    if ($faculty->id === Auth::id() && $request->role !== 'chairperson') { 
+         return back()->with('error', 'You cannot change your own role.'); 
+    }
+    $faculty->update(['role' => $request->role]); 
+}
+```
+**Panel Question:** *"How do you prevent the Chairperson from accidentally removing their own admin rights?"*
+* **The Goal:** To update faculty roles while preventing self-sabotage.
+* **The Process:** Verify if the target user is the logged-in user, and block the update if they are trying to demote themselves.
+
+> *"Sir, we wrote a specific validation guard for this. Before updating the database, the system checks if the target `faculty_id` matches the currently logged-in Chairperson's ID. If it does, and they are attempting to select a role other than Chairperson, the system intercepts the request and redirects them back with an error message, preventing them from accidentally locking themselves out of the admin panel."*

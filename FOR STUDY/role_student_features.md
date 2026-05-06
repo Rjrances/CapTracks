@@ -318,3 +318,106 @@ For complete system coverage, here is every single specific function the Student
 **Authentication (`AuthController`)**
 - `login()` / `logout()`: Validates credentials against the encrypted `password` column and manages session tokens.
 - `changePassword()`: Receives a new password, hashes it using `bcrypt()`, and updates the user's account row.
+
+---
+
+## 10. 🎤 The "Cheat Sheet" Defense Scripts
+If a panelist points at these functions and asks you to explain them line-by-line without reading the syntax, use these exact scripts:
+
+## 10. 🎤 The "Cheat Sheet" Defense Scripts
+If a panelist points at these functions and asks you to explain them line-by-line without reading the syntax, use these exact scripts:
+
+### A. Document Versioning (`ProjectSubmissionController@store`)
+**The Code:**
+```php
+public function store(Request $request) {
+    $student = Auth::guard('student')->user()->student; 
+    $path = $request->file('file')->store('submissions', 'public'); 
+    
+    $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, $request->type);
+
+    ProjectSubmission::create([ 
+        'student_id' => $student->student_id, 
+        'file_path' => $path, 
+        'type' => $request->type, 
+        'version' => $nextVersion, 
+        'status' => 'pending', 
+    ]);
+}
+```
+**Panel Question:** *"How does the system prevent students from overwriting old proposal versions?"*
+* **The Goal:** To securely upload a student's document while keeping a complete history.
+* **The Process:** Find the highest version number the student currently has, and add +1 to it.
+
+> *"Sir, the goal of this function is to securely upload a student's document without deleting revisions.*
+> *First, the system saves the uploaded physical file into our server.*
+> *Next, it queries the database to find the highest version number the student already has for this document type using `getNextVersionFor`. If they uploaded Version 1, the system assigns the new file as Version 2.*
+> *Because we create a brand new database row instead of updating the old one, the old file path is never overwritten, allowing the adviser to compare Version 1 against Version 2 side-by-side."*
+
+### B. Kanban Background Math (`StudentMilestoneController@moveTask`)
+**The Code:**
+```php
+public function moveTask(Request $request, $taskId) {
+    $task = GroupMilestoneTask::findOrFail($taskId); 
+    $task->update(['status' => $request->status]); 
+
+    $milestone = $task->groupMilestone; 
+    $totalTasks = $milestone->groupMilestoneTasks()->count(); 
+    $completedTasks = $milestone->groupMilestoneTasks()->where('status', 'done')->count(); 
+    
+    $milestone->update([ 
+        'progress_percentage' => ($totalTasks > 0) ? round(($completedTasks / $totalTasks) * 100) : 0 
+    ]);
+}
+```
+**Panel Question:** *"How do your dashboards load the progress percentage without slowing down?"*
+* **The Goal:** To natively recalculate the group's progress when a task changes.
+* **The Process:** Count total tasks, count 'done' tasks, calculate percentage, and save to DB.
+
+> *"Sir, we don't calculate percentages on the fly when the dashboard loads. Instead, every time a student drags a Kanban task into the 'Done' column, an asynchronous trigger fires.*
+> *The system quickly counts the total tasks, counts the completed tasks, and calculates the math. It then saves that static percentage directly into the `group_milestones` table. Because of this, the dashboard simply reads a single number instead of recalculating hundreds of tasks every refresh, making the system highly scalable."*
+
+### C. Default Password Middleware (`CheckStudentPasswordChange@handle`)
+**The Code:**
+```php
+public function handle(Request $request, Closure $next) {
+    $student = Auth::guard('student')->user(); 
+    if ($student && Hash::check('password123', $student->password)) { 
+        return redirect()->route('student.change-password')
+            ->with('warning', 'You must change your default password.');
+    }
+    return $next($request); 
+}
+```
+**Panel Question:** *"How do you force newly imported students to change their password on first login?"*
+* **The Goal:** To enforce account security immediately after CSV mass import.
+* **The Process:** Intercept the web request, check if their hashed password matches 'password123', and redirect them.
+
+> *"Sir, we use Laravel Middleware. Whenever a student tries to access any page on the system, the middleware intercepts the request. It takes their current encrypted password from the database and runs a Hash Check against the default string 'password123'. If there is a match, the middleware blocks the page load and redirects them to the change password form. Once they change it, the Hash Check fails, and the middleware allows them to access the system normally."*
+
+### D. The Defense Gate Service (`StudentDefenseRequestController@store`)
+**The Code:**
+```php
+public function store(Request $request) {
+    $student = $this->getAuthenticatedStudent();
+    $group = $student->groups()->first();
+    
+    $gate = $this->defenseMilestoneGateService->evaluate($group, $request->defense_type);
+    
+    if (!$gate['eligible']) {
+        return redirect()->route('student.defense-requests.index')
+            ->withErrors(['milestone' => $gate['message']]);
+    }
+    
+    DefenseRequest::create([
+        'group_id' => $group->id,
+        'defense_type' => $request->defense_type,
+        'status' => 'pending',
+    ]);
+}
+```
+**Panel Question:** *"How does the system physically stop a student from requesting a defense if they aren't done?"*
+* **The Goal:** To validate milestone completion before allowing defense requests.
+* **The Process:** Feed the group data into the `DefenseMilestoneGateService`. If ineligible, abort.
+
+> *"Sir, we built a dedicated `DefenseMilestoneGateService`. Before the defense request is even saved to the database, the system sends the group's current progress data into this service. The service verifies if their global progress matches the strict requirements for the defense type (for example, 100% completion). If the service returns false, the controller aborts the creation and throws an error back to the student, physically preventing the request from proceeding."*
