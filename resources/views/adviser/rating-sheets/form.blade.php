@@ -98,6 +98,9 @@
                         </div>
                         <div class="col-md-3">
                             <input type="number" step="0.1" min="0" max="{{ $criterion['max_points'] ?? 10 }}" name="criteria_scores[]" class="form-control criteria-score-input" value="{{ $criterion['score'] }}" required {{ !empty($isFinalized) ? 'disabled' : '' }}>
+                            <div class="invalid-feedback">
+                                Please enter a score between 0 and {{ number_format((float) ($criterion['max_points'] ?? 10), 2) }}.
+                            </div>
                         </div>
                         <div class="col-md-2">
                             <small class="text-muted">/ {{ number_format((float) ($criterion['max_points'] ?? 10), 2) }}</small>
@@ -125,6 +128,9 @@
                                 value="{{ $individualScores->get($member->student_id, 0) }}"
                                 required
                                 {{ !empty($isFinalized) ? 'disabled' : '' }}>
+                            <div class="invalid-feedback">
+                                Please enter a score between 0 and {{ number_format((float) ($individualCriterion['max_points'] ?? 100), 2) }}.
+                            </div>
                         </div>
                         <div class="col-md-2">
                             <small class="text-muted">/ {{ number_format((float) ($individualCriterion['max_points'] ?? 100), 2) }}</small>
@@ -205,6 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const rawValue = input.value;
         if (rawValue === '') {
             input.setCustomValidity('');
+            input.classList.remove('is-invalid');
             return;
         }
 
@@ -214,12 +221,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (Number.isNaN(parsed)) {
             input.setCustomValidity('');
+            input.classList.remove('is-invalid');
             return;
         }
 
-        input.setCustomValidity(parsed < min || parsed > max
+        const isOutOfRange = parsed < min || parsed > max;
+        input.setCustomValidity(isOutOfRange
             ? 'Please enter a valid score between 0 and the allowed maximum.'
             : '');
+        input.classList.toggle('is-invalid', isOutOfRange);
     }
 
     function validateRange(input) {

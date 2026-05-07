@@ -135,7 +135,7 @@ class RatingSheetController extends Controller
         ]);
 
         $criteria = [];
-        foreach (collect($validated['criteria_names'])->values() as $index => $_name) {
+        foreach (collect($validated['criteria_names'])->values() as $index => $name) {
             $maxPoints = (float) ($validated['criteria_max_points'][$index] ?? 0);
             $score = (float) ($validated['criteria_scores'][$index] ?? 0);
             if ($score < 0) {
