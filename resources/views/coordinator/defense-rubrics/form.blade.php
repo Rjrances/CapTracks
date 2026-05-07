@@ -43,7 +43,7 @@
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="is_active" name="is_active" {{ old('is_active', $template->is_active) ? 'checked' : '' }}>
+                            <input class="form-check-input" type="checkbox" value="1" id="is_active" name="is_active" @checked(old('is_active', $template->is_active))>
                             <label class="form-check-label" for="is_active">Set as active for this stage</label>
                         </div>
                     </div>
@@ -54,24 +54,6 @@
                 </div>
             </div>
         </div>
-
-        @php
-            $initialCriteria = old('criteria', $template->criteria->map(fn($criterion) => [
-                'name' => $criterion->name,
-                'scope' => $criterion->scope,
-                'max_points' => $criterion->max_points,
-            ])->toArray());
-            if (empty($initialCriteria)) {
-                $initialCriteria = [
-                    ['name' => 'Software', 'scope' => 'group', 'max_points' => 50],
-                    ['name' => 'Document - Completeness', 'scope' => 'group', 'max_points' => 15],
-                    ['name' => 'Document - Acceptability', 'scope' => 'group', 'max_points' => 20],
-                    ['name' => 'Oral Presentation - Presentation', 'scope' => 'group', 'max_points' => 10],
-                    ['name' => 'Oral Presentation - Visual Tools', 'scope' => 'group', 'max_points' => 5],
-                    ['name' => 'Individual Contribution', 'scope' => 'individual', 'max_points' => 100],
-                ];
-            }
-        @endphp
 
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">

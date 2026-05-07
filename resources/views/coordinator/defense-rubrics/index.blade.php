@@ -12,6 +12,9 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
@@ -40,9 +43,18 @@
                                     @endif
                                 </td>
                                 <td class="text-end">
-                                    <a href="{{ route('coordinator.defense-rubrics.edit', $template) }}" class="btn btn-sm btn-outline-primary">
-                                        Edit
-                                    </a>
+                                    <div class="d-inline-flex gap-1">
+                                        <a href="{{ route('coordinator.defense-rubrics.edit', $template) }}" class="btn btn-sm btn-outline-primary">
+                                            Edit
+                                        </a>
+                                        <form method="POST" action="{{ route('coordinator.defense-rubrics.destroy', $template) }}" onsubmit="return confirm('Delete this rubric? This action cannot be undone.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" {{ $template->is_active ? 'disabled' : '' }}>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

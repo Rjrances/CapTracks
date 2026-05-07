@@ -80,7 +80,7 @@ Route::middleware(['auth', 'role:coordinator|adviser'])->prefix('coordinator')->
     Route::patch('/defense/{defenseSchedule}/complete', [DefenseScheduleController::class, 'markAsCompleted'])->name('defense.complete');
     Route::middleware(['role:coordinator'])->group(function () {
         Route::resource('defense-rubrics', DefenseRubricController::class)
-            ->except(['show', 'destroy'])
+            ->except(['show'])
             ->parameters(['defense-rubrics' => 'defenseRubric']);
     });
 
