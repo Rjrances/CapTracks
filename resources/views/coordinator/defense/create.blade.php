@@ -153,7 +153,10 @@
                                 <label>Panel Members <span class="text-danger">*</span></label>
                                 <div class="alert alert-info mb-3">
                                     <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
-                                    Select exactly two slots only: one Chair and one Member.
+                                    Chair and Member are auto-selected based on availability and workload balancing.
+                                </div>
+                                <div id="panel-auto-assignment-hint" class="alert alert-warning mb-3">
+                                    Fill in Group, Date, Start Time, End Time, and Room to auto-assign Chair and Member.
                                 </div>
                                 <div id="panel-members-container">
                                     <div class="panel-member-row mb-2">
@@ -195,9 +198,6 @@
                             </div>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-outline-info" id="auto-assign-panel">
-                                <i class="fas fa-magic me-2"></i>Auto-Assign Panel
-                            </button>
                             <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
                                 Cancel
                             </a>
@@ -212,6 +212,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let currentAvailableFaculty = [];
+    let currentAutoAssignedFacultyIds = [];
     let latestDoubleBookingRequestId = 0;
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
     const panelFacultyByGroupId = @json($panelFacultyByGroupId);
@@ -223,18 +224,58 @@ document.addEventListener('DOMContentLoaded', function() {
     if (groupSelectEl) {
         groupSelectEl.addEventListener('change', function() {
             const groupId = this.value;
-            if (groupId) {
+            if (groupId && hasCompleteSchedulingInputs()) {
                 loadFacultyForGroup(groupId);
             } else {
                 clearFacultyOptions();
             }
+            togglePanelAssignmentState();
         });
     }
+    document.getElementById('date').addEventListener('change', togglePanelAssignmentState);
+    document.getElementById('start_time').addEventListener('change', togglePanelAssignmentState);
+    document.getElementById('end_time').addEventListener('change', togglePanelAssignmentState);
+    document.getElementById('room').addEventListener('input', togglePanelAssignmentState);
     loadInitialFaculty();
+    togglePanelAssignmentState();
+
+    function hasCompleteSchedulingInputs() {
+        return !!(
+            document.getElementById('group_id').value &&
+            document.getElementById('date').value &&
+            document.getElementById('start_time').value &&
+            document.getElementById('end_time').value &&
+            document.getElementById('room').value
+        );
+    }
+
+    function togglePanelAssignmentState() {
+        const enabled = hasCompleteSchedulingInputs();
+        const facultySelects = document.querySelectorAll('.faculty-select');
+        const hint = document.getElementById('panel-auto-assignment-hint');
+
+        facultySelects.forEach(select => {
+            select.disabled = !enabled;
+        });
+
+        if (hint) {
+            hint.classList.toggle('d-none', enabled);
+        }
+
+        if (enabled) {
+            const groupId = document.getElementById('group_id').value;
+            if (groupId) {
+                loadFacultyForGroup(groupId);
+            }
+        } else {
+            clearFacultyOptions();
+        }
+    }
+
     function loadInitialFaculty() {
         const groupSelect = document.getElementById('group_id');
         const gid = groupSelect ? groupSelect.value : '';
-        if (gid) {
+        if (gid && hasCompleteSchedulingInputs()) {
             loadFacultyForGroup(gid);
         } else {
             clearFacultyOptions();
@@ -249,7 +290,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!date || !startTime || !endTime || !room) {
             currentAvailableFaculty = base;
-            updateFacultyOptions(base);
+            currentAutoAssignedFacultyIds = [];
+            clearFacultyOptions();
             return Promise.resolve(base);
         }
 
@@ -271,12 +313,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             const list = data.availableFaculty || base;
             currentAvailableFaculty = list;
+            currentAutoAssignedFacultyIds = (data.autoAssignedFacultyIds || list.slice(0, 2).map(member => String(member.id))).map(String);
             updateFacultyOptions(list);
             return list;
         })
         .catch(error => {
             console.error('Error loading faculty:', error);
             currentAvailableFaculty = base;
+            currentAutoAssignedFacultyIds = base.slice(0, 2).map(member => String(member.id));
             updateFacultyOptions(base);
             return base;
         });
@@ -287,6 +331,9 @@ document.addEventListener('DOMContentLoaded', function() {
             let currentValue = select.value;
             if (!currentValue && initialPanelPicks[index] != null && initialPanelPicks[index] !== '') {
                 currentValue = String(initialPanelPicks[index]);
+            }
+            if (!currentValue && currentAutoAssignedFacultyIds[index] != null) {
+                currentValue = String(currentAutoAssignedFacultyIds[index]);
             }
             select.innerHTML = '<option value="">Select Faculty</option>';
             faculty.forEach(member => {
@@ -304,45 +351,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const facultySelects = document.querySelectorAll('.faculty-select');
         facultySelects.forEach(select => {
             select.innerHTML = '<option value="">Select Faculty</option>';
-        });
-    }
-    document.getElementById('auto-assign-panel').addEventListener('click', function() {
-        autoAssignPanelMembers();
-    });
-
-    async function autoAssignPanelMembers() {
-        const facultySelects = Array.from(document.querySelectorAll('.faculty-select'));
-        const roleInputs = Array.from(document.querySelectorAll('input[name$="[role]"]'));
-        const groupId = document.getElementById('group_id').value;
-        const date = document.getElementById('date').value;
-        const startTime = document.getElementById('start_time').value;
-        const endTime = document.getElementById('end_time').value;
-        const room = document.getElementById('room').value;
-
-        if (facultySelects.length === 0) {
-            return;
-        }
-
-        if (!groupId || !date || !startTime || !endTime || !room) {
-            alert('Please select group, date, start time, end time, and room before auto-assigning.');
-            return;
-        }
-
-        await loadFacultyForGroup(groupId);
-
-        if (currentAvailableFaculty.length < 2) {
-            alert('Not enough available faculty to auto-assign panel members.');
-            return;
-        }
-        const selectedFacultyIds = currentAvailableFaculty
-            .slice(0, 2)
-            .map(member => String(member.id));
-
-        facultySelects.forEach((select, index) => {
-            if (index < 2) {
-                select.value = selectedFacultyIds[index];
-                roleInputs[index].value = index === 0 ? 'chair' : 'member';
-            }
         });
     }
     function checkDoubleBooking() {

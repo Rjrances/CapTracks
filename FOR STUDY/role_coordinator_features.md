@@ -50,48 +50,53 @@ public function facultyMatrix() {
 
 ## 2. Defense Scheduling & Automatic Panel Assignment
 
-**Description:** Coordinators approve student defense requests and schedule defense panels. The system automatically filters and suggests panel members to prevent scheduling conflicts and balance workload.
+**Description:** Coordinators approve student defense readiness requests and schedule defenses. Adviser and Offering Coordinator are auto-included, while Chair and Member are now **automatically assigned by backend policy** (availability + workload balancing), not manual user choice.
 
 **Core Logic (`app/Http/Controllers/Coordinator/DefenseScheduleController.php`):**
 ```php
-public function storeSchedule(Request $request, DefenseRequest $defenseRequest) {
-    
-    // Create a new record in the defense_schedules table
-    $schedule = DefenseSchedule::create([ 
-        'group_id' => $defenseRequest->group_id, // Link it to the group that requested it
-        'academic_term_id' => AcademicTerm::where('is_active', true)->first()->id, // Link to the current semester
-        'schedule_date' => $request->schedule_date, // Set the date
-        'start_time' => $request->start_time, // Set the start time
-        'end_time' => $request->end_time, // Set the end time
-        'venue' => $request->venue, // Set the physical room
-        'status' => 'scheduled' // Mark the schedule as officially active
-    ]);
+public function store(Request $request)
+{
+    // 1) Validate scheduling inputs (group, stage, room, date/time)
+    // 2) Validate scope: coordinator can only schedule groups in their offerings/active term
+    // 3) Guardrail checks: milestone gate + room/date conflicts
 
-    // Loop through the selected panel members (Chair, Member)
-    foreach ($request->panel_members as $role => $facultyId) { 
-        
-        // Create a new record in the defense_panels table
-        DefensePanel::create([ 
-            'defense_schedule_id' => $schedule->id, // Link this panelist to the schedule we just created
-            'faculty_id' => $facultyId, // Assign the specific faculty member's ID
-            'role' => $role, // Set their role (e.g., 'chair' or 'member')
-            'status' => 'pending'  // Keep it pending until the faculty member logs in and accepts the invite
+    $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
+    $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
+
+    // 4) Backend auto-assignment (source of truth)
+    $autoPanelMembers = $this->resolveAutoPanelMembers($group, $startAt, $endAt);
+    if ($autoPanelMembers->count() < 2) {
+        return back()->withErrors([
+            'panel_members' => 'Unable to auto-assign Chair and Member for this schedule. Please choose another date/time/room.',
         ]);
     }
-    
-    // Update the student's original request so they know it was approved
-    $defenseRequest->update(['status' => 'approved']); 
+
+    // 5) Persist chair/member from auto policy
+    foreach ($autoPanelMembers as $member) {
+        DefensePanel::create([
+            'defense_schedule_id' => $schedule->id,
+            'faculty_id' => $member['faculty_id'],
+            'role' => $member['role'], // chair/member
+            'status' => 'pending',
+        ]);
+    }
+
+    // 6) Auto-include adviser + offering coordinator (accepted immediately)
+    DefensePanel::create([... 'role' => 'adviser', 'status' => 'accepted']);
+    DefensePanel::create([... 'role' => 'coordinator', 'status' => 'accepted']);
 }
 ```
 
 ### 🧠 Defense Tip: How Does the System Choose the Auto-Assign Panel?
-If panelists ask, *"How does your system know who to suggest for a defense panel?"*, you can explain that the `getAvailableFaculty()` method runs a strict **5-step filtering rule**:
+If panelists ask, *"How does your system know who to assign for a defense panel?"*, explain that `resolveAutoPanelMembers()` applies a deterministic **5-step policy**:
 
-1. **Role Check:** It pulls all active users who are faculty members (Teachers, Advisers, Coordinators).
-2. **Conflict of Interest 1:** It actively excludes the faculty member who is the **Adviser** for that specific group (an adviser cannot be a panelist grading their own students).
-3. **Conflict of Interest 2:** It excludes the faculty member who is the **Subject Coordinator** for that specific class offering.
-4. **Time Collision Check:** It checks the `defense_schedules` table. If a faculty member is already sitting on another defense panel at the exact same `start_time` and `schedule_date`, they are completely hidden from the selection list.
-5. **Workload Balancing (Sorting):** Finally, it looks at how many panels the remaining eligible faculty members are currently assigned to this semester. It **sorts them in ascending order**, placing faculty with the fewest panel assignments at the very top of the auto-assign list to balance the workload across the department.
+1. **Candidate Pool:** Pull Chair/Member-eligible faculty from `panelChairMemberCandidates()`.
+2. **Conflict of Interest Filters:** Exclude the group’s **Adviser** and **Offering Coordinator** from Chair/Member pool.
+3. **Time Collision Check:** Exclude faculty already assigned to overlapping defense windows via `getConflictingFacultyIds()`.
+4. **Workload Balancing:** Count current term assignments and sort ascending (`assignment_count`).
+5. **Deterministic Pick:** Take top two candidates (`Chair` = first, `Member` = second).
+
+> UI note: the create form now disables panel fields until Group + Date + Start + End + Room are complete, then auto-prefills from backend response.
 
 
 ## 3. Milestone Templates
@@ -156,51 +161,47 @@ public function bulkUpdate(Request $request) {
 
 If your panelists want you to explain the code line-by-line, memorize these three most complex and critical Coordinator functions.
 
-### A. Auto-Assign Panel Engine (`DefenseScheduleController@getAvailableFaculty`)
-Panel Question: *"Explain line-by-line how the system filters out teachers with scheduling conflicts during defense assignments."*
+### A. Auto-Assign Panel Engine (`DefenseScheduleController@resolveAutoPanelMembers`)
+Panel Question: *"Explain line-by-line how the system automatically assigns Chair and Member without conflicts."*
 
 ```php
-public function getAvailableFaculty(Request $request) {
-    // LINE 1: Capture the exact date and start time the coordinator selected for the defense.
-    $scheduleDate = $request->schedule_date;
-    $startTime = $request->start_time;
+private function resolveAutoPanelMembers(Group $group, Carbon $startAt, Carbon $endAt, ?int $excludeScheduleId = null): Collection
+{
+    // LINE 1: Resolve active term context for fair per-term load balancing.
+    $activeTerm = AcademicTerm::where('is_active', true)->first();
 
-    // LINE 2: Query the 'users' table. Fetch all active users who are either an adviser, coordinator, or teacher.
-    $query = User::whereIn('role', ['adviser', 'coordinator', 'teacher']);
+    // LINE 2: Get busy faculty IDs in overlapping defense windows.
+    $conflictingFacultyIds = $this->getConflictingFacultyIds($startAt, $endAt, $excludeScheduleId);
 
-    // LINE 3: Conflict 1 Check - Filter out the group's own adviser (they cannot panel their own students).
-    if ($request->group_adviser_id) {
-        $query->where('id', '!=', $request->group_adviser_id);
-    }
+    // LINE 3: Build eligible candidate pool (already excludes adviser/offering coordinator).
+    $availableFaculty = $this->panelChairMemberCandidates($group)
+        ->whereNotIn('id', $conflictingFacultyIds)
+        ->values();
 
-    // LINE 4: Conflict 2 Check - Filter out the coordinator running the specific class offering.
-    if ($request->offering_teacher_id) {
-        $query->where('id', '!=', $request->offering_teacher_id);
-    }
+    // LINE 4: Count each candidate's panel assignments in active term.
+    $assignmentCounts = DefensePanel::select('faculty_id', DB::raw('COUNT(*) as assignment_count'))
+        ->whereHas('defenseSchedule', function ($query) use ($activeTerm, $excludeScheduleId) {
+            if ($activeTerm) $query->where('academic_term_id', $activeTerm->id);
+            if ($excludeScheduleId) $query->where('id', '!=', $excludeScheduleId);
+        })
+        ->groupBy('faculty_id')
+        ->pluck('assignment_count', 'faculty_id');
 
-    // LINE 5: Time Collision Check - Find all defense schedules that are happening on the EXACT same date and start time.
-    $conflictingSchedules = DefenseSchedule::where('schedule_date', $scheduleDate)
-                                           ->where('start_time', $startTime)
-                                           ->pluck('id');
+    // LINE 5: Sort least-loaded first (then by name), and pick top 2.
+    $selectedFaculty = $availableFaculty
+        ->map(function ($facultyMember) use ($assignmentCounts) {
+            $facultyMember->assignment_count = (int) ($assignmentCounts[$facultyMember->id] ?? 0);
+            return $facultyMember;
+        })
+        ->sortBy([['assignment_count', 'asc'], ['name', 'asc']])
+        ->take(2)
+        ->values();
 
-    // LINE 6: Conflict 3 Check - If there are conflicting schedules, find the panelists assigned to them.
-    if ($conflictingSchedules->isNotEmpty()) {
-        $busyFacultyIds = DefensePanel::whereIn('defense_schedule_id', $conflictingSchedules)
-                                      ->pluck('faculty_id');
-        // LINE 7: Exclude those busy teachers from our list of available faculty.
-        $query->whereNotIn('id', $busyFacultyIds);
-    }
-
-    // LINE 8: Workload Balance - Calculate how many active panel assignments each remaining teacher has.
-    $query->withCount(['defensePanels as active_panels_count' => function ($q) {
-        $q->where('status', 'accepted');
-    }]);
-
-    // LINE 9: Sort the list in ascending order so teachers with the LEAST panels appear at the top, ensuring fair workload distribution.
-    $availableFaculty = $query->orderBy('active_panels_count', 'asc')->get();
-
-    // LINE 10: Return the sorted, filtered list to the frontend dropdown as JSON.
-    return response()->json($availableFaculty);
+    // LINE 6: Convert deterministic top-2 into fixed roles.
+    return collect([
+        ['faculty_id' => $selectedFaculty[0]->id, 'role' => 'chair'],
+        ['faculty_id' => $selectedFaculty[1]->id, 'role' => 'member'],
+    ]);
 }
 ```
 
@@ -312,29 +313,41 @@ If a panelist points at these functions and asks you to explain them line-by-lin
 ### A. Auto-Assign Algorithm (`DefenseScheduleController@getAvailableFaculty`)
 **The Code:**
 ```php
-public function autoAssignPanel(DefenseRequest $request) {
-    // Check calendar for active conflicts
-    $conflicts = DefenseSchedule::where('schedule_date', $request->date)->pluck('faculty_id');
-    $adviserId = $request->group->adviser_id;
-    
-    // Filter the faculty
-    $availableFaculty = Faculty::whereNotIn('id', $conflicts)
-        ->where('id', '!=', $adviserId)
-        ->withCount('assignedGroups')
-        ->orderBy('assigned_groups_count', 'asc')
-        ->get();
-        
-    return $availableFaculty;
+private function resolveAutoPanelMembers(Group $group, Carbon $startAt, Carbon $endAt, ?int $excludeScheduleId = null): Collection {
+    $conflictingFacultyIds = $this->getConflictingFacultyIds($startAt, $endAt, $excludeScheduleId);
+
+    $availableFaculty = $this->panelChairMemberCandidates($group)
+        ->whereNotIn('id', $conflictingFacultyIds)
+        ->values();
+
+    $assignmentCounts = DefensePanel::select('faculty_id', DB::raw('COUNT(*) as assignment_count'))
+        ->whereHas('defenseSchedule', function ($q) use ($activeTerm) {
+            $q->where('academic_term_id', $activeTerm->id);
+        })
+        ->groupBy('faculty_id')
+        ->pluck('assignment_count', 'faculty_id');
+
+    $selected = $availableFaculty
+        ->map(fn ($f) => tap($f, fn () => $f->assignment_count = (int) ($assignmentCounts[$f->id] ?? 0)))
+        ->sortBy([['assignment_count', 'asc'], ['name', 'asc']])
+        ->take(2)
+        ->values();
+
+    return collect([
+        ['faculty_id' => $selected[0]->id, 'role' => 'chair'],
+        ['faculty_id' => $selected[1]->id, 'role' => 'member'],
+    ]);
 }
 ```
 **Panel Question:** *"Explain how your Auto-Assign algorithm works without double-booking teachers."*
-* **The Goal:** To automatically find 3 available panelists for a student group.
-* **The Process:** Query the database to remove anyone who already has a defense at that exact time, and remove the group's adviser.
+* **The Goal:** To automatically assign Chair and Member with fairness and no schedule overlap.
+* **The Process:** Exclude conflicted faculty and conflict-of-interest roles, rank by least assignment load, and pick top two deterministically.
 
 > *"Sir, the goal of this function is to automatically find available panelists for a defense.*
-> *First, the system looks at the requested date and filters out any faculty members who already have a defense scheduled at that exact time.*
-> *Next, we identify the group's current adviser. The system removes both the busy teachers and the group's adviser to prevent a conflict of interest.*
-> *Finally, the system counts how many groups the remaining teachers are assigned to, sorts them from lowest to highest, and selects the top options to balance workload."*
+> *First, the system checks overlap conflicts for the selected date/time window and removes busy faculty.*
+> *Next, the eligible pool already excludes the group adviser and offering coordinator for Chair/Member slots.*
+> *Then, it computes each candidate’s current assignment count for the active term and sorts ascending.*
+> *Finally, it picks the top 2 and maps them as Chair and Member. Adviser and coordinator are auto-included separately."*
 
 ### B. Faculty Matrix & Load Monitoring (`CoordinatorController@facultyMatrix`)
 **The Code:**
@@ -406,3 +419,55 @@ public function bulkUpdate(Request $request) {
 * **The Process:** Use SQL's `WHERE IN` clause to execute a single bulk update query instead of looping.
 
 > *"Sir, instead of running a slow `foreach` loop that triggers 50 separate database queries, we use a single optimized SQL command. The system takes the array of IDs from the checkboxes, uses the `whereIn` clause to target all matching rows in the database simultaneously, and instantly updates their status to 'approved'. It takes only one query regardless of how many proposals are selected."*
+
+---
+
+## 9. Methods Used (Simple Terms)
+
+Use this section when panelists ask what specific Laravel/PHP methods mean.
+
+- `pluck('column')` - Gets only one column from query results (for example, just IDs), instead of loading full records.
+- `whereIn('column', [...])` - Filters rows where the value matches any item in a list.
+- `whereNotIn('column', [...])` - Filters rows by excluding values from a list.
+- `withCount('relation')` - Adds a count of related records (for example, how many panels a faculty already has) without manually looping.
+- `whereHas('relation', fn...)` - Filters a model based on conditions inside a related model.
+- `first()` - Returns the first matching row, or `null` if none exists.
+- `findOrFail(id)` - Finds one record by ID; throws an error automatically if not found.
+- `create([...])` - Inserts a new record in the database in one call.
+- `update([...])` - Updates existing record fields in one call.
+- `delete()` - Removes a record.
+- `exists()` - Fast true/false check if at least one row matches.
+- `collect([...])` - Creates a Laravel Collection object so we can chain helpers (sort, map, filter, etc.).
+- `map(fn...)` - Transforms each item in a collection into a new shape/value.
+- `sortBy([...])` - Sorts collection items (for auto-panel ranking by load, then name).
+- `take(2)` - Gets only the first two items (used for Chair and Member picks).
+- `values()` - Reindexes collection keys to clean 0..n ordering.
+- `unique('field')` - Removes duplicates by a specific field.
+- `toArray()` - Converts a collection/object into a plain PHP array.
+- `return back()->withErrors([...])->withInput()` - Sends user back to form with validation errors and keeps typed input.
+- `DB::beginTransaction()` / `DB::commit()` / `DB::rollback()` - Groups multiple DB writes into one safe unit: all succeed together, or all are undone on failure.
+- `Carbon::parse(...)` - Converts date/time text into a date object for comparisons and scheduling.
+- `response()->json([...])` - Returns structured JSON data to frontend JavaScript.
+
+### Symbols / Operators (Q&A quick guide)
+- `?` (ternary) - Short if/else in one line.
+- `??` (null coalescing) - Use fallback value when left side is `null`.
+- `?:` (elvis shorthand) - Use left side if truthy, otherwise fallback.
+- `?->` (null-safe operator) - Access property/method only if object is not `null`.
+- `=>` - Key/value separator in arrays, and short function arrow syntax.
+- `===` - Strict comparison (value and type must match).
+
+## 10. Quick Oral Cheat Sheet (Top 10 Terms)
+
+Use these one-liners when panelists ask suddenly during Q&A.
+
+1. **`pluck`** - "Get only one column, like IDs, from many rows."
+2. **`whereIn`** - "Filter rows that match any value in a list."
+3. **`withCount`** - "Add relationship counts directly from DB, no manual loops."
+4. **`whereHas`** - "Filter by a condition inside a related table."
+5. **`create`** - "Insert a new database row quickly."
+6. **`update`** - "Modify existing row values."
+7. **`exists`** - "Fast yes/no check if a matching record exists."
+8. **`sortBy`** - "Order results by a rule, like least workload first."
+9. **`take(2)`** - "Get only the first two ranked candidates."
+10. **`DB transaction`** - "All-or-nothing save: commit if all pass, rollback if any fail."

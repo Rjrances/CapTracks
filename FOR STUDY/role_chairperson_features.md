@@ -359,3 +359,51 @@ public function update(Request $request, $faculty_id) {
 * **The Process:** Verify if the target user is the logged-in user, and block the update if they are trying to demote themselves.
 
 > *"Sir, we wrote a specific validation guard for this. Before updating the database, the system checks if the target `faculty_id` matches the currently logged-in Chairperson's ID. If it does, and they are attempting to select a role other than Chairperson, the system intercepts the request and redirects them back with an error message, preventing them from accidentally locking themselves out of the admin panel."*
+
+---
+
+## 9. Methods Used (Simple Terms)
+
+- `pluck('column')` - Gets only one column from query results (like IDs) instead of full rows.
+- `whereIn('column', [...])` - Filters records that match any value in a list.
+- `whereNotIn('column', [...])` - Excludes records that match values in a list.
+- `withCount('relation')` - Adds relation counts without manual loops.
+- `whereHas('relation', fn...)` - Filters by conditions inside related tables.
+- `first()` - Gets the first matching row or `null`.
+- `findOrFail(id)` - Finds by ID or throws a not found error.
+- `create([...])` - Inserts a new database row.
+- `update([...])` - Updates fields of existing rows.
+- `delete()` - Removes a row.
+- `exists()` - Returns true/false if any matching row exists.
+- `collect([...])` - Creates a Laravel collection for chainable operations.
+- `map(fn...)` - Transforms each item in a collection.
+- `sortBy(...)` - Sorts collection items by one or more rules.
+- `take(n)` - Gets only the first `n` items.
+- `values()` - Reindexes collection keys to clean 0..n numbering.
+- `unique('field')` - Removes duplicates by field.
+- `toArray()` - Converts data to plain PHP array.
+- `return back()->withErrors(...)->withInput()` - Returns user to form with errors and keeps previous input.
+- `DB::beginTransaction()/commit()/rollback()` - All-or-nothing database save flow.
+- `Carbon::parse(...)` - Converts date/time text into a date object.
+- `response()->json([...])` - Returns JSON for frontend scripts.
+
+### Symbols / Operators (Q&A quick guide)
+- `?` (ternary) - Short if/else in one line.
+- `??` (null coalescing) - Use fallback value when left side is `null`.
+- `?:` (elvis shorthand) - Use left side if truthy, otherwise fallback.
+- `?->` (null-safe operator) - Access property/method only if object is not `null`.
+- `=>` - Key/value separator in arrays, and short function arrow syntax.
+- `===` - Strict comparison (value and type must match).
+
+## 10. Quick Oral Cheat Sheet (Top 10 Terms)
+
+1. **`pluck`** - "Get only one column, like IDs, from many rows."
+2. **`whereIn`** - "Filter rows that match any value in a list."
+3. **`withCount`** - "Add relationship counts directly from DB, no manual loops."
+4. **`whereHas`** - "Filter by a condition inside a related table."
+5. **`create`** - "Insert a new database row quickly."
+6. **`update`** - "Modify existing row values."
+7. **`exists`** - "Fast yes/no check if a matching record exists."
+8. **`sortBy`** - "Order results by a rule, like least workload first."
+9. **`take(2)`** - "Get only the first two ranked candidates."
+10. **`DB transaction`** - "All-or-nothing save: commit if all pass, rollback if any fail."

@@ -138,7 +138,7 @@
                                 <label>Panel Members <span class="text-danger">*</span></label>
                                 <div class="alert alert-info mb-3">
                                     <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
-                                    Select exactly two slots only: one Chair and one Member.
+                                    Chair and Member are auto-selected by the system on save based on availability and workload balancing.
                                 </div>
                                 @if($defenseSchedule->group->adviser || ($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id))
                                     <div class="alert alert-success mb-3">
@@ -156,6 +156,10 @@
                                 @php
                                     $chairPanel = $defenseSchedule->defensePanels->firstWhere('role', 'chair');
                                     $memberPanel = $defenseSchedule->defensePanels->firstWhere('role', 'member');
+                                    $autoIncludedPanelIds = collect([
+                                        optional($defenseSchedule->group->adviser)->id,
+                                        optional(optional($defenseSchedule->group->offering)->faculty)->id,
+                                    ])->filter()->map(fn ($id) => (string) $id)->all();
                                 @endphp
                                 <div id="panel-members-container">
                                     <div class="panel-member-row mb-2">
@@ -164,6 +168,7 @@
                                                 <select name="panel_members[0][faculty_id]" class="form-control faculty-select" required>
                                                     <option value="">Select Faculty</option>
                                                     @foreach($faculty as $facultyMember)
+                                                        @continue(in_array((string) $facultyMember->id, $autoIncludedPanelIds, true))
                                                         <option
                                                             value="{{ $facultyMember->id }}"
                                                             {{ (string) old('panel_members.0.faculty_id', $chairPanel->faculty_id ?? '') === (string) $facultyMember->id ? 'selected' : '' }}
@@ -188,6 +193,7 @@
                                                 <select name="panel_members[1][faculty_id]" class="form-control faculty-select" required>
                                                     <option value="">Select Faculty</option>
                                                     @foreach($faculty as $facultyMember)
+                                                        @continue(in_array((string) $facultyMember->id, $autoIncludedPanelIds, true))
                                                         <option
                                                             value="{{ $facultyMember->id }}"
                                                             {{ (string) old('panel_members.1.faculty_id', $memberPanel->faculty_id ?? '') === (string) $facultyMember->id ? 'selected' : '' }}

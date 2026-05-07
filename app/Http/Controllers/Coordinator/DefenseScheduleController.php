@@ -213,15 +213,8 @@ class DefenseScheduleController extends Controller
             'date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'panel_members' => 'required|array|size:2',
-            'panel_members.*.faculty_id' => 'required|distinct|exists:users,id',
-            'panel_members.*.role' => 'required|in:chair,member',
             'milestone_override_reason' => 'nullable|string|max:1000',
         ]);
-        $panelValidationError = $this->validatePanelComposition($validated['panel_members']);
-        if ($panelValidationError) {
-            return back()->withErrors(['panel_members' => $panelValidationError])->withInput();
-        }
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         if (!$activeTerm) {
             return back()->withErrors(['error' => 'No active academic term found. Please contact the chairperson to set an active term.'])->withInput();
@@ -249,10 +242,6 @@ class DefenseScheduleController extends Controller
             $gateOverridden = true;
         }
 
-        $ineligiblePick = $this->panelMembersMustNotIncludeAdviserOrCoordinator($group, $validated['panel_members']);
-        if ($ineligiblePick) {
-            return back()->withErrors(['panel_members' => $ineligiblePick])->withInput();
-        }
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
 
@@ -267,11 +256,11 @@ class DefenseScheduleController extends Controller
             return back()->withErrors(['room' => 'This room is already booked for the selected time slot.'])->withInput();
         }
 
-        //check member conflict
-        $panelFacultyIds = collect($validated['panel_members'])->pluck('faculty_id')->toArray();
-        $panelConflict = $this->checkPanelMemberConflicts($panelFacultyIds, $startAt, $endAt);
-        if ($panelConflict) {
-            return back()->withErrors(['error' => 'One or more panel members are already scheduled for another defense at the selected time.'])->withInput();
+        $autoPanelMembers = $this->resolveAutoPanelMembers($group, $startAt, $endAt);
+        if ($autoPanelMembers->count() < 2) {
+            return back()->withErrors([
+                'panel_members' => 'Unable to auto-assign Chair and Member for this schedule. Please choose another date/time/room.',
+            ])->withInput();
         }
 
         try {
@@ -303,7 +292,7 @@ class DefenseScheduleController extends Controller
                 'milestone_gate_overridden' => $gateOverridden,
                 'milestone_override_reason' => $gateOverridden ? $validated['milestone_override_reason'] : null,
             ]);
-            foreach ($validated['panel_members'] as $member) {
+            foreach ($autoPanelMembers as $member) {
                 DefensePanel::create([
                     'defense_schedule_id' => $schedule->id,
                     'faculty_id' => $member['faculty_id'],
@@ -394,15 +383,8 @@ class DefenseScheduleController extends Controller
             'date' => 'required|date',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'panel_members' => 'required|array|size:2',
-            'panel_members.*.faculty_id' => 'required|distinct|exists:users,id',
-            'panel_members.*.role' => 'required|in:chair,member',
             'milestone_override_reason' => 'nullable|string|max:1000',
         ]);
-        $panelValidationError = $this->validatePanelComposition($validated['panel_members']);
-        if ($panelValidationError) {
-            return back()->withErrors(['panel_members' => $panelValidationError])->withInput();
-        }
         $schedule = DefenseSchedule::findOrFail($id);
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
         $group = Group::with('offering')->findOrFail($validated['group_id']);
@@ -420,10 +402,6 @@ class DefenseScheduleController extends Controller
             $gateOverridden = true;
         }
 
-        $ineligiblePick = $this->panelMembersMustNotIncludeAdviserOrCoordinator($group, $validated['panel_members']);
-        if ($ineligiblePick) {
-            return back()->withErrors(['panel_members' => $ineligiblePick])->withInput();
-        }
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
 
@@ -438,11 +416,11 @@ class DefenseScheduleController extends Controller
             return back()->withErrors(['room' => 'This room is already booked for the selected time slot.'])->withInput();
         }
 
-        //check member conflict
-        $panelFacultyIds = collect($validated['panel_members'])->pluck('faculty_id')->toArray();
-        $panelConflict = $this->checkPanelMemberConflicts($panelFacultyIds, $startAt, $endAt, $id);
-        if ($panelConflict) {
-            return back()->withErrors(['error' => 'One or more panel members are already scheduled for another defense at the selected time.'])->withInput();
+        $autoPanelMembers = $this->resolveAutoPanelMembers($group, $startAt, $endAt, $id);
+        if ($autoPanelMembers->count() < 2) {
+            return back()->withErrors([
+                'panel_members' => 'Unable to auto-assign Chair and Member for this schedule. Please choose another date/time/room.',
+            ])->withInput();
         }
 
         try {
@@ -458,7 +436,7 @@ class DefenseScheduleController extends Controller
                 'milestone_override_reason' => $gateOverridden ? $validated['milestone_override_reason'] : null,
             ]);
             DefensePanel::where('defense_schedule_id', $schedule->id)->delete();
-            foreach ($validated['panel_members'] as $member) {
+            foreach ($autoPanelMembers as $member) {
                 DefensePanel::create([
                     'defense_schedule_id' => $schedule->id,
                     'faculty_id' => $member['faculty_id'],
@@ -588,16 +566,72 @@ class DefenseScheduleController extends Controller
             ])
             ->values();
 
+        $autoAssignedFacultyIds = $availableFaculty
+            ->take(2)
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->values();
+
         return response()->json([
             'availableFaculty' => $availableFaculty,
+            'autoAssignedFacultyIds' => $autoAssignedFacultyIds,
             'conflict' => $conflict,
             'message' => $conflict ? 'This room is already booked for the selected time slot.' : null
         ]);
     }
 
-    private function getConflictingFacultyIds($startAt, $endAt)
+    private function resolveAutoPanelMembers(Group $group, Carbon $startAt, Carbon $endAt, ?int $excludeScheduleId = null): Collection
     {
-        return DefensePanel::whereHas('defenseSchedule', function ($query) use ($startAt, $endAt) {
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+        $conflictingFacultyIds = $this->getConflictingFacultyIds($startAt, $endAt, $excludeScheduleId);
+
+        $availableFaculty = $this->panelChairMemberCandidates($group)
+            ->whereNotIn('id', $conflictingFacultyIds)
+            ->values();
+
+        $assignmentCounts = DefensePanel::select('faculty_id', DB::raw('COUNT(*) as assignment_count'))
+            ->whereHas('defenseSchedule', function ($query) use ($activeTerm, $excludeScheduleId) {
+                if ($activeTerm) {
+                    $query->where('academic_term_id', $activeTerm->id);
+                }
+                if ($excludeScheduleId) {
+                    $query->where('id', '!=', $excludeScheduleId);
+                }
+            })
+            ->groupBy('faculty_id')
+            ->pluck('assignment_count', 'faculty_id');
+
+        $selectedFaculty = $availableFaculty
+            ->map(function ($facultyMember) use ($assignmentCounts) {
+                $facultyMember->assignment_count = (int) ($assignmentCounts[$facultyMember->id] ?? 0);
+                return $facultyMember;
+            })
+            ->sortBy([
+                ['assignment_count', 'asc'],
+                ['name', 'asc'],
+            ])
+            ->take(2)
+            ->values();
+
+        if ($selectedFaculty->count() < 2) {
+            return collect();
+        }
+
+        return collect([
+            [
+                'faculty_id' => $selectedFaculty[0]->id,
+                'role' => 'chair',
+            ],
+            [
+                'faculty_id' => $selectedFaculty[1]->id,
+                'role' => 'member',
+            ],
+        ]);
+    }
+
+    private function getConflictingFacultyIds($startAt, $endAt, ?int $excludeScheduleId = null)
+    {
+        return DefensePanel::whereHas('defenseSchedule', function ($query) use ($startAt, $endAt, $excludeScheduleId) {
             $query->where(function ($overlapQuery) use ($startAt, $endAt) {
                 $overlapQuery->whereBetween('start_at', [$startAt, $endAt])
                     ->orWhereBetween('end_at', [$startAt, $endAt])
@@ -606,6 +640,9 @@ class DefenseScheduleController extends Controller
                             ->where('end_at', '>=', $endAt);
                     });
             });
+            if ($excludeScheduleId) {
+                $query->where('id', '!=', $excludeScheduleId);
+            }
         })->pluck('faculty_id')->unique()->values()->all();
     }
 
