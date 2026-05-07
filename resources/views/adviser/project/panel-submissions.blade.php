@@ -58,6 +58,18 @@
                 $groupData = $submissionsByGroup[$group->id] ?? null;
                 $groupSubmissions = $groupData['submissions'] ?? collect();
                 $pendingCount = $groupSubmissions->where('status', 'pending')->count();
+                $schedule = $group->defense_schedule;
+                $panels = collect($schedule?->defensePanels ?? []);
+                $missingRoles = [];
+                if ($panels->where('role', 'chair')->where('status', 'accepted')->isEmpty()) {
+                    $missingRoles[] = 'Chair';
+                }
+                if ($panels->where('role', 'member')->where('status', 'accepted')->isEmpty()) {
+                    $missingRoles[] = 'Member';
+                }
+                $ratingBlockedMessage = empty($missingRoles)
+                    ? null
+                    : 'Ratings open only after confirmation from: ' . implode(' and ', $missingRoles) . '.';
             @endphp
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
@@ -77,8 +89,12 @@
                             <a href="{{ route('adviser.groups.details', $group) }}" class="btn btn-outline-light btn-sm">
                                 <i class="fas fa-eye"></i> Group Details
                             </a>
-                            @if(isset($group->defense_schedule) && $group->defense_schedule)
-                                <a href="{{ route('adviser.rating-sheets.show', $group->defense_schedule) }}" class="btn btn-warning btn-sm">
+                            @if($schedule)
+                                <a href="{{ $ratingBlockedMessage ? '#' : route('adviser.rating-sheets.show', $schedule) }}"
+                                   class="btn btn-warning btn-sm js-rating-sheet-link"
+                                   data-rating-blocked="{{ $ratingBlockedMessage ? '1' : '0' }}"
+                                   data-rating-message="{{ $ratingBlockedMessage }}"
+                                   data-rating-group="{{ $group->name }}">
                                     <i class="fas fa-clipboard-check"></i> Rating Sheet
                                 </a>
                             @endif
@@ -156,4 +172,49 @@
         </div>
     @endif
 </div>
+
+<div class="modal fade" id="ratingBlockedModal" tabindex="-1" aria-labelledby="ratingBlockedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ratingBlockedModalLabel">Cannot Open Rating Sheet</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="ratingBlockedMessageText"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modalElement = document.getElementById('ratingBlockedModal');
+    const modalMessage = document.getElementById('ratingBlockedMessageText');
+    const blockedModal = modalElement ? new bootstrap.Modal(modalElement) : null;
+
+    function showBlockedModal(message, groupName) {
+        if (!blockedModal || !modalMessage) return;
+        const safeMessage = (message || 'Ratings are not available yet.').trim();
+        const prefix = groupName ? `Group: ${groupName}\n\n` : '';
+        modalMessage.textContent = `${prefix}${safeMessage}`;
+        blockedModal.show();
+    }
+
+    document.querySelectorAll('.js-rating-sheet-link').forEach((link) => {
+        link.addEventListener('click', function (event) {
+            if (this.dataset.ratingBlocked !== '1') return;
+            event.preventDefault();
+            showBlockedModal(this.dataset.ratingMessage, this.dataset.ratingGroup);
+        });
+    });
+
+    @if(session('rating_sheet_blocked_message'))
+        showBlockedModal(@json(session('rating_sheet_blocked_message')), @json(session('rating_sheet_blocked_group')));
+    @endif
+});
+</script>
 @endsection

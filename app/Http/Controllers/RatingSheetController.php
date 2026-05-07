@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 
 class RatingSheetController extends Controller
 {
+    private const SIMPLE_SCORE_ERROR = 'Please enter a valid score between 0 and the allowed maximum.';
+
     public function __construct(
         private readonly DefenseRubricService $defenseRubricService,
         private readonly DefenseEvaluationService $defenseEvaluationService
@@ -27,7 +29,7 @@ class RatingSheetController extends Controller
         }
         $schedule->loadMissing('group.members');
         if (!$this->isRatingWindowOpen($schedule)) {
-            abort(403, $this->ratingWindowBlockReason($schedule));
+            return $this->redirectBlockedRatingAccess($schedule, $this->ratingWindowBlockReason($schedule));
         }
 
         $isAssignedPanel = $schedule->defensePanels()
@@ -109,6 +111,10 @@ class RatingSheetController extends Controller
         }
 
         $panelFacultyUserId = $this->resolvePanelFacultyUserId($schedule, $user);
+        $rubricTemplate = $this->defenseRubricService->getActiveTemplateForStage($schedule->stage);
+        $defaultCriteria = $this->getDefaultCriteria($rubricTemplate?->criteria);
+        $individualCriterion = collect($defaultCriteria)->first(fn ($criterion) => ($criterion['scope'] ?? 'group') === 'individual');
+        $individualMaxPoints = (float) ($individualCriterion['max_points'] ?? 100);
 
         $validated = $request->validate([
             'criteria_ids' => 'nullable|array',
@@ -120,21 +126,26 @@ class RatingSheetController extends Controller
             'criteria_max_points' => 'required|array|min:1',
             'criteria_max_points.*' => 'required|numeric|min:1|max:1000',
             'criteria_scores' => 'required|array|min:1',
-            'criteria_scores.*' => 'required|numeric|min:0',
+            'criteria_scores.*' => 'required|numeric',
             'individual_scores' => 'required|array|min:1',
-            'individual_scores.*' => 'required|numeric|min:0|max:100',
+            'individual_scores.*' => 'required|numeric',
             'recommendation' => 'required|in:pass,conditional_pass,redefend',
             'recommendation_reason' => 'nullable|string|max:2000|required_if:recommendation,redefend',
             'remarks' => 'nullable|string|max:2000',
         ]);
 
         $criteria = [];
-        foreach (collect($validated['criteria_names'])->values() as $index => $name) {
+        foreach (collect($validated['criteria_names'])->values() as $index => $_name) {
             $maxPoints = (float) ($validated['criteria_max_points'][$index] ?? 0);
             $score = (float) ($validated['criteria_scores'][$index] ?? 0);
+            if ($score < 0) {
+                return back()
+                    ->withErrors(['criteria_scores' => self::SIMPLE_SCORE_ERROR])
+                    ->withInput();
+            }
             if ($score > $maxPoints) {
                 return back()
-                    ->withErrors(['criteria_scores' => "Criterion '{$name}' score cannot exceed {$maxPoints}."])
+                    ->withErrors(['criteria_scores' => self::SIMPLE_SCORE_ERROR])
                     ->withInput();
             }
 
@@ -155,19 +166,27 @@ class RatingSheetController extends Controller
         }
 
         $members = $schedule->group?->members ?? collect();
-        $individualScores = $members->map(function ($member) use ($validated) {
+        $individualScores = [];
+        foreach ($members as $member) {
             $score = (float) ($validated['individual_scores'][$member->student_id] ?? 0);
-            if ($score > 100) {
-                $score = 100;
+            if ($score < 0) {
+                return back()
+                    ->withErrors(['individual_scores' => self::SIMPLE_SCORE_ERROR])
+                    ->withInput();
+            }
+            if ($score > $individualMaxPoints) {
+                return back()
+                    ->withErrors(['individual_scores' => self::SIMPLE_SCORE_ERROR])
+                    ->withInput();
             }
 
-            return [
+            $individualScores[] = [
                 'student_id' => $member->student_id,
                 'student_name' => $member->name,
-                'max_points' => 100,
+                'max_points' => $individualMaxPoints,
                 'score' => $score,
             ];
-        })->values()->all();
+        }
 
         RatingSheet::updateOrCreate(
             [
@@ -556,5 +575,17 @@ class RatingSheetController extends Controller
         return redirect()
             ->route($targetRoute, $preferredScheduleId)
             ->with('info', 'You were redirected to the current defense schedule for this group.');
+    }
+
+    private function redirectBlockedRatingAccess(DefenseSchedule $schedule, string $message)
+    {
+        if (request()->routeIs('adviser.*')) {
+            return redirect()
+                ->route('adviser.panel-submissions')
+                ->with('rating_sheet_blocked_message', $message)
+                ->with('rating_sheet_blocked_group', $schedule->group->name ?? null);
+        }
+
+        return back()->withErrors(['rating' => $message]);
     }
 }

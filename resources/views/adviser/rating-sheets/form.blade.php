@@ -61,7 +61,7 @@
                 {{ $schedule->start_at->format('M d, Y h:i A') }} - {{ $schedule->room }}
             </div>
 
-            <form action="{{ request()->routeIs('coordinator.*') ? route('coordinator.rating-sheets.rate.submit', $schedule) : route('adviser.rating-sheets.submit', $schedule) }}" method="POST">
+            <form action="{{ request()->routeIs('coordinator.*') ? route('coordinator.rating-sheets.rate.submit', $schedule) : route('adviser.rating-sheets.submit', $schedule) }}" method="POST" novalidate>
                 @csrf
 
                 @php
@@ -171,28 +171,91 @@
     </div>
 </div>
 
+<div class="modal fade" id="ratingValidationModal" tabindex="-1" aria-labelledby="ratingValidationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ratingValidationModalLabel">Invalid Score</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="ratingValidationModalMessage">
+                Please enter a valid score between 0 and the allowed maximum.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const scoreInputs = document.querySelectorAll('.criteria-score-input');
+    const individualInputs = document.querySelectorAll('input[name^="individual_scores["]');
     const totalEl = document.getElementById('total-score');
     const submitBtn = document.getElementById('submit-rating-btn');
     const recommendationSelect = document.getElementById('recommendation');
     const redefendReasonWrapper = document.getElementById('redefend-reason-wrapper');
     const redefendReasonInput = document.getElementById('recommendation_reason');
+    const validationModalEl = document.getElementById('ratingValidationModal');
+    const validationModalMessage = document.getElementById('ratingValidationModalMessage');
+    const validationModal = validationModalEl ? new bootstrap.Modal(validationModalEl) : null;
+
+    function clampScoreInput(input) {
+        const rawValue = input.value;
+        if (rawValue === '') {
+            input.setCustomValidity('');
+            return;
+        }
+
+        const parsed = parseFloat(rawValue);
+        const min = parseFloat(input.min || '0');
+        const max = parseFloat(input.max || '0');
+
+        if (Number.isNaN(parsed)) {
+            input.setCustomValidity('');
+            return;
+        }
+
+        input.setCustomValidity(parsed < min || parsed > max
+            ? 'Please enter a valid score between 0 and the allowed maximum.'
+            : '');
+    }
+
+    function validateRange(input) {
+        const rawValue = input.value;
+        if (rawValue === '') {
+            return false;
+        }
+
+        const parsed = parseFloat(rawValue);
+        const min = parseFloat(input.min || '0');
+        const max = parseFloat(input.max || '0');
+
+        return !Number.isNaN(parsed) && parsed >= min && parsed <= max;
+    }
 
     function updateTotalAndState() {
         let total = 0;
         scoreInputs.forEach((input) => {
+            clampScoreInput(input);
             const value = parseFloat(input.value);
             total += Number.isNaN(value) ? 0 : value;
         });
 
+        individualInputs.forEach((input) => clampScoreInput(input));
         totalEl.textContent = total.toFixed(2);
         submitBtn.disabled = total <= 0;
     }
 
     scoreInputs.forEach((input) => {
         input.addEventListener('input', updateTotalAndState);
+        input.addEventListener('blur', updateTotalAndState);
+    });
+
+    individualInputs.forEach((input) => {
+        input.addEventListener('input', updateTotalAndState);
+        input.addEventListener('blur', updateTotalAndState);
     });
 
     function toggleRedefendReason() {
@@ -202,6 +265,23 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     recommendationSelect.addEventListener('change', toggleRedefendReason);
+
+    const ratingForm = submitBtn?.closest('form');
+    if (ratingForm) {
+        ratingForm.addEventListener('submit', function (event) {
+            const allInputs = [...scoreInputs, ...individualInputs];
+            allInputs.forEach((input) => clampScoreInput(input));
+
+            const hasInvalidScore = allInputs.some((input) => !validateRange(input));
+            if (hasInvalidScore) {
+                event.preventDefault();
+                if (validationModalMessage) {
+                    validationModalMessage.textContent = 'Please enter a valid score between 0 and the allowed maximum.';
+                }
+                validationModal?.show();
+            }
+        });
+    }
 
     updateTotalAndState();
     toggleRedefendReason();
