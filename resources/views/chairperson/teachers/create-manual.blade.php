@@ -11,12 +11,6 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    @endif
                     @if($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
                             <ul class="mb-0">
@@ -30,24 +24,85 @@
                     <form action="{{ route('chairperson.teachers.store-manual') }}" method="POST">
                         @csrf
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-2">
                                 <div class="mb-3">
-                                    <label for="name" class="form-label fw-bold">
-                                        <i class="fas fa-user me-1"></i>Full Name *
+                                    <label for="name_prefix" class="form-label fw-bold">
+                                        Prefix
                                     </label>
                                     <input type="text" 
-                                           name="name" 
-                                           id="name" 
-                                           class="form-control @error('name') is-invalid @enderror" 
-                                           value="{{ old('name') }}" 
-                                           placeholder="Enter full name"
-                                           required>
-                                    @error('name')
+                                           name="name_prefix" 
+                                           id="name_prefix" 
+                                           class="form-control @error('name_prefix') is-invalid @enderror" 
+                                           value="{{ old('name_prefix') }}" 
+                                           placeholder="Dr.">
+                                    @error('name_prefix')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="first_name" class="form-label fw-bold">
+                                        <i class="fas fa-user me-1"></i>First Name *
+                                    </label>
+                                    <input type="text" 
+                                           name="first_name" 
+                                           id="first_name" 
+                                           class="form-control @error('first_name') is-invalid @enderror" 
+                                           value="{{ old('first_name') }}" 
+                                           placeholder="Enter first name"
+                                           required>
+                                    @error('first_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="middle_name" class="form-label fw-bold">Middle Name</label>
+                                    <input type="text" 
+                                           name="middle_name" 
+                                           id="middle_name" 
+                                           class="form-control @error('middle_name') is-invalid @enderror" 
+                                           value="{{ old('middle_name') }}" 
+                                           placeholder="Optional">
+                                    @error('middle_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="last_name" class="form-label fw-bold">Last Name *</label>
+                                    <input type="text" 
+                                           name="last_name" 
+                                           id="last_name" 
+                                           class="form-control @error('last_name') is-invalid @enderror" 
+                                           value="{{ old('last_name') }}" 
+                                           placeholder="Enter last name"
+                                           required>
+                                    @error('last_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="mb-3">
+                                    <label for="suffix" class="form-label fw-bold">Suffix</label>
+                                    <input type="text" 
+                                           name="suffix" 
+                                           id="suffix" 
+                                           class="form-control @error('suffix') is-invalid @enderror" 
+                                           value="{{ old('suffix') }}" 
+                                           placeholder="Jr., III">
+                                    @error('suffix')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="col-md-10">
                                 <div class="mb-3">
                                     <label for="email" class="form-label fw-bold">
                                         <i class="fas fa-envelope me-1"></i>Email Address *
@@ -89,21 +144,11 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="role" class="form-label fw-bold">
-                                        <i class="fas fa-user-tag me-1"></i>Role *
+                                    <label for="role_display" class="form-label fw-bold">
+                                        <i class="fas fa-user-tag me-1"></i>Role
                                     </label>
-                                    <select name="role" 
-                                            id="role" 
-                                            class="form-select @error('role') is-invalid @enderror" 
-                                            required>
-                                        <option value="">Select Role</option>
-                                        <option value="teacher" {{ old('role') == 'teacher' ? 'selected' : '' }}>Teacher</option>
-                                        <option value="adviser" {{ old('role') == 'adviser' ? 'selected' : '' }}>Adviser</option>
-                                        <option value="panelist" {{ old('role') == 'panelist' ? 'selected' : '' }}>Panelist</option>
-                                    </select>
-                                    @error('role')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                    <input type="text" id="role_display" class="form-control" value="Teacher" readonly>
+                                    <div class="form-text">Role is automatically assigned as teacher for manual adding.</div>
                                 </div>
                             </div>
                         </div>

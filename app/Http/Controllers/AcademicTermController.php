@@ -20,7 +20,17 @@ class AcademicTermController extends Controller
     {
         $request->validate([
             'school_year' => 'required|string|max:255',
-            'semester' => 'required|in:First Semester,Second Semester,Summer',
+            'semester' => [
+                'required',
+                'in:First Semester,Second Semester,Summer',
+                function ($attribute, $value, $fail) use ($request) {
+                    $fullSemester = trim((string) $request->school_year) . ' ' . $value;
+                    $exists = AcademicTerm::where('semester', $fullSemester)->exists();
+                    if ($exists) {
+                        $fail('This school year and semester combination already exists.');
+                    }
+                },
+            ],
         ]);
         if ($request->has('is_active') && $request->is_active) {
             AcademicTerm::where('is_active', true)->update(['is_active' => false]);
@@ -46,8 +56,33 @@ class AcademicTermController extends Controller
     {
         $request->validate([
             'school_year' => 'required|string|max:255',
-            'semester' => 'required|in:First Semester,Second Semester,Summer',
+            'semester' => [
+                'required',
+                'in:First Semester,Second Semester,Summer',
+                function ($attribute, $value, $fail) use ($request, $academicTerm) {
+                    $fullSemester = trim((string) $request->school_year) . ' ' . $value;
+                    $exists = AcademicTerm::where('semester', $fullSemester)
+                        ->where('id', '!=', $academicTerm->id)
+                        ->exists();
+                    if ($exists) {
+                        $fail('This school year and semester combination already exists.');
+                    }
+                },
+            ],
         ]);
+
+        $wantsActive = $request->has('is_active') && $request->is_active;
+        if (!$wantsActive && $academicTerm->is_active) {
+            $hasOtherActiveTerm = AcademicTerm::where('id', '!=', $academicTerm->id)
+                ->where('is_active', true)
+                ->exists();
+            if (!$hasOtherActiveTerm) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'At least one academic term must remain active.');
+            }
+        }
+
         if ($request->has('is_active') && $request->is_active) {
             AcademicTerm::where('id', '!=', $academicTerm->id)
                 ->where('is_active', true)
@@ -78,6 +113,17 @@ class AcademicTermController extends Controller
             return redirect()->route('chairperson.academic-terms.index')
                 ->with('error', 'Cannot activate an archived academic term.');
         }
+
+        if ($academicTerm->is_active) {
+            $hasOtherActiveTerm = AcademicTerm::where('id', '!=', $academicTerm->id)
+                ->where('is_active', true)
+                ->exists();
+            if (!$hasOtherActiveTerm) {
+                return redirect()->route('chairperson.academic-terms.index')
+                    ->with('error', 'At least one academic term must remain active.');
+            }
+        }
+
         DB::transaction(function () use ($academicTerm) {
             AcademicTerm::where('id', '!=', $academicTerm->id)
                 ->update(['is_active' => false]);

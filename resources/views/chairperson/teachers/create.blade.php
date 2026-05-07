@@ -11,15 +11,14 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    @endif
-                    @if(session('error'))
+                    @if($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            {{ session('error') }}
+                            <strong>Please fix the following errors:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
@@ -36,57 +35,34 @@
                         </div>
                         <div class="alert alert-info">
                             <h6 class="alert-heading">
-                                <i class="fas fa-info-circle me-1"></i>CSV File Format
-                            </h6>
-                            <p class="mb-2">Your CSV file should have the following columns:</p>
-                            <ul class="mb-0">
-                                <li><strong>faculty_id</strong> (required)</li>
-                                <li><strong>name</strong> (required)</li>
-                                <li><strong>email</strong> (required)</li>
-                                <li><strong>role</strong> (optional)</li>
-                                <li><strong>department</strong> (optional)</li>
-                                <li><strong>semester</strong> (required)</li>
-                            </ul>
-                        </div>
-                        <div class="alert alert-info">
-                            <h6 class="alert-heading">
-                                <i class="fas fa-info-circle me-1"></i>CSV Format Guide
+                                <i class="fas fa-info-circle me-1"></i>CSV Format Required
                             </h6>
                             <p class="mb-2">Your CSV file should have these columns:</p>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>faculty_id</th>
-                                            <th>name</th>
-                                            <th>email</th>
-                                            <th>role</th>
-                                            <th>department</th>
-                                            <th>semester</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>10001</td>
-                                            <td>Dr. John Smith</td>
-                                            <td>john.smith@university.edu</td>
-                                            <td>teacher</td>
-                                            <td>SCS</td>
-                                            <td>2024-2025 First Semester</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <ul class="mb-0">
+                                <li><strong>faculty_id</strong> - Required and must be unique</li>
+                                <li><strong>first_name</strong> - Required</li>
+                                <li><strong>middle_name</strong> - Optional</li>
+                                <li><strong>last_name</strong> - Required</li>
+                                <li><strong>name_prefix</strong> - Optional (e.g., Dr., Engr.)</li>
+                                <li><strong>suffix</strong> - Optional (e.g., Jr., III)</li>
+                                <li><strong>email</strong> - Required and must be unique</li>
+                                <li><strong>role</strong> - Optional (defaults to teacher)</li>
+                                <li><strong>department</strong> - Optional</li>
+                                <li><strong>semester</strong> - Required (e.g., 2024-2025 First Semester)</li>
+                            </ul>
+                            <hr class="my-2">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-download me-2"></i>
+                                <a href="/faculty_import_template.csv" class="btn btn-sm btn-outline-info" download>
+                                    Download CSV Template
+                                </a>
+                                <small class="text-muted ms-2">Use this template to ensure correct format</small>
                             </div>
-                            <p class="mb-0 mt-2">
-                                <strong>Notes:</strong><br>
-Faculty ID must be provided in the CSV (e.g., 10001, 10002, etc.)<br>
-Faculty ID must be unique and not already exist in the system<br>
-The role column is optional - if not specified, it will default to "teacher"<br>
-Valid roles: teacher, adviser, panelist, coordinator, chairperson<br>
-<strong>Semester format:</strong> "2024-2025 First Semester", "2024-2025 Second Semester", "2024-2025 Summer"<br>
-Department should be "SCS" for School of Computer Science<br>
-Faculty names should include appropriate titles (Dr., Prof., etc.)<br>
-                            </p>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    <strong>Legacy support:</strong> A single <code>name</code> column is still accepted, but split name columns are recommended.
+                                </small>
+                            </div>
                         </div>
                         <div class="alert alert-warning">
                             <h6 class="alert-heading">
@@ -103,9 +79,6 @@ Faculty names should include appropriate titles (Dr., Prof., etc.)<br>
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-upload me-1"></i>Import Faculty
                             </button>
-                            <a href="/faculty_import_template.csv" class="btn btn-info" download>
-                                <i class="fas fa-download me-1"></i>Download Template
-                            </a>
                             <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-1"></i>Back to Teachers
                             </a>

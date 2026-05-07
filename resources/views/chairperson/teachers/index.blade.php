@@ -110,7 +110,7 @@
                 @foreach ($teachers as $teacher)
                     <tr>
                         <td><strong>{{ $teacher->faculty_id }}</strong></td>
-                        <td>{{ $teacher->name }}</td>
+                        <td>{{ $teacher->formatted_name }}</td>
                         <td>{{ $teacher->email }}</td>
                         <td>
                             @php

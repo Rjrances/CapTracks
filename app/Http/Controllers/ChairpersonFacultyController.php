@@ -78,6 +78,12 @@ class ChairpersonFacultyController extends Controller
         $suffix = $request->filled('suffix') ? trim((string) $request->suffix) : null;
         $fullName = $this->buildFullName($namePrefix, $firstName, $middleName, $lastName, $suffix);
         
+        if ($this->facultyNameAlreadyExists($firstName, $middleName, $lastName, $suffix, $activeTerm)) {
+            return back()
+                ->withInput()
+                ->withErrors(['first_name' => 'A faculty member with the same first, middle, and last name already exists for this semester. Use a different suffix if this is a different person.']);
+        }
+        
         
         if ($activeTerm) {
             $existingEmail = User::where('email', $request->email)
@@ -131,16 +137,17 @@ class ChairpersonFacultyController extends Controller
         $activeTerm = $this->getActiveTerm();
         
         $request->validate([
-            'name' => 'nullable|string|max:255',
             'name_prefix' => 'nullable|string|max:20',
-            'first_name' => 'required_without:name|string|max:100',
+            'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
-            'last_name' => 'required_without:name|string|max:100',
+            'last_name' => 'required|string|max:100',
             'suffix' => 'nullable|string|max:20',
             'email' => 'required|email',
             'faculty_id' => 'required|string|max:20',
             'department' => 'nullable|string|max:255',
         ], [
+            'first_name.required' => 'First name is required.',
+            'last_name.required' => 'Last name is required.',
             'email.required' => 'Email is required.',
             'email.email' => 'Please enter a valid email address.',
             'faculty_id.required' => 'Faculty ID is required.',
@@ -152,6 +159,12 @@ class ChairpersonFacultyController extends Controller
         $namePrefix = $request->filled('name_prefix') ? trim((string) $request->name_prefix) : null;
         $suffix = $request->filled('suffix') ? trim((string) $request->suffix) : null;
         $fullName = $this->buildFullName($namePrefix, $firstName, $middleName, $lastName, $suffix);
+
+        if ($this->facultyNameAlreadyExists($firstName, $middleName, $lastName, $suffix, $activeTerm)) {
+            return back()
+                ->withInput()
+                ->withErrors(['first_name' => 'A faculty member with the same first, middle, and last name already exists for this semester. Use a different suffix if this is a different person.']);
+        }
         
         //email validation
         if ($activeTerm) {
@@ -285,11 +298,10 @@ class ChairpersonFacultyController extends Controller
         
         //email validation
         $request->validate([
-            'name' => 'nullable|string|max:255',
             'name_prefix' => 'nullable|string|max:20',
-            'first_name' => 'required_without:name|string|max:100',
+            'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
-            'last_name' => 'required_without:name|string|max:100',
+            'last_name' => 'required|string|max:100',
             'suffix' => 'nullable|string|max:20',
             'email' => [
                 'required',
@@ -307,10 +319,20 @@ class ChairpersonFacultyController extends Controller
             ],
             'department' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8',
+        ], [
+            'first_name.required' => 'First name is required.',
+            'last_name.required' => 'Last name is required.',
         ]);
         [$firstName, $middleName, $lastName] = $this->resolveNameParts($request);
         $namePrefix = $request->filled('name_prefix') ? trim((string) $request->name_prefix) : null;
         $suffix = $request->filled('suffix') ? trim((string) $request->suffix) : null;
+
+        if ($this->facultyNameAlreadyExists($firstName, $middleName, $lastName, $suffix, $activeTerm, $faculty->id)) {
+            return back()
+                ->withInput()
+                ->withErrors(['first_name' => 'A faculty member with the same first, middle, and last name already exists for this semester. Use a different suffix if this is a different person.']);
+        }
+
         $fullName = $this->buildFullName($namePrefix, $firstName, $middleName, $lastName, $suffix);
         $updateData = [
             'name' => $fullName,
@@ -419,6 +441,32 @@ class ChairpersonFacultyController extends Controller
             $lastName,
             $suffix,
         ], fn ($value) => filled($value))));
+    }
+
+    private function facultyNameAlreadyExists(
+        string $firstName,
+        ?string $middleName,
+        string $lastName,
+        ?string $suffix,
+        ?AcademicTerm $activeTerm,
+        ?int $excludeUserId = null
+    ): bool
+    {
+        $query = User::query()
+            ->whereRaw('LOWER(TRIM(COALESCE(first_name, ""))) = ?', [strtolower(trim($firstName))])
+            ->whereRaw('LOWER(TRIM(COALESCE(middle_name, ""))) = ?', [strtolower(trim((string) $middleName))])
+            ->whereRaw('LOWER(TRIM(COALESCE(last_name, ""))) = ?', [strtolower(trim($lastName))])
+            ->whereRaw('LOWER(TRIM(COALESCE(suffix, ""))) = ?', [strtolower(trim((string) $suffix))]);
+
+        if ($activeTerm) {
+            $query->where('semester', $activeTerm->semester);
+        }
+
+        if ($excludeUserId) {
+            $query->where('id', '!=', $excludeUserId);
+        }
+
+        return $query->exists();
     }
 }
 

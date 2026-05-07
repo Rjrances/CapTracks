@@ -53,22 +53,6 @@
             </div>
         @endif
     @endif
-    {{-- Success Message --}}
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>
-            <strong>Success!</strong> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-    {{-- Error Messages --}}
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
     @if($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i>
@@ -109,10 +93,13 @@
                     <h6 class="alert-heading">
                         <i class="fas fa-info-circle me-1"></i>Excel Format Required
                     </h6>
-                    <p class="mb-2">Your Excel file should have these columns:</p>
+                    <p class="mb-2">Your CSV file should have these columns:</p>
                     <ul class="mb-0">
                         <li><strong>student_id</strong> - Student ID number (must be exactly 10 digits)</li>
-                        <li><strong>name</strong> - Full name</li>
+                        <li><strong>first_name</strong> - Required</li>
+                        <li><strong>middle_name</strong> - Optional</li>
+                        <li><strong>last_name</strong> - Required</li>
+                        <li><strong>suffix</strong> - Optional</li>
                         <li><strong>email</strong> - Email address (must be unique)</li>
                         <li><strong>semester</strong> - Current semester (format: "2024-2025 First Semester", "2024-2025 Second Semester", "2024-2025 Summer")</li>
                         <li><strong>course</strong> - Course/Program (BS Computer Science, BS Information Technology, BS Entertainment and Multimedia Computing)</li>
@@ -130,6 +117,11 @@
                         <small class="text-muted">
                             <i class="fas fa-magic me-1"></i>
                             <strong>Automatic Enrollment:</strong> Students will be automatically enrolled in their specified offering based on the offer_code.
+                        </small>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <strong>Legacy support:</strong> A single <code>name</code> column is still accepted, but split name columns are recommended.
                         </small>
                     </div>
                 </div>

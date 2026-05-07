@@ -21,12 +21,6 @@
                      </a>
                  </div>
             </div>
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
             <div class="card mb-4">
                 <div class="card-body">
                     <form method="GET" action="{{ route('chairperson.students.index') }}" class="row g-3">
@@ -168,14 +162,14 @@
                                             <div class="form-check">
                                                 <input class="form-check-input student-checkbox" type="checkbox" 
                                                        value="{{ $student->student_id }}" id="student_{{ $student->student_id }}"
-                                                       data-student-name="{{ $student->name }}">
+                                                       data-student-name="{{ $student->formatted_name }}">
                                             </div>
                                         </td>
                                         <td>
                                             <strong>{{ $student->student_id }}</strong>
                                         </td>
                                         <td>
-                                            <div class="fw-semibold">{{ $student->name }}</div>
+                                            <div class="fw-semibold">{{ $student->formatted_name }}</div>
                                         </td>
                                         <td>
                                             <small>{{ $student->email }}</small>
@@ -211,7 +205,7 @@
                                                  </a>
                                                  <button type="button" class="btn btn-outline-danger" 
                                                          data-bs-toggle="tooltip" title="Delete Student"
-                                                         onclick="deleteStudent('{{ $student->student_id }}', '{{ $student->name }}')">
+                                                        onclick="deleteStudent('{{ $student->student_id }}', '{{ $student->formatted_name }}')">
                                                      <i class="fas fa-trash"></i>
                                                  </button>
                                              </div>
@@ -331,11 +325,11 @@
 </form>
 <script>
 function deleteStudent(studentId, studentName) {
-    if (confirm(`Are you sure you want to delete student "${studentName}"?\n\nThis action cannot be undone and will remove the student from all offerings and groups.`)) {
-        const form = document.getElementById('deleteStudentForm');
-        form.action = `/chairperson/students/${studentId}`;
-        form.submit();
-    }
+    const form = document.getElementById('deleteStudentForm');
+    form.action = `/chairperson/students/${studentId}`;
+    form.dataset.confirmType = 'delete';
+    form.dataset.confirmMessage = `Are you sure you want to delete student "${studentName}"? This action cannot be undone and will remove the student from all offerings and groups.`;
+    form.requestSubmit();
 }
 document.addEventListener('DOMContentLoaded', function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -388,23 +382,19 @@ function initializeBulkSelection() {
     deleteSelectedBtn.addEventListener('click', function() {
         const checkedCheckboxes = document.querySelectorAll('.student-checkbox:checked');
         const studentIds = Array.from(checkedCheckboxes).map(cb => cb.value);
-        const studentNames = Array.from(checkedCheckboxes).map(cb => cb.dataset.studentName);
         if (studentIds.length === 0) {
             alert('Please select at least one student to delete.');
             return;
         }
-        const confirmMessage = `Are you sure you want to delete ${studentIds.length} selected student(s)?\n\n` +
-                             `Students to be deleted:\n${studentNames.join('\n')}\n\n` +
-                             `This action cannot be undone and will remove the students from all offerings and groups.`;
-        if (confirm(confirmMessage)) {
-            const form = document.getElementById('bulkDeleteForm');
-            const input = document.getElementById('bulkDeleteStudentIds');
-            if (form && input) {
-                input.value = JSON.stringify(studentIds);
-                form.submit();
-            } else {
-                alert('Error: Form not found. Please refresh the page and try again.');
-            }
+        const form = document.getElementById('bulkDeleteForm');
+        const input = document.getElementById('bulkDeleteStudentIds');
+        if (form && input) {
+            input.value = JSON.stringify(studentIds);
+            form.dataset.confirmType = 'delete';
+            form.dataset.confirmMessage = `Are you sure you want to delete ${studentIds.length} selected student(s)? This action cannot be undone and will remove the students from all offerings and groups.`;
+            form.requestSubmit();
+        } else {
+            alert('Error: Form not found. Please refresh the page and try again.');
         }
     });
 }

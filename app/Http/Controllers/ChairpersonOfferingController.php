@@ -125,6 +125,18 @@ class ChairpersonOfferingController extends Controller
                 $newTeacher->assignRole('coordinator');
                 \Log::info("Automatically assigned coordinator role to teacher {$newTeacher->name} for offering {$offering->subject_code}");
             }
+
+            $oldTeacher = User::where('faculty_id', $oldTeacherId)->first();
+            if ($oldTeacher && $oldTeacher->hasRole('coordinator')) {
+                $oldTeacherHasOtherOfferings = Offering::where('faculty_id', $oldTeacherId)
+                    ->where('id', '!=', $offering->id)
+                    ->exists();
+
+                if (!$oldTeacherHasOtherOfferings) {
+                    $oldTeacher->removeRole('coordinator');
+                    \Log::info("Removed coordinator role from teacher {$oldTeacher->name} because they no longer handle offerings.");
+                }
+            }
         }
         
         $message = 'Offering updated successfully. Coordinator role assigned automatically.';
@@ -134,10 +146,22 @@ class ChairpersonOfferingController extends Controller
 
     public function destroy($id)
     {
-        $offering = Offering::with('teacher')->where('id', $id)->firstOrFail();
+        $offering = Offering::with(['teacher', 'students'])->where('id', $id)->firstOrFail();
         $teacher = $offering->teacher;
+        $teacherFacultyId = $offering->faculty_id;
         $offeringCode = $offering->subject_code;
+
+        // Clear pivot rows first to satisfy FK constraints.
+        $offering->students()->detach();
         $offering->delete();
+
+        if ($teacher && $teacher->hasRole('coordinator')) {
+            $teacherHasOtherOfferings = Offering::where('faculty_id', $teacherFacultyId)->exists();
+            if (!$teacherHasOtherOfferings) {
+                $teacher->removeRole('coordinator');
+                \Log::info("Removed coordinator role from teacher {$teacher->name} after deleting offering {$offeringCode}.");
+            }
+        }
         
         $message = "Offering '{$offeringCode}' deleted successfully.";
         return redirect()->route('chairperson.offerings.index')->with('success', $message);

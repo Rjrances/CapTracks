@@ -56,6 +56,14 @@ class StudentImportService
             $import = new StudentsImport($offeringId);
             Excel::import($import, $file);
 
+            $createdCount = $import->getCreatedStudentsCount();
+            $existingCount = $import->getExistingStudentsCount();
+            if ($createdCount === 0 && $existingCount > 0) {
+                $existingIds = $import->getExistingStudentIds();
+                $existingPreview = !empty($existingIds) ? ' IDs: ' . implode(', ', $existingIds) . (count($existingIds) >= 10 ? '...' : '') : '';
+                return back()->with('error', "Import failed: all {$existingCount} students in the file already exist in the system.{$existingPreview}");
+            }
+
             if ($offeringId) {
                 try {
                     $offering = Offering::find($offeringId);
@@ -73,6 +81,9 @@ class StudentImportService
             }
 
             $successMessage = "Students imported successfully from '{$fileName}'!";
+            if ($existingCount > 0) {
+                $successMessage .= " {$existingCount} existing student(s) were skipped.";
+            }
 
             if ($request->has('offering_id')) {
                 $oid = $request->get('offering_id');

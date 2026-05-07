@@ -13,7 +13,6 @@ use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterImport;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBatchInserts, WithChunkReading, SkipsOnError, SkipsEmptyRows, WithMapping, WithEvents
 {
@@ -21,6 +20,9 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
     protected $importedStudentIds = [];
     protected $enrollmentService;
     protected $importedStudents = [];
+    protected $createdStudentsCount = 0;
+    protected $existingStudentsCount = 0;
+    protected $existingStudentIds = [];
     
     public function __construct($offeringId = null)
     {
@@ -34,7 +36,13 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
 
         return [
             'student_id' => (string) $normalized['student_id'], // Force to string to handle Excel numeric conversion
+            'name_prefix' => trim((string) ($normalized['name_prefix'] ?? '')),
+            'first_name' => trim((string) ($normalized['first_name'] ?? '')),
+            'middle_name' => trim((string) ($normalized['middle_name'] ?? '')),
+            'last_name' => trim((string) ($normalized['last_name'] ?? '')),
+            'suffix' => trim((string) ($normalized['suffix'] ?? '')),
             'name' => $this->composeStudentName(
+                $normalized['name_prefix'] ?? '',
                 $normalized['first_name'] ?? '',
                 $normalized['middle_name'] ?? '',
                 $normalized['last_name'] ?? '',
@@ -48,24 +56,42 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
     }
     public function model(array $row)
     {
-        // Create the student first
+        $student = Student::where('student_id', $row['student_id'])->first();
+        if (!$student && !empty($row['email'])) {
+            $student = Student::where('email', $row['email'])->first();
+        }
+
+        if ($student) {
+            $this->existingStudentsCount++;
+            $this->existingStudentIds[] = (string) $student->student_id;
+            return null;
+        }
+
         $student = new Student([
             'student_id' => $row['student_id'],
             'name' => $row['name'],
+            'name_prefix' => $row['name_prefix'] ?: null,
+            'first_name' => $row['first_name'] ?: null,
+            'middle_name' => $row['middle_name'] ?: null,
+            'last_name' => $row['last_name'] ?: null,
+            'suffix' => $row['suffix'] ?: null,
             'email' => $row['email'],
             'semester' => $row['semester'],
             'course' => $row['course'],
             'offer_code' => $row['offer_code'],
         ]);
         $student->save();
+        $this->createdStudentsCount++;
 
-        // Create student account using the same ID as student_id
-        StudentAccount::create([
-            'student_id' => $student->student_id, // Use same ID as student_id
-            'email' => $row['email'],
-            'password' => null, // No password - must be set on first login
-            'must_change_password' => true, // Force password change on first login
-        ]);
+        // Ensure student account exists for both new and existing students.
+        StudentAccount::firstOrCreate(
+            ['student_id' => $student->student_id],
+            [
+                'email' => $student->email ?: $row['email'],
+                'password' => null, // No password - must be set on first login
+                'must_change_password' => true, // Force password change on first login
+            ]
+        );
 
         // Store the student for later enrollment processing
         $this->importedStudents[] = $student;
@@ -75,21 +101,36 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
         }
         return $student;
     }
+
+    public function getCreatedStudentsCount(): int
+    {
+        return $this->createdStudentsCount;
+    }
+
+    public function getExistingStudentsCount(): int
+    {
+        return $this->existingStudentsCount;
+    }
+
+    public function getExistingStudentIds(int $limit = 10): array
+    {
+        return array_slice(array_values(array_unique($this->existingStudentIds)), 0, $limit);
+    }
     public function rules(): array
     {
         return [
             '*.student_id' => [
                 'required',
                 'string',
-                'unique:students,student_id',
                 'regex:/^\d{10}$/', // Must be exactly 10 digits
             ],
             '*.name' => 'nullable|string|max:255',
+            '*.name_prefix' => 'nullable|string|max:20',
             '*.first_name' => 'nullable|string|max:255',
             '*.middle_name' => 'nullable|string|max:255',
             '*.last_name' => 'nullable|string|max:255',
             '*.suffix' => 'nullable|string|max:20',
-            '*.email' => 'nullable|email|unique:students,email|unique:student_accounts,email',
+            '*.email' => 'nullable|email',
             '*.semester' => 'required|string|in:2024-2025 First Semester,2024-2025 Second Semester,2024-2025 Summer',
             '*.course' => 'required|string|max:255',
             '*.offer_code' => 'nullable|string|max:20|exists:offerings,offer_code',
@@ -113,10 +154,8 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
     {
         return [
             '*.student_id.required' => 'Student ID is required on row :index.',
-            '*.student_id.unique' => 'Student ID :input already exists in the system on row :index.',
             '*.student_id.regex' => 'Student ID must be exactly 10 digits on row :index.',
             '*.email.email' => 'Invalid email format on row :index.',
-            '*.email.unique' => 'Email :input already exists in the system on row :index.',
             '*.semester.required' => 'Semester is required on row :index.',
             '*.course.required' => 'Course is required on row :index.',
             '*.offer_code.exists' => 'Offer code :input does not exist in the system on row :index.',
@@ -192,8 +231,9 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
         ];
     }
 
-    private function composeStudentName(string $firstName, string $middleName, string $lastName, string $suffix): string
+    private function composeStudentName(string $namePrefix, string $firstName, string $middleName, string $lastName, string $suffix): string
     {
+        $namePrefix = trim($namePrefix);
         $firstName = trim($firstName);
         $middleName = trim($middleName);
         $lastName = trim($lastName);
@@ -203,7 +243,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             return '';
         }
 
-        $fullName = trim(implode(' ', array_filter([$firstName, $middleName, $lastName, $suffix])));
+        $fullName = trim(implode(' ', array_filter([$namePrefix, $firstName, $middleName, $lastName, $suffix])));
 
         return $fullName;
     }
@@ -216,6 +256,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
 
             return [
                 'student_id' => $row['student_id'] ?? '',
+                'name_prefix' => '',
                 'first_name' => $firstName,
                 'middle_name' => $middleName,
                 'last_name' => $lastName,
@@ -261,6 +302,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
 
         return [
             'student_id' => $row['student_id'] ?? '',
+            'name_prefix' => trim((string) ($row['name_prefix'] ?? '')),
             'first_name' => $firstName,
             'middle_name' => $middleName,
             'last_name' => $lastName,

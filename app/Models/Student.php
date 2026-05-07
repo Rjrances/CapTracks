@@ -6,6 +6,11 @@ class Student extends Model
     protected $fillable = [
         'student_id',
         'name',
+        'name_prefix',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'suffix',
         'email',
         'course',
         'year',
@@ -77,4 +82,21 @@ class Student extends Model
     protected $primaryKey = 'student_id';
     public $incrementing = false;
     protected $keyType = 'string';
+
+    public function getFormattedNameAttribute(): string
+    {
+        $parts = array_filter([
+            $this->name_prefix,
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name,
+            $this->suffix,
+        ], fn ($value) => filled($value));
+
+        if (!empty($parts)) {
+            return trim(implode(' ', $parts));
+        }
+
+        return (string) $this->name;
+    }
 }
