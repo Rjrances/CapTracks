@@ -37,30 +37,30 @@ class DefenseScheduleSeeder extends Seeder
         $schedules = [
             [
                 'group_id' => $groups->first()->id,
-                'defense_type' => '60_percent',
-                'scheduled_date' => Carbon::now()->addDays(7)->toDateString(),
-                'scheduled_time' => '09:00:00',
+                'stage' => '60',
+                'start_at' => Carbon::now()->addDays(7)->setTime(9, 0, 0),
                 'room' => 'Room 101',
-                'coordinator_notes' => 'First defense presentation for the semester',
+                'remarks' => 'First defense presentation for the semester',
             ],
             [
                 'group_id' => $groups->count() > 1 ? $groups[1]->id : $groups->first()->id,
-                'defense_type' => '100_percent',
-                'scheduled_date' => Carbon::now()->addDays(14)->toDateString(),
-                'scheduled_time' => '14:00:00',
+                'stage' => '100',
+                'start_at' => Carbon::now()->addDays(14)->setTime(14, 0, 0),
                 'room' => 'Room 102',
-                'coordinator_notes' => 'Final defense presentation',
+                'remarks' => 'Final defense presentation',
             ],
         ];
 
         foreach ($schedules as $scheduleData) {
+            $startAt = Carbon::parse($scheduleData['start_at']);
             $defenseSchedule = DefenseSchedule::create([
                 'group_id' => $scheduleData['group_id'],
-                'defense_type' => $scheduleData['defense_type'],
-                'scheduled_date' => $scheduleData['scheduled_date'],
-                'scheduled_time' => $scheduleData['scheduled_time'],
+                'stage' => $scheduleData['stage'],
+                'academic_term_id' => $activeTerm->id,
+                'start_at' => $startAt,
+                'end_at' => $startAt->copy()->addHours(2),
                 'room' => $scheduleData['room'],
-                'coordinator_notes' => $scheduleData['coordinator_notes'],
+                'remarks' => $scheduleData['remarks'],
                 'status' => 'scheduled',
             ]);
 

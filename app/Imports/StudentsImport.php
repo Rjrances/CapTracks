@@ -29,14 +29,20 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
     }
     public function map($row): array
     {
-        $offerCode = trim((string) ($row['offer_code'] ?? ''));
+        $normalized = $this->normalizeStudentRow($row);
+        $offerCode = trim((string) ($normalized['offer_code'] ?? ''));
 
         return [
-            'student_id' => (string) $row['student_id'], // Force to string to handle Excel numeric conversion
-            'name' => trim($row['name'] ?? ''),
-            'email' => trim($row['email'] ?? ''),
-            'semester' => trim($row['semester'] ?? ''),
-            'course' => trim($row['course'] ?? ''),
+            'student_id' => (string) $normalized['student_id'], // Force to string to handle Excel numeric conversion
+            'name' => $this->composeStudentName(
+                $normalized['first_name'] ?? '',
+                $normalized['middle_name'] ?? '',
+                $normalized['last_name'] ?? '',
+                $normalized['suffix'] ?? ''
+            ),
+            'email' => trim((string) ($normalized['email'] ?? '')),
+            'semester' => trim((string) ($normalized['semester'] ?? '')),
+            'course' => trim((string) ($normalized['course'] ?? '')),
             'offer_code' => $offerCode === '' ? null : $offerCode,
         ];
     }
@@ -78,7 +84,11 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
                 'unique:students,student_id',
                 'regex:/^\d{10}$/', // Must be exactly 10 digits
             ],
-            '*.name' => 'required|string|max:255',
+            '*.name' => 'nullable|string|max:255',
+            '*.first_name' => 'nullable|string|max:255',
+            '*.middle_name' => 'nullable|string|max:255',
+            '*.last_name' => 'nullable|string|max:255',
+            '*.suffix' => 'nullable|string|max:20',
             '*.email' => 'nullable|email|unique:students,email|unique:student_accounts,email',
             '*.semester' => 'required|string|in:2024-2025 First Semester,2024-2025 Second Semester,2024-2025 Summer',
             '*.course' => 'required|string|max:255',
@@ -105,7 +115,6 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             '*.student_id.required' => 'Student ID is required on row :index.',
             '*.student_id.unique' => 'Student ID :input already exists in the system on row :index.',
             '*.student_id.regex' => 'Student ID must be exactly 10 digits on row :index.',
-            '*.name.required' => 'Student name is required on row :index.',
             '*.email.email' => 'Invalid email format on row :index.',
             '*.email.unique' => 'Email :input already exists in the system on row :index.',
             '*.semester.required' => 'Semester is required on row :index.',
@@ -181,5 +190,122 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
                 $this->afterImport();
             },
         ];
+    }
+
+    private function composeStudentName(string $firstName, string $middleName, string $lastName, string $suffix): string
+    {
+        $firstName = trim($firstName);
+        $middleName = trim($middleName);
+        $lastName = trim($lastName);
+        $suffix = trim($suffix);
+
+        if ($firstName === '' && $lastName === '') {
+            return '';
+        }
+
+        $fullName = trim(implode(' ', array_filter([$firstName, $middleName, $lastName, $suffix])));
+
+        return $fullName;
+    }
+
+    private function normalizeStudentRow(array $row): array
+    {
+        // Legacy shape: student_id,name,email,semester,course,offer_code
+        if (!empty($row['name']) && !empty($row['email'])) {
+            [$firstName, $middleName, $lastName, $suffix] = $this->splitLegacyName((string) $row['name']);
+
+            return [
+                'student_id' => $row['student_id'] ?? '',
+                'first_name' => $firstName,
+                'middle_name' => $middleName,
+                'last_name' => $lastName,
+                'suffix' => $suffix,
+                'email' => $row['email'] ?? '',
+                'semester' => $row['semester'] ?? '',
+                'course' => $row['course'] ?? '',
+                'offer_code' => $row['offer_code'] ?? '',
+            ];
+        }
+
+        $firstName = trim((string) ($row['first_name'] ?? ''));
+        $middleName = trim((string) ($row['middle_name'] ?? ''));
+        $lastName = trim((string) ($row['last_name'] ?? ''));
+        $suffix = trim((string) ($row['suffix'] ?? ''));
+        $email = trim((string) ($row['email'] ?? ''));
+        $semester = trim((string) ($row['semester'] ?? ''));
+        $course = trim((string) ($row['course'] ?? ''));
+        $offerCode = trim((string) ($row['offer_code'] ?? ''));
+
+        // Misaligned shape after header update but old row values:
+        // student_id,first_name(full name),email,semester,course,offer_code
+        if (
+            $email === '' &&
+            filter_var($middleName, FILTER_VALIDATE_EMAIL) &&
+            $semester === '' &&
+            $course === ''
+        ) {
+            $email = $middleName;
+            $semester = $lastName;
+            $course = $suffix;
+            $offerCode = $row['email'] ?? '';
+            [$firstName, $middleName, $lastName, $suffix] = $this->splitLegacyName($firstName);
+        }
+
+        if (($firstName === '' || $lastName === '') && !empty($row['name'])) {
+            [$parsedFirstName, $parsedMiddleName, $parsedLastName, $parsedSuffix] = $this->splitLegacyName((string) $row['name']);
+            $firstName = $firstName !== '' ? $firstName : $parsedFirstName;
+            $middleName = $middleName !== '' ? $middleName : $parsedMiddleName;
+            $lastName = $lastName !== '' ? $lastName : $parsedLastName;
+            $suffix = $suffix !== '' ? $suffix : $parsedSuffix;
+        }
+
+        return [
+            'student_id' => $row['student_id'] ?? '',
+            'first_name' => $firstName,
+            'middle_name' => $middleName,
+            'last_name' => $lastName,
+            'suffix' => $suffix,
+            'email' => $email,
+            'semester' => $semester,
+            'course' => $course,
+            'offer_code' => $offerCode,
+        ];
+    }
+
+    private function splitLegacyName(string $name): array
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return ['', '', '', ''];
+        }
+
+        // "Last, First Middle Suffix" format.
+        if (str_contains($name, ',')) {
+            [$lastPart, $restPart] = array_map('trim', explode(',', $name, 2));
+            $restTokens = preg_split('/\s+/', $restPart) ?: [];
+            $suffix = '';
+            if (!empty($restTokens) && preg_match('/^(Jr\\.?|Sr\\.?|I{2,3}|IV|V)$/i', (string) end($restTokens))) {
+                $suffix = array_pop($restTokens);
+            }
+            $firstName = $restTokens[0] ?? '';
+            $middleName = count($restTokens) > 1 ? implode(' ', array_slice($restTokens, 1)) : '';
+
+            return [$firstName, $middleName, $lastPart, $suffix];
+        }
+
+        $tokens = preg_split('/\s+/', $name) ?: [];
+        if (count($tokens) === 1) {
+            return [$tokens[0], '', $tokens[0], ''];
+        }
+
+        $suffix = '';
+        if (preg_match('/^(Jr\\.?|Sr\\.?|I{2,3}|IV|V)$/i', (string) end($tokens))) {
+            $suffix = array_pop($tokens);
+        }
+        $firstName = array_shift($tokens) ?? '';
+        $lastName = array_pop($tokens) ?? '';
+        $middleName = !empty($tokens) ? implode(' ', $tokens) : '';
+
+        return [$firstName, $middleName, $lastName, $suffix];
     }
 }

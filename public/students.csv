@@ -1,115 +1,115 @@
-student_id,name,email,semester,course,offer_code,first_name,middle_name,last_name,suffix
-2026010001,"Catado, Mary Arniel Riva",2026010001@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010002,"Plaza, Anthony James",2026010002@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010003,"Roche, Marylle",2026010003@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010004,"Torres, Jose Leto",2026010004@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010005,"Aroma, Kent Francois",2026010005@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010006,"Olbedencia, Philip James",2026010006@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010007,"Valencia, Christian Chil",2026010007@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010008,"Montealto, Anthony Jay",2026010008@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010009,"Pogoy, Rafhael",2026010009@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010010,"Aguspina, Jabez",2026010010@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010011,"Evangelista, Rextine",2026010011@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010012,"Ravelo, Joshua",2026010012@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010013,"Enopia, Marivic",2026010013@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010014,"Delantar, Ma. Teresa",2026010014@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010015,"Bestal, John William",2026010015@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010016,"Antiquina, Nino Clint",2026010016@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010017,"Canete, Luigi",2026010017@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010018,"Obaob, Neil Joshua",2026010018@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010019,"Quijano, James",2026010019@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010020,"Tan, Jhedver",2026010020@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010021,"Baclayo, Lhea-Lhyn",2026010021@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010022,"Ong, Franka Isabelle",2026010022@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010023,"Andrino, Kim",2026010023@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010024,"Caballero, Mel Kevin",2026010024@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010025,"Gimenez, Earl Reynan",2026010025@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010026,"Mansing, Jamil",2026010026@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010027,"Lingcopines, Kyla Mari",2026010027@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010028,"Yangan, Bonn Azioele",2026010028@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010029,"Nipay, Nina Glen",2026010029@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010030,"Carigo, Karen",2026010030@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010031,"Garcia, Alliyana Rose",2026010031@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010032,"Nacorda, Johanne",2026010032@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010033,"Lequigan, Jean Claude",2026010033@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010034,"Guk-ong, Kenn",2026010034@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010035,"Casul, Ashley Nicole",2026010035@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010036,"Enerez, Daveryle",2026010036@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010037,"Campos, Neville Henry",2026010037@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010038,"Cornel, Kyla Alianna",2026010038@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010039,"Abella, May Fatima",2026010039@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010040,"Deiparine, Patricia",2026010040@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010041,"Catamco, Larry",2026010041@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010042,"Gabriel, Paulo",2026010042@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010043,"Villafuerte, Elijah",2026010043@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010044,"Burgos, Joseph",2026010044@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010045,"Tabada, Alica Lynn",2026010045@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010046,"Deiparine, Renzo Miguel",2026010046@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010047,"Bonghanoy, Kyle",2026010047@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010048,"Sy, Christian Javidil",2026010048@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010049,"Lagahid, Kaye Marie",2026010049@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010050,"Sembrano, Donna Elizabeth",2026010050@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010051,"Cano, Julien Veniz",2026010051@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010052,"Lactuan, Dave Dominic",2026010052@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010053,"Panong, Kristian Cesar II",2026010053@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010054,"Suba, Jamal Robert",2026010054@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010055,"Mendoza, Ryu",2026010055@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010056,"Tan, Robien Lee",2026010056@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010057,"Valencia, Percival Louis",2026010057@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010058,"Maturan, Ryle",2026010058@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010059,"Tabarno, Ryan",2026010059@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010060,"Parnaos, Jorene",2026010060@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010061,"Ortiz, Sean Michael",2026010061@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010062,"Rances, Rainer Josh",2026010062@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010063,"Gonzales, Melvic John",2026010063@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010064,"Enad, Joshua",2026010064@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010065,"Pagador, Zandale",2026010065@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010066,"Bartolaba, Vinz Khyl James",2026010066@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010067,"Layam, Aaron John",2026010067@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010068,"Belgera, Jessa Marie",2026010068@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010069,"Olivo, Rena",2026010069@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010070,"Aquino, Ralph",2026010070@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010071,"Villamor, Raphael",2026010071@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010072,"Santiago, Mikee Edrianne",2026010072@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010073,"Reyes III, Ramon Reynel",2026010073@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010074,"Ylanan, Yrnir Onil",2026010074@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010075,"Hista, John Argie",2026010075@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010076,"Patatag, John Paul",2026010076@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010077,"Monte de Ramos, Harvy",2026010077@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010078,"Basa, Melchizedek",2026010078@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010079,"Carreon, Romer Ryle",2026010079@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010080,"Lydzustre, Francis",2026010080@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010081,"Guarino, Venz Henry",2026010081@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010082,"Patena, Rhobert",2026010082@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010083,"Bartulin, Geo Vince",2026010083@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010084,"Llevado, Bernie Leen",2026010084@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010085,"Sagon, Julian Andrei",2026010085@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010086,"Cabanero, Ravi",2026010086@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010087,"Nabalan, Jude Ralph",2026010087@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010088,"Alas, Steven James",2026010088@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010089,"Cañete, John Maynard",2026010089@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010090,"De los Reyes, Joshua Caleb",2026010090@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010091,"Fernandez, Sean Archer",2026010091@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010092,"Doquila, Queen Angel",2026010092@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010093,"Pugosa, Krishna Rhabe",2026010093@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010094,"Alberca, Chendy",2026010094@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010095,"Cinco, Kharl Edward",2026010095@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010096,"Lastimosa, Althea Marie",2026010096@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010097,"Jean Berioso",2026010097@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010098,"Gabriel Gabison",2026010098@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010099,"Marceline Tabada",2026010099@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010100,"Ashby Manugas",2026010100@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010101,"Selwyn Tatad",2026010101@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010102,"Arielle Dalan",2026010102@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010103,"Dano, Sasha",2026010103@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010104,"Bono, Anton III",2026010104@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010105,"Athena Julapong",2026010105@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010106,"Drew Amadora",2026010106@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010107,"Johnniel Dizon",2026010107@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010108,"Ella Venice Punay",2026010108@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010109,"Camilo, Karl Bryan",2026010109@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010110,"Linaza, Lonieren",2026010110@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010111,"Tan, Mark",2026010111@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010112,"Tubaon, Emerito Dale",2026010112@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010113,"John Andre Amad",2026010113@student.university.edu,"2024-2025 First Semester","BS Computer Science",
-2026010114,"Darnel Ampasin",2026010114@student.university.edu,"2024-2025 First Semester","BS Computer Science",
+"student_id","first_name","middle_name","last_name","suffix","email","semester","course","offer_code"
+"2026010001","Mary Arniel Riva","","Catado","","2026010001@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010002","Anthony James","","Plaza","","2026010002@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010003","Marylle","","Roche","","2026010003@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010004","Jose Leto","","Torres","","2026010004@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010005","Kent Francois","","Aroma","","2026010005@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010006","Philip James","","Olbedencia","","2026010006@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010007","Christian Chil","","Valencia","","2026010007@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010008","Anthony Jay","","Montealto","","2026010008@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010009","Rafhael","","Pogoy","","2026010009@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010010","Jabez","","Aguspina","","2026010010@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010011","Rextine","","Evangelista","","2026010011@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010012","Joshua","","Ravelo","","2026010012@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010013","Marivic","","Enopia","","2026010013@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010014","Ma. Teresa","","Delantar","","2026010014@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010015","John William","","Bestal","","2026010015@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010016","Nino Clint","","Antiquina","","2026010016@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010017","Luigi","","Canete","","2026010017@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010018","Neil Joshua","","Obaob","","2026010018@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010019","James","","Quijano","","2026010019@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010020","Jhedver","","Tan","","2026010020@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010021","Lhea-Lhyn","","Baclayo","","2026010021@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010022","Franka Isabelle","","Ong","","2026010022@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010023","Kim","","Andrino","","2026010023@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010024","Mel Kevin","","Caballero","","2026010024@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010025","Earl Reynan","","Gimenez","","2026010025@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010026","Jamil","","Mansing","","2026010026@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010027","Kyla Mari","","Lingcopines","","2026010027@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010028","Bonn Azioele","","Yangan","","2026010028@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010029","Nina Glen","","Nipay","","2026010029@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010030","Karen","","Carigo","","2026010030@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010031","Alliyana Rose","","Garcia","","2026010031@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010032","Johanne","","Nacorda","","2026010032@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010033","Jean Claude","","Lequigan","","2026010033@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010034","Kenn","","Guk-ong","","2026010034@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010035","Ashley Nicole","","Casul","","2026010035@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010036","Daveryle","","Enerez","","2026010036@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010037","Neville Henry","","Campos","","2026010037@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010038","Kyla Alianna","","Cornel","","2026010038@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010039","May Fatima","","Abella","","2026010039@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010040","Patricia","","Deiparine","","2026010040@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010041","Larry","","Catamco","","2026010041@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010042","Paulo","","Gabriel","","2026010042@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010043","Elijah","","Villafuerte","","2026010043@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010044","Joseph","","Burgos","","2026010044@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010045","Alica Lynn","","Tabada","","2026010045@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010046","Renzo Miguel","","Deiparine","","2026010046@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010047","Kyle","","Bonghanoy","","2026010047@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010048","Christian Javidil","","Sy","","2026010048@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010049","Kaye Marie","","Lagahid","","2026010049@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010050","Donna Elizabeth","","Sembrano","","2026010050@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010051","Julien Veniz","","Cano","","2026010051@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010052","Dave Dominic","","Lactuan","","2026010052@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010053","Kristian Cesar II","","Panong","","2026010053@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010054","Jamal Robert","","Suba","","2026010054@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010055","Ryu","","Mendoza","","2026010055@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010056","Robien Lee","","Tan","","2026010056@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010057","Percival Louis","","Valencia","","2026010057@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010058","Ryle","","Maturan","","2026010058@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010059","Ryan","","Tabarno","","2026010059@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010060","Jorene","","Parnaos","","2026010060@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010061","Sean Michael","","Ortiz","","2026010061@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010062","Rainer Josh","","Rances","","2026010062@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010063","Melvic John","","Gonzales","","2026010063@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010064","Joshua","","Enad","","2026010064@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010065","Zandale","","Pagador","","2026010065@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010066","Vinz Khyl James","","Bartolaba","","2026010066@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010067","Aaron John","","Layam","","2026010067@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010068","Jessa Marie","","Belgera","","2026010068@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010069","Rena","","Olivo","","2026010069@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010070","Ralph","","Aquino","","2026010070@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010071","Raphael","","Villamor","","2026010071@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010072","Mikee Edrianne","","Santiago","","2026010072@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010073","Ramon Reynel","","Reyes III","","2026010073@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010074","Yrnir Onil","","Ylanan","","2026010074@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010075","John Argie","","Hista","","2026010075@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010076","John Paul","","Patatag","","2026010076@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010077","Harvy","","Monte de Ramos","","2026010077@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010078","Melchizedek","","Basa","","2026010078@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010079","Romer Ryle","","Carreon","","2026010079@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010080","Francis","","Lydzustre","","2026010080@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010081","Venz Henry","","Guarino","","2026010081@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010082","Rhobert","","Patena","","2026010082@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010083","Geo Vince","","Bartulin","","2026010083@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010084","Bernie Leen","","Llevado","","2026010084@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010085","Julian Andrei","","Sagon","","2026010085@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010086","Ravi","","Cabanero","","2026010086@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010087","Jude Ralph","","Nabalan","","2026010087@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010088","Steven James","","Alas","","2026010088@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010089","John Maynard","","Cañete","","2026010089@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010090","Joshua Caleb","","De los Reyes","","2026010090@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010091","Sean Archer","","Fernandez","","2026010091@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010092","Queen Angel","","Doquila","","2026010092@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010093","Krishna Rhabe","","Pugosa","","2026010093@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010094","Chendy","","Alberca","","2026010094@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010095","Kharl Edward","","Cinco","","2026010095@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010096","Althea Marie","","Lastimosa","","2026010096@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010097","Jean","","Berioso","","2026010097@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010098","Gabriel","","Gabison","","2026010098@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010099","Marceline","","Tabada","","2026010099@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010100","Ashby","","Manugas","","2026010100@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010101","Selwyn","","Tatad","","2026010101@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010102","Arielle","","Dalan","","2026010102@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010103","Sasha","","Dano","","2026010103@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010104","Anton III","","Bono","","2026010104@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010105","Athena","","Julapong","","2026010105@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010106","Drew","","Amadora","","2026010106@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010107","Johnniel","","Dizon","","2026010107@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010108","Ella Venice","","Punay","","2026010108@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010109","Karl Bryan","","Camilo","","2026010109@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010110","Lonieren","","Linaza","","2026010110@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010111","Mark","","Tan","","2026010111@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010112","Emerito Dale","","Tubaon","","2026010112@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010113","John Andre","","Amad","","2026010113@student.university.edu","2024-2025 First Semester","BS Computer Science",""
+"2026010114","Darnel","","Ampasin","","2026010114@student.university.edu","2024-2025 First Semester","BS Computer Science",""

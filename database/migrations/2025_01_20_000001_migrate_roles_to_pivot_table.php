@@ -23,20 +23,13 @@ return new class extends Migration
             }
         }
         
-        // Remove the role column from users table
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('role');
-        });
+        // Keep users.role for backward compatibility with existing controllers/seeders.
+        // Roles are still mirrored into user_roles for pivot-based checks.
     }
 
     public function down(): void
     {
-        // Add back the role column
-        Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['chairperson', 'coordinator', 'adviser', 'panelist'])->nullable();
-        });
-        
-        // Migrate data back from pivot table
+        // Migrate data back from pivot table into users.role (column is retained in up()).
         $userRoles = DB::table('user_roles')->get();
         
         foreach ($userRoles as $userRole) {
