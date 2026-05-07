@@ -1,13 +1,13 @@
-faculty_id,name,email,role,department,semester
-10002,Mr. Roderick Bandalan,roderick.bandalan@university.edu,teacher,SCS,2024-2025 First Semester
-10003,Engr. Violdan Bayocot,violdan.bayocot@university.edu,teacher,SCS,2024-2025 First Semester
-10004,Mr. Temothy Homecillo,temothy.homecillo@university.edu,teacher,SCS,2024-2025 First Semester
-10005,Engr. Vicente Patalita III,vicente.patalita@university.edu,teacher,SCS,2024-2025 First Semester
-10006,Engr. Alyssa Tan,alyssa.tan@university.edu,teacher,SCS,2024-2025 First Semester
-10007,Mr. James Aliazon,james.aliazon@university.edu,teacher,SCS,2024-2025 First Semester
-10008,Mrs. Josephine Petralba,josephine.petralba@university.edu,teacher,SCS,2024-2025 First Semester
-10009,Engr. Carmel Tejana,carmel.tejana@university.edu,teacher,SCS,2024-2025 First Semester
-10010,Mr. Eric Magto,eric.magto@university.edu,teacher,SCS,2024-2025 First Semester
-10011,Dr. Jovelyn Cuizon,jovelyn.cuizon@university.edu,teacher,SCS,2024-2025 First Semester
-10012,Mr. Ahdzleebee Formentera,ahdzleebee.formentera@university.edu,teacher,SCS,2024-2025 First Semester
-10013,Ms. Khiara Rubia,khiara.rubia@university.edu,teacher,SCS,2024-2025 First Semester
+faculty_id,name_prefix,first_name,middle_name,last_name,suffix,name,email,role,department,semester
+10002,Mr.,Roderick,,Bandalan,,Mr. Roderick Bandalan,roderick.bandalan@university.edu,teacher,SCS,2024-2025 First Semester
+10003,Engr.,Violdan,,Bayocot,,Engr. Violdan Bayocot,violdan.bayocot@university.edu,teacher,SCS,2024-2025 First Semester
+10004,Mr.,Temothy,,Homecillo,,Mr. Temothy Homecillo,temothy.homecillo@university.edu,teacher,SCS,2024-2025 First Semester
+10005,Engr.,Vicente,,Patalita,III,Engr. Vicente Patalita III,vicente.patalita@university.edu,teacher,SCS,2024-2025 First Semester
+10006,Engr.,Alyssa,,Tan,,Engr. Alyssa Tan,alyssa.tan@university.edu,teacher,SCS,2024-2025 First Semester
+10007,Mr.,James,,Aliazon,,Mr. James Aliazon,james.aliazon@university.edu,teacher,SCS,2024-2025 First Semester
+10008,Mrs.,Josephine,,Petralba,,Mrs. Josephine Petralba,josephine.petralba@university.edu,teacher,SCS,2024-2025 First Semester
+10009,Engr.,Carmel,,Tejana,,Engr. Carmel Tejana,carmel.tejana@university.edu,teacher,SCS,2024-2025 First Semester
+10010,Mr.,Eric,,Magto,,Mr. Eric Magto,eric.magto@university.edu,teacher,SCS,2024-2025 First Semester
+10011,Dr.,Jovelyn,,Cuizon,,Dr. Jovelyn Cuizon,jovelyn.cuizon@university.edu,teacher,SCS,2024-2025 First Semester
+10012,Mr.,Ahdzleebee,,Formentera,,Mr. Ahdzleebee Formentera,ahdzleebee.formentera@university.edu,teacher,SCS,2024-2025 First Semester
+10013,Ms.,Khiara,,Rubia,,Ms. Khiara Rubia,khiara.rubia@university.edu,teacher,SCS,2024-2025 First Semester

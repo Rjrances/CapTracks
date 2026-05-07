@@ -51,7 +51,12 @@ class ChairpersonFacultyController extends Controller
         $activeTerm = $this->getActiveTerm();
         
         $request->validate([
-            'name'     => 'required|string|max:255',
+            'name'     => 'nullable|string|max:255',
+            'name_prefix' => 'nullable|string|max:20',
+            'first_name' => 'required_without:name|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required_without:name|string|max:100',
+            'suffix' => 'nullable|string|max:20',
             'email'    => 'required|email',
             'faculty_id' => 'required|string|max:20',
             'role'     => 'required|in:adviser,panelist',
@@ -67,6 +72,11 @@ class ChairpersonFacultyController extends Controller
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 8 characters.',
         ]);
+        
+        [$firstName, $middleName, $lastName] = $this->resolveNameParts($request);
+        $namePrefix = $request->filled('name_prefix') ? trim((string) $request->name_prefix) : null;
+        $suffix = $request->filled('suffix') ? trim((string) $request->suffix) : null;
+        $fullName = $this->buildFullName($namePrefix, $firstName, $middleName, $lastName, $suffix);
         
         
         if ($activeTerm) {
@@ -90,7 +100,12 @@ class ChairpersonFacultyController extends Controller
         $facultyId = $request->faculty_id;
         
         $user = User::create([
-            'name'                 => $request->name,
+            'name'                 => $fullName,
+            'name_prefix'          => $namePrefix,
+            'first_name'           => $firstName,
+            'middle_name'          => $middleName,
+            'last_name'            => $lastName,
+            'suffix'               => $suffix,
             'email'                => $request->email,
             'birthday'             => now()->subYears(30),
             'department'           => 'N/A',
@@ -116,7 +131,12 @@ class ChairpersonFacultyController extends Controller
         $activeTerm = $this->getActiveTerm();
         
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'nullable|string|max:255',
+            'name_prefix' => 'nullable|string|max:20',
+            'first_name' => 'required_without:name|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required_without:name|string|max:100',
+            'suffix' => 'nullable|string|max:20',
             'email' => 'required|email',
             'faculty_id' => 'required|string|max:20',
             'department' => 'nullable|string|max:255',
@@ -127,6 +147,11 @@ class ChairpersonFacultyController extends Controller
             'faculty_id.string' => 'Faculty ID must be a string.',
             'faculty_id.max' => 'Faculty ID must not exceed 20 characters.',
         ]);
+
+        [$firstName, $middleName, $lastName] = $this->resolveNameParts($request);
+        $namePrefix = $request->filled('name_prefix') ? trim((string) $request->name_prefix) : null;
+        $suffix = $request->filled('suffix') ? trim((string) $request->suffix) : null;
+        $fullName = $this->buildFullName($namePrefix, $firstName, $middleName, $lastName, $suffix);
         
         //email validation
         if ($activeTerm) {
@@ -151,7 +176,12 @@ class ChairpersonFacultyController extends Controller
         
         //create user
         $user = User::create([
-            'name' => $request->name,
+            'name' => $fullName,
+            'name_prefix' => $namePrefix,
+            'first_name' => $firstName,
+            'middle_name' => $middleName,
+            'last_name' => $lastName,
+            'suffix' => $suffix,
             'email' => $request->email,
             'department' => $request->department,
             'role' => 'teacher',
@@ -255,7 +285,12 @@ class ChairpersonFacultyController extends Controller
         
         //email validation
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'nullable|string|max:255',
+            'name_prefix' => 'nullable|string|max:20',
+            'first_name' => 'required_without:name|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required_without:name|string|max:100',
+            'suffix' => 'nullable|string|max:20',
             'email' => [
                 'required',
                 'email',
@@ -273,8 +308,17 @@ class ChairpersonFacultyController extends Controller
             'department' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:8',
         ]);
+        [$firstName, $middleName, $lastName] = $this->resolveNameParts($request);
+        $namePrefix = $request->filled('name_prefix') ? trim((string) $request->name_prefix) : null;
+        $suffix = $request->filled('suffix') ? trim((string) $request->suffix) : null;
+        $fullName = $this->buildFullName($namePrefix, $firstName, $middleName, $lastName, $suffix);
         $updateData = [
-            'name' => $request->name,
+            'name' => $fullName,
+            'name_prefix' => $namePrefix,
+            'first_name' => $firstName,
+            'middle_name' => $middleName,
+            'last_name' => $lastName,
+            'suffix' => $suffix,
             'email' => $request->email,
             'department' => $request->department,
         ];
@@ -336,6 +380,45 @@ class ChairpersonFacultyController extends Controller
             ->firstOrFail();
         $faculty->delete();
         return redirect()->route('chairperson.teachers.index')->with('success', 'Faculty member deleted successfully.');
+    }
+
+    private function resolveNameParts(Request $request): array
+    {
+        $firstName = trim((string) $request->input('first_name', ''));
+        $middleName = trim((string) $request->input('middle_name', ''));
+        $lastName = trim((string) $request->input('last_name', ''));
+
+        if ($firstName !== '' && $lastName !== '') {
+            return [$firstName, $middleName ?: null, $lastName];
+        }
+
+        $fullName = trim((string) $request->input('name', ''));
+        $segments = preg_split('/\s+/', $fullName) ?: [];
+
+        if (count($segments) === 1) {
+            return [$segments[0], null, $segments[0]];
+        }
+
+        if (count($segments) >= 2) {
+            $first = array_shift($segments);
+            $last = array_pop($segments);
+            $middle = trim(implode(' ', $segments));
+
+            return [$first, $middle !== '' ? $middle : null, $last];
+        }
+
+        return ['', null, ''];
+    }
+
+    private function buildFullName(?string $prefix, string $firstName, ?string $middleName, string $lastName, ?string $suffix): string
+    {
+        return trim(implode(' ', array_filter([
+            $prefix,
+            $firstName,
+            $middleName,
+            $lastName,
+            $suffix,
+        ], fn ($value) => filled($value))));
     }
 }
 

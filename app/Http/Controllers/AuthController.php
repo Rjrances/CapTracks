@@ -92,9 +92,19 @@ class AuthController extends Controller
         } else {
 
             $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+            $fullName = trim((string) $request->name);
+            $nameSegments = preg_split('/\s+/', $fullName) ?: [];
+            $firstName = $nameSegments[0] ?? $fullName;
+            $lastName = count($nameSegments) > 1 ? $nameSegments[count($nameSegments) - 1] : $firstName;
+            $middleName = count($nameSegments) > 2
+                ? implode(' ', array_slice($nameSegments, 1, -1))
+                : null;
             
             $user = User::create([
-                'name' => $request->name,
+                'name' => $fullName,
+                'first_name' => $firstName,
+                'middle_name' => $middleName,
+                'last_name' => $lastName,
                 'email' => $request->email,
                 'birthday' => now()->subYears(25),
                 'department' => 'N/A',

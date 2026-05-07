@@ -10,19 +10,19 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('school_id')->unique(); // Faculty/Staff ID for login
+            $table->string('faculty_id', 20)->unique();
             $table->string('name');
+            $table->string('name_prefix', 20)->nullable();
+            $table->string('first_name', 100)->nullable();
+            $table->string('middle_name', 100)->nullable();
+            $table->string('last_name', 100)->nullable();
+            $table->string('suffix', 20)->nullable();
             $table->string('email')->unique();
             $table->date('birthday')->nullable();
             $table->string('department')->nullable(); // Department instead of course
-            $table->string('position')->nullable();   // Position instead of year
-            
-            $table->enum('role', ['chairperson', 'coordinator', 'adviser', 'panelist']); // Remove 'student'
-            
-            $table->boolean('must_change_password')->default(false);
-            
+            $table->enum('role', ['chairperson', 'coordinator', 'adviser', 'panelist', 'teacher']);
+            $table->string('semester', 50)->nullable();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
             $table->rememberToken();
             $table->timestamps();
         });

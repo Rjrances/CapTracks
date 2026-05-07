@@ -1,4 +1,4 @@
-student_id,name,email,semester,course,offer_code
+student_id,name,email,semester,course,offer_code,first_name,middle_name,last_name,suffix
 2026010001,"Catado, Mary Arniel Riva",2026010001@student.university.edu,"2024-2025 First Semester","BS Computer Science",
 2026010002,"Plaza, Anthony James",2026010002@student.university.edu,"2024-2025 First Semester","BS Computer Science",
 2026010003,"Roche, Marylle",2026010003@student.university.edu,"2024-2025 First Semester","BS Computer Science",

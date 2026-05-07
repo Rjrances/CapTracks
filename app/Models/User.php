@@ -10,6 +10,11 @@ class User extends Authenticatable
     protected $fillable = [
         'faculty_id',
         'name',
+        'name_prefix',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'suffix',
         'email',
         'birthday',
         'department',
@@ -184,5 +189,22 @@ class User extends Authenticatable
         return $query->whereHas('roles', function (Builder $roleQuery) use ($role) {
             $roleQuery->where('name', $role);
         });
+    }
+
+    public function getFormattedNameAttribute(): string
+    {
+        $parts = array_filter([
+            $this->name_prefix,
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name,
+            $this->suffix,
+        ], fn ($value) => filled($value));
+
+        if (!empty($parts)) {
+            return trim(implode(' ', $parts));
+        }
+
+        return (string) $this->name;
     }
 }
