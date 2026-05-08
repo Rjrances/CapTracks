@@ -71,13 +71,27 @@ class ProjectSubmissionController extends Controller
     private function studentIndex($user)
     {
         $student = $user->student ?? null;
-        $submissions = $student ? ProjectSubmission::where('student_id', $student->student_id)->orderBy('submitted_at', 'desc')->get() : [];
-        return view('student.project.index', compact('submissions'));
+        $submissions = [];
+        $currentStudentId = $student?->student_id;
+        if ($student) {
+            $accessibleStudentIds = $this->getAccessibleStudentIdsForStudent($student);
+            $submissions = ProjectSubmission::whereIn('student_id', $accessibleStudentIds)
+                ->orderBy('submitted_at', 'desc')
+                ->get();
+        }
+        return view('student.project.index', compact('submissions', 'currentStudentId'));
     }
     private function studentIndexFromSession($student)
     {
-        $submissions = $student ? ProjectSubmission::where('student_id', $student->student_id)->orderBy('submitted_at', 'desc')->get() : [];
-        return view('student.project.index', compact('submissions'));
+        $submissions = [];
+        $currentStudentId = $student?->student_id;
+        if ($student) {
+            $accessibleStudentIds = $this->getAccessibleStudentIdsForStudent($student);
+            $submissions = ProjectSubmission::whereIn('student_id', $accessibleStudentIds)
+                ->orderBy('submitted_at', 'desc')
+                ->get();
+        }
+        return view('student.project.index', compact('submissions', 'currentStudentId'));
     }
     public function create()
     {
@@ -278,7 +292,7 @@ class ProjectSubmissionController extends Controller
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
-        if ($projectSubmission->student_id !== $student->student_id) {
+        if (!$this->studentCanAccessSubmission($student, $projectSubmission)) {
             abort(403);
         }
         if (!$projectSubmission->file_path || !Storage::disk('public')->exists($projectSubmission->file_path)) {
@@ -314,7 +328,7 @@ class ProjectSubmissionController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        if ($projectSubmission->student_id !== $student->student_id) {
+        if (!$this->studentCanAccessSubmission($student, $projectSubmission)) {
             abort(403, 'Unauthorized access to this file.');
         }
 
@@ -337,8 +351,9 @@ class ProjectSubmissionController extends Controller
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
-        $a = ProjectSubmission::where('student_id', $student->student_id)->findOrFail($left);
-        $b = ProjectSubmission::where('student_id', $student->student_id)->findOrFail($right);
+        $accessibleStudentIds = $this->getAccessibleStudentIdsForStudent($student);
+        $a = ProjectSubmission::whereIn('student_id', $accessibleStudentIds)->findOrFail($left);
+        $b = ProjectSubmission::whereIn('student_id', $accessibleStudentIds)->findOrFail($right);
         if ((int) $a->id === (int) $b->id) {
             return redirect()->route('student.project')->with('error', 'Choose two different submissions.');
         }
@@ -372,5 +387,28 @@ class ProjectSubmissionController extends Controller
         }
 
         return null;
+    }
+
+    private function getAccessibleStudentIdsForStudent(Student $student): array
+    {
+        $group = Group::whereHas('members', function ($q) use ($student) {
+            $q->where('group_members.student_id', $student->student_id);
+        })->with('members:student_id')->first();
+
+        if (!$group) {
+            return [$student->student_id];
+        }
+
+        $memberIds = $group->members->pluck('student_id')->filter()->unique()->values()->all();
+        if (empty($memberIds)) {
+            return [$student->student_id];
+        }
+
+        return $memberIds;
+    }
+
+    private function studentCanAccessSubmission(Student $student, ProjectSubmission $submission): bool
+    {
+        return in_array($submission->student_id, $this->getAccessibleStudentIdsForStudent($student), true);
     }
 }

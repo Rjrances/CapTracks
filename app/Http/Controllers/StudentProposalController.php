@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\DefenseRequest;
+use App\Models\Group;
 use App\Models\ProjectSubmission;
 use App\Models\Student;
 use App\Services\DocumentPreviewService;
@@ -26,12 +27,13 @@ class StudentProposalController extends Controller
         if (!$group) {
             return redirect()->route('student.group')->with('error', 'You must be part of a group to submit a proposal.');
         }
-        $existingProposal = ProjectSubmission::where('student_id', $student->student_id)
+        $accessibleStudentIds = $this->getAccessibleStudentIdsForStudent($student);
+        $existingProposal = ProjectSubmission::whereIn('student_id', $accessibleStudentIds)
             ->where('type', 'proposal')
             ->orderByDesc('version')
             ->orderByDesc('submitted_at')
             ->first();
-        $proposalVersions = ProjectSubmission::where('student_id', $student->student_id)
+        $proposalVersions = ProjectSubmission::whereIn('student_id', $accessibleStudentIds)
             ->where('type', 'proposal')
             ->orderByDesc('version')
             ->orderByDesc('submitted_at')
@@ -49,7 +51,8 @@ class StudentProposalController extends Controller
             'existingProposal',
             'proposalStatus',
             'proposalVersions',
-            'activeProposalDefenseRequest'
+            'activeProposalDefenseRequest',
+            'student'
         ));
     }
     public function create()
@@ -138,8 +141,8 @@ class StudentProposalController extends Controller
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         $proposal = ProjectSubmission::findOrFail($id);
-        if ($proposal->student_id !== $student->student_id) {
-            return redirect()->route('student.proposal')->with('error', 'You can only view your own proposals.');
+        if (!$this->studentCanAccessProposal($student, $proposal)) {
+            return redirect()->route('student.proposal')->with('error', 'You can only view proposals within your group.');
         }
         return view('student.proposal.show', compact('proposal'));
     }
@@ -289,7 +292,7 @@ class StudentProposalController extends Controller
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
-        if ($projectSubmission->student_id !== $student->student_id || $projectSubmission->type !== 'proposal') {
+        if (!$this->studentCanAccessProposal($student, $projectSubmission) || $projectSubmission->type !== 'proposal') {
             abort(404);
         }
         if (!$projectSubmission->file_path || !Storage::disk('public')->exists($projectSubmission->file_path)) {
@@ -308,10 +311,11 @@ class StudentProposalController extends Controller
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
-        $a = ProjectSubmission::where('student_id', $student->student_id)
+        $accessibleStudentIds = $this->getAccessibleStudentIdsForStudent($student);
+        $a = ProjectSubmission::whereIn('student_id', $accessibleStudentIds)
             ->where('type', 'proposal')
             ->findOrFail($left);
-        $b = ProjectSubmission::where('student_id', $student->student_id)
+        $b = ProjectSubmission::whereIn('student_id', $accessibleStudentIds)
             ->where('type', 'proposal')
             ->findOrFail($right);
         if ((int) $a->id === (int) $b->id) {
@@ -395,5 +399,24 @@ class StudentProposalController extends Controller
                     'next_step' => 'Contact your adviser'
                 ];
         }
+    }
+
+    private function getAccessibleStudentIdsForStudent(Student $student): array
+    {
+        $group = Group::whereHas('members', function ($q) use ($student) {
+            $q->where('group_members.student_id', $student->student_id);
+        })->with('members:student_id')->first();
+
+        if (!$group) {
+            return [$student->student_id];
+        }
+
+        $memberIds = $group->members->pluck('student_id')->filter()->unique()->values()->all();
+        return !empty($memberIds) ? $memberIds : [$student->student_id];
+    }
+
+    private function studentCanAccessProposal(Student $student, ProjectSubmission $proposal): bool
+    {
+        return in_array($proposal->student_id, $this->getAccessibleStudentIdsForStudent($student), true);
     }
 }

@@ -71,7 +71,7 @@
             </div>
         </div>
         <div class="row mb-4">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="card h-100">
                     <div class="card-header bg-info text-white">
                         <h5 class="mb-0">
@@ -114,70 +114,6 @@
                                 <a href="{{ route('student.group') }}" class="btn btn-primary">
                                     <i class="fas fa-envelope me-2"></i>Invite Adviser
                                 </a>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="mb-0">
-                            <i class="fas fa-graduation-cap me-2"></i>Defense Schedule
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        @if($group->defenseSchedules->where('status', 'scheduled')->count() > 0)
-                            <div class="text-center mb-3">
-                                <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
-                                <h5 class="mb-2">Scheduled Defenses</h5>
-                            </div>
-                            @foreach($group->defenseSchedules->where('status', 'scheduled') as $defense)
-                                <div class="border rounded p-3 mb-2">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">{{ $defense->stage_label ?? 'Defense' }}</h6>
-                                            <small class="text-muted">
-                                                <i class="fas fa-calendar me-1"></i>
-                                                {{ $defense->start_at ? $defense->start_at->format('M d, Y') : 'TBA' }}
-                                                <br>
-                                                <i class="fas fa-clock me-1"></i>
-                                                {{ $defense->start_at ? $defense->start_at->format('h:i A') : 'TBA' }}
-                                            </small>
-                                        </div>
-                                        <span class="badge bg-success">Scheduled</span>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @elseif($group->defenseRequests->where('status', 'pending')->count() > 0)
-                            <div class="text-center mb-3">
-                                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
-                                <h5 class="mb-2">Pending Requests</h5>
-                            </div>
-                            @foreach($group->defenseRequests->where('status', 'pending') as $request)
-                                <div class="border rounded p-3 mb-2">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">{{ $request->defense_type_label ?? 'Defense Request' }}</h6>
-                                            <small class="text-muted">
-                                                <i class="fas fa-clock me-1"></i>
-                                                Requested {{ $request->created_at ? $request->created_at->diffForHumans() : 'Recently' }}
-                                            </small>
-                                        </div>
-                                        <span class="badge bg-warning">Pending</span>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @else
-                            <div class="text-center">
-                                <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
-                                <h5 class="mb-2">No Defense Scheduled</h5>
-                                <p class="text-muted mb-3">Defense schedules will appear here when scheduled</p>
-                                @if($group->adviser)
-                                    <a href="{{ route('student.group') }}" class="btn btn-warning">
-                                        <i class="fas fa-rocket me-2"></i>Request Defense
-                                    </a>
-                                @endif
                             </div>
                         @endif
                     </div>

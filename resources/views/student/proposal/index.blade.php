@@ -7,11 +7,11 @@
             <p class="text-muted mb-0">Submit and track your formal project proposal for approval</p>
         </div>
         <div>
-            @if(!$existingProposal || $existingProposal->status === 'rejected')
+            @if(!$existingProposal || (($existingProposal->student_id ?? null) === ($student->student_id ?? null) && $existingProposal->status === 'rejected'))
                 <a href="{{ route('student.proposal.create') }}" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>Submit Proposal
                 </a>
-            @elseif($existingProposal->status === 'pending')
+            @elseif($existingProposal->status === 'pending' && ($existingProposal->student_id ?? null) === ($student->student_id ?? null))
                 <a href="{{ route('student.proposal.edit', $existingProposal->id) }}" class="btn btn-warning">
                     <i class="fas fa-edit me-2"></i>Edit Proposal
                 </a>
@@ -32,6 +32,9 @@
                             <div class="col-md-8">
                                 <h6 class="mb-1">{{ $existingProposal->title ?? 'Project Proposal' }}</h6>
                                 <p class="text-muted mb-2">Submitted: {{ $existingProposal->submitted_at ? \Carbon\Carbon::parse($existingProposal->submitted_at)->format('M d, Y H:i') : 'N/A' }}</p>
+                                @if(($existingProposal->student_id ?? null) !== ($student->student_id ?? null))
+                                    <p class="text-muted mb-2">Submitted by groupmate: {{ $existingProposal->student->name ?? 'Group member' }}</p>
+                                @endif
                                 @switch($proposalStatus['status'])
                                     @case('pending')
                                         <span class="badge bg-warning fs-6">Under Review</span>
@@ -51,7 +54,7 @@
                                     <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success">
                                         <i class="fas fa-gavel me-2"></i>Request Proposal Defense
                                     </a>
-                                @elseif($existingProposal->status === 'rejected')
+                                @elseif($existingProposal->status === 'rejected' && ($existingProposal->student_id ?? null) === ($student->student_id ?? null))
                                     <a href="{{ route('student.proposal.edit', $existingProposal->id) }}" class="btn btn-warning">
                                         <i class="fas fa-edit me-2"></i>Revise Proposal
                                     </a>
@@ -154,7 +157,7 @@
                                                 <a href="{{ asset('storage/' . $version->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary" title="Download">
                                                     <i class="fas fa-download"></i>
                                                 </a>
-                                                @if(!$existingProposal || $version->id !== $existingProposal->id)
+                                                @if((($version->student_id ?? null) === ($student->student_id ?? null)) && (!$existingProposal || $version->id !== $existingProposal->id))
                                                     <form action="{{ route('student.proposal.rollback', $version->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Rollback to this version? This will create a new pending version.');">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-outline-warning">

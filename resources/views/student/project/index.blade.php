@@ -141,7 +141,7 @@
                     </td>
                     <td class="text-center">
                         @if($submission->file_path)
-                            <a href="{{ asset('storage/' . $submission->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <a href="{{ route('student.project.submission.file', $submission) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-download"></i>
                             </a>
                         @else
@@ -167,13 +167,15 @@
                                 <i class="fas fa-eye"></i>
                             </a>
                         @endif
-                        <form action="{{ route('student.project.destroy', $submission->id) }}" method="POST" style="display:inline-block;">
-                            @csrf
-                            @method('DELETE')
-                            <button class="btn btn-danger btn-sm" onclick="return confirm('Delete this submission?')" title="Delete submission">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        @if(($currentStudentId ?? null) === $submission->student_id)
+                            <form action="{{ route('student.project.destroy', $submission->id) }}" method="POST" style="display:inline-block;">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-danger btn-sm" onclick="return confirm('Delete this submission?')" title="Delete submission">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        @endif
                     </td>
                 </tr>
                 @endforeach
