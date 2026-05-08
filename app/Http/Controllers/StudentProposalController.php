@@ -70,6 +70,9 @@ class StudentProposalController extends Controller
         if (!$group) {
             return redirect()->route('student.group')->with('error', 'You must be part of a group to submit a proposal.');
         }
+        if (!$group->adviser) {
+            return redirect()->route('student.proposal')->with('error', 'Your group must have an assigned adviser before submitting a proposal.');
+        }
         $existingProposal = ProjectSubmission::where('student_id', $student->student_id)
             ->where('type', 'proposal')
             ->latest()
@@ -101,6 +104,9 @@ class StudentProposalController extends Controller
         $group = $student->groups()->first();
         if (!$group) {
             return redirect()->route('student.group')->with('error', 'You must be part of a group to submit a proposal.');
+        }
+        if (!$group->adviser) {
+            return redirect()->route('student.proposal')->with('error', 'Your group must have an assigned adviser before submitting a proposal.');
         }
         $path = $request->file('file')->store('proposals', 'public');
         $nextVersion = ProjectSubmission::getNextVersionFor($student->student_id, 'proposal');

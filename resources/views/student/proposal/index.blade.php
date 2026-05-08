@@ -7,17 +7,29 @@
             <p class="text-muted mb-0">Submit and track your formal project proposal for approval</p>
         </div>
         <div>
-            @if(!$existingProposal || (($existingProposal->student_id ?? null) === ($student->student_id ?? null) && $existingProposal->status === 'rejected'))
-                <a href="{{ route('student.proposal.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Submit Proposal
-                </a>
-            @elseif($existingProposal->status === 'pending' && ($existingProposal->student_id ?? null) === ($student->student_id ?? null))
-                <a href="{{ route('student.proposal.edit', $existingProposal->id) }}" class="btn btn-warning">
-                    <i class="fas fa-edit me-2"></i>Edit Proposal
-                </a>
+            @if($group->adviser)
+                @if(!$existingProposal || (($existingProposal->student_id ?? null) === ($student->student_id ?? null) && $existingProposal->status === 'rejected'))
+                    <a href="{{ route('student.proposal.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Submit Proposal
+                    </a>
+                @elseif($existingProposal->status === 'pending' && ($existingProposal->student_id ?? null) === ($student->student_id ?? null))
+                    <a href="{{ route('student.proposal.edit', $existingProposal->id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>Edit Proposal
+                    </a>
+                @endif
+            @else
+                <button type="button" class="btn btn-secondary" disabled>
+                    <i class="fas fa-ban me-2"></i>Submit Proposal
+                </button>
             @endif
         </div>
     </div>
+    @if(!$group->adviser)
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            Your group needs an assigned adviser before you can submit a project proposal.
+        </div>
+    @endif
     <div class="row mb-4">
         <div class="col-md-8">
             <div class="card">

@@ -176,74 +176,105 @@
     </div>
 </div>
 <script>
-const originalMember1Options = Array.from(document.getElementById('member1').options);
-const originalMember2Options = Array.from(document.getElementById('member2').options);
+const memberSourceOptions = [];
 
-function filterStudents() {
-    const searchTerm = document.getElementById('student_search').value.toLowerCase();
+function initializeMemberSourceOptions() {
     const member1Select = document.getElementById('member1');
-    const member2Select = document.getElementById('member2');
-    
-    filterSelectOptions(member1Select, originalMember1Options, searchTerm);
-    
-    filterSelectOptions(member2Select, originalMember2Options, searchTerm);
+    if (!member1Select) return;
+
+    memberSourceOptions.length = 0;
+    Array.from(member1Select.options).forEach((option) => {
+        if (!option.value) return;
+        memberSourceOptions.push({
+            value: option.value,
+            label: option.textContent,
+            name: (option.getAttribute('data-name') || '').toLowerCase(),
+        });
+    });
 }
 
-function filterSelectOptions(selectElement, originalOptions, searchTerm) {
-    selectElement.innerHTML = '<option value="">Select a student...</option>';
-    
-    originalOptions.forEach(option => {
-        if (option.value === '') return;
-        
-        const studentName = option.getAttribute('data-name') || '';
-        if (studentName.includes(searchTerm)) {
-            selectElement.appendChild(option.cloneNode(true));
+function renderMemberSelects() {
+    const member1Select = document.getElementById('member1');
+    const member2Select = document.getElementById('member2');
+    const searchInput = document.getElementById('student_search');
+    const searchTerm = (searchInput?.value || '').toLowerCase();
+    if (!member1Select || !member2Select) return;
+
+    const selectedMember1 = member1Select.value;
+    const selectedMember2 = member2Select.value;
+
+    member1Select.innerHTML = '<option value="">Select a student...</option>';
+    member2Select.innerHTML = '<option value="">Select a student...</option>';
+
+    memberSourceOptions.forEach((student) => {
+        const matchesSearch = student.name.includes(searchTerm);
+        const hiddenInFirst = selectedMember2 && student.value === selectedMember2 && student.value !== selectedMember1;
+        const hiddenInSecond = selectedMember1 && student.value === selectedMember1 && student.value !== selectedMember2;
+
+        // Keep currently selected option visible even when search text changes
+        if (!hiddenInFirst && (matchesSearch || student.value === selectedMember1)) {
+            const option = document.createElement('option');
+            option.value = student.value;
+            option.textContent = student.label;
+            option.setAttribute('data-name', student.name);
+            if (student.value === selectedMember1) {
+                option.selected = true;
+            }
+            member1Select.appendChild(option);
+        }
+
+        if (hiddenInSecond) {
+            return;
+        }
+
+        if (matchesSearch || student.value === selectedMember2) {
+            const option = document.createElement('option');
+            option.value = student.value;
+            option.textContent = student.label;
+            option.setAttribute('data-name', student.name);
+            if (student.value === selectedMember2) {
+                option.selected = true;
+            }
+            member2Select.appendChild(option);
         }
     });
-    
-    if (selectElement.value && !Array.from(selectElement.options).some(opt => opt.value === selectElement.value)) {
-        selectElement.value = '';
+
+    if (member1Select.value && member2Select.value && member1Select.value === member2Select.value) {
+        member2Select.value = '';
     }
+
+    updateSelectionCount();
+}
+
+function filterStudents() {
+    renderMemberSelects();
 }
 
 function updateMember2Options() {
-    const member1Select = document.getElementById('member1');
-    const member2Select = document.getElementById('member2');
-    const selectedMember1 = member1Select.value;
-    
-    member2Select.innerHTML = '<option value="">Select a student...</option>';
-    
-    originalMember2Options.forEach(option => {
-        if (option.value === '') return;
-        if (option.value !== selectedMember1) {
-            member2Select.appendChild(option.cloneNode(true));
-        }
-    });
-    
-    if (member2Select.value === selectedMember1) {
-        member2Select.value = '';
-    }
-    
-    updateSelectionCount();
+    renderMemberSelects();
 }
 
 function updateSelectionCount() {
     const member1Select = document.getElementById('member1');
     const member2Select = document.getElementById('member2');
     const countSpan = document.getElementById('selection-count');
-    
+
     let count = 0;
-    if (member1Select.value) count++;
-    if (member2Select.value) count++;
-    
-    countSpan.textContent = count;
+    if (member1Select?.value) count++;
+    if (member2Select?.value) count++;
+
+    if (countSpan) {
+        countSpan.textContent = count;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    updateSelectionCount();
-    
-    document.getElementById('member1').addEventListener('change', updateMember2Options);
-    document.getElementById('member2').addEventListener('change', updateSelectionCount);
+    initializeMemberSourceOptions();
+    renderMemberSelects();
+
+    document.getElementById('student_search')?.addEventListener('input', renderMemberSelects);
+    document.getElementById('member1')?.addEventListener('change', renderMemberSelects);
+    document.getElementById('member2')?.addEventListener('change', renderMemberSelects);
 });
 </script>
 @endsection 

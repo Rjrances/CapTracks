@@ -337,4 +337,56 @@
     </div>
 </div>
 @endif
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const firstSelect = document.getElementById('edit_member1');
+    const secondSelect = document.getElementById('edit_member2');
+    if (!firstSelect || !secondSelect) return;
+
+    const sourceOptions = Array.from(firstSelect.options)
+        .filter((option) => option.value)
+        .map((option) => ({ value: option.value, label: option.textContent }));
+
+    function renderEditMemberOptions() {
+        const selectedFirst = firstSelect.value;
+        const selectedSecond = secondSelect.value;
+
+        firstSelect.innerHTML = '<option value="">Select a student...</option>';
+        secondSelect.innerHTML = '<option value="">Select a student...</option>';
+
+        sourceOptions.forEach((student) => {
+            const hiddenInFirst = selectedSecond && student.value === selectedSecond && student.value !== selectedFirst;
+            const hiddenInSecond = selectedFirst && student.value === selectedFirst && student.value !== selectedSecond;
+
+            if (!hiddenInFirst) {
+            const firstOption = document.createElement('option');
+            firstOption.value = student.value;
+            firstOption.textContent = student.label;
+            if (student.value === selectedFirst) {
+                firstOption.selected = true;
+            }
+            firstSelect.appendChild(firstOption);
+            }
+
+            if (!hiddenInSecond) {
+                const secondOption = document.createElement('option');
+                secondOption.value = student.value;
+                secondOption.textContent = student.label;
+                if (student.value === selectedSecond) {
+                    secondOption.selected = true;
+                }
+                secondSelect.appendChild(secondOption);
+            }
+        });
+
+        if (firstSelect.value && secondSelect.value && firstSelect.value === secondSelect.value) {
+            secondSelect.value = '';
+        }
+    }
+
+    firstSelect.addEventListener('change', renderEditMemberOptions);
+    secondSelect.addEventListener('change', renderEditMemberOptions);
+    renderEditMemberOptions();
+});
+</script>
 @endsection 
