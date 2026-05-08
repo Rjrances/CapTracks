@@ -522,18 +522,22 @@ function renderInviteSelectOptions() {
     second.innerHTML = '<option value="">Select student (optional)...</option>';
 
     originalInviteOptions.forEach((student) => {
-        if (searchTerm && !student.name.includes(searchTerm)) return;
+        const matchesSearch = !searchTerm || student.name.includes(searchTerm);
+        const hiddenInFirst = selectedSecond && student.value === selectedSecond && student.value !== selectedFirst;
+        const hiddenInSecond = selectedFirst && student.value === selectedFirst && student.value !== selectedSecond;
 
-        const firstOption = document.createElement('option');
-        firstOption.value = student.value;
-        firstOption.textContent = student.text;
-        firstOption.setAttribute('data-name', student.name);
-        if (student.value === selectedFirst) {
-            firstOption.selected = true;
+        if (!hiddenInFirst && (matchesSearch || student.value === selectedFirst)) {
+            const firstOption = document.createElement('option');
+            firstOption.value = student.value;
+            firstOption.textContent = student.text;
+            firstOption.setAttribute('data-name', student.name);
+            if (student.value === selectedFirst) {
+                firstOption.selected = true;
+            }
+            first.appendChild(firstOption);
         }
-        first.appendChild(firstOption);
 
-        if (student.value !== selectedFirst) {
+        if (!hiddenInSecond && (matchesSearch || student.value === selectedSecond)) {
             const secondOption = document.createElement('option');
             secondOption.value = student.value;
             secondOption.textContent = student.text;
