@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Group;
 use App\Models\MilestoneTemplate;
+use App\Models\ProjectSubmission;
 
 class MilestoneAssignmentService
 {
@@ -48,7 +49,7 @@ class MilestoneAssignmentService
             ];
         }
 
-        $next = self::resolveNextSequencedTemplate($milestones);
+        $next = self::resolveNextSequencedTemplate($group, $milestones);
         if (! $next) {
             return [
                 'can_assign' => false,
@@ -87,7 +88,7 @@ class MilestoneAssignmentService
                 $expected = MilestoneTemplate::find($meta['allowed_template_id']);
 
                 return $expected
-                    ? "Milestones must follow order: Proposal → 60% → 100%. Next to assign: \"{$expected->name}\"."
+                    ? "Milestones must follow order: Proposal (or approved project proposal) → 60% → 100%. Next to assign: \"{$expected->name}\"."
                     : 'The next milestone in sequence could not be determined.';
             }
         }
@@ -95,7 +96,7 @@ class MilestoneAssignmentService
         return null;
     }
 
-    private static function resolveNextSequencedTemplate($groupMilestones): ?MilestoneTemplate
+    private static function resolveNextSequencedTemplate(Group $group, $groupMilestones): ?MilestoneTemplate
     {
         $sequenced = MilestoneTemplate::query()
             ->where('status', 'active')
@@ -118,6 +119,12 @@ class MilestoneAssignmentService
             })
             ->map(fn ($gm) => (int) $gm->milestoneTemplate->sequence_order);
 
+        // Clean alignment with proposal flow:
+        // If the group's project proposal is already approved, consider sequence step 1 satisfied.
+        if (self::groupHasApprovedProposal($group)) {
+            $completedOrders->push(1);
+        }
+
         $nextOrder = $completedOrders->isEmpty()
             ? (int) $sequenced->min('sequence_order')
             : $completedOrders->max() + 1;
@@ -132,5 +139,24 @@ class MilestoneAssignmentService
         );
 
         return $alreadyAssigned ? null : $next;
+    }
+
+    private static function groupHasApprovedProposal(Group $group): bool
+    {
+        $group->loadMissing('members');
+        $memberStudentIds = $group->members
+            ->pluck('student_id')
+            ->filter()
+            ->values();
+
+        if ($memberStudentIds->isEmpty()) {
+            return false;
+        }
+
+        return ProjectSubmission::query()
+            ->whereIn('student_id', $memberStudentIds)
+            ->where('type', 'proposal')
+            ->where('status', 'approved')
+            ->exists();
     }
 }

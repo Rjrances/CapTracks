@@ -63,7 +63,7 @@
                             </div>
                             <div class="col-md-4 text-end">
                                 @if($existingProposal->status === 'approved' && $proposalStatus['can_request_defense'])
-                                    <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success">
+                                    <a href="{{ route('student.defense-requests.create', ['defense_type' => 'proposal']) }}" class="btn btn-success">
                                         <i class="fas fa-gavel me-2"></i>Request Proposal Defense
                                     </a>
                                 @elseif($existingProposal->status === 'rejected' && ($existingProposal->student_id ?? null) === ($student->student_id ?? null))
@@ -234,7 +234,7 @@
                                 </small>
                                 @if($proposalStatus['can_request_defense'])
                                     <div class="mt-2">
-                                        <a href="{{ route('student.defense-requests.create') }}" class="btn btn-success btn-sm">
+                                        <a href="{{ route('student.defense-requests.create', ['defense_type' => '60_percent']) }}" class="btn btn-success btn-sm">
                                             <i class="fas fa-gavel me-1"></i>Request Defense
                                         </a>
                                     </div>

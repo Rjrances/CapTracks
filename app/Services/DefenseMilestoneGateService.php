@@ -3,11 +3,16 @@
 namespace App\Services;
 
 use App\Models\Group;
+use App\Models\ProjectSubmission;
 
 class DefenseMilestoneGateService
 {
     public function evaluate(Group $group, string $stage): array
     {
+        if ($this->isProposalStage($stage)) {
+            return $this->evaluateProposalStage($group);
+        }
+
         $requiredOrder = $this->stageToOrder($stage);
         $label = $this->stageLabel($stage);
 
@@ -34,6 +39,40 @@ class DefenseMilestoneGateService
                 ? "{$label} milestone is complete."
                 : "{$label} milestone is not complete yet (current progress: {$milestone->progress_percentage}%).",
         ];
+    }
+
+    private function evaluateProposalStage(Group $group): array
+    {
+        $group->loadMissing('members');
+        $memberStudentIds = $group->members
+            ->pluck('student_id')
+            ->filter()
+            ->values();
+
+        if ($memberStudentIds->isEmpty()) {
+            return [
+                'eligible' => false,
+                'message' => 'No group members found to validate proposal approval.',
+            ];
+        }
+
+        $hasApprovedProposal = ProjectSubmission::query()
+            ->whereIn('student_id', $memberStudentIds)
+            ->where('type', 'proposal')
+            ->where('status', 'approved')
+            ->exists();
+
+        return [
+            'eligible' => $hasApprovedProposal,
+            'message' => $hasApprovedProposal
+                ? 'Proposal is approved.'
+                : 'Proposal is not approved yet.',
+        ];
+    }
+
+    private function isProposalStage(string $stage): bool
+    {
+        return $stage === 'proposal';
     }
 
     private function stageToOrder(string $stage): int
