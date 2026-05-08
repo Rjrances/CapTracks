@@ -1,7 +1,7 @@
 @extends('layouts.student')
 @section('title', 'Group Details')
 @section('content')
-<div class="container mt-5">
+<div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
             <i class="fas fa-arrow-left me-2"></i>Return to Dashboard

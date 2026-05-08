@@ -4,22 +4,7 @@
 <div class="container-fluid">
         <div class="row">
             <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <p class="text-muted mb-0">Track your capstone project progress</p>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('student.project') }}" class="btn btn-primary">
-                            <i class="fas fa-file-alt me-2"></i>My Submissions
-                        </a>
-                        <a href="{{ route('student.group') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-users me-2"></i>My Group
-                        </a>
-                        <a href="{{ route('student.defense-requests.index') }}" class="btn btn-outline-success">
-                            <i class="fas fa-gavel me-2"></i>Defense Requests
-                        </a>
-                    </div>
-                </div>
+                <p class="text-muted mb-4">Track your capstone project progress</p>
             </div>
         </div>
         @if(session('success'))
@@ -296,76 +281,6 @@
             </div>
         </div>
         @endif
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">
-                                <i class="fas fa-tasks me-2"></i>Recent Tasks
-                            </h5>
-                            <a href="{{ route('student.milestones') }}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-columns me-1"></i>Kanban Board
-                            </a>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        @if(isset($recentTasks) && $recentTasks->count() > 0)
-                            <div class="list-group list-group-flush">
-                                @foreach($recentTasks as $task)
-                                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">{{ $task->name }}</h6>
-                                            <small class="text-muted">{{ $task->description }}</small>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            @if($task->status === 'done')
-                                                <span class="badge bg-success">Done</span>
-                                            @elseif($task->status === 'doing')
-                                                <span class="badge bg-warning">Doing</span>
-                                            @else
-                                                <span class="badge bg-secondary">Pending</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-center py-4">
-                                <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
-                                <h6 class="text-muted">No tasks assigned yet</h6>
-                                <p class="text-muted small">Tasks will appear here when created in your milestones.</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-bolt me-2"></i>Quick Actions
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <a href="{{ route('student.project.create') }}" class="btn btn-primary">
-                                <i class="fas fa-upload me-2"></i>Upload Document
-                            </a>
-                            <a href="{{ route('student.group') }}" class="btn btn-outline-primary">
-                                <i class="fas fa-users me-2"></i>View Group
-                            </a>
-                            <a href="{{ route('student.milestones') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-columns me-2"></i>Kanban Board
-                            </a>
-                            <a href="{{ route('student.proposal') }}" class="btn btn-outline-success">
-                                <i class="fas fa-file-alt me-2"></i>Proposal & Endorsement
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
         <div class="row">
             <div class="col-12">
                 <div class="card">
