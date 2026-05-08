@@ -362,7 +362,11 @@ class DefenseScheduleController extends Controller
         $groups = Group::with(['members', 'adviser', 'offering'])
             ->whereIn('offering_id', $coordinatorOfferings)
             ->get();
-        $existingPanelistIds = $defenseSchedule->defensePanels->pluck('faculty_id')->toArray();
+        $existingPanelistIds = $defenseSchedule->defensePanels
+            ->whereIn('role', ['chair', 'member'])
+            ->where('status', '!=', 'declined')
+            ->pluck('faculty_id')
+            ->toArray();
         
         $faculty = User::where(function ($query) use ($defenseSchedule, $existingPanelistIds) {
                 $query->whereIn('id', $existingPanelistIds)
@@ -386,6 +390,9 @@ class DefenseScheduleController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'milestone_override_reason' => 'nullable|string|max:1000',
+            'panel_members' => 'required|array|size:2',
+            'panel_members.*.faculty_id' => 'required|exists:users,id',
+            'panel_members.*.role' => 'required|in:chair,member',
         ]);
         $schedule = DefenseSchedule::findOrFail($id);
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
@@ -418,12 +425,65 @@ class DefenseScheduleController extends Controller
             return back()->withErrors(['room' => 'This room is already booked for the selected time slot.'])->withInput();
         }
 
-        $autoPanelMembers = $this->resolveAutoPanelMembers($group, $startAt, $endAt, $id);
-        if ($autoPanelMembers->count() < 2) {
+        $requestedPanelMembers = collect($validated['panel_members'] ?? [])
+            ->map(function ($row) {
+                return [
+                    'faculty_id' => (int) ($row['faculty_id'] ?? 0),
+                    'role' => (string) ($row['role'] ?? ''),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $compositionError = $this->validatePanelComposition($requestedPanelMembers);
+        if ($compositionError) {
+            return back()->withErrors(['panel_members' => $compositionError])->withInput();
+        }
+
+        $pickedFacultyIds = collect($requestedPanelMembers)->pluck('faculty_id')->filter()->values()->all();
+        if (count(array_unique($pickedFacultyIds)) !== 2) {
+            return back()->withErrors(['panel_members' => 'Chair and Member must be different faculty members.'])->withInput();
+        }
+
+        $blockedSelectionError = $this->panelMembersMustNotIncludeAdviserOrCoordinator($group, $requestedPanelMembers);
+        if ($blockedSelectionError) {
+            return back()->withErrors(['panel_members' => $blockedSelectionError])->withInput();
+        }
+
+        if ($this->checkPanelMemberConflicts($pickedFacultyIds, $startAt, $endAt, $id)) {
             return back()->withErrors([
-                'panel_members' => 'Unable to auto-assign Chair and Member for this schedule. Please choose another date/time/room.',
+                'panel_members' => 'One or more selected panel members are already assigned to another defense at this time.',
             ])->withInput();
         }
+
+        $schedule->loadMissing('defensePanels');
+        $declinedPanelistIds = $schedule->defensePanels
+            ->whereIn('role', ['chair', 'member'])
+            ->where('status', 'declined')
+            ->pluck('faculty_id')
+            ->unique()
+            ->values()
+            ->all();
+        $currentChairMemberIds = $schedule->defensePanels
+            ->whereIn('role', ['chair', 'member'])
+            ->pluck('faculty_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (!empty($declinedPanelistIds) && count(array_intersect($pickedFacultyIds, $declinedPanelistIds)) > 0) {
+            return back()->withErrors([
+                'panel_members' => 'Replacement required: previously declined panelist cannot be re-selected for this update.',
+            ])->withInput();
+        }
+
+        $existingInvitedPanelsByRole = $schedule->defensePanels
+            ->whereIn('role', ['chair', 'member'])
+            ->keyBy('role');
+
+        $manualPanelMembers = collect($requestedPanelMembers)
+            ->sortBy(fn ($row) => $row['role'] === 'chair' ? 0 : 1)
+            ->values();
 
         try {
             DB::beginTransaction();
@@ -438,12 +498,18 @@ class DefenseScheduleController extends Controller
                 'milestone_override_reason' => $gateOverridden ? $validated['milestone_override_reason'] : null,
             ]);
             DefensePanel::where('defense_schedule_id', $schedule->id)->delete();
-            foreach ($autoPanelMembers as $member) {
+            foreach ($manualPanelMembers as $member) {
+                $existingPanelForRole = $existingInvitedPanelsByRole->get($member['role']);
+                $preserveAccepted = $existingPanelForRole
+                    && (int) $existingPanelForRole->faculty_id === (int) $member['faculty_id']
+                    && $existingPanelForRole->status === 'accepted';
+
                 DefensePanel::create([
                     'defense_schedule_id' => $schedule->id,
                     'faculty_id' => $member['faculty_id'],
                     'role' => $member['role'],
-                    'status' => 'pending',
+                    'status' => $preserveAccepted ? 'accepted' : 'pending',
+                    'responded_at' => $preserveAccepted ? ($existingPanelForRole->responded_at ?? now()) : null,
                 ]);
             }
             if ($schedule->group->faculty_id) {
@@ -582,13 +648,20 @@ class DefenseScheduleController extends Controller
         ]);
     }
 
-    private function resolveAutoPanelMembers(Group $group, Carbon $startAt, Carbon $endAt, ?int $excludeScheduleId = null): Collection
+    private function resolveAutoPanelMembers(
+        Group $group,
+        Carbon $startAt,
+        Carbon $endAt,
+        ?int $excludeScheduleId = null,
+        array $excludedFacultyIds = []
+    ): Collection
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         $conflictingFacultyIds = $this->getConflictingFacultyIds($startAt, $endAt, $excludeScheduleId);
 
         $availableFaculty = $this->panelChairMemberCandidates($group)
             ->whereNotIn('id', $conflictingFacultyIds)
+            ->whereNotIn('id', $excludedFacultyIds)
             ->values();
 
         $assignmentCounts = DefensePanel::select('faculty_id', DB::raw('COUNT(*) as assignment_count'))

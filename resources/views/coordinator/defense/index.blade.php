@@ -255,7 +255,26 @@
                                                 <span class="badge bg-primary">{{ $schedule->defense_type_label }}</span>
                                             </td>
                                             <td>
-                                                <span class="badge bg-{{ $schedule->status_badge_variant }}">{{ $schedule->status_label }}</span>
+                                                @php
+                                                    $hasDeclinedChairForStatus = $schedule->defensePanels->where('role', 'chair')->where('status', 'declined')->isNotEmpty();
+                                                    $hasDeclinedMemberForStatus = $schedule->defensePanels->where('role', 'member')->where('status', 'declined')->isNotEmpty();
+                                                    $hasConfirmedChairForStatus = $schedule->defensePanels->where('role', 'chair')->where('status', 'accepted')->isNotEmpty();
+                                                    $hasConfirmedMemberForStatus = $schedule->defensePanels->where('role', 'member')->where('status', 'accepted')->isNotEmpty();
+
+                                                    $displayStatusLabel = $schedule->status_label;
+                                                    $displayStatusBadgeClass = 'bg-' . $schedule->status_badge_variant;
+
+                                                    if ($schedule->status === 'scheduled') {
+                                                        if ($hasDeclinedChairForStatus || $hasDeclinedMemberForStatus) {
+                                                            $displayStatusLabel = 'Replacement needed';
+                                                            $displayStatusBadgeClass = 'bg-danger';
+                                                        } elseif (!$hasConfirmedChairForStatus || !$hasConfirmedMemberForStatus) {
+                                                            $displayStatusLabel = 'Awaiting panel confirmation';
+                                                            $displayStatusBadgeClass = 'bg-warning text-dark';
+                                                        }
+                                                    }
+                                                @endphp
+                                                <span class="badge {{ $displayStatusBadgeClass }}">{{ $displayStatusLabel }}</span>
                                             </td>
                                             <td>
                                                 <div>{{ $schedule->start_at->format('M d, Y') }}</div>
@@ -300,19 +319,31 @@
                                             </td>
                                             <td>
                                                 @php
+                                                    $hasDeclinedChair = $schedule->defensePanels->where('role', 'chair')->where('status', 'declined')->isNotEmpty();
+                                                    $hasDeclinedMember = $schedule->defensePanels->where('role', 'member')->where('status', 'declined')->isNotEmpty();
                                                     $hasConfirmedChair = $schedule->defensePanels->where('role', 'chair')->where('status', 'accepted')->isNotEmpty();
                                                     $hasConfirmedMember = $schedule->defensePanels->where('role', 'member')->where('status', 'accepted')->isNotEmpty();
                                                     $canOpenRatings = $hasConfirmedChair && $hasConfirmedMember;
                                                     $missingRoles = [];
+                                                    $declinedRoles = [];
+                                                    if ($hasDeclinedChair) {
+                                                        $declinedRoles[] = 'Chair';
+                                                    }
+                                                    if ($hasDeclinedMember) {
+                                                        $declinedRoles[] = 'Member';
+                                                    }
                                                     if (!$hasConfirmedChair) {
                                                         $missingRoles[] = 'Chair';
                                                     }
                                                     if (!$hasConfirmedMember) {
                                                         $missingRoles[] = 'Member';
                                                     }
-                                                    $ratingsBlockReason = empty($missingRoles)
-                                                        ? null
-                                                        : 'Waiting for confirmation: ' . implode(' and ', $missingRoles) . '.';
+                                                    $ratingsBlockReason = null;
+                                                    if (!empty($declinedRoles)) {
+                                                        $ratingsBlockReason = 'Replacement needed: ' . implode(' and ', $declinedRoles) . ' declined.';
+                                                    } elseif (!empty($missingRoles)) {
+                                                        $ratingsBlockReason = 'Waiting for confirmation: ' . implode(' and ', $missingRoles) . '.';
+                                                    }
                                                 @endphp
                                                 <div class="btn-group btn-group-sm" role="group">
                                                     @if($canOpenRatings)

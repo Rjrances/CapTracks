@@ -31,11 +31,51 @@ class CalendarController extends Controller
         $calendarEvents = $defenses->map(function ($defense) use ($myGroupIds) {
             $startDate = \Carbon\Carbon::parse($defense->start_at);
             $endDate   = \Carbon\Carbon::parse($defense->end_at);
+            $invitedPanels = $defense->panelists->whereIn('role', ['chair', 'member']);
+            $hasConfirmedChair = $invitedPanels->where('role', 'chair')->where('status', 'accepted')->isNotEmpty();
+            $hasConfirmedMember = $invitedPanels->where('role', 'member')->where('status', 'accepted')->isNotEmpty();
+            $hasDeclinedInvite = $invitedPanels->where('status', 'declined')->isNotEmpty();
+
+            $panelState = $hasDeclinedInvite
+                ? 'replacement_needed'
+                : (($hasConfirmedChair && $hasConfirmedMember) ? 'confirmed' : 'awaiting_confirmation');
+
+            $displayStatus = match ($defense->status) {
+                'completed' => 'Completed',
+                'in_progress' => 'In progress',
+                default => match ($panelState) {
+                    'replacement_needed' => 'Replacement needed',
+                    'awaiting_confirmation' => 'Awaiting panel confirmation',
+                    default => 'Scheduled',
+                },
+            };
+
+            $displayStatusVariant = match ($defense->status) {
+                'completed' => 'success',
+                'in_progress' => 'warning',
+                default => match ($panelState) {
+                    'replacement_needed' => 'danger',
+                    'awaiting_confirmation' => 'warning text-dark',
+                    default => 'primary',
+                },
+            };
+
+            $eventClass = match ($defense->status) {
+                'completed' => 'approved',
+                'in_progress' => 'scheduled',
+                default => match ($panelState) {
+                    'replacement_needed' => 'declined',
+                    'awaiting_confirmation' => 'pending',
+                    default => 'scheduled',
+                },
+            };
+
             return [
                 'id'              => $defense->id,
                 'title'           => $defense->group->name ?? 'Defense',
                 'start'           => $startDate->toISOString(),
                 'end'             => $endDate->toISOString(),
+                'className'       => $eventClass,
                 'backgroundColor' => in_array($defense->group_id, $myGroupIds) ? '#28a745' : '#6c757d',
                 'borderColor'     => in_array($defense->group_id, $myGroupIds) ? '#28a745' : '#6c757d',
                 'textColor'       => '#ffffff',
@@ -45,6 +85,10 @@ class CalendarController extends Controller
                     'adviser'     => $defense->group->adviser->name ?? 'N/A',
                     'coordinator' => $defense->group->offering->teacher->name ?? 'N/A',
                     'status'      => $defense->status,
+                    'panel_state' => $panelState,
+                    'display_status' => $displayStatus,
+                    'display_status_variant' => $displayStatusVariant,
+                    'local_date'  => $startDate->format('m/d/Y'),
                     'room'        => $defense->room ?? 'TBD',
                     'time'        => $startDate->format('g:i A'),
                     'students'    => $defense->group->members->pluck('name')->join(', '),

@@ -154,8 +154,12 @@
                                     </div>
                                 @endif
                                 @php
-                                    $chairPanel = $defenseSchedule->defensePanels->firstWhere('role', 'chair');
-                                    $memberPanel = $defenseSchedule->defensePanels->firstWhere('role', 'member');
+                                    $chairPanel = $defenseSchedule->defensePanels
+                                        ->first(fn ($panel) => $panel->role === 'chair' && $panel->status !== 'declined');
+                                    $memberPanel = $defenseSchedule->defensePanels
+                                        ->first(fn ($panel) => $panel->role === 'member' && $panel->status !== 'declined');
+                                    $selectedChairId = (string) old('panel_members.0.faculty_id', $chairPanel->faculty_id ?? '');
+                                    $selectedMemberId = (string) old('panel_members.1.faculty_id', $memberPanel->faculty_id ?? '');
                                     $autoIncludedPanelIds = collect([
                                         optional($defenseSchedule->group->adviser)->id,
                                         optional(optional($defenseSchedule->group->offering)->faculty)->id,
@@ -169,9 +173,10 @@
                                                     <option value="">Select Faculty</option>
                                                     @foreach($faculty as $facultyMember)
                                                         @continue(in_array((string) $facultyMember->id, $autoIncludedPanelIds, true))
+                                                        @continue($selectedMemberId !== '' && (string) $facultyMember->id === $selectedMemberId)
                                                         <option
                                                             value="{{ $facultyMember->id }}"
-                                                            {{ (string) old('panel_members.0.faculty_id', $chairPanel->faculty_id ?? '') === (string) $facultyMember->id ? 'selected' : '' }}
+                                                            {{ $selectedChairId === (string) $facultyMember->id ? 'selected' : '' }}
                                                         >
                                                             {{ $facultyMember->name }}
                                                         </option>
@@ -194,9 +199,10 @@
                                                     <option value="">Select Faculty</option>
                                                     @foreach($faculty as $facultyMember)
                                                         @continue(in_array((string) $facultyMember->id, $autoIncludedPanelIds, true))
+                                                        @continue($selectedChairId !== '' && (string) $facultyMember->id === $selectedChairId)
                                                         <option
                                                             value="{{ $facultyMember->id }}"
-                                                            {{ (string) old('panel_members.1.faculty_id', $memberPanel->faculty_id ?? '') === (string) $facultyMember->id ? 'selected' : '' }}
+                                                            {{ $selectedMemberId === (string) $facultyMember->id ? 'selected' : '' }}
                                                         >
                                                             {{ $facultyMember->name }}
                                                         </option>
@@ -231,6 +237,38 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const chairSelect = document.querySelector('select[name="panel_members[0][faculty_id]"]');
+    const memberSelect = document.querySelector('select[name="panel_members[1][faculty_id]"]');
+
+    function syncPanelDropdowns() {
+        if (!chairSelect || !memberSelect) {
+            return;
+        }
+
+        const chairValue = chairSelect.value;
+        const memberValue = memberSelect.value;
+
+        Array.from(chairSelect.options).forEach(option => {
+            if (!option.value) return;
+            option.hidden = memberValue !== '' && option.value === memberValue;
+            option.disabled = memberValue !== '' && option.value === memberValue;
+        });
+
+        Array.from(memberSelect.options).forEach(option => {
+            if (!option.value) return;
+            option.hidden = chairValue !== '' && option.value === chairValue;
+            option.disabled = chairValue !== '' && option.value === chairValue;
+        });
+
+        if (chairValue !== '' && memberValue !== '' && chairValue === memberValue) {
+            memberSelect.value = '';
+        }
+    }
+
+    chairSelect?.addEventListener('change', syncPanelDropdowns);
+    memberSelect?.addEventListener('change', syncPanelDropdowns);
+    syncPanelDropdowns();
+
     function checkDoubleBooking() {
         const date = document.getElementById('date').value;
         const startTime = document.getElementById('start_time').value;

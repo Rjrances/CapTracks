@@ -272,6 +272,13 @@
 .calendar-event.pending:hover {
     background: #80868b;
 }
+.calendar-event.declined {
+    background: #dc3545;
+    color: #ffffff;
+}
+.calendar-event.declined:hover {
+    background: #bb2d3b;
+}
 @media (max-width: 768px) {
     .calendar-header {
         flex-direction: column;
@@ -359,11 +366,11 @@ function showEventDetails(event) {
                 <p><strong>Group:</strong> ${event.extendedProps.group || 'N/A'}</p>
                 <p><strong>Adviser:</strong> ${event.extendedProps.adviser || 'N/A'}</p>
                 <p><strong>Coordinator:</strong> ${event.extendedProps.coordinator || 'N/A'}</p>
-                <p><strong>Status:</strong> <span class="badge bg-${event.extendedProps.status === 'approved' || event.extendedProps.status === 'scheduled' || event.extendedProps.status === 'completed' ? 'success' : 'secondary'}">${event.extendedProps.status.charAt(0).toUpperCase() + event.extendedProps.status.slice(1)}</span></p>
+                <p><strong>Status:</strong> <span class="badge bg-${event.extendedProps.display_status_variant || 'secondary'}">${event.extendedProps.display_status || (event.extendedProps.status ? event.extendedProps.status.charAt(0).toUpperCase() + event.extendedProps.status.slice(1) : 'Unknown')}</span></p>
             </div>
             <div class="col-md-6">
                 <h6>Schedule</h6>
-                <p><strong>Date:</strong> ${new Date(event.start).toLocaleDateString()}</p>
+                <p><strong>Date:</strong> ${event.extendedProps.local_date || new Date(event.start).toLocaleDateString()}</p>
                 <p><strong>Time:</strong> ${event.extendedProps.time || new Date(event.start).toLocaleTimeString()}</p>
                 <p><strong>Location:</strong> ${event.extendedProps.room || 'TBA'}</p>
             </div>
