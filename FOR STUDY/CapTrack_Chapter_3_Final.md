@@ -23,7 +23,7 @@ The researchers selected Laravel’s native Blade templating engine for frontend
 Within CapTrack, state management and user isolation are achieved through Laravel’s Multi-Guard Authentication system. This acts as a centralized security locator, streamlining dependency injection and session management by strictly separating user types at the database level. By registering custom guards (`web` for Faculty and `student` for Students), the system ensures consistent data flow and state preservation across the application. These controllers rely on session regeneration for reactive updates, resulting in a highly responsive and impenetrable state architecture that strictly forbids unauthorized cross-role access.
 
 **Code Snippet of Laravel Authentication and Role-Based Middleware:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 2: Laravel Authentication and Role-Based Middleware*
 ```php
 'guards' => [
@@ -42,7 +42,7 @@ Within CapTrack, state management and user isolation are achieved through Larave
 While Multi-Guard Authentication isolates Students from Faculty at the database level, the system utilizes the `spatie/laravel-permission` package to enforce granular, role-based access control (RBAC) among the different Faculty types. By assigning specific roles (e.g., Coordinator, Chairperson, Adviser) to the faculty users, developers can securely lock route groups and controller methods using Spatie's `role` middleware. This approach prevents unauthorized elevation of privileges and ensures that a standard Teacher cannot access the Chairperson's administrative dashboard or the Coordinator's defense scheduling tools.
 
 **Code Snippet of Spatie Role Middleware Integration:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 2b: Spatie Role Middleware in Laravel Routing*
 ```php
 // Only users with the 'coordinator' role can access these routes
@@ -57,7 +57,7 @@ Route::middleware(['auth', 'role:coordinator'])->prefix('coordinator')->group(fu
 In addition to the Multi-Guard system, Eloquent ORM plays a key role in CapTrack’s state management strategy. Eloquent leverages the principles of Active Record implementation to offer a simpler, more declarative approach to managing and propagating database state throughout the application’s models. By defining precise relationship mappings (`HasMany`, `BelongsToMany`, `MorphMany`), developers can ensure that changes in state (like a student uploading a file) instantly trigger efficient updates in parent objects (like the project’s overall progress) without extensive boilerplate SQL code.
 
 **Code Snippet of Eloquent ORM Relationships:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 3: Active Record Relationship Mappings*
 ```php
 class CapstoneGroup extends Model {
@@ -78,7 +78,7 @@ CapTrack leverages MySQL relational database services comprehensively across its
 The FullCalendar library is essential for integrating time-based and scheduling services, allowing developers to embed interactive visual calendars into the application. In CapTrack, FullCalendar powers the coordinator and faculty interactive map interfaces, enabling coordinators to view defense locations, times, and define schedule boundaries. This integration supports key functionalities such as color-coded markers, draggable time blocks, and instant visual representation of the Auto-Assign algorithmic output.
 
 **Code Snippet of FullCalendar Initialization:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 4: FullCalendar JavaScript Configuration*
 ```javascript
 document.addEventListener('DOMContentLoaded', function() {
@@ -123,7 +123,7 @@ The researchers used MySQL, a relational database, for backend development, whic
 Laravel Controllers power CapTrack's backend logic with object-oriented methods that automatically execute in response to events like student group creation or proposal submissions. The controllers handle critical tasks such as user authentication, CSV data validation (using `firstOrCreate` to prevent duplicates), database cleanup operations, and executing complex math equations, ensuring seamless communication between students and their faculty advisers.
 
 **Code Snippet of Backend PHP Controllers (CSV Import):**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 5: Code snippet of Faculty Data Initialization and Validation*
 ```php
 public function importFaculty(Request $request) {
@@ -142,7 +142,7 @@ public function importFaculty(Request $request) {
 To guarantee data privacy and account security, CapTrack implements a strict first-time login policy for all student users. Because student accounts are automatically generated via CSV import with a default password (their Student ID), the system uses a custom middleware and controller logic to detect their first login attempt. Upon detection, the user is immediately intercepted and forced to update their password using a cryptographic hash before they can access any dashboard features.
 
 **Code Snippet of Security Protocol Implementation:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 6: Code snippet of the Forced Password Reset Logic*
 ```php
 public function updateFirstPassword(Request $request) {
@@ -163,7 +163,7 @@ public function updateFirstPassword(Request $request) {
 A dynamic notification system is used in CapTrack to deliver real-time updates between advisers and their assigned student groups, handling alerts for document uploads, defense schedule approvals, and task status changes. These notifications are tracked in the database and displayed via a dropdown bell icon on the frontend, ensuring reliable cross-role communication.
 
 **Code Snippet of In-App Notification System:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 7: Code snippet of Real-Time Notification Logic*
 ```php
 public function sendNotification($userId, $message, $type) {
@@ -186,7 +186,7 @@ Document management is a critical service in CapTrack that enables robust file t
 The implementation involves configuring the `ProjectSubmissionController` such that when a student uploads a file, the system queries the database for `MAX(version)` for that specific document type. It increments this integer by one, ensuring that every new document automatically receives the correct chronological version number.
 
 **Code Snippet of Document Versioning Configuration:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 8: Code snippet of Dynamic Document Version Control*
 ```php
 public function store(Request $request) {
@@ -209,7 +209,7 @@ public function store(Request $request) {
 Effective communication between advisers and student groups is facilitated through a nested commenting architecture tied directly to uploaded project documents. This service allows faculty to leave specific, actionable feedback on individual document versions. The backend utilizes a self-referential database relationship (`parent_id`) to structure comments in a hierarchical thread, allowing students to reply directly to specific faculty annotations without clustering the primary discussion board.
 
 **Code Snippet of the Threaded Commenting Logic:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 9: Code snippet of Nested Document Feedback*
 ```php
 public function storeComment(Request $request, $submissionId) {
@@ -228,7 +228,7 @@ public function storeComment(Request $request, $submissionId) {
 Real-time task tracking functions as a core component of the CapTrack application, addressing primary objectives through continuous monitoring and timely updates of student progress. This feature contributes to academic productivity by providing faculty with current data regarding group requirements. The application employs backend processing to ensure consistent mathematical calculations. When a Kanban card is dragged to 'Done', a background controller calculation transmits the updated percentage data `(Completed/Total*100)` to the MySQL database. This approach maintains data accuracy even when the page is reloaded.
 
 **Code Snippet of Kanban Percentage Calculation:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 10: Code snippet of Kanban Progress Math Calculation*
 ```php
 public function moveTask(Request $request, $taskId) {
@@ -250,7 +250,7 @@ Automated scheduling complements the calendar feature by enabling coordinators t
 The implementation logic calculates the availability of every faculty member. Specifically, it eliminates the group's direct adviser (conflict of interest) and eliminates the coordinator. It then cross-references the `defense_schedules` table to eliminate any faculty member who has a time collision with the requested date. Finally, it sorts the remaining eligible teachers by their current workload, automatically suggesting the least-busy faculty to balance institutional workload.
 
 **Code Snippet of Automated Conflict Resolution (Auto-Assign):**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 11: Code snippet of the Auto-Assign Scheduling Algorithm*
 ```php
 public function autoAssignPanel(DefenseRequest $request) {
@@ -272,7 +272,7 @@ public function autoAssignPanel(DefenseRequest $request) {
 This feature empowers coordinators to efficiently oversee and maintain structured routines and requirement schedules for student groups. Coordinators can create "Milestone Templates" and conveniently add, edit, or delete requirements, categorizing them into tasks. Once saved, these templates can be manually assigned to active groups, ensuring precise management tailored to institutional standards and project phases.
 
 **Code Snippet of Assigning Milestone Templates:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 12: Code snippet of Coordinator Milestone Assignment*
 ```php
 public function assignToGroup(Request $request) {
@@ -300,7 +300,7 @@ public function assignToGroup(Request $request) {
 CapTrack allows students to manage the secure transfer of mentorship by sending Adviser Invitations to faculty accounts. It handles all aspects of the invitation workflow including initiation, authorization checks, and status updates (Pending, Accepted, Rejected). It ensures data consistency by instantly linking the group to the faculty member's matrix upon acceptance, while implementing safeguards to prevent a group from having multiple lead advisers.
 
 **Code Snippet of Processing an Adviser Transfer:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 13: Code snippet of the Adviser Invitation Workflow*
 ```php
 public function acceptInvitation($inviteId) {
@@ -320,7 +320,7 @@ public function acceptInvitation($inviteId) {
 For formal project defenses, CapTrack replaces traditional paper grading sheets with a dynamic, digital evaluation rubric. Panel members input sub-scores based on predefined criteria, and the backend dynamically parses this data, calculates the total weighted score, and securely stores the entire evaluation array as a JSON string within the MySQL database. This approach allows for highly flexible grading standards without requiring complex database schema migrations for every new rubric criteria.
 
 **Code Snippet of the JSON Grading Calculation:**
-*[TAKE A SCREENSHOT OF THIS CODE BLOCK IN VS CODE AND INSERT IT HERE]*
+*Code Listing (copyable text, theme-independent):*
 *Figure 14: Code snippet of Dynamic Rubric Parsing*
 ```php
 public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
