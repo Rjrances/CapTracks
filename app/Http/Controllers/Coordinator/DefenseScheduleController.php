@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\AcademicTerm;
 use App\Models\Offering;
 use App\Services\NotificationService;
+use App\Services\DefenseEvaluationService;
 use App\Services\DefenseMilestoneGateService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -17,7 +18,8 @@ use Illuminate\Support\Facades\DB;
 class DefenseScheduleController extends Controller
 {
     public function __construct(
-        private readonly DefenseMilestoneGateService $defenseMilestoneGateService
+        private readonly DefenseMilestoneGateService $defenseMilestoneGateService,
+        private readonly DefenseEvaluationService $defenseEvaluationService
     ) {
     }
 
@@ -86,7 +88,7 @@ class DefenseScheduleController extends Controller
                 ->isEmpty();
         })->values();
         
-        $scheduleQuery = DefenseSchedule::with(['group', 'academicTerm', 'defensePanels.faculty', 'defenseRequest'])
+        $scheduleQuery = DefenseSchedule::with(['group.adviser', 'academicTerm', 'defensePanels.faculty', 'defenseRequest'])
             ->whereHas('group', function($q) use ($coordinatorOfferings) {
                 $q->whereIn('offering_id', $coordinatorOfferings);
             })
@@ -938,6 +940,16 @@ class DefenseScheduleController extends Controller
 
         if (!in_array($defenseSchedule->status, ['scheduled', 'in_progress'])) {
             return back()->with('error', 'Only scheduled or in-progress defenses can be marked as completed.');
+        }
+
+        $defenseSchedule->loadMissing(['group.members', 'defensePanels', 'evaluationSummary']);
+        $readiness = $this->defenseEvaluationService->readiness($defenseSchedule);
+        if (!$readiness['is_ready']) {
+            return back()->with('error', 'Cannot complete yet. Required panelists must submit all rating sheets first.');
+        }
+
+        if (!$defenseSchedule->evaluationSummary) {
+            return back()->with('error', 'Cannot complete directly. Finalize the result from Rating Sheets first.');
         }
 
         $defenseSchedule->update([

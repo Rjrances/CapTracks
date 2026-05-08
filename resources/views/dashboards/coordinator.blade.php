@@ -6,12 +6,6 @@
             $coordinatorName = auth()->check() ? auth()->user()->name : 'Coordinator';
         @endphp
         <x-coordinator.intro :description="'Welcome, '.$coordinatorName.' — manage capstone projects, groups, and academic activities for the current term.'">
-            <a href="{{ route('coordinator.groups.index') }}" class="btn btn-primary">
-                <i class="fas fa-users me-2"></i>Manage Groups
-            </a>
-            <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-flag me-2"></i>Milestones
-            </a>
         </x-coordinator.intro>
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">

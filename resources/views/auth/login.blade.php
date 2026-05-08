@@ -40,9 +40,6 @@
                 </div>
                 <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700 transition">Login Now</button>
             </form>
-            <div class="text-center mt-6">
-                <a href="/password/reset" class="text-blue-600 hover:underline text-sm">Forgot password? Click here</a>
-            </div>
         </div>
     </div>
 </body>

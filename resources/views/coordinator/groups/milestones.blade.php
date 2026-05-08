@@ -181,18 +181,28 @@
                                         @endif
                                     </td>
                                     <td class="text-end {{ $hasTaskList ? 'border-bottom-0' : '' }}">
-                                        <form action="{{ route('coordinator.milestones.removeFromGroup', [$group, $groupMilestone]) }}"
-                                              method="post"
-                                              class="d-inline"
-                                              onsubmit="return confirm('Unassign this milestone from the group? Task progress for it will be removed.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-outline-secondary"
-                                                    title="Remove this assignment from the group only">
-                                                <i class="fas fa-unlink me-1"></i>Unassign
-                                            </button>
-                                        </form>
+                                        @php
+                                            $isCompletedMilestone = ((int) ($groupMilestone->progress_percentage ?? 0) >= 100)
+                                                || in_array((string) ($groupMilestone->status ?? ''), ['completed', 'done'], true);
+                                        @endphp
+                                        @if($isCompletedMilestone)
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle" title="Completed milestones are locked and cannot be unassigned.">
+                                                <i class="fas fa-lock me-1"></i>Locked
+                                            </span>
+                                        @else
+                                            <form action="{{ route('coordinator.milestones.removeFromGroup', [$group, $groupMilestone]) }}"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Unassign this milestone from the group? Task progress for it will be removed.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        title="Remove this assignment from the group only">
+                                                    <i class="fas fa-unlink me-1"></i>Unassign
+                                                </button>
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                                 @if($hasTaskList)

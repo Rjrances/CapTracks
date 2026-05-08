@@ -5,12 +5,6 @@
 @section('content')
 <div class="container-fluid">
         <x-coordinator.intro :description="'Members, adviser assignment, and status for this capstone group ('.($group->offering->subject_code ?? 'offering').').'">
-            <a href="{{ route('coordinator.groups.index') }}" class="btn btn-outline-primary">
-                <i class="fas fa-users me-2"></i>All groups
-            </a>
-            <a href="{{ route('coordinator.groups.milestones', $group->id) }}" class="btn btn-outline-secondary">
-                <i class="fas fa-flag me-2"></i>Milestones
-            </a>
         </x-coordinator.intro>
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb mb-0">

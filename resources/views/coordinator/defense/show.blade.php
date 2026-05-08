@@ -5,15 +5,17 @@ Defense — {{ $defenseSchedule->group->name }}
 @section('content')
 <div class="container-fluid">
         <x-coordinator.intro :description="'Schedule, panel, and logistics for the defense of '.$defenseSchedule->group->name.'.'">
-            <a href="{{ route('coordinator.defense.edit', $defenseSchedule->id) }}" class="btn btn-primary">
-                <i class="fas fa-edit me-2"></i>Edit schedule
-            </a>
+            @if($defenseSchedule->status !== 'completed')
+                <a href="{{ route('coordinator.defense.edit', $defenseSchedule->id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>Edit schedule
+                </a>
+            @endif
             <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Defense management
             </a>
         </x-coordinator.intro>
             <div class="row mb-4">
-                <div class="col-md-8">
+                <div class="col-12">
                     <div class="card">
                         <div class="card-header">
                             <h6 class="mb-0">
@@ -61,43 +63,6 @@ Defense — {{ $defenseSchedule->group->name }}
                                         <span class="badge bg-{{ $defenseSchedule->status_badge_variant }} fs-6">{{ $defenseSchedule->status_label }}</span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">
-                                <i class="fas fa-info-circle me-2"></i>Quick Actions
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-grid gap-2">
-                                <a href="{{ route('coordinator.defense.edit', $defenseSchedule->id) }}" class="btn btn-primary">
-                                    <i class="fas fa-edit me-2"></i>Edit Schedule
-                                </a>
-                                <a href="{{ route('coordinator.rating-sheets.show', $defenseSchedule->id) }}" class="btn btn-outline-info">
-                                    <i class="fas fa-clipboard-check me-2"></i>View Rating Sheets
-                                </a>
-                                @if(in_array($defenseSchedule->status, ['scheduled', 'in_progress']))
-                                    <form action="{{ route('coordinator.defense.complete', $defenseSchedule->id) }}" method="POST" class="d-grid">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-success"
-                                                onclick="return confirm('Mark this defense as completed?')">
-                                            <i class="fas fa-check-circle me-2"></i>Mark as Completed
-                                        </button>
-                                    </form>
-                                @endif
-                                <form action="{{ route('coordinator.defense.destroy', $defenseSchedule->id) }}" method="POST" class="d-grid">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-outline-danger" 
-                                            onclick="return confirm('Are you sure you want to delete this defense schedule? This action cannot be undone.')">
-                                        <i class="fas fa-trash me-2"></i>Delete Schedule
-                                    </button>
-                                </form>
                             </div>
                         </div>
                     </div>
@@ -197,10 +162,11 @@ Defense — {{ $defenseSchedule->group->name }}
                                 </div>
                             @endif
                             @php
-                                $manualMembers = $defenseSchedule->defensePanels->filter(function($panel) use ($defenseSchedule) {
-                                    return $panel->faculty_id != $defenseSchedule->group->adviser_id && 
-                                           (!($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id == $panel->faculty_id));
-                                });
+                                // "Additional Members" should only show panel chair/member.
+                                // Adviser and coordinator are rendered in the "Automatically Included" section.
+                                $manualMembers = $defenseSchedule->defensePanels
+                                    ->whereIn('role', ['chair', 'member'])
+                                    ->values();
                             @endphp
                             @if($manualMembers->count() > 0)
                                 <div class="col-md-6 mb-3">

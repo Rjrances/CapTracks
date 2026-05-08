@@ -282,9 +282,15 @@
                                                                     default => 'bg-warning text-dark',
                                                                 };
                                                             @endphp
-                                                            <div class="d-flex flex-wrap align-items-center gap-1 mb-1">
-                                                                <span>{{ $panel->faculty->name }} ({{ ucfirst($panel->role) }})</span>
-                                                                <span class="badge {{ $confirmationBadgeClass }}">{{ $confirmationLabel }}</span>
+                                                            <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                                                                <span class="text-break">
+                                                                    @if($panel->role === 'adviser')
+                                                                        {{ $schedule->group->adviser->name ?? ($panel->faculty->name ?? 'Unassigned') }} ({{ ucfirst($panel->role) }})
+                                                                    @else
+                                                                        {{ $panel->faculty->name }} ({{ ucfirst($panel->role) }})
+                                                                    @endif
+                                                                </span>
+                                                                <span class="badge {{ $confirmationBadgeClass }} flex-shrink-0">{{ $confirmationLabel }}</span>
                                                             </div>
                                                         @endforeach
                                                     </div>
@@ -318,9 +324,11 @@
                                                             <i class="fas fa-lock me-1"></i> Ratings Locked
                                                         </button>
                                                     @endif
-                                                    <a href="{{ route('coordinator.defense.edit', $schedule) }}" class="btn btn-outline-primary btn-sm">
-                                                        <i class="fas fa-edit"></i> Edit
-                                                    </a>
+                                                    @if($schedule->status !== 'completed')
+                                                        <a href="{{ route('coordinator.defense.edit', $schedule) }}" class="btn btn-outline-primary btn-sm">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </a>
+                                                    @endif
                                                     @if(in_array($schedule->status, ['scheduled', 'in_progress']))
                                                         <form action="{{ route('coordinator.defense.complete', $schedule) }}" method="POST" class="d-inline">
                                                             @csrf

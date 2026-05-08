@@ -3,12 +3,6 @@
 @section('content')
 <div class="container-fluid">
         <x-coordinator.intro description="View rosters, adviser assignments, and group progress for the current term.">
-            <a href="{{ route('coordinator.dashboard') }}" class="btn btn-outline-primary">
-                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-            </a>
-            <a href="{{ route('coordinator.milestones.index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-flag me-2"></i>Milestones
-            </a>
         </x-coordinator.intro>
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -195,20 +189,6 @@
                                 <h4 class="text-warning mb-0">{{ $groups->where('faculty_id', null)->count() }}</h4>
                                 <small class="text-muted">No Adviser</small>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-bolt me-2"></i>Quick Actions
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-info">
-                                <i class="fas fa-calendar me-2"></i>Defense Scheduling
-                            </a>
                         </div>
                     </div>
                 </div>

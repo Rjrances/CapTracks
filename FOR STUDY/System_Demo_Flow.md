@@ -69,11 +69,11 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 ---
 
 ## 👨‍🎓 Phase 2: The Core Workflow (Student)
-*Switch to your Incognito tab and log in as the student you just enrolled.*
+*Switch to the Student tab (normal browser) and log in as the student you just enrolled.*
 
 **Step 4 — Forced Password Change (Security Middleware)**
 
-[ACTION] Open the incognito tab. Go to the student login page. Type in the student ID and the default password `password123`. Click Login.
+[ACTION] Open the Student tab. Go to the student login page. Type in the student ID and the default password `password123`. Click Login.
 
 > [SAY] *"I am now logging in as one of our newly imported students using the default password assigned to them. Watch what happens."*
 
@@ -160,7 +160,7 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 
 ---
 
-**Step 9 — Assign a Milestone to the Group**
+**Step 10 — Assign a Milestone to the Group**
 
 [ACTION] Go to Milestones. Find the student's group in the group list. Select a milestone template from the dropdown (e.g., "Chapter 1 — Proposal") and set a due date. Click Assign.
 
@@ -172,7 +172,7 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 
 ---
 
-**Step 10 — Approve a Proposal**
+**Step 11 — Approve a Proposal**
 
 [ACTION] Go to Proposal Submissions. Find the student's uploaded document. Click Approve.
 
@@ -180,7 +180,7 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 
 ---
 
-**Step 11 — The Auto-Assign Algorithm (CRITICAL FEATURE)**
+**Step 12 — The Auto-Assign Algorithm (CRITICAL FEATURE)**
 
 
 [ACTION] Navigate to Defense Scheduling. Find a group that has requested a defense. Click "Schedule Panel" and open the faculty dropdown.
@@ -201,10 +201,10 @@ Follow this exact step-by-step workflow. **Read the text inside the quotation ma
 
 ---
 
-## 📝 Phase 4: The Final Grade (Adviser / Panelist)
+## 📝 Phase 5: The Final Grade (Adviser / Panelist)
 *Log in as one of the assigned panelists.*
 
-**Step 12 — Dynamic JSON Grading Rubric**
+**Step 13 — Dynamic JSON Grading Rubric**
 
 [ACTION] Log in as a Panelist. Navigate to Active Defenses. Open the Grading Sheet for the group.
 

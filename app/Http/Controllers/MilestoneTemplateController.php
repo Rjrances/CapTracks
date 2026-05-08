@@ -64,6 +64,40 @@ class MilestoneTemplateController extends Controller
         if ($request->input('sequence_order') === '' || $request->input('sequence_order') === null) {
             $data['sequence_order'] = null;
         }
+
+        $sameNameExists = MilestoneTemplate::query()
+            ->whereRaw('LOWER(name) = ?', [strtolower((string) $data['name'])])
+            ->exists();
+        if ($sameNameExists) {
+            return back()
+                ->withInput()
+                ->withErrors(['name' => 'A milestone template with this name already exists. Please use a different name.']);
+        }
+
+        if (!empty($data['sequence_order'])) {
+            if (($data['status'] ?? null) === 'active') {
+                $activeStepExists = MilestoneTemplate::query()
+                    ->where('status', 'active')
+                    ->where('sequence_order', $data['sequence_order'])
+                    ->exists();
+                if ($activeStepExists) {
+                    return back()
+                        ->withInput()
+                        ->withErrors(['sequence_order' => 'This sequence step is already used by another active milestone template.']);
+                }
+            }
+
+            $sameNameAndStepExists = MilestoneTemplate::query()
+                ->whereRaw('LOWER(name) = ?', [strtolower((string) $data['name'])])
+                ->where('sequence_order', $data['sequence_order'])
+                ->exists();
+            if ($sameNameAndStepExists) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['name' => 'A milestone template with the same name and sequence step already exists.']);
+            }
+        }
+
         MilestoneTemplate::create($data);
         return redirect()->route('coordinator.milestones.index')->with('success', 'Milestone created successfully.');
     }
@@ -83,6 +117,43 @@ class MilestoneTemplateController extends Controller
         if ($request->input('sequence_order') === '' || $request->input('sequence_order') === null) {
             $data['sequence_order'] = null;
         }
+
+        $sameNameExists = MilestoneTemplate::query()
+            ->where('id', '!=', $milestone->id)
+            ->whereRaw('LOWER(name) = ?', [strtolower((string) $data['name'])])
+            ->exists();
+        if ($sameNameExists) {
+            return back()
+                ->withInput()
+                ->withErrors(['name' => 'A milestone template with this name already exists. Please use a different name.']);
+        }
+
+        if (!empty($data['sequence_order'])) {
+            if (($data['status'] ?? null) === 'active') {
+                $activeStepExists = MilestoneTemplate::query()
+                    ->where('id', '!=', $milestone->id)
+                    ->where('status', 'active')
+                    ->where('sequence_order', $data['sequence_order'])
+                    ->exists();
+                if ($activeStepExists) {
+                    return back()
+                        ->withInput()
+                        ->withErrors(['sequence_order' => 'This sequence step is already used by another active milestone template.']);
+                }
+            }
+
+            $sameNameAndStepExists = MilestoneTemplate::query()
+                ->where('id', '!=', $milestone->id)
+                ->whereRaw('LOWER(name) = ?', [strtolower((string) $data['name'])])
+                ->where('sequence_order', $data['sequence_order'])
+                ->exists();
+            if ($sameNameAndStepExists) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['name' => 'A milestone template with the same name and sequence step already exists.']);
+            }
+        }
+
         $milestone->update($data);
         return redirect()->route('coordinator.milestones.index')->with('success', 'Milestone updated successfully.');
     }

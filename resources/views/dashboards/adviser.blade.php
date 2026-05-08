@@ -8,20 +8,6 @@
                     <div>
                         <p class="text-muted mb-0">Manage your groups, invitations, and student projects</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('adviser.groups') }}" class="btn btn-primary">
-                            <i class="fas fa-user-tie me-2"></i>Adviser Groups
-                        </a>
-                        <a href="{{ route('adviser.panel-groups') }}" class="btn btn-outline-info">
-                            <i class="fas fa-gavel me-2"></i>Panel Groups
-                        </a>
-                        <a href="{{ route('adviser.invitations') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-envelope me-2"></i>Adviser Invitations
-                        </a>
-                        <a href="{{ route('adviser.panel-invitations') }}" class="btn btn-outline-info">
-                            <i class="fas fa-gavel me-2"></i>Panel Invitations
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>

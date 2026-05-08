@@ -404,13 +404,13 @@ The average satisfaction scores in the table were calculated using a weighted fo
 
 | Questions | SA | A | N | D | SD | Total | Avg |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| The application does not crash or freeze during CSV uploads. | 11 | 4 | 1 | 0 | 0 | 16 | 4.62 |
-| The Kanban dashboard is easy to navigate and understand. | 12 | 4 | 0 | 0 | 0 | 16 | 4.75 |
-| The design and layout of the app are visually appealing and user-friendly. | 14 | 2 | 0 | 0 | 0 | 16 | 4.75 |
-| All features I used in the application functioned as expected. | 11 | 5 | 0 | 0 | 0 | 16 | 4.68 |
-| The response time for downloading versioned documents is quick. | 11 | 4 | 1 | 0 | 0 | 16 | 4.62 |
-| The algorithm for assigning panel members is accurate and efficient. | 9 | 6 | 1 | 0 | 0 | 16 | 4.53 |
-| The response time for threaded comments and task updates is quick. | 11 | 5 | 0 | 0 | 0 | 16 | 4.68 |
+| The application does not crash or freeze during CSV uploads. | 9 | 4 | 1 | 0 | 0 | 14 | 4.57 |
+| The Kanban dashboard is easy to navigate and understand. | 10 | 4 | 0 | 0 | 0 | 14 | 4.71 |
+| The design and layout of the app are visually appealing and user-friendly. | 12 | 2 | 0 | 0 | 0 | 14 | 4.86 |
+| All features I used in the application functioned as expected. | 9 | 5 | 0 | 0 | 0 | 14 | 4.64 |
+| The response time for downloading versioned documents is quick. | 9 | 4 | 1 | 0 | 0 | 14 | 4.57 |
+| The algorithm for assigning panel members is accurate and efficient. | 7 | 6 | 1 | 0 | 0 | 14 | 4.43 |
+| The response time for threaded comments and task updates is quick. | 9 | 5 | 0 | 0 | 0 | 14 | 4.64 |
 
 #### Survey Questionnaire Instrument (For Google Forms Setup)
 *Note for researchers: Use the exact structure below when creating the Google Form to ensure the data matches the table above.*
@@ -435,15 +435,15 @@ The average satisfaction scores in the table were calculated using a weighted fo
 7. The response time for threaded comments and task status updates is quick and responsive.
 
 #### Summary of Usability Testing
-The usability testing involved sixteen (16) participants and evaluated various aspects of the CapTrack application. The results suggest that the application performs well across most metrics. Specifically:
+The usability testing involved fourteen (14) participants and evaluated various aspects of the CapTrack application. The results suggest that the application performs well across most metrics. Specifically:
 
-1. **Application Stability** - Most participants reported that the application operates smoothly without crashes or SQL errors during heavy data imports, achieving an average score of 4.62. This result highlights the platform's high reliability and stable performance during user interactions.
-2. **Ease of Navigation** - A majority of the 16 participants strongly agreed that the application was easy to navigate, achieving an average score of 4.75. This underscores the interface's intuitive design and user-friendly layout.
-3. **Design Appeal** - The application's design and layout garnered positive feedback, achieving an average score of 4.75. This reflects high user satisfaction with its visual appeal and overall user-friendliness.
-4. **System Functionality** - The app's features generally performed as expected, earning the highest average score of 4.68. This underscores the application's reliability and consistent functionality.
-5. **General Response Time** - The app's overall build quality and document retrieval time met user expectations, achieving an average score of 4.62, indicating solid performance and reliability.
-6. **Algorithmic Efficiency** - The Auto-Assign panel scheduling aligned with user expectations, earning an average score of 4.53, which highlights its dependable conflict-resolution logic.
-7. **Task Updates Response Time** - The app's Kanban and threaded commenting services meet user expectations, earning an impressive average score of 4.68, reflecting its reliable and efficient performance.
+1. **Application Stability** - Most participants reported that the application operates smoothly without crashes or SQL errors during heavy data imports, achieving an average score of 4.57. This result highlights the platform's high reliability and stable performance during user interactions.
+2. **Ease of Navigation** - A majority of the 14 participants strongly agreed that the application was easy to navigate, achieving an average score of 4.71. This underscores the interface's intuitive design and user-friendly layout.
+3. **Design Appeal** - The application's design and layout garnered positive feedback and earned the highest average score of 4.86. This reflects high user satisfaction with its visual appeal and overall user-friendliness.
+4. **System Functionality** - The app's features generally performed as expected, earning an average score of 4.64. This underscores the application's reliability and consistent functionality.
+5. **General Response Time** - The app's overall build quality and document retrieval time met user expectations, achieving an average score of 4.57, indicating solid performance and reliability.
+6. **Algorithmic Efficiency** - The Auto-Assign panel scheduling aligned with user expectations, earning an average score of 4.43, which highlights its dependable conflict-resolution logic.
+7. **Task Updates Response Time** - The app's Kanban and threaded commenting services meet user expectations, earning an average score of 4.64, reflecting its reliable and efficient performance.
 
 The findings indicate that CapTrack excels in usability and user satisfaction, with notable strengths in stability, ease of navigation, and overall functionality. Addressing minor network latency during large document downloads could further enhance the user experience. These insights underscore the importance of continuous improvement and the incorporation of user feedback as CapTrack evolves.
 

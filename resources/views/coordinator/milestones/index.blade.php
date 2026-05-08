@@ -210,6 +210,15 @@
                                                                     <span class="badge bg-info text-truncate" style="max-width: 180px;" title="{{ $milestone->template ? $milestone->template->name : 'Unknown Template' }}">
                                                                         {{ $milestone->template ? $milestone->template->name : 'Unknown' }}
                                                                     </span>
+                                                                    @php
+                                                                        $isMilestoneComplete = ((int) ($milestone->progress_percentage ?? 0) >= 100)
+                                                                            || in_array((string) ($milestone->status ?? ''), ['completed', 'done'], true);
+                                                                    @endphp
+                                                                    @if($isMilestoneComplete)
+                                                                        <span class="badge bg-success text-nowrap">Completed</span>
+                                                                    @else
+                                                                        <span class="badge bg-secondary text-nowrap">In progress</span>
+                                                                    @endif
                                                                     <small class="text-muted text-nowrap">
                                                                         Due: {{ ($milestone->due_date ?? $milestone->target_date) ? \Carbon\Carbon::parse($milestone->due_date ?? $milestone->target_date)->format('M d') : 'Not set' }}
                                                                     </small>
@@ -222,6 +231,7 @@
                                                 </td>
                                                 <td>
                                                     @if($group->overall_progress_percentage !== null)
+                                                        <small class="text-muted d-block mb-1">Overall</small>
                                                         <div class="progress" style="height: 20px; min-width: 60px;">
                                                             <div class="progress-bar" role="progressbar" 
                                                                  style="width: {{ $group->overall_progress_percentage }}%"

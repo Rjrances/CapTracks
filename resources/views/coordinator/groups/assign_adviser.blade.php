@@ -49,21 +49,13 @@ Assign adviser — {{ $group->name }}
                         <option value="">-- Select Adviser --</option>
                         @foreach($availableFaculty as $faculty)
                             <option value="{{ $faculty->faculty_id }}" {{ $group->faculty_id == $faculty->faculty_id ? 'selected' : '' }}>
-                                {{ $faculty->name }} 
-                                @if($faculty->hasRole('teacher'))
-                                    <span class="badge bg-primary">Teacher</span>
-                                @endif
-                                @if($faculty->hasRole('adviser'))
-                                    <span class="badge bg-success">Adviser</span>
-                                @endif
-                                @if($faculty->hasRole('panelist'))
-                                    <span class="badge bg-info">Panelist</span>
-                                @endif
+                                {{ $faculty->name }}
                             </option>
                         @endforeach
                     </select>
                     <div class="form-text">
-                        Available faculty members who can serve as advisers for this group
+                        Available faculty members who can serve as advisers for this group.
+                        "Current Adviser" above is the actual assignment for this group.
                     </div>
                     @error('faculty_id')
                         <div class="text-danger small mt-1">{{ $message }}</div>

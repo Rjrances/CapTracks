@@ -262,6 +262,7 @@ class CoordinatorController extends Controller
     public function assignAdviser($id)
     {
         $group = Group::with(['adviser', 'members', 'offering'])->findOrFail($id);
+        $confirmedPanelistIds = $this->getConfirmedPanelistUserIdsForGroup($group->id);
         $availableFaculty = User::withAnyRole(['teacher', 'adviser', 'panelist', 'coordinator'])
             ->where('semester', $group->academicTerm->semester)
             ->where(function($query) use ($group) {
@@ -269,6 +270,7 @@ class CoordinatorController extends Controller
                     $q->where('id', $group->offering_id);
                 });
             })
+            ->whereNotIn('id', $confirmedPanelistIds)
             ->orderBy('name')
             ->get();
         return view('coordinator.groups.assign_adviser', compact('group', 'availableFaculty'));
@@ -294,6 +296,10 @@ class CoordinatorController extends Controller
             $adviser = User::where('faculty_id', $validated['faculty_id'])->first();
             if ($adviser && $group->offering && $adviser->offerings()->where('id', $group->offering_id)->exists()) {
                 return back()->withErrors(['faculty_id' => 'This faculty member coordinates this offering and cannot be assigned as an adviser due to conflict of interest.']);
+            }
+            $confirmedPanelistIds = $this->getConfirmedPanelistUserIdsForGroup($group->id);
+            if ($adviser && $confirmedPanelistIds->contains($adviser->id)) {
+                return back()->withErrors(['faculty_id' => 'This faculty member is already a confirmed panelist for this group\'s scheduled defense and cannot be assigned as adviser.']);
             }
         }
 
@@ -368,6 +374,32 @@ class CoordinatorController extends Controller
         $notification->update(['is_read' => true]);
 
         return response()->json(['success' => true, 'message' => 'Notification marked as read']);
+    }
+
+    /**
+     * Confirmed panelists (chair/member) that must not be assignable as adviser.
+     * Rule:
+     * - Exclude confirmed panelists for active defenses (scheduled/in_progress), and
+     * - Exclude confirmed panelists for completed proposal defenses (finalized panel).
+     */
+    private function getConfirmedPanelistUserIdsForGroup(int $groupId)
+    {
+        return \App\Models\DefensePanel::query()
+            ->where('status', 'accepted')
+            ->whereIn('role', ['chair', 'member'])
+            ->whereHas('defenseSchedule', function ($query) use ($groupId) {
+                $query->where('group_id', $groupId)
+                    ->where(function ($q) {
+                        $q->whereIn('status', ['scheduled', 'in_progress'])
+                            ->orWhere(function ($completedProposal) {
+                                $completedProposal->where('status', 'completed')
+                                    ->where('stage', 'proposal');
+                            });
+                    });
+            })
+            ->pluck('faculty_id')
+            ->unique()
+            ->values();
     }
 
     public function markAllNotificationsAsRead()

@@ -359,7 +359,7 @@ function showEventDetails(event) {
                 <p><strong>Group:</strong> ${event.extendedProps.group || 'N/A'}</p>
                 <p><strong>Adviser:</strong> ${event.extendedProps.adviser || 'N/A'}</p>
                 <p><strong>Coordinator:</strong> ${event.extendedProps.coordinator || 'N/A'}</p>
-                <p><strong>Status:</strong> <span class="badge bg-${event.extendedProps.status === 'approved' ? 'success' : event.extendedProps.status === 'scheduled' ? 'success' : 'secondary'}">${event.extendedProps.status.charAt(0).toUpperCase() + event.extendedProps.status.slice(1)}</span></p>
+                <p><strong>Status:</strong> <span class="badge bg-${event.extendedProps.status === 'approved' || event.extendedProps.status === 'scheduled' || event.extendedProps.status === 'completed' ? 'success' : 'secondary'}">${event.extendedProps.status.charAt(0).toUpperCase() + event.extendedProps.status.slice(1)}</span></p>
             </div>
             <div class="col-md-6">
                 <h6>Schedule</h6>
@@ -374,8 +374,10 @@ function showEventDetails(event) {
     const editBtn     = document.getElementById('editDefenseBtn');
     const viewBadge   = document.getElementById('viewOnlyBadge');
     const isMine      = event.extendedProps.is_mine;
+    const status      = (event.extendedProps.status || '').toLowerCase();
+    const isCompleted = status === 'completed';
 
-    if (isMine) {
+    if (isMine && !isCompleted) {
         editBtn.href    = `/coordinator/defense/${event.id}/edit`;
         editBtn.style.display  = 'inline-block';
         viewBadge.style.display = 'none';

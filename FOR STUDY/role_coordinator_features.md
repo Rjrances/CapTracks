@@ -15,6 +15,95 @@ If panelists ask for the "System Workflow" or "Use Case" of a Coordinator, expla
 
 **Description:** Coordinators can view lists of all students enrolled in capstone classes for the current term and view a matrix showing how many groups each faculty member is advising/paneling.
 
+### 🔗 End-to-End Flow: Chairperson Import -> Coordinator Classlist (Line-by-Line)
+
+Use this when panelists ask: **"If Chairperson imports students, how do they appear in Coordinator class list?"**
+
+#### A) Chairperson triggers import
+
+**File:** `app/Http/Controllers/ChairpersonStudentController.php`
+
+```php
+public function upload(Request $request)
+{
+    return app(StudentImportService::class)->importFromRequest($request, StudentImportService::MODE_CHAIRPERSON);
+}
+```
+
+- `upload()` receives the CSV + optional `offering_id`.
+- It delegates to `StudentImportService`.
+- `MODE_CHAIRPERSON` tells service this is a chairperson-initiated import.
+
+#### B) Import service validates, imports, and enrolls
+
+**File:** `app/Services/StudentImportService.php`
+
+```php
+public function importFromRequest(Request $request, string $mode = self::MODE_CHAIRPERSON): RedirectResponse
+{
+    $request->validate([
+        'file' => 'required|file|mimes:csv|max:10240',
+    ]);
+
+    $offeringId = $request->get('offering_id');
+    $import = new StudentsImport($offeringId);
+    Excel::import($import, $file);
+
+    if ($offeringId) {
+        $offering = Offering::find($offeringId);
+        $recentStudents = Student::where('created_at', '>=', now()->subMinutes(2))->get();
+        foreach ($recentStudents as $student) {
+            $student->enrollInOffering($offering);
+        }
+    }
+}
+```
+
+- Validates CSV input first.
+- Reads `offering_id` from request.
+- Runs `StudentsImport` to create/skip student records.
+- If `offering_id` exists, links imported students to that offering through `enrollInOffering()`.
+- This enrollment step is what makes students visible to coordinator-scoped queries.
+
+#### C) Student-offering relation used by classlist
+
+**File:** `app/Models/Student.php`
+
+```php
+public function offerings()
+{
+    return $this->belongsToMany(Offering::class, 'offering_student', 'student_id', 'offering_id', 'student_id', 'id')
+                ->withPivot('enrolled_at')
+                ->withTimestamps();
+}
+```
+
+- Coordinator classlist does not read raw CSV rows.
+- It reads students through this many-to-many enrollment relation (`offering_student` pivot).
+
+#### D) Coordinator classlist fetches only coordinator-owned offerings
+
+**File:** `app/Http/Controllers/CoordinatorController.php` (classlist logic)
+
+```php
+$coordinatedOfferingIds = Offering::where('faculty_id', $user->faculty_id)
+    ->when($activeTerm, function ($query) use ($activeTerm) {
+        return $query->where('academic_term_id', $activeTerm->id);
+    })
+    ->pluck('id');
+
+$studentsQuery = Student::with(['offerings' => function ($query) use ($coordinatedOfferingIds) {
+    $query->whereIn('offerings.id', $coordinatedOfferingIds);
+}])->where('semester', $activeTerm->semester)
+  ->whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
+      $query->whereIn('offerings.id', $coordinatedOfferingIds);
+  });
+```
+
+- Gets offerings assigned to the logged-in coordinator (`faculty_id` match).
+- Loads only students who are enrolled in those offerings (`whereHas('offerings', ...)`).
+- That is why imported students appear in coordinator classlist **only after enrollment** into coordinator-owned offering.
+
 **Core Logic (`app/Http/Controllers/CoordinatorController.php`):**
 ```php
 public function facultyMatrix() {
@@ -426,12 +515,15 @@ public function bulkUpdate(Request $request) {
 
 Use this section when panelists ask what specific Laravel/PHP methods mean.
 
+- `first()` - Returns only the first matching row (single model), or `null` if none found.  
+  Example in coordinator code:  
+  `$activeTerm = AcademicTerm::where('is_active', true)->first();`  
+  Meaning: get one active term record (not a collection/list).
 - `pluck('column')` - Gets only one column from query results (for example, just IDs), instead of loading full records.
 - `whereIn('column', [...])` - Filters rows where the value matches any item in a list.
 - `whereNotIn('column', [...])` - Filters rows by excluding values from a list.
 - `withCount('relation')` - Adds a count of related records (for example, how many panels a faculty already has) without manually looping.
 - `whereHas('relation', fn...)` - Filters a model based on conditions inside a related model.
-- `first()` - Returns the first matching row, or `null` if none exists.
 - `findOrFail(id)` - Finds one record by ID; throws an error automatically if not found.
 - `create([...])` - Inserts a new record in the database in one call.
 - `update([...])` - Updates existing record fields in one call.

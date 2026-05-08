@@ -17,7 +17,7 @@ class CalendarController extends Controller
         // Show ALL scheduled defenses in the active term so coordinators
         // can see other groups' schedules and avoid room/time conflicts.
         $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'group.offering.teacher', 'panelists'])
-            ->whereIn('status', ['scheduled'])
+            ->whereIn('status', ['scheduled', 'in_progress', 'completed'])
             ->when($activeTerm, function ($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);
             })
@@ -62,7 +62,7 @@ class CalendarController extends Controller
     {
         $user = Auth::user();
         $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
-            ->whereIn('status', ['scheduled'])
+            ->whereIn('status', ['scheduled', 'in_progress', 'completed'])
             ->whereHas('group', function($query) use ($user) {
                 $query->where('faculty_id', $user->faculty_id);
             })
@@ -115,7 +115,7 @@ class CalendarController extends Controller
         $calendarEvents = collect();
         if ($group) {
             $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
-                ->whereIn('status', ['scheduled'])
+                ->whereIn('status', ['scheduled', 'in_progress', 'completed'])
                 ->where('group_id', $group->id)
                 ->orderBy('start_at')
                 ->get();
@@ -150,7 +150,7 @@ class CalendarController extends Controller
     public function chairpersonCalendar()
     {
         $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
-            ->whereIn('status', ['scheduled'])
+            ->whereIn('status', ['scheduled', 'in_progress', 'completed'])
             ->orderBy('start_at')
             ->get();
         $calendarEvents = $defenses->map(function ($defense) {
