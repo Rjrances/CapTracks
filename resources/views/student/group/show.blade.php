@@ -91,18 +91,33 @@
                                 <h6 class="fw-bold mb-3">
                                     <i class="fas fa-user-plus me-1"></i>Invite Member
                                 </h6>
+                                @php
+                                    $pendingMemberInvitationsCount = $group->groupInvitations()->where('status', 'pending')->count();
+                                    $remainingSlots = max(0, 3 - $group->members->count() - $pendingMemberInvitationsCount);
+                                @endphp
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    You can invite {{ 3 - $group->members->count() }} more member(s) to reach the maximum of 3 members.
+                                    You can invite {{ $remainingSlots }} more member(s) to reach the maximum of 3 members.
                                     <br><strong>Note:</strong> Only students enrolled in the same offering can be invited to your group.
+                                    @if($pendingMemberInvitationsCount > 0)
+                                        <br><strong>Pending invitations:</strong> {{ $pendingMemberInvitationsCount }}
+                                    @endif
                                 </div>
                                 <form action="{{ route('student.group.invite-member') }}" method="POST" class="row g-3">
                                     @csrf
                                     <div class="col-md-6">
                                         <input type="text" id="student_search" class="form-control" placeholder="Search for student name..." onkeyup="filterStudents()">
-                                        <select name="student_id" id="student_select" class="form-select mt-2" required>
-                                            <option value="">Select a student...</option>
+                                        <select name="student_ids[]" id="student_select_1" class="form-select mt-2" {{ $remainingSlots <= 0 ? 'disabled' : '' }} required>
+                                            <option value="">Select student...</option>
                                             {{-- Available students are now passed from the controller with consistent filtering --}}
+                                            @foreach($availableStudents as $student)
+                                                <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
+                                                    {{ $student->name }} ({{ $student->student_id }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <select name="student_ids[]" id="student_select_2" class="form-select mt-2" {{ $remainingSlots < 2 ? 'disabled' : '' }}>
+                                            <option value="">Select student (optional)...</option>
                                             @foreach($availableStudents as $student)
                                                 <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
                                                     {{ $student->name }} ({{ $student->student_id }})
@@ -120,7 +135,7 @@
                                         <textarea name="message" class="form-control" rows="3" placeholder="Optional message for the invitation..."></textarea>
                                     </div>
                                     <div class="col-12">
-                                        <button type="submit" class="btn btn-success">
+                                        <button type="submit" class="btn btn-success" {{ $remainingSlots <= 0 ? 'disabled' : '' }}>
                                             <i class="fas fa-paper-plane"></i> Send Invitation
                                         </button>
                                     </div>
@@ -377,9 +392,6 @@
             <a href="{{ route('student.group.edit') }}" class="btn btn-outline-primary">
                 <i class="fas fa-edit"></i> Edit Group
             </a>
-            <a href="{{ route('student.group.index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Groups
-            </a>
         </div>
     @else
         <div class="text-center">
@@ -478,25 +490,87 @@ function requestDefense(defenseType) {
     modal.show();
 }
 
-function filterStudents() {
-    const searchTerm = document.getElementById('student_search').value.toLowerCase();
-    const select = document.getElementById('student_select');
-    const options = select.getElementsByTagName('option');
-    
-    for (let i = 0; i < options.length; i++) {
-        const option = options[i];
-        const studentName = option.getAttribute('data-name') || '';
-        
-        if (option.value === '' || studentName.includes(searchTerm)) {
-            option.style.display = '';
-        } else {
-            option.style.display = 'none';
+const originalInviteOptions = [];
+
+function initializeInviteOptions() {
+    const first = document.getElementById('student_select_1');
+    if (!first) return;
+    originalInviteOptions.length = 0;
+
+    const options = first.querySelectorAll('option');
+    options.forEach((option) => {
+        if (!option.value) return;
+        originalInviteOptions.push({
+            value: option.value,
+            text: option.textContent,
+            name: (option.getAttribute('data-name') || '').toLowerCase(),
+        });
+    });
+}
+
+function renderInviteSelectOptions() {
+    const first = document.getElementById('student_select_1');
+    const second = document.getElementById('student_select_2');
+    const searchInput = document.getElementById('student_search');
+    if (!first || !second) return;
+
+    const searchTerm = (searchInput?.value || '').toLowerCase();
+    const selectedFirst = first.value;
+    const selectedSecond = second.value;
+
+    first.innerHTML = '<option value="">Select student...</option>';
+    second.innerHTML = '<option value="">Select student (optional)...</option>';
+
+    originalInviteOptions.forEach((student) => {
+        if (searchTerm && !student.name.includes(searchTerm)) return;
+
+        const firstOption = document.createElement('option');
+        firstOption.value = student.value;
+        firstOption.textContent = student.text;
+        firstOption.setAttribute('data-name', student.name);
+        if (student.value === selectedFirst) {
+            firstOption.selected = true;
         }
-    }
-    
-    if (select.value && select.selectedOptions[0].style.display === 'none') {
-        select.value = '';
+        first.appendChild(firstOption);
+
+        if (student.value !== selectedFirst) {
+            const secondOption = document.createElement('option');
+            secondOption.value = student.value;
+            secondOption.textContent = student.text;
+            secondOption.setAttribute('data-name', student.name);
+            if (student.value === selectedSecond) {
+                secondOption.selected = true;
+            }
+            second.appendChild(secondOption);
+        }
+    });
+
+    if (selectedSecond && selectedSecond === selectedFirst) {
+        second.value = '';
     }
 }
+
+function filterStudents() {
+    renderInviteSelectOptions();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const first = document.getElementById('student_select_1');
+    const second = document.getElementById('student_select_2');
+    const searchInput = document.getElementById('student_search');
+
+    initializeInviteOptions();
+    renderInviteSelectOptions();
+
+    if (first) {
+        first.addEventListener('change', renderInviteSelectOptions);
+    }
+    if (second) {
+        second.addEventListener('change', renderInviteSelectOptions);
+    }
+    if (searchInput) {
+        searchInput.addEventListener('input', renderInviteSelectOptions);
+    }
+});
 </script>
 @endsection 

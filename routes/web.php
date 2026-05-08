@@ -205,6 +205,7 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
 
     // Project Submission
     Route::get('/project/submissions/preview/{projectSubmission}', [ProjectSubmissionController::class, 'studentPreviewSubmission'])->name('project.submission.preview');
+    Route::get('/project/submissions/file/{projectSubmission}', [ProjectSubmissionController::class, 'studentSubmissionFile'])->name('project.submission.file');
     Route::get('/project/submissions/{left}/compare/{right}', [ProjectSubmissionController::class, 'studentCompareSubmissions'])->name('project.submissions.compare');
     Route::get('/project', [ProjectSubmissionController::class, 'index'])->name('project');
     Route::get('/project/create', [ProjectSubmissionController::class, 'create'])->name('project.create');

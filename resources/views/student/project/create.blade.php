@@ -60,6 +60,15 @@
             </h5>
         </div>
         <div class="card-body">
+            @if($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <form action="{{ route('student.project.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="row">
@@ -73,7 +82,7 @@
                                 <option value="final">🏁 Final Report</option>
                                 <option value="other">📎 Additional Files</option>
                             </select>
-                            <div class="form-text">Choose the type of document you're submitting</div>
+                            <div class="form-text" id="type-rule-text">Choose the type of document you're submitting</div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -82,7 +91,7 @@
                                 <i class="fas fa-file me-1"></i>Document File
                             </label>
                             <input type="file" name="file" id="file" class="form-control" required accept=".pdf,.doc,.docx,.zip,.pptx,.ppt">
-                            <div class="form-text">Supported formats: PDF, DOC, DOCX, ZIP, PPT, PPTX (Max: 10MB)</div>
+                            <div class="form-text" id="file-rule-text">Supported formats: PDF, DOC, DOCX, ZIP, PPT, PPTX (Max: 10MB)</div>
                         </div>
                     </div>
                 </div>
@@ -152,5 +161,35 @@
     }
 }
 </style>
+@endpush
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const typeSelect = document.getElementById('type');
+    const fileInput = document.getElementById('file');
+    const typeRuleText = document.getElementById('type-rule-text');
+    const fileRuleText = document.getElementById('file-rule-text');
+
+    function applyTypeRules() {
+        const selectedType = typeSelect.value;
+        if (selectedType === 'final') {
+            fileInput.setAttribute('accept', '.pdf,.doc,.docx');
+            typeRuleText.textContent = 'Final Report accepts PDF, DOC, or DOCX only.';
+            fileRuleText.textContent = 'Allowed for Final Report: PDF, DOC, DOCX (Max: 10MB)';
+        } else if (selectedType === 'other') {
+            fileInput.setAttribute('accept', '.pdf,.doc,.docx,.zip,.ppt,.pptx');
+            typeRuleText.textContent = 'Additional Files accepts supplementary formats.';
+            fileRuleText.textContent = 'Allowed for Additional Files: PDF, DOC, DOCX, ZIP, PPT, PPTX (Max: 10MB)';
+        } else {
+            fileInput.setAttribute('accept', '.pdf,.doc,.docx,.zip,.ppt,.pptx');
+            typeRuleText.textContent = 'Choose the type of document you are submitting.';
+            fileRuleText.textContent = 'Supported formats: PDF, DOC, DOCX, ZIP, PPT, PPTX (Max: 10MB)';
+        }
+    }
+
+    typeSelect.addEventListener('change', applyTypeRules);
+    applyTypeRules();
+});
+</script>
 @endpush
 @endsection 

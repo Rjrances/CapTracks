@@ -83,7 +83,7 @@ class StudentGroupController extends Controller
 
         $offering = $student->getCurrentOffering();
         if (!$offering) {
-            return redirect()->route('student.dashboard')->with('error', 'You must be enrolled in a capstone offering before creating a group. Please contact your coordinator to get enrolled.');
+            return redirect()->route('student.group')->with('error', 'You must be enrolled in a capstone offering before creating a group. Please contact your coordinator to get enrolled.');
         }
         
         //invite members
@@ -255,23 +255,7 @@ class StudentGroupController extends Controller
     }
     public function index()
     {
-        // Get the authenticated student
-        $student = $this->getAuthenticatedStudent();
-
-        if (!$student) {
-            return redirect()->route('student.dashboard')->with('error', 'Student not found.');
-        }
-
-        // Get the student's group (any term)
-        $studentGroup = \App\Models\Group::whereHas('members', function($q) use ($student) {
-            $q->where('group_members.student_id', $student->student_id);
-        })
-        ->with(['adviser', 'members', 'offering'])
-        ->first();
-        
-        $groups = $studentGroup ? collect([$studentGroup]) : collect();
-        
-        return view('student.group.index', compact('groups'));
+        return redirect()->route('student.group');
     }
     public function inviteAdviser(Request $request)
     {
@@ -311,7 +295,9 @@ class StudentGroupController extends Controller
     public function inviteMember(Request $request)
     {
         $request->validate([
-            'student_id' => 'required|exists:students,student_id',
+            'student_id' => 'nullable|exists:students,student_id',
+            'student_ids' => 'nullable|array',
+            'student_ids.*' => 'nullable|exists:students,student_id',
             'message' => 'nullable|string|max:500',
         ]);
         
@@ -324,65 +310,97 @@ class StudentGroupController extends Controller
         if (!$group) {
             return back()->with('error', 'Group not found.');
         }
-        
-        if ($group->members()->count() >= 3) {
+
+        $requestedStudentIds = collect($request->input('student_ids', []))
+            ->filter()
+            ->map(fn ($id) => (string) $id)
+            ->values();
+
+        if ($request->filled('student_id')) {
+            $requestedStudentIds->push((string) $request->input('student_id'));
+        }
+
+        $requestedStudentIds = $requestedStudentIds->unique()->values();
+
+        if ($requestedStudentIds->isEmpty()) {
+            return back()->with('error', 'Please select at least one student to invite.');
+        }
+
+        $currentMembersCount = $group->members()->count();
+        $pendingInvitationsCount = \App\Models\GroupInvitation::where('group_id', $group->id)
+            ->where('status', 'pending')
+            ->count();
+
+        if ($currentMembersCount >= 3) {
             return back()->with('error', 'Group has reached the maximum of 3 members.');
         }
-        
-        if ($group->members()->where('group_members.student_id', $request->student_id)->exists()) {
-            return back()->with('error', 'Student is already a member of this group.');
+
+        $remainingSlots = 3 - $currentMembersCount - $pendingInvitationsCount;
+        if ($remainingSlots <= 0) {
+            return back()->with('error', 'No available slots. Wait for pending invitation(s) to be resolved before inviting more members.');
         }
-        
-        // Check if invitation already exists
-        $existingInvitation = \App\Models\GroupInvitation::where('group_id', $group->id)
-            ->where('student_id', $request->student_id)
-            ->where('status', 'pending')
-            ->first();
-            
-        if ($existingInvitation) {
-            return back()->with('error', 'An invitation has already been sent to this student.');
+
+        if ($requestedStudentIds->count() > $remainingSlots) {
+            return back()->with('error', "You can only invite {$remainingSlots} more member(s).");
         }
-        
-        // Validate that the invited student is eligible using consistent filtering
-        $invitedStudent = \App\Models\Student::where('student_id', $request->student_id)->first();
-        if (!$invitedStudent) {
-            return back()->with('error', 'Student not found.');
-        }
-        
-        // Use the same validation logic as the filtering method
+
         if (!$group->offering) {
             return back()->with('error', 'Group does not have an offering assigned. Please contact your coordinator.');
         }
-        
-        // Check if student is from the same semester and offering as the group
-        if ($invitedStudent->semester !== $group->offering->academicTerm->semester) {
-            return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the same semester as your group. Only students from {$group->offering->academicTerm->semester} can be invited.");
+
+        foreach ($requestedStudentIds as $studentId) {
+            if ($group->members()->where('group_members.student_id', $studentId)->exists()) {
+                return back()->with('error', 'One or more selected students are already members of this group.');
+            }
+
+            $existingInvitation = \App\Models\GroupInvitation::where('group_id', $group->id)
+                ->where('student_id', $studentId)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($existingInvitation) {
+                return back()->with('error', 'One or more selected students already have pending invitations.');
+            }
+
+            $invitedStudent = \App\Models\Student::where('student_id', $studentId)->first();
+            if (!$invitedStudent) {
+                return back()->with('error', 'One or more selected students were not found.');
+            }
+
+            if ($invitedStudent->semester !== $group->offering->academicTerm->semester) {
+                return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the same semester as your group. Only students from {$group->offering->academicTerm->semester} can be invited.");
+            }
+
+            $memberOffering = $invitedStudent->getCurrentOffering();
+            if (!$memberOffering || $memberOffering->id !== $group->offering->id) {
+                return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the same capstone offering as your group. All group members must be enrolled in {$group->offering->offer_code} ({$group->offering->subject_code}).");
+            }
+
+            $existingGroup = \App\Models\Group::whereHas('members', function($q) use ($invitedStudent) {
+                $q->where('group_members.student_id', $invitedStudent->student_id);
+            })->where('academic_term_id', $group->offering->academic_term_id)->first();
+
+            if ($existingGroup) {
+                return back()->with('error', "Student {$invitedStudent->name} is already a member of another group in {$group->offering->academicTerm->semester}.");
+            }
         }
-        
-        $memberOffering = $invitedStudent->getCurrentOffering();
-        if (!$memberOffering || $memberOffering->id !== $group->offering->id) {
-            return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the same capstone offering as your group. All group members must be enrolled in {$group->offering->offer_code} ({$group->offering->subject_code}).");
+
+        foreach ($requestedStudentIds as $studentId) {
+            \App\Models\GroupInvitation::create([
+                'group_id' => $group->id,
+                'student_id' => $studentId,
+                'invited_by_student_id' => $student->student_id,
+                'message' => $request->message,
+                'status' => 'pending',
+            ]);
         }
-        
-        // Check if student already has a group in the same term
-        $existingGroup = \App\Models\Group::whereHas('members', function($q) use ($invitedStudent) {
-            $q->where('group_members.student_id', $invitedStudent->student_id);
-        })->where('academic_term_id', $group->offering->academic_term_id)->first();
-        
-        if ($existingGroup) {
-            return back()->with('error', "Student {$invitedStudent->name} is already a member of another group in {$group->offering->academicTerm->semester}.");
-        }
-        
-        // Create invitation
-        \App\Models\GroupInvitation::create([
-            'group_id' => $group->id,
-            'student_id' => $request->student_id,
-            'invited_by_student_id' => $student->student_id,
-            'message' => $request->message,
-            'status' => 'pending',
-        ]);
-        
-        return back()->with('success', 'Invitation sent successfully! The student will be notified and can accept or decline the invitation.');
+
+        $count = $requestedStudentIds->count();
+        $message = $count === 1
+            ? 'Invitation sent successfully! The student will be notified and can accept or decline the invitation.'
+            : "{$count} invitations sent successfully! The students will be notified and can accept or decline the invitations.";
+
+        return back()->with('success', $message);
     }
     
     public function acceptInvitation(Request $request, $invitationId)

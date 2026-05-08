@@ -102,27 +102,68 @@
                                 <h6 class="fw-bold mb-2">Add New Member:</h6>
                                 <form action="{{ route('student.group.invite-member') }}" method="POST">
                                     @csrf
-                                    <div class="mb-3">
-                                        <select name="student_id" class="form-select @error('student_id') is-invalid @enderror" required>
-                                            <option value="">Select a student...</option>
-                                            {{-- Available students are now passed from the controller with consistent filtering --}}
-                                            @foreach($availableStudents as $student)
-                                                <option value="{{ $student->student_id }}" {{ old('student_id') == $student->student_id ? 'selected' : '' }}>
-                                                    {{ $student->name }} ({{ $student->student_id }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @if($availableStudents->isEmpty())
-                                            <div class="form-text text-info">
-                                                <i class="fas fa-info-circle me-1"></i>
-                                                No other students available with the same offer code{{ $group->offering ? ' (' . $group->offering->offer_code . ')' : '' }}.
-                                            </div>
+                                    @php
+                                        $pendingMemberInvitationsCount = $group->groupInvitations()->where('status', 'pending')->count();
+                                        $remainingSlots = max(0, 3 - $group->members->count() - $pendingMemberInvitationsCount);
+                                    @endphp
+                                    <div class="alert alert-info py-2">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        You can invite up to {{ $remainingSlots }} more member(s).
+                                        @if($pendingMemberInvitationsCount > 0)
+                                            <span class="d-block mt-1">
+                                                Pending group invitation(s): {{ $pendingMemberInvitationsCount }}
+                                            </span>
                                         @endif
-                                        @error('student_id')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
                                     </div>
-                                    <button type="submit" class="btn btn-success btn-sm">
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-semibold mb-1">Select First Member</label>
+                                            <select name="student_ids[]" id="edit_member1" class="form-select @error('student_ids') is-invalid @enderror" required>
+                                                <option value="">Select a student...</option>
+                                                @foreach($availableStudents as $student)
+                                                    <option value="{{ $student->student_id }}" {{ collect(old('student_ids', []))->contains($student->student_id) ? 'selected' : '' }}>
+                                                        {{ $student->name }} ({{ $student->student_id }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-semibold mb-1">Select Second Member (Optional)</label>
+                                            <select name="student_ids[]" id="edit_member2" class="form-select @error('student_ids') is-invalid @enderror" {{ $remainingSlots < 2 ? 'disabled' : '' }}>
+                                                <option value="">Select a student...</option>
+                                                @foreach($availableStudents as $student)
+                                                    <option value="{{ $student->student_id }}" {{ collect(old('student_ids', []))->contains($student->student_id) ? 'selected' : '' }}>
+                                                        {{ $student->name }} ({{ $student->student_id }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <textarea name="message" class="form-control" rows="2" placeholder="Optional message for the invitation...">{{ old('message') }}</textarea>
+                                        </div>
+                                    </div>
+                                    @if($availableStudents->isEmpty())
+                                        <div class="form-text text-info">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            No other students available with the same offer code{{ $group->offering ? ' (' . $group->offering->offer_code . ')' : '' }}.
+                                        </div>
+                                    @endif
+                                    @if($remainingSlots < 2 && $remainingSlots > 0)
+                                        <div class="form-text text-muted">Only one slot is available right now.</div>
+                                    @endif
+                                    @error('student_ids')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                    @error('student_ids.*')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                    @error('student_id')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                    <div class="form-text">
+                                        You can invite up to 2 students at once (leader + 2 members max per group).
+                                    </div>
+                                    <button type="submit" class="btn btn-success btn-sm" {{ $remainingSlots <= 0 ? 'disabled' : '' }}>
                                         <i class="fas fa-user-plus me-1"></i>Add Member
                                     </button>
                                 </form>

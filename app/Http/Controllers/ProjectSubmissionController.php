@@ -90,6 +90,32 @@ class ProjectSubmissionController extends Controller
             'type' => 'required|in:proposal,final,other',
             'description' => 'nullable|string|max:1000',
         ]);
+
+        $allowedExtensionsByType = [
+            'final' => ['pdf', 'doc', 'docx'],
+            'other' => ['pdf', 'doc', 'docx', 'zip', 'ppt', 'pptx'],
+            'proposal' => ['pdf', 'doc', 'docx'],
+        ];
+
+        $fileExtension = strtolower((string) $request->file('file')->getClientOriginalExtension());
+        $selectedType = (string) $request->input('type');
+        $allowedForType = $allowedExtensionsByType[$selectedType] ?? [];
+
+        if (!in_array($fileExtension, $allowedForType, true)) {
+            $typeLabel = match ($selectedType) {
+                'final' => 'Final Report',
+                'other' => 'Additional Files',
+                'proposal' => 'Proposal',
+                default => ucfirst($selectedType),
+            };
+
+            $allowedText = strtoupper(implode(', ', $allowedForType));
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'file' => "Invalid file type for {$typeLabel}. Allowed formats: {$allowedText}.",
+                ]);
+        }
         
         if (Auth::guard('student')->check()) {
             $studentAccount = Auth::guard('student')->user();
@@ -265,10 +291,43 @@ class ProjectSubmissionController extends Controller
             default => ucfirst((string) $projectSubmission->type),
         };
 
+        $panel = DocumentPreviewService::panelForSubmission($projectSubmission);
+        $secureFileUrl = route('student.project.submission.file', $projectSubmission);
+        $panel['downloadUrl'] = $secureFileUrl;
+
+        // Use an authenticated inline file route for PDFs to avoid web-server-level 403 on /storage links.
+        if (($panel['kind'] ?? null) === 'pdf') {
+            $panel['iframeSrc'] = $secureFileUrl . '#toolbar=1';
+        }
+
         return view('student.project.preview', [
-            'panel' => DocumentPreviewService::panelForSubmission($projectSubmission),
+            'panel' => $panel,
             'typeLabel' => $typeLabel,
             'backUrl' => route('student.project'),
+        ]);
+    }
+
+    public function studentSubmissionFile(ProjectSubmission $projectSubmission)
+    {
+        $student = $this->getAuthenticatedStudent();
+        if (!$student) {
+            abort(403, 'Unauthorized');
+        }
+
+        if ($projectSubmission->student_id !== $student->student_id) {
+            abort(403, 'Unauthorized access to this file.');
+        }
+
+        if (!$projectSubmission->file_path || !Storage::disk('public')->exists($projectSubmission->file_path)) {
+            abort(404, 'File not found.');
+        }
+
+        $absolutePath = Storage::disk('public')->path($projectSubmission->file_path);
+        $mimeType = Storage::disk('public')->mimeType($projectSubmission->file_path) ?: 'application/octet-stream';
+
+        return response()->file($absolutePath, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . basename($projectSubmission->file_path) . '"',
         ]);
     }
 

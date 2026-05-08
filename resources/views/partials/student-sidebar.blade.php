@@ -38,6 +38,13 @@
         @endif
     </div>
     <nav class="p-3">
+        @php
+            $isMyGroupActive = request()->routeIs('student.group')
+                || request()->routeIs('student.group.index')
+                || request()->routeIs('student.group.create')
+                || request()->routeIs('student.group.edit');
+            $isGroupInvitationsActive = request()->routeIs('student.group.invitations');
+        @endphp
         <ul class="nav flex-column">
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('student.dashboard') || request()->is('student/dashboard') ? 'active bg-primary' : '' }}" 
@@ -47,7 +54,7 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('student.group*') || request()->is('student/group*') ? 'active bg-primary' : '' }}" 
+                <a class="nav-link text-white {{ $isMyGroupActive ? 'active bg-primary' : '' }}" 
                    href="{{ route('student.group') }}">
                     <i class="fas fa-users me-2"></i>
                     My Group
@@ -65,7 +72,7 @@
             
             @if(!$studentHasGroup)
             <li class="nav-item mb-2">
-                <a class="nav-link text-white d-flex align-items-center justify-content-between gap-2 {{ request()->routeIs('student.group.invitations') || request()->is('student/group/invitations') ? 'active bg-primary' : '' }}"
+                <a class="nav-link text-white d-flex align-items-center justify-content-between gap-2 {{ $isGroupInvitationsActive ? 'active bg-primary' : '' }}"
                    href="{{ route('student.group.invitations') }}">
                     <span class="d-flex align-items-center text-truncate">
                         <i class="fas fa-envelope me-2 flex-shrink-0"></i>

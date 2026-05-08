@@ -54,19 +54,31 @@
                             </div>
                             
                             <div class="d-flex gap-2">
-                                <form action="{{ route('student.group.accept-invitation', $invitation->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success" onclick="return confirm('Accept this group invitation?')">
-                                        <i class="fas fa-check me-1"></i>Accept
-                                    </button>
-                                </form>
-                                
-                                <form action="{{ route('student.group.decline-invitation', $invitation->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Decline this group invitation?')">
-                                        <i class="fas fa-times me-1"></i>Decline
-                                    </button>
-                                </form>
+                                <button
+                                    type="button"
+                                    class="btn btn-success invitation-action-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#invitationActionModal"
+                                    data-action-url="{{ route('student.group.accept-invitation', $invitation->id) }}"
+                                    data-action-label="Accept"
+                                    data-action-message="Accept this group invitation?"
+                                    data-action-btn-class="btn-success"
+                                >
+                                    <i class="fas fa-check me-1"></i>Accept
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-danger invitation-action-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#invitationActionModal"
+                                    data-action-url="{{ route('student.group.decline-invitation', $invitation->id) }}"
+                                    data-action-label="Decline"
+                                    data-action-message="Decline this group invitation?"
+                                    data-action-btn-class="btn-danger"
+                                >
+                                    <i class="fas fa-times me-1"></i>Decline
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -84,4 +96,47 @@
         </div>
     @endif
 </div>
+
+<div class="modal fade" id="invitationActionModal" tabindex="-1" aria-labelledby="invitationActionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="invitationActionModalLabel">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="invitationActionModalBody">
+                Are you sure?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="invitationActionForm" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" id="invitationActionConfirmBtn" class="btn btn-primary">Confirm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modal = document.getElementById('invitationActionModal');
+    const actionForm = document.getElementById('invitationActionForm');
+    const actionBody = document.getElementById('invitationActionModalBody');
+    const actionConfirmBtn = document.getElementById('invitationActionConfirmBtn');
+
+    modal.addEventListener('show.bs.modal', function (event) {
+        const trigger = event.relatedTarget;
+        const actionUrl = trigger.getAttribute('data-action-url');
+        const actionLabel = trigger.getAttribute('data-action-label') || 'Confirm';
+        const actionMessage = trigger.getAttribute('data-action-message') || 'Are you sure?';
+        const actionBtnClass = trigger.getAttribute('data-action-btn-class') || 'btn-primary';
+
+        actionForm.setAttribute('action', actionUrl);
+        actionBody.textContent = actionMessage;
+        actionConfirmBtn.textContent = actionLabel;
+        actionConfirmBtn.className = 'btn ' + actionBtnClass;
+    });
+});
+</script>
 @endsection
