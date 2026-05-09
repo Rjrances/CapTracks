@@ -136,7 +136,7 @@ class DefenseScheduleController extends Controller
         $stats = [
             'pending_requests' => $defenseRequests->where('status', 'pending')->count(),
             'approved_requests' => $defenseRequests->where('status', 'approved')->count(),
-            // Keep stats consistent with the currently filtered schedule list.
+            
             'active_defenses' => $defenseSchedules->whereIn('status', ['scheduled', 'in_progress'])->count(),
             'completed_defenses' => $defenseSchedules->where('status', 'completed')->count(),
             'this_week_defenses' => $defenseSchedules->filter(function ($schedule) {
@@ -309,7 +309,7 @@ class DefenseScheduleController extends Controller
                         'defense_schedule_id' => $schedule->id,
                         'faculty_id' => $adviserUser->id,
                         'role' => 'adviser',
-                        // Group adviser is auto-included, not invitation-based.
+                        
                         'status' => 'accepted',
                         'responded_at' => now(),
                     ]);
@@ -322,7 +322,7 @@ class DefenseScheduleController extends Controller
                         'defense_schedule_id' => $schedule->id,
                         'faculty_id' => $coordinatorUser->id,
                         'role' => 'coordinator',
-                        // Subject coordinator is auto-included, not invitation-based.
+                        
                         'status' => 'accepted',
                         'responded_at' => now(),
                     ]);
@@ -560,7 +560,7 @@ class DefenseScheduleController extends Controller
             if ($defenseSchedule->defense_request_id) {
                 DefenseRequest::where('id', $defenseSchedule->defense_request_id)->delete();
             } else {
-                // Recovery path for legacy schedules created without defense_request_id linkage.
+                
                 DefenseRequest::where('group_id', $defenseSchedule->group_id)
                     ->where('status', 'approved')
                     ->whereDoesntHave('defenseSchedule')
@@ -796,9 +796,7 @@ class DefenseScheduleController extends Controller
         return null;
     }
 
-    /**
-     * Chair/Member dropdown pool only — adviser and subject coordinator are appended in store()/update().
-     */
+    
     private function panelChairMemberCandidates(Group $group): Collection
     {
         $group->loadMissing('offering');
@@ -898,10 +896,10 @@ class DefenseScheduleController extends Controller
             return back()->with('error', 'This group already has an active defense schedule.');
         }
         
-        //group and adviser relationships
+        
         $defenseRequest->load(['group.adviser', 'group.members']);
         
-        //panelist selection
+        
         $availableFaculty = User::withAnyRole(['teacher'])
             ->where('id', '!=', $defenseRequest->group->adviser->id)
             ->whereDoesntHave('roles', function ($query) {
@@ -989,7 +987,7 @@ class DefenseScheduleController extends Controller
             'coordinator_notes' => 'required|string|max:1000',
         ]);
         
-        // Can reject if pending or approved (but not yet scheduled)
+        
         if ($defenseRequest->isScheduled() || $defenseRequest->isRejected()) {
             return back()->with('error', 'This defense request cannot be rejected.');
         }
@@ -1081,10 +1079,7 @@ class DefenseScheduleController extends Controller
         }
     }
 
-    /**
-     * Returns the correct dashboard route for a given user role.
-     * Prevents coordinators/chairpersons from being sent to the adviser dashboard.
-     */
+    
     private function getDashboardRouteForRole(string $userRole): string
     {
         return match ($userRole) {

@@ -8,12 +8,7 @@ use Illuminate\Support\Collection;
 
 class StudentEnrollmentService
 {
-    /**
-     * Automatically enroll students in offerings based on their offer_code
-     *
-     * @param Collection $students
-     * @return array
-     */
+    
     public function enrollStudentsByOfferCode(Collection $students): array
     {
         $results = [
@@ -66,12 +61,7 @@ class StudentEnrollmentService
         return $results;
     }
 
-    /**
-     * Enroll a single student by offer code
-     *
-     * @param Student $student
-     * @return array
-     */
+    
     public function enrollStudentByOfferCode(Student $student): array
     {
         if (!$student->offer_code) {
@@ -112,12 +102,7 @@ class StudentEnrollmentService
         }
     }
 
-    /**
-     * Get enrollment statistics
-     *
-     * @param array $results
-     * @return array
-     */
+    
     public function getEnrollmentStats(array $results): array
     {
         return [

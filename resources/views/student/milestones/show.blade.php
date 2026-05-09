@@ -306,7 +306,7 @@ function moveTask(taskId, newStatus) {
     .then(data => {
         if (data.success) {
             showAlert('Task moved successfully!', 'success');
-            // Use the progress value already returned by moveTask — no extra request needed
+            
             updateProgressBarUI(data.milestone_progress);
             updateColumnCounts();
         } else {
@@ -321,7 +321,7 @@ function moveTask(taskId, newStatus) {
 }
 
 function updateProgressBarUI(progress) {
-    // Use tag selector 'h4', NOT '.h4' (class selector) — the element has no h4 CSS class
+    
     const progressBar = document.querySelector('.progress-bar');
     const progressText = document.querySelector('h4.mb-0');
 
@@ -351,13 +351,13 @@ function updateColumnCounts() {
         const taskCards = column.querySelectorAll('.task-card');
         const count = taskCards.length;
 
-        // Update the badge count
+        
         const badge = column.querySelector('.card-header .badge');
         if (badge) {
             badge.textContent = count;
         }
 
-        // Show or hide the empty state placeholder based on card count
+        
         const emptyState = column.querySelector('.kanban-empty-state');
         if (emptyState) {
             emptyState.style.display = count === 0 ? '' : 'none';

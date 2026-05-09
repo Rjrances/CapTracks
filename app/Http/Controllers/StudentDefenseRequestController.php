@@ -61,7 +61,7 @@ class StudentDefenseRequestController extends Controller
                 ->withErrors(['pending' => 'You already have an active defense process. Please wait until the current one is completed.']);
         }
         
-        // Get defense type from URL parameter
+        
         $defenseType = $request->get('defense_type', 'proposal');
         $gate = $this->defenseMilestoneGateService->evaluate($group, $defenseType);
         if (!$gate['eligible']) {

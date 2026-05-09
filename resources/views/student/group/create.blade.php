@@ -116,7 +116,6 @@
                                     </label>
                                     <select name="members[]" id="member1" class="form-select" onchange="updateMember2Options()">
                                         <option value="">Select a student...</option>
-                                        {{-- Available students are now passed from the controller with consistent filtering --}}
                                         @foreach($availableStudents as $student)
                                             @if($student->email !== (Auth::guard('student')->check() ? Auth::guard('student')->user()->email : ''))
                                                 <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
@@ -151,7 +150,6 @@
                                 </small>
                             </div>
                             @php
-                                // Use the count from the controller's filtered students
                                 $availableStudentsCount = $availableStudents->count();
                             @endphp
                             @if($availableStudentsCount <= 0)
@@ -211,7 +209,6 @@ function renderMemberSelects() {
         const hiddenInFirst = selectedMember2 && student.value === selectedMember2 && student.value !== selectedMember1;
         const hiddenInSecond = selectedMember1 && student.value === selectedMember1 && student.value !== selectedMember2;
 
-        // Keep currently selected option visible even when search text changes
         if (!hiddenInFirst && (matchesSearch || student.value === selectedMember1)) {
             const option = document.createElement('option');
             option.value = student.value;

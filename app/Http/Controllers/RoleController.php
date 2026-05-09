@@ -9,7 +9,7 @@ class RoleController extends Controller
         $sortBy = $request->get('sort', 'faculty_id');
         $sortDirection = $request->get('direction', 'asc');
         
-        //get active term
+        
         $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
         
         $roles = [
@@ -45,7 +45,7 @@ class RoleController extends Controller
             ]
         ];
         
-        //get user roles
+        
         $allUsers = User::with('roles')
             ->select('id', 'name', 'email', 'faculty_id', 'department')
             ->when($activeTerm, function($query) use ($activeTerm) {
@@ -54,14 +54,14 @@ class RoleController extends Controller
             ->orderBy($sortBy, $sortDirection)
             ->paginate(20);
             
-        //faculty count
+        
         foreach ($roles as $roleKey => &$role) {
             if ($roleKey === 'student') {
                 $role['user_count'] = 0;
                 continue;
             }
             
-            //faculty count sem
+            
             $query = User::withAnyRole(['chairperson', 'coordinator', 'adviser', 'panelist', 'teacher']);
             
             if ($activeTerm) {
@@ -81,10 +81,10 @@ class RoleController extends Controller
         ]);
         
         try {
-            //filter term
+            
             $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
             
-            //faculty_id for sem
+            
             $user = User::where('faculty_id', $faculty_id)
                 ->when($activeTerm, function($query) use ($activeTerm) {
                     return $query->where('semester', $activeTerm->semester);

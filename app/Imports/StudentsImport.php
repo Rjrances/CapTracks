@@ -35,7 +35,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
         $offerCode = trim((string) ($normalized['offer_code'] ?? ''));
 
         return [
-            'student_id' => (string) $normalized['student_id'], // Force to string to handle Excel numeric conversion
+            'student_id' => (string) $normalized['student_id'], 
             'name_prefix' => trim((string) ($normalized['name_prefix'] ?? '')),
             'first_name' => trim((string) ($normalized['first_name'] ?? '')),
             'middle_name' => trim((string) ($normalized['middle_name'] ?? '')),
@@ -83,17 +83,17 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
         $student->save();
         $this->createdStudentsCount++;
 
-        // Ensure student account exists for both new and existing students.
+        
         StudentAccount::firstOrCreate(
             ['student_id' => $student->student_id],
             [
                 'email' => $student->email ?: $row['email'],
-                'password' => null, // No password - must be set on first login
-                'must_change_password' => true, // Force password change on first login
+                'password' => null, 
+                'must_change_password' => true, 
             ]
         );
 
-        // Store the student for later enrollment processing
+        
         $this->importedStudents[] = $student;
 
         if ($this->offeringId) {
@@ -122,7 +122,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             '*.student_id' => [
                 'required',
                 'string',
-                'regex:/^\d{10}$/', // Must be exactly 10 digits
+                'regex:/^\d{10}$/', 
             ],
             '*.name' => 'nullable|string|max:255',
             '*.name_prefix' => 'nullable|string|max:20',
@@ -176,28 +176,28 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
     public function afterImport()
     {
         try {
-            // Process automatic enrollment based on offer_code
+            
             if (!empty($this->importedStudents)) {
                 $enrollmentResults = $this->enrollmentService->enrollStudentsByOfferCode(collect($this->importedStudents));
                 $stats = $this->enrollmentService->getEnrollmentStats($enrollmentResults);
                 
                 Log::info("Student import enrollment results:", $stats);
                 
-                // Log successful enrollments
+                
                 if (!empty($enrollmentResults['enrolled'])) {
                     foreach ($enrollmentResults['enrolled'] as $result) {
                         Log::info("Student {$result['student']->student_id} enrolled in offering {$result['offering']->subject_code}");
                     }
                 }
                 
-                // Log failed enrollments
+                
                 if (!empty($enrollmentResults['failed'])) {
                     foreach ($enrollmentResults['failed'] as $result) {
                         Log::warning("Failed to enroll student {$result['student']->student_id}: {$result['reason']}");
                     }
                 }
                 
-                // Log offerings not found
+                
                 if (!empty($enrollmentResults['not_found'])) {
                     foreach ($enrollmentResults['not_found'] as $result) {
                         Log::warning("Offering not found for student {$result['student']->student_id} with offer code: {$result['offer_code']}");
@@ -205,7 +205,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
                 }
             }
             
-            // Legacy support for offeringId-based enrollment
+            
             if ($this->offeringId && !empty($this->importedStudentIds)) {
                 $offering = \App\Models\Offering::find($this->offeringId);
                 if ($offering) {
@@ -250,7 +250,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
 
     private function normalizeStudentRow(array $row): array
     {
-        // Legacy shape: student_id,name,email,semester,course,offer_code
+        
         if (!empty($row['name']) && !empty($row['email'])) {
             [$firstName, $middleName, $lastName, $suffix] = $this->splitLegacyName((string) $row['name']);
 
@@ -277,8 +277,8 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
         $course = trim((string) ($row['course'] ?? ''));
         $offerCode = trim((string) ($row['offer_code'] ?? ''));
 
-        // Misaligned shape after header update but old row values:
-        // student_id,first_name(full name),email,semester,course,offer_code
+        
+        
         if (
             $email === '' &&
             filter_var($middleName, FILTER_VALIDATE_EMAIL) &&
@@ -321,7 +321,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             return ['', '', '', ''];
         }
 
-        // "Last, First Middle Suffix" format.
+        
         if (str_contains($name, ',')) {
             [$lastPart, $restPart] = array_map('trim', explode(',', $name, 2));
             $restTokens = preg_split('/\s+/', $restPart) ?: [];

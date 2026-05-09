@@ -119,7 +119,7 @@ class CoordinatorController extends Controller
                 ->values();
         }
         
-        $students = collect(); //null
+        $students = collect(); 
         if ($activeTerm && $coordinatedOfferingIds->isNotEmpty()) {
             $studentsQuery = Student::with(['offerings' => function ($query) use ($coordinatedOfferingIds) {
                 $query->whereIn('offerings.id', $coordinatedOfferingIds);
@@ -147,7 +147,7 @@ class CoordinatorController extends Controller
                 });
             }
             
-            //Default search
+            
             if ($request->filled('search') && !$request->filled('name') && !$request->filled('course')) {
                 $search = $request->input('search');
                 $studentsQuery->where(function($q) use ($search) {
@@ -279,7 +279,7 @@ class CoordinatorController extends Controller
     {
         $group = Group::with('offering')->findOrFail($id);
 
-        // Assign-adviser form only posts faculty_id; keep existing group name/description for validation.
+        
         if (!$request->has('name')) {
             $request->merge([
                 'name' => $group->name,
@@ -333,7 +333,7 @@ class CoordinatorController extends Controller
     public function destroy($id)
     {
         $group = Group::findOrFail($id);
-        $group->members()->detach(); //Tangtang members
+        $group->members()->detach(); 
         $group->adviserInvitations()->delete();
         $group->delete();
         return redirect()->route('coordinator.groups.index')->with('success', 'Group deleted successfully!');
@@ -376,12 +376,7 @@ class CoordinatorController extends Controller
         return response()->json(['success' => true, 'message' => 'Notification marked as read']);
     }
 
-    /**
-     * Confirmed panelists (chair/member) that must not be assignable as adviser.
-     * Rule:
-     * - Exclude confirmed panelists for active defenses (scheduled/in_progress), and
-     * - Exclude confirmed panelists for completed proposal defenses (finalized panel).
-     */
+    
     private function getConfirmedPanelistUserIdsForGroup(int $groupId)
     {
         return \App\Models\DefensePanel::query()
@@ -503,7 +498,7 @@ class CoordinatorController extends Controller
             ->paginate(20)
             ->appends($request->only('student_id'));
 
-        // Dropdown only lists students who actually have logged activity.
+        
         $studentsWithActivity = ActivityLog::whereIn('student_id', $studentIds)
             ->pluck('student_id')
             ->unique();

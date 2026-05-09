@@ -216,7 +216,7 @@
     padding: 4px 8px;
     font-size: 0.8rem;
 }
-/* Responsive adjustments */
+
 @media (max-width: 768px) {
     .table th, .table td {
         padding: 8px 4px;

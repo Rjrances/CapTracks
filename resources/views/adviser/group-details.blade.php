@@ -105,7 +105,7 @@
             </div>
         </div>
         @if($canViewMilestoneDiscussions ?? false)
-            {{-- Milestone Kanban Boards --}}
+            
             <div class="mb-4">
                 <div class="fw-bold mb-2" style="font-size:1.2rem;">
                     <i class="fas fa-columns me-2"></i>Milestone Kanban Boards
@@ -142,7 +142,7 @@
                 </div>
             </div>
 
-            {{-- Milestone Task Discussions --}}
+            
             <div class="mb-4">
                 <div class="fw-bold mb-2" style="font-size:1.2rem;">
                     <i class="fas fa-tasks me-2"></i>Milestone tasks (discussion)

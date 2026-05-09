@@ -304,13 +304,13 @@
     cursor: pointer;
     user-select: none;
 }
-#deleteSelectedBtn {
+
     transition: all 0.2s ease;
 }
-#deleteSelectedBtn:hover {
+
     transform: scale(1.02);
 }
-#deleteSelectedBtn:active {
+
     transform: scale(0.98);
 }
 </style>

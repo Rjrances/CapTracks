@@ -161,7 +161,7 @@
             </tbody>
         </table>
         
-        {{-- Pagination --}}
+        
         <div class="d-flex justify-content-between align-items-center mt-4">
             <div class="text-muted">
                 Showing {{ $teachers->firstItem() }} to {{ $teachers->lastItem() }} of {{ $teachers->total() }} faculty members

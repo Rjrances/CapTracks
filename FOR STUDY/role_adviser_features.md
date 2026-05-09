@@ -1,401 +1,248 @@
-# Adviser & Teacher Features (Faculty Member)
+# Adviser (Teacher) Features (Final)
 
-Faculty members (whether assigned as an Adviser, Subject Teacher, or Panelist) mentor student groups, provide threaded feedback, evaluate submissions, track group progress, and rate capstone defenses.
+Adviser role covers mentoring, invitation handling, proposal/project review, panel participation, and rating sheet submission.
 
-## 🔄 User Journey Flow (Top to Bottom)
-If panelists ask for the "System Workflow" or "Use Case" of an Adviser or Panelist, explain this exact step-by-step flow:
-1. **Receive Invitations:** The Faculty member logs in and sees pending dashboard notifications inviting them to either Advise a group or sit on a Defense Panel.
-2. **Accept/Decline:** They interact with the invitation, accepting it to officially link themselves to the group.
-3. **Monitor Progress:** As an Adviser, they use their Dashboard to see the real-time progress percentages of their assigned groups.
-4. **Provide Feedback:** They review uploaded task submissions and leave threaded (nested) comments to guide the students.
-5. **Grade Defenses:** As a Panelist, they attend the scheduled defense and input their final grades into the dynamic JSON Rating Sheet rubric.
+## Main Route Space
 
+- Prefix: `/adviser`
+- Middleware: `auth`
+- Access is scoped by role-linked data in queries (adviser groups, panel assignments, invitations).
 
-## 1. Dashboard Statistics Calculation
+## Sidebar Modules (current UI)
 
-**Description:** The dashboard dynamically calculates group progress and pending tasks to give the adviser a snapshot of their workload.
+- Dashboard
+- Adviser Groups
+- Panel Groups
+- Adviser Invitations
+- Panel Invitations
+- Calendar
+- (Switch to Coordinator View appears when user also has coordinator context)
 
-**Core Logic (`app/Http/Controllers/AdviserController.php`):**
+## 1) Dashboard and Invitations
+
+Dashboard route:
+- `/adviser/dashboard`
+
+Adviser invitations:
+- list and respond under `/adviser/invitations`
+
+Panel invitations:
+- list and respond under `/adviser/panel-invitations`
+
+## 2) Group Mentoring Views
+
+Routes:
+- `/adviser/groups`
+- `/adviser/groups/{group}`
+- milestone kanban read/review routes for adviser perspective
+- milestone task comments read/write for adviser
+
+Purpose:
+- monitor assigned groups, review progress, and provide guidance.
+
+## 3) Proposal Review
+
+Routes:
+- `/adviser/proposals`
+- preview, compare versions, show/edit/update
+- adviser comments and bulk update endpoints
+
+Behavior:
+- scoped to adviser-accessible groups/submissions.
+
+## 4) Project Submission Review
+
+Routes:
+- `/adviser/projects`
+- `/adviser/projects/{id}` and edit/update
+
+Recent UI cleanup:
+- redundant "Review Actions" card removed from adviser project detail page.
+
+## 5) Panel Role and Rating Sheets
+
+Rating routes:
+- `/adviser/rating-sheets/{schedule}` (show)
+- POST same path (submit/update adviser rating)
+
+Panel group views:
+- panel submission and panel group routes are available in adviser space.
+
+## 6) Notifications, Calendar, Activity Log
+
+- adviser notifications endpoints support mark/delete operations
+- calendar route: `/adviser/calendar`
+- activity log route: `/adviser/activity-log`
+
+## 7) Coordinator Dual-Role Bridge
+
+When a faculty user also acts as coordinator:
+- adviser sidebar can show `Switch to Coordinator View`
+- coordinator sidebar can show `Switch to Adviser View`
+
+This is a navigation bridge, not a separate auth session.
+
+## 8) Final Adviser Workflow
+
+1. Respond to adviser/panel invitations
+2. Monitor assigned groups and submissions
+3. Review proposal/project versions and provide feedback
+4. Submit rating sheets for panel assignments
+
+---
+
+## 9) Connected Code and Functions (Adviser)
+
+This section maps adviser features to concrete controller functions.
+
+### A. Adviser workspace controller
+
+File: `app/Http/Controllers/AdviserController.php`
+
+- `dashboard()` - adviser dashboard data and summary cards.
+- `invitations()` / `respondToInvitation()` - adviser invitation inbox and actions.
+- `myGroups()` / `groupDetails()` - assigned groups and per-group view.
+- `showGroupMilestoneKanban()` - adviser view of group milestone board.
+- `milestoneTaskComments()` / `storeMilestoneTaskComment()` - threaded milestone discussion.
+- `allGroups()` / `panelSubmissions()` - combined adviser/panel submissions context.
+- `panelInvitations()` / `respondToPanelInvitation()` - panel assignment acceptance/rejection.
+- `notifications()`, `markAllNotificationsAsRead()`, `markNotificationAsRead()`, `markMultipleAsRead()`, `deleteNotification()`, `deleteMultiple()` - adviser notifications.
+- `activityLog()` - adviser activity history.
+
+### B. Adviser proposal review controller
+
+File: `app/Http/Controllers/AdviserProposalController.php`
+
+- `index()` - adviser proposal list with filters.
+- `show()` - proposal detail.
+- `preview()` - file preview endpoint.
+- `compareVersions()` - side-by-side version compare.
+- `edit()` / `update()` - adviser decision and feedback update.
+- `getStats()` - proposal metrics.
+- `bulkUpdate()` - batch decision updates.
+- `storeComment()` - proposal comment threading.
+
+### C. Project submission review used by adviser routes
+
+File: `app/Http/Controllers/ProjectSubmissionController.php`
+
+- `index()` - project submissions list for adviser/panel contexts.
+- `show()` - submission detail view.
+- `edit()` / `update()` - review update actions.
+
+### D. Panel grading and coordinator-facing aggregation link
+
+File: `app/Http/Controllers/RatingSheetController.php`
+
+- `showAdviserForm()` - adviser/panelist rating form view.
+- `submitAdviserRating()` - submit/update adviser or panel rating.
+- `showCoordinatorRatings()`, `printCoordinatorRatings()`, `finalizeCoordinatorRatings()`, `reopenCoordinatorRatings()` - downstream coordinator consolidation lifecycle.
+
+---
+
+## 10) Example Code Path (Line-by-Line): Panel Invitation Response
+
+Connected function: `AdviserController::respondToPanelInvitation()`
+
 ```php
-public function dashboard() {
-    $user = Auth::user(); 
-    
-    // Fetch groups assigned to this adviser and dynamically calculate progress
-    $adviserGroups = Group::with(['groupMilestones', 'groupMilestoneTasks']) 
-        ->where('faculty_id', $user->faculty_id) 
-        ->get() 
-        ->map(function ($group) { 
-            $group->progress_percentage = $this->calculateGroupProgress($group); 
-            $group->overdue_tasks = $this->getOverdueTasks($group); 
-            return $group; 
-        });
+public function respondToPanelInvitation(Request $request, DefensePanel $panel)
+{
+    $request->validate([
+        'status' => 'required|in:accepted,rejected',
+    ]);
 
-    // Fetch groups assigned to this faculty as a panel member
-    $panelGroups = Group::with(['academicTerm', 'defenseSchedules.defensePanels'])
-        ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->id)
-                  ->whereIn('role', ['chair', 'member'])
-                  ->where('status', 'accepted');
-        })
-        ->get();
+    $user = Auth::user();
 
-    // Build an array of quick summary statistics for the top widgets
-    $summaryStats = [ 
-        'total_groups' => $adviserGroups->count(),
-        'panel_groups' => $panelGroups->count(), // Count panel assignments correctly
-        'groups_ready_for_defense' => $adviserGroups->filter(fn($g) => $g->progress_percentage >= 60)->count(),
-        'overdue_tasks_total' => $adviserGroups->sum('overdue_tasks'),
-    ];
-
-    // Send the data to the Blade template
-    return view('dashboards.adviser', compact('adviserGroups', 'panelGroups', 'summaryStats')); 
-}
-
-private function calculateGroupProgress($group) {
-    
-    // Get all milestones for this group
-    $groupMilestones = $group->groupMilestones; 
-    
-    // If they have no milestones, return 0%
-    if ($groupMilestones->isEmpty()) return 0; 
-    
-    // Add up the individual percentages of all milestones
-    $totalProgress = $groupMilestones->sum('progress_percentage'); 
-    
-    // Calculate the average percentage (Total / Count) and round it off
-    return round($totalProgress / $groupMilestones->count()); 
-}
-```
-
-## 2. Group Invitations & Panel Assignments
-
-**Description:** Advisers accept or decline mentorship or panel invitations.
-
-**Core Logic (`app/Http/Controllers/AdviserController.php`):**
-```php
-public function respondToPanelInvitation(Request $request, DefensePanel $panel) {
-    
-    // Check if the faculty clicked the "Accept" button
-    if ($request->response === 'accept') { 
-        
-        // Call the custom model method to change status to 'accepted'
-        $panel->accept(); 
-        
-    } else { // Otherwise, they clicked "Decline"
-        
-        // Call the custom model method to change status to 'declined'
-        $panel->decline(); 
+    if ($panel->faculty_id != $user->id) {
+        return back()->withErrors(['error' => 'Unauthorized action.']);
     }
-    
-    // Refresh the page
-    return back()->with('success', 'Panel invitation response submitted.'); 
-}
-```
 
-
-## 3. Threaded Milestone Feedback
-
-**Description:** Advisers leave detailed, nested comments on student tasks.
-
-**Core Logic (`app/Http/Controllers/AdviserController.php`):**
-```php
-public function storeMilestoneTaskComment(Request $request, Group $group, GroupMilestoneTask $groupMilestoneTask) {
-    
-    // Create a new comment record
-    TaskComment::create([ 
-        'group_milestone_task_id' => $groupMilestoneTask->id, // Link the comment specifically to this task
-        'user_id' => Auth::id(), // Record the ID of the faculty member commenting
-        'body' => $request->body, // Save the actual comment text
-        'parent_id' => $request->parent_id, // If replying to someone, save their comment ID here (Adjacency List model)
+    $panel->update([
+        'status' => $request->status,
+        'responded_at' => now(),
     ]);
-    
-    // Trigger a real-time notification to the students in the group
-    NotificationService::adviserCommentOnMilestoneTask(Auth::user(), $groupMilestoneTask);
 }
 ```
 
-### 🧠 Defense Tip: How does Threaded Chat / Nested Comments work in the DB?
-If a panelist asks: *"How did you design the database to allow infinite replying/nesting on comments?"*
-**Your Answer:** *"We used an 'Adjacency List' database design. Instead of creating a separate table for 'Replies', our `task_comments` table has a `parent_id` column that points back to its own table (a self-referencing relationship). If a comment is a brand new thread, `parent_id` is null. If a user is replying to someone, `parent_id` simply holds the ID of the comment they are replying to. This handles infinite threading natively with only one table."*
-
-
-## 4. Defense Rating Sheets
-
-**Description:** Panel members use rating sheets to grade groups during defense.
-
-**Core Logic (`app/Http/Controllers/RatingSheetController.php`):**
-```php
-public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
-    $user = Auth::user();
-    
-    // Validate that the user is actually on the panel for this schedule
-    $isAssignedPanel = $schedule->defensePanels()->where('faculty_id', $user->id)->exists();
-    if (!$isAssignedPanel) abort(403, 'You are not assigned to this defense panel.');
-
-    // Prepare JSON breakdown array from the request
-    $criteria = collect($request->criteria_names)->values()->map(function ($name, $index) use ($request) {
-        return ['name' => $name, 'score' => (float) ($request->criteria_scores[$index] ?? 0)];
-    })->toArray();
-
-    // Sum total score
-    $totalScore = collect($criteria)->sum('score');
-
-    // Create or update the rating sheet in the database
-    RatingSheet::updateOrCreate(
-        ['defense_schedule_id' => $schedule->id, 'faculty_id' => $user->id],
-        [
-            'group_id' => $schedule->group_id,
-            'criteria' => $criteria, // Laravel handles JSON encoding automatically
-            'total_score' => $totalScore,
-            'remarks' => $request->remarks ?? null,
-            'submitted_at' => now(),
-        ]
-    );
-}
-```
-
-## 6. Critical Code Line-by-Line Breakdown (For 1000% Defense Readiness)
-
-If your panelists want you to explain the code line-by-line, memorize these three most complex and critical Adviser functions.
-
-### A. Submitting JSON Rating Sheets (`RatingSheetController@submitAdviserRating`)
-Panel Question: *"Explain line-by-line how you save dynamic grading criteria without creating separate database tables for every single row on a rubric."*
-
-```php
-public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
-    // LINE 1: Get the currently authenticated faculty member.
-    $user = Auth::user();
-    
-    // LINE 2: Verify the user is actually assigned to this specific defense panel to prevent unauthorized grading.
-    $isAssignedPanel = $schedule->defensePanels()->where('faculty_id', $user->id)->exists();
-    if (!$isAssignedPanel) abort(403, 'You are not assigned to this defense panel.');
-
-    // LINE 3: Combine the incoming arrays (criteria_names and criteria_scores) into a single collection.
-    $criteria = collect($request->criteria_names)->values()->map(function ($name, $index) use ($request) {
-        // LINE 4: Map each name to its corresponding score, casting the score to a float (decimal).
-        return ['name' => $name, 'score' => (float) ($request->criteria_scores[$index] ?? 0)];
-    })->toArray(); // LINE 5: Convert the final collection back into a raw PHP array.
-
-    // LINE 6: Calculate the sum of all individual criteria scores to get the final grade.
-    $totalScore = collect($criteria)->sum('score');
-
-    // LINE 7: Use Eloquent's updateOrCreate to either insert a new grading sheet or overwrite an existing one for this faculty member.
-    RatingSheet::updateOrCreate(
-        ['defense_schedule_id' => $schedule->id, 'faculty_id' => $user->id], // LINE 8: The unique identifiers (Where to update).
-        [
-            'group_id' => $schedule->group_id, // LINE 9: The data to update.
-            // LINE 10: Here is the magic. Laravel automatically encodes the PHP array into a raw JSON string because of the $casts array in the RatingSheet model.
-            'criteria' => $criteria, 
-            'total_score' => $totalScore,
-            'remarks' => $request->remarks ?? null,
-            'submitted_at' => now(), // LINE 11: Timestamp the submission.
-        ]
-    );
-}
-```
-
-### B. Threaded Kanban Comments (`AdviserController@storeMilestoneTaskComment`)
-Panel Question: *"Explain line-by-line how the database knows if a comment is a reply to another comment."*
-
-```php
-public function storeMilestoneTaskComment(Request $request, Group $group, GroupMilestoneTask $groupMilestoneTask) {
-    // LINE 1: Insert a new row into the 'task_comments' table using the Adjacency List model structure.
-    TaskComment::create([ 
-        // LINE 2: Link the comment explicitly to the Kanban task the adviser clicked on.
-        'group_milestone_task_id' => $groupMilestoneTask->id, 
-        
-        // LINE 3: Record the adviser's faculty ID as the author of the comment.
-        'user_id' => Auth::id(), 
-        
-        // LINE 4: Save the actual text content of the message.
-        'body' => $request->body, 
-        
-        // LINE 5: If the user clicked 'Reply', $request->parent_id contains the ID of the comment they replied to. 
-        // If it's a new standalone comment, parent_id is NULL. This single column allows infinite nesting threads.
-        'parent_id' => $request->parent_id, 
-    ]);
-    
-    // LINE 6: Dispatch an alert via the NotificationService to tell the students they received feedback.
-    NotificationService::adviserCommentOnMilestoneTask(Auth::user(), $groupMilestoneTask);
-}
-```
-
-### C. Calculating Dashboard Progress (`AdviserController@calculateGroupProgress`)
-Panel Question: *"Explain line-by-line how the dashboard dynamically calculates the overall completion percentage of a group."*
-
-```php
-private function calculateGroupProgress($group) {
-    // LINE 1: Retrieve all active milestone templates assigned to this specific group.
-    $groupMilestones = $group->groupMilestones; 
-    
-    // LINE 2: Fail-safe check: If the group has no milestones assigned yet, their progress is mathematically 0%.
-    if ($groupMilestones->isEmpty()) return 0; 
-    
-    // LINE 3: Use Laravel's collection sum() to add up the pre-calculated 'progress_percentage' from each individual milestone category.
-    // E.g., Chapter 1 (100%) + Chapter 2 (50%) = Total 150
-    $totalProgress = $groupMilestones->sum('progress_percentage'); 
-    
-    // LINE 4: Divide the sum by the total number of milestones (e.g., 150 / 2 = 75%).
-    // LINE 5: Round the result to avoid decimal places on the dashboard UI.
-    return round($totalProgress / $groupMilestones->count()); 
-}
-```
-
-## 7. Exhaustive Feature & Endpoint List (All Functions)
-For complete system coverage, here is every single specific function the Adviser/Teacher can perform across the application:
-
-**Dashboard, General Mentoring & Invitations (`AdviserController`)**
-- `dashboard()`: Computes real-time milestone progress metrics for all assigned student groups, rendering the overview UI.
-- `invitations()`: Retrieves all pending group mentorship invites directed specifically to the logged-in faculty member.
-- `respondToInvitation()`: Processes accept/decline inputs for mentorships, updating the `AdviserInvitation` table.
-- `myGroups()` / `allGroups()`: Lists groups specifically mentored by the faculty vs. all groups where they are either a mentor or a panelist.
-- `groupDetails()`: Fetches comprehensive profile data (members, timeline) for a single advisee group.
-- `milestoneTaskComments()`: Loads the threaded discussion view for a specific task card on the Kanban board.
-- `storeMilestoneTaskComment()`: Saves a new nested or parent comment onto a task, executing adjacency list logic.
-- `panelInvitations()` / `respondToPanelInvitation()`: Dedicated methods for viewing and accepting/declining invites to sit on defense grading panels.
-- `notifications()`, `markAllNotificationsAsRead()`, `deleteNotification()`: Standard endpoints to manage the adviser's personal alert feed.
-- `activityLog()`: Shows a granular audit trail of file uploads and task movements made solely by the adviser's assigned groups.
-
-**Proposals & Feedback (`AdviserProposalController`)**
-- `index()` / `show()`: Lists capstone proposals submitted by the adviser's groups that await review.
-- `preview()`: Displays the active proposal PDF/document in the browser.
-- `compareVersions()`: Fetches two historical versions of the same document to help the adviser track student revisions.
-- `edit()` / `update()` / `bulkUpdate()`: Functions allowing the adviser to stamp proposals as "Approved" or "Rejected", individually or en masse.
-- `getStats()`: Fetches numerical summaries of proposal statuses for dashboard display.
-- `storeComment()`: Attaches a feedback thread directly to a submitted project proposal.
-
-**Defenses & Grading (`RatingSheetController`)**
-- `showAdviserForm()`: Loads the dynamic, JSON-driven rubric form for panelists during a live defense.
-- `submitAdviserRating()`: Captures panelist scores, encodes them into a JSON array, calculates the weighted total, and saves it to the `RatingSheet` model.
-- `showCoordinatorRatings()` / `finalizeCoordinatorRatings()` / `reopenCoordinatorRatings()`: Evaluates the aggregated panel grades and provides options to lock or unlock the final group score.
-- `printCoordinatorRatings()`: Generates a printer-friendly layout of the finalized defense grades.
-
-**Calendar & View (`CalendarController`)**
-- `adviserCalendar()`: Retrieves all scheduled defenses where the faculty member is assigned (either as an adviser or panelist) and maps them onto the interactive calendar UI.
-
-**Authentication (`AuthController`)**
-- `login()` / `logout()`: Validates credentials against the encrypted `password` column and manages session tokens.
-- `changePassword()`: Receives a new password, hashes it using `bcrypt()`, and updates the user's account row.
+Line-by-line:
+1. Receives request + bound panel record.
+2-4. Validates status payload.
+6. Gets current authenticated faculty user.
+8-10. Authorization check ensures only assigned faculty can respond.
+12-15. Persists decision and response timestamp.
 
 ---
 
-## 8. 🎤 The "Cheat Sheet" Defense Script
-## 8. 🎤 The "Cheat Sheet" Defense Script
-If a panelist points at these functions and asks you to explain them line-by-line without reading the syntax, use these exact scripts:
+## 11) Core Connected Functions (Snippet + Line-by-Line)
 
-### A. Dynamic JSON Grading Rubrics (`RatingSheetController@submitAdviserRating`)
-**The Code:**
+### A) `AdviserController::respondToInvitation`
+
 ```php
-public function submitAdviserRating(Request $request, DefenseSchedule $schedule) {
-    $user = Auth::user();
-    
-    $criteria = collect($request->criteria_names)->values()->map(function ($name, $index) use ($request) {
-        return ['name' => $name, 'score' => (float) ($request->criteria_scores[$index] ?? 0)];
-    })->toArray();
+$request->validate([
+    'status' => 'required|in:accepted,declined',
+]);
+if ($invitation->faculty_id !== Auth::id()) {
+    return back()->withErrors(['error' => 'Unauthorized action.']);
+}
+$invitation->update([
+    'status' => $request->status,
+    'responded_at' => now(),
+]);
+```
 
-    $totalScore = collect($criteria)->sum('score');
+Line-by-line:
+1-3. Validates adviser decision payload.
+4-6. Enforces ownership: invitation must belong to current faculty.
+7-10. Saves decision and response timestamp.
 
-    RatingSheet::updateOrCreate(
-        ['defense_schedule_id' => $schedule->id, 'faculty_id' => $user->id],
-        [
-            'group_id' => $schedule->group_id,
-            'criteria' => $criteria, // JSON conversion here
-            'total_score' => $totalScore,
-            'submitted_at' => now(),
-        ]
-    );
+### B) `AdviserProposalController::update`
+
+```php
+$request->validate([
+    'status' => 'required|in:pending,approved,rejected',
+    'comment' => 'nullable|string',
+]);
+$proposal->update([
+    'status' => $request->status,
+    'teacher_comment' => $request->comment,
+]);
+```
+
+Line-by-line:
+1-4. Validates proposal decision and optional feedback.
+5-8. Persists decision and comment on proposal record.
+
+### C) `ProjectSubmissionController::show` (adviser-access context)
+
+```php
+$submission = ProjectSubmission::findOrFail($id);
+$hasAdviserAccess = Group::where('faculty_id', $user->faculty_id)
+    ->whereHas('members', fn($query) => $query->where('students.student_id', $submission->student_id))
+    ->exists();
+if (!$hasAdviserAccess) {
+    abort(403, 'Unauthorized access.');
 }
 ```
-**Panel Question:** *"How do you handle different rubric criteria without having to migrate the database schema every semester?"*
-* **The Goal:** To allow flexible grading sheets without hardcoding criteria columns in MySQL.
-* **The Process:** Loop through the criteria, calculate the total score, and convert the entire array into a JSON string.
 
-> *"Sir, instead of creating hardcoded database columns for 'Grammar', 'Methodology', and 'Delivery', we utilized a dynamic JSON architecture.*
-> *When an adviser submits their grading sheet, the system takes all of their specific sub-scores and criteria names and loops through them to calculate the total weighted score.*
-> *Then, the system converts that entire array into a raw JSON string and saves it into a single text column in the `rating_sheets` table. This means the university can completely change their grading rubrics next semester, and our database will instantly support it without requiring any structural SQL migrations."*
+Line-by-line:
+1. Loads submission by ID or fails.
+2-4. Checks whether adviser owns a group containing the submission’s student.
+5-7. Blocks access when adviser is not authorized.
 
-### B. Dashboard Progress Calculation (`AdviserController@calculateGroupProgress`)
-**The Code:**
+### D) `RatingSheetController::submitAdviserRating`
+
 ```php
-private function calculateGroupProgress($group) {
-    $groupMilestones = $group->groupMilestones; 
-    if ($groupMilestones->isEmpty()) return 0; 
-    
-    $totalProgress = $groupMilestones->sum('progress_percentage'); 
-    return round($totalProgress / $groupMilestones->count()); 
-}
+$validated = $request->validate([
+    'scores' => 'required|array',
+    'comments' => 'nullable|string',
+]);
+$rating = RatingSheet::updateOrCreate(
+    ['defense_schedule_id' => $schedule->id, 'faculty_id' => auth()->id()],
+    ['scores' => $validated['scores'], 'comments' => $validated['comments'] ?? null]
+);
 ```
-**Panel Question:** *"Explain how the dashboard calculates the overall completion percentage of a group."*
-* **The Goal:** To calculate an accurate average of all milestone progress bars combined.
-* **The Process:** Fetch all milestones, sum their individual percentages, and divide by the total number of milestones.
 
-> *"Sir, the goal of this function is to generate the group's global progress percentage for the adviser's dashboard.*
-> *First, it fetches all active milestones assigned to the group. It uses the `sum()` function to add together all of their individual pre-calculated percentages—for example, adding 100% from Chapter 1 and 50% from Chapter 2.*
-> *Then, it divides that total by the number of milestones to find the average, and rounds the result to provide a clean number for the UI."*
-
-### C. Threaded Kanban Comments (`AdviserController@storeMilestoneTaskComment`)
-**The Code:**
-```php
-public function storeMilestoneTaskComment(Request $request, Group $group, GroupMilestoneTask $groupMilestoneTask) {
-    TaskComment::create([ 
-        'group_milestone_task_id' => $groupMilestoneTask->id, 
-        'user_id' => Auth::id(), 
-        'body' => $request->body, 
-        'parent_id' => $request->parent_id, 
-    ]);
-}
-```
-**Panel Question:** *"How does the database know if a comment is a reply to another comment without making a second table?"*
-* **The Goal:** To allow infinite nested replies on task feedback.
-* **The Process:** Use an Adjacency List architecture where `parent_id` points to another comment in the exact same table.
-
-> *"Sir, we achieved infinite threading by using an 'Adjacency List' database design. When an adviser creates a comment, the system saves the task ID and the text.*
-> *If the comment is a reply to a student, the `parent_id` column saves the ID of the student's comment. If it's a brand new standalone comment, the `parent_id` is simply left NULL. This self-referencing structure allows us to build infinite conversation threads using only a single table."*
-
----
-
-## 9. Methods Used (Simple Terms)
-
-- `pluck('column')` - Gets only one column from query results (like IDs) instead of full rows.
-- `whereIn('column', [...])` - Filters records that match any value in a list.
-- `whereNotIn('column', [...])` - Excludes records that match values in a list.
-- `withCount('relation')` - Adds relation counts without manual loops.
-- `whereHas('relation', fn...)` - Filters by conditions inside related tables.
-- `first()` - Gets the first matching row or `null`.
-- `findOrFail(id)` - Finds by ID or throws a not found error.
-- `create([...])` - Inserts a new database row.
-- `update([...])` - Updates fields of existing rows.
-- `delete()` - Removes a row.
-- `exists()` - Returns true/false if any matching row exists.
-- `collect([...])` - Creates a Laravel collection for chainable operations.
-- `map(fn...)` - Transforms each item in a collection.
-- `sortBy(...)` - Sorts collection items by one or more rules.
-- `take(n)` - Gets only the first `n` items.
-- `values()` - Reindexes collection keys to clean 0..n numbering.
-- `unique('field')` - Removes duplicates by field.
-- `toArray()` - Converts data to plain PHP array.
-- `return back()->withErrors(...)->withInput()` - Returns user to form with errors and keeps previous input.
-- `DB::beginTransaction()/commit()/rollback()` - All-or-nothing database save flow.
-- `Carbon::parse(...)` - Converts date/time text into a date object.
-- `response()->json([...])` - Returns JSON for frontend scripts.
-
-### Symbols / Operators (Q&A quick guide)
-- `?` (ternary) - Short if/else in one line.
-- `??` (null coalescing) - Use fallback value when left side is `null`.
-- `?:` (elvis shorthand) - Use left side if truthy, otherwise fallback.
-- `?->` (null-safe operator) - Access property/method only if object is not `null`.
-- `=>` - Key/value separator in arrays, and short function arrow syntax.
-- `===` - Strict comparison (value and type must match).
-
-## 10. Quick Oral Cheat Sheet (Top 10 Terms)
-
-1. **`pluck`** - "Get only one column, like IDs, from many rows."
-2. **`whereIn`** - "Filter rows that match any value in a list."
-3. **`withCount`** - "Add relationship counts directly from DB, no manual loops."
-4. **`whereHas`** - "Filter by a condition inside a related table."
-5. **`create`** - "Insert a new database row quickly."
-6. **`update`** - "Modify existing row values."
-7. **`exists`** - "Fast yes/no check if a matching record exists."
-8. **`sortBy`** - "Order results by a rule, like least workload first."
-9. **`take(2)`** - "Get only the first two ranked candidates."
-10. **`DB transaction`** - "All-or-nothing save: commit if all pass, rollback if any fail."
+Line-by-line:
+1-4. Validates rubric payload.
+5-8. Upserts rating entry for the same schedule+faculty pair.
+9. Stores normalized score/comments payload.

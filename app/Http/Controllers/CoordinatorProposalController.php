@@ -21,7 +21,7 @@ class CoordinatorProposalController extends Controller
         $user = Auth::user();
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         
-        //offerings by coordinator-user
+        
         $coordinatedOfferings = Offering::where('faculty_id', $user->faculty_id)
             ->when($activeTerm, function ($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);
@@ -32,7 +32,7 @@ class CoordinatorProposalController extends Controller
         $proposalsByOffering = [];
         
         foreach ($coordinatedOfferings as $offering) {
-            //all groups
+            
             $groups = $offering->groups;
             
             $allProposals = collect();
@@ -69,7 +69,7 @@ class CoordinatorProposalController extends Controller
             return redirect()->route('coordinator.proposals.index')->with('error', 'Student not found.');
         }
         
-        //proposal checker
+        
         $studentGroup = $student->groups()->first();
         if (!$studentGroup) {
             return redirect()->route('coordinator.proposals.index')->with('error', 'Student is not in any group.');

@@ -1,280 +1,77 @@
-# Coordinator Features
+# Coordinator Features (Final + Line-by-Line)
 
-The Coordinator acts as the project manager, establishing milestone requirements, reviewing proposals, analyzing faculty loads, and coordinating defenses.
+Coordinator manages group operations, milestones, proposal review, and defense scheduling for offerings they coordinate.
 
-## 🔄 User Journey Flow (Top to Bottom)
-If panelists ask for the "System Workflow" or "Use Case" of a Coordinator, explain this exact step-by-step flow:
-1. **Setup Milestones:** The Coordinator creates Milestone Templates (e.g., Chapter 1-3) which act as blueprints for the students.
-2. **Manage Classlists:** They view and manage the specific students enrolled in their assigned Offerings.
-3. **Monitor Load:** They check the Faculty Matrix to ensure they don't over-assign tasks to busy teachers.
-4. **Review Proposals:** They review project proposals and can bulk approve/reject them.
-5. **Schedule Defenses:** When students request a defense, the Coordinator reviews the request, uses the Auto-Assign logic to find available panelists, and finalizes the Defense Schedule.
-6. **Review Grades:** After the defense finishes, they view the aggregated Rating Sheets submitted by the panelists.
+## Main Route Space
 
-## 1. Class Lists & Faculty Matrix
+- Prefix: `/coordinator`
+- Middleware: `auth` + `role:coordinator|adviser`
+- Coordinator-only submodule exists for defense rubrics.
 
-**Description:** Coordinators can view lists of all students enrolled in capstone classes for the current term and view a matrix showing how many groups each faculty member is advising/paneling.
+## Sidebar Modules (Current UI)
 
-### 🔗 End-to-End Flow: Chairperson Import -> Coordinator Classlist (Line-by-Line)
+- Dashboard
+- Groups
+- Class List
+- Faculty Matrix
+- Proposal Review
+- Defense Management
+- Milestone Templates
+- Calendar
+- Activity Log
 
-Use this when panelists ask: **"If Chairperson imports students, how do they appear in Coordinator class list?"**
+---
 
-#### A) Chairperson triggers import
+## 1) Groups and Class List
 
-**File:** `app/Http/Controllers/ChairpersonStudentController.php`
+- Groups CRUD: `/coordinator/groups/*`
+- Class List: `/coordinator/classlist`
+- Import students (coordinator scope): `/coordinator/classlist/import`
 
-```php
-public function upload(Request $request)
-{
-    return app(StudentImportService::class)->importFromRequest($request, StudentImportService::MODE_CHAIRPERSON);
-}
-```
+Scope rule:
+- records are filtered to offerings tied to the logged-in coordinator and (when present) active term.
 
-**Simple line-by-line explanation:**
-1. `public function upload(Request $request)` - declares the method and receives the HTTP request object.
-2. `{` - starts the method body.
-3. `return app(StudentImportService::class)->importFromRequest(...)` - gets the import service from Laravel container and forwards the request.
-4. `StudentImportService::MODE_CHAIRPERSON` - tells the service this request came from the chairperson flow.
-5. `}` - ends the method.
+---
 
-#### B) Import service validates, imports, and enrolls
+## 2) Milestone Assignment (Code + Line-by-Line)
 
-**File:** `app/Services/StudentImportService.php`
+Source: `app/Http/Controllers/MilestoneTemplateController.php`
 
 ```php
-public function importFromRequest(Request $request, string $mode = self::MODE_CHAIRPERSON): RedirectResponse
+public function assignToGroup(Request $request)
 {
+    // Validate incoming payload: group and template must exist, due date is optional but future-only.
     $request->validate([
-        'file' => 'required|file|mimes:csv|max:10240',
-    ]);
-
-    $offeringId = $request->get('offering_id');
-    $import = new StudentsImport($offeringId);
-    Excel::import($import, $file);
-
-    if ($offeringId) {
-        $offering = Offering::find($offeringId);
-        $recentStudents = Student::where('created_at', '>=', now()->subMinutes(2))->get();
-        foreach ($recentStudents as $student) {
-            $student->enrollInOffering($offering);
-        }
-    }
-}
-```
-
-**Simple line-by-line explanation:**
-1. Function signature - accepts request + mode, returns a redirect response.
-2. `$request->validate(...)` - blocks invalid upload before processing.
-3. `'file' => 'required|file|mimes:csv|max:10240'` - requires CSV and limits file size.
-4. `$offeringId = $request->get('offering_id')` - reads selected offering (if any).
-5. `$import = new StudentsImport($offeringId)` - prepares import class with offering context.
-6. `Excel::import($import, $file)` - runs row import using Laravel Excel.
-7. `if ($offeringId) { ... }` - only runs enrollment logic when offering is provided.
-8. `Offering::find($offeringId)` - fetches target offering.
-9. `Student::where(...)->get()` - gets recently created student records.
-10. `foreach (...) { $student->enrollInOffering($offering); }` - links each imported student to offering.
-
-#### C) Student-offering relation used by classlist
-
-**File:** `app/Models/Student.php`
-
-```php
-public function offerings()
-{
-    return $this->belongsToMany(Offering::class, 'offering_student', 'student_id', 'offering_id', 'student_id', 'id')
-                ->withPivot('enrolled_at')
-                ->withTimestamps();
-}
-```
-
-**Simple line-by-line explanation:**
-1. `public function offerings()` - defines Student model relationship method.
-2. `belongsToMany(...)` - declares many-to-many link between students and offerings.
-3. `'offering_student'` - uses pivot table where enrollment is stored.
-4. `->withPivot('enrolled_at')` - includes enrollment timestamp from pivot.
-5. `->withTimestamps()` - keeps pivot created/updated timestamps.
-
-#### D) Coordinator classlist fetches only coordinator-owned offerings
-
-**File:** `app/Http/Controllers/CoordinatorController.php` (classlist logic)
-
-```php
-$coordinatedOfferingIds = Offering::where('faculty_id', $user->faculty_id)
-    ->when($activeTerm, function ($query) use ($activeTerm) {
-        return $query->where('academic_term_id', $activeTerm->id);
-    })
-    ->pluck('id');
-
-$studentsQuery = Student::with(['offerings' => function ($query) use ($coordinatedOfferingIds) {
-    $query->whereIn('offerings.id', $coordinatedOfferingIds);
-}])->where('semester', $activeTerm->semester)
-  ->whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
-      $query->whereIn('offerings.id', $coordinatedOfferingIds);
-  });
-```
-
-**Simple line-by-line explanation:**
-1. `Offering::where('faculty_id', $user->faculty_id)` - gets offerings owned by logged-in coordinator.
-2. `->when($activeTerm, ...)` - narrows to active term when available.
-3. `->pluck('id')` - extracts offering IDs only.
-4. `Student::with(['offerings' => ...])` - eager loads matching offering details for each student.
-5. `->where('semester', $activeTerm->semester)` - keeps semester aligned.
-6. `->whereHas('offerings', ...)` - returns only students enrolled in coordinator offerings.
-
-**Core Logic (`app/Http/Controllers/CoordinatorController.php`):**
-```php
-public function facultyMatrix() {
-    $user = auth()->user();
-    $activeTerm = AcademicTerm::where('is_active', true)->first();
-
-    $coordinatedOfferings = Offering::with(['teacher', 'academicTerm'])
-        ->where('faculty_id', $user->faculty_id)
-        ->when($activeTerm, fn ($q) => $q->where('academic_term_id', $activeTerm->id))
-        ->get();
-
-    $groups = Group::with([
-        'offering.teacher',
-        'adviser',
-        'defenseSchedules' => fn ($q) => $q->latest('start_at'),
-        'defenseSchedules.defensePanels.faculty',
-    ])->whereIn('offering_id', $coordinatedOfferings->pluck('id'))->get();
-
-    // Build matrix rows from coordinator-owned groups and latest schedule.
-    return view('coordinator.faculty-matrix', compact('groups'));
-}
-```
-
-**Simple line-by-line explanation:**
-1. Gets logged-in user and active term.
-2. Queries offerings where `faculty_id` equals coordinator faculty ID.
-3. Eager-loads groups under those offerings with adviser and latest defense panels.
-4. Prepares coordinator-scoped data for matrix rendering.
-5. Returns `coordinator.faculty-matrix` view with the prepared dataset.
-
-## 2. Defense Scheduling & Automatic Panel Assignment
-
-**Description:** Coordinators approve student defense readiness requests and schedule defenses. Adviser and Offering Coordinator are auto-included. For **create**, Chair and Member are auto-assigned by backend policy (availability + workload balancing). For **edit/update**, the coordinator now selects Chair and Member manually from eligible options, with backend conflict and role safeguards.
-
-**Core Logic (`app/Http/Controllers/Coordinator/DefenseScheduleController.php`):**
-```php
-public function store(Request $request)
-{
-    // 1) Validate scheduling inputs (group, stage, room, date/time)
-    // 2) Validate scope: coordinator can only schedule groups in their offerings/active term
-    // 3) Guardrail checks: milestone gate + room/date conflicts
-
-    $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
-    $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
-
-    // 4) Backend auto-assignment (source of truth)
-    $autoPanelMembers = $this->resolveAutoPanelMembers($group, $startAt, $endAt);
-    if ($autoPanelMembers->count() < 2) {
-        return back()->withErrors([
-            'panel_members' => 'Unable to auto-assign Chair and Member for this schedule. Please choose another date/time/room.',
-        ]);
-    }
-
-    // 5) Persist chair/member from auto policy
-    foreach ($autoPanelMembers as $member) {
-        DefensePanel::create([
-            'defense_schedule_id' => $schedule->id,
-            'faculty_id' => $member['faculty_id'],
-            'role' => $member['role'], // chair/member
-            'status' => 'pending',
-        ]);
-    }
-
-    // 6) Auto-include adviser + offering coordinator (accepted immediately)
-    DefensePanel::create([... 'role' => 'adviser', 'status' => 'accepted']);
-    DefensePanel::create([... 'role' => 'coordinator', 'status' => 'accepted']);
-}
-```
-
-**Simple line-by-line explanation:**
-1. Validates schedule input fields (group, stage, date/time, room).
-2. Converts date/time strings into `Carbon` datetime objects.
-3. Runs backend auto-assign to get best chair/member pair.
-4. If no valid pair, returns with `panel_members` validation error.
-5. Creates invited panel rows for chair/member with `pending` status.
-6. Auto-adds adviser and offering coordinator with `accepted` status.
-
-**Update/Edit Behavior (`app/Http/Controllers/Coordinator/DefenseScheduleController.php`):**
-```php
-public function update(Request $request, $id)
-{
-    $validated = $request->validate([
-        // ...
-        'panel_members' => 'required|array|size:2',
-        'panel_members.*.faculty_id' => 'required|exists:users,id',
-        'panel_members.*.role' => 'required|in:chair,member',
-    ]);
-
-    // Validate composition, adviser/coordinator exclusion, duplicate picks,
-    // and time collision checks for selected faculty.
-    // Then persist selected chair/member as panel rows.
-    // If same accepted person remains in same role, keep accepted status.
-}
-```
-
-**Simple line-by-line explanation:**
-1. Validates update inputs including exactly two `panel_members`.
-2. Checks coordinator authorization scope for selected group/offering.
-3. Applies milestone gate rules with optional override reason.
-4. Checks date conflict (same group same date) and room double-booking.
-5. Normalizes selected panel payload and validates chair/member composition.
-6. Blocks duplicate selected faculty and conflict-of-interest picks.
-7. Blocks schedule collisions for selected panelists.
-8. Prevents reselecting previously declined chair/member in replacement flow.
-9. Updates schedule + rewrites defense panel rows inside DB transaction.
-10. Preserves `accepted` status if same accepted person remains in same role.
-
-### 🧠 Defense Tip: How Does the System Choose the Auto-Assign Panel?
-If panelists ask, *"How does your system know who to assign for a defense panel?"*, explain that `resolveAutoPanelMembers()` applies a deterministic **5-step policy** (in this exact order):
-
-1. **Active Term Context:** Resolve `AcademicTerm::where('is_active', true)->first()` so workload counting is per-term and fair.
-2. **Time Collision Check:** Call `getConflictingFacultyIds($startAt, $endAt, $excludeScheduleId)` to find faculty already assigned to an overlapping defense window. The overlap check covers three cases: their schedule starts inside ours, their schedule ends inside ours, or their schedule fully contains ours.
-3. **Eligible Candidate Pool (with COI filters):** `panelChairMemberCandidates($group)` returns the pool of faculty whose `role` is in `[teacher, chairperson, panelist, adviser, coordinator]` AND whose `semester` matches the active term, with the group's **Adviser** (`group->faculty_id`) and **Offering Coordinator** (`group->offering->faculty_id`) already excluded. The conflicting IDs from step 2 (and any caller-supplied `$excludedFacultyIds`) are then removed.
-4. **Workload Balancing:** Run `DefensePanel::select('faculty_id', COUNT(*) as assignment_count)->groupBy('faculty_id')` filtered to the active term to compute per-faculty assignment counts. Map each candidate's `assignment_count` and `sortBy([['assignment_count', 'asc'], ['name', 'asc']])` so the least-loaded candidates surface first; ties break alphabetically for determinism.
-5. **Deterministic Pick:** `take(2)` and map to `[ 'chair' => first, 'member' => second ]`. If fewer than two candidates remain, the function returns an empty collection so `store()` can fail fast with the "Unable to auto-assign" error.
-
-> UI note: **Create** uses the backend auto-assign for Chair/Member (the form has no Chair/Member fields). **Edit** lets the coordinator manually select Chair/Member, then the backend re-validates time conflicts, COI, duplicate picks, and "previously declined" replacement rules before saving.
-
-
-## 3. Milestone Templates
-
-**Description:** Coordinators define the milestones and required tasks.
-
-**Core Logic (`app/Http/Controllers/MilestoneTemplateController.php`):**
-```php
-public function assignToGroup(Request $request) {
-    // Validate the request payload
-    $request->validate([
-        'group_id'              => 'required|exists:groups,id',
+        'group_id'            => 'required|exists:groups,id',
         'milestone_template_id' => 'required|exists:milestone_templates,id',
-        'due_date'              => 'nullable|date|after:today',
+        'due_date'            => 'nullable|date|after:today',
     ]);
 
-    // Find the requested template (eager-loading its tasks) and the specific group
+    // Load selected template together with its tasks (for seeding group task rows).
     $template = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
+    // Load target group record.
     $group    = Group::findOrFail($request->group_id);
 
-    // Guard 1: prevent duplicate assignment of the same template to the same group
+    // Check duplicate: same milestone template already assigned to the same group.
     $alreadyAssigned = GroupMilestone::where('group_id', $group->id)
         ->where('milestone_template_id', $template->id)
         ->exists();
+
+    // Stop early and return a user-facing validation error if duplicate assignment exists.
     if ($alreadyAssigned) {
         return redirect()->route('coordinator.milestones.index')
             ->withErrors(['assign' => "\"{$template->name}\" is already assigned to {$group->name}."]);
     }
 
-    // Guard 2: central sequencing/single-active-milestone policy
+    // Delegate business rules (sequence, prerequisite proposal approval, etc.) to service layer.
     $assignmentError = MilestoneAssignmentService::validateAssignment($group, $template);
+    // If service returns a block reason, stop and return it to the UI.
     if ($assignmentError !== null) {
         return redirect()->route('coordinator.milestones.index')
             ->withErrors(['assign' => $assignmentError]);
     }
 
-    // Create the active milestone header
+    // Create the group-level milestone record with initial progress/status.
     $groupMilestone = GroupMilestone::create([
         'group_id'              => $group->id,
         'milestone_template_id' => $template->id,
@@ -286,7 +83,7 @@ public function assignToGroup(Request $request) {
         'status'                => 'not_started',
     ]);
 
-    // Clone each template task into a trackable GroupMilestoneTask (Kanban "pending")
+    // Seed one GroupMilestoneTask row per template task for Kanban tracking.
     foreach ($template->tasks as $task) {
         GroupMilestoneTask::create([
             'group_milestone_id' => $groupMilestone->id,
@@ -295,768 +92,64 @@ public function assignToGroup(Request $request) {
             'is_completed'       => false,
         ]);
     }
-
-    // Notify the group's members
-    NotificationService::coordinatorAssignedMilestoneToGroup($group, $groupMilestone, $template);
 }
 ```
-
-**Simple line-by-line explanation:**
-1. `$request->validate(...)` - rejects the request if `group_id`/`milestone_template_id` are missing or `due_date` is in the past.
-2. `MilestoneTemplate::with('tasks')->findOrFail(...)` - loads the master template plus all its child tasks in one query (avoids N+1).
-3. `Group::findOrFail(...)` - loads the target group that will receive the cloned milestone.
-4. `GroupMilestone::where(...)->exists()` - blocks re-assigning the same template to the same group twice.
-5. `MilestoneAssignmentService::validateAssignment(...)` - applies the central policy: only one active (sub-100%) milestone per group, and respects `sequence_order` if any active templates use it.
-6. `GroupMilestone::create([...])` - creates the assignment header, copying the template's name/description and starting progress at 0%.
-7. `foreach ($template->tasks as $task)` + `GroupMilestoneTask::create(...)` - clones each template task as a per-group, trackable task with `status = 'pending'`, ready for the student Kanban board.
-8. `NotificationService::coordinatorAssignedMilestoneToGroup(...)` - notifies the group's members so the new milestone appears on their dashboard.
-
-## 4. Proposal Review & Bulk Updating
-
-**Description:** Coordinators review project proposals and can bulk-approve or reject them.
-
-**Core Logic (`app/Http/Controllers/CoordinatorProposalController.php`):**
-```php
-public function bulkUpdate(Request $request)
-{
-    $request->validate([
-        'proposal_ids' => 'required|array',
-        'proposal_ids.*' => 'integer|exists:project_submissions,id',
-        'status' => 'required|in:approved,rejected',
-        'teacher_comment' => 'required|string|min:10',
-    ]);
-
-    foreach ($request->proposal_ids as $proposalId) {
-        // ownership checks per proposal (coordinator can only update
-        // submissions under their coordinated offering)
-        // then update status + teacher_comment and notify student.
-    }
-}
-```
-
-**Simple line-by-line explanation:**
-1. Validates proposal IDs, decision status, and required comment.
-2. Loops selected proposals one-by-one.
-3. For each item, enforces coordinator ownership scope.
-4. Saves status/comment and sends matching notification.
-5. Returns back with count of successfully processed proposals.
-
-## 5. Critical Code Line-by-Line Breakdown (For 1000% Defense Readiness)
-
-If your panelists want you to explain the code line-by-line, memorize these three most complex and critical Coordinator functions.
-
-### A. Auto-Assign Panel Engine (`DefenseScheduleController@resolveAutoPanelMembers`)
-Panel Question: *"Explain line-by-line how the system automatically assigns Chair and Member without conflicts."*
-
-```php
-private function resolveAutoPanelMembers(
-    Group $group,
-    Carbon $startAt,
-    Carbon $endAt,
-    ?int $excludeScheduleId = null,
-    array $excludedFacultyIds = []
-): Collection
-{
-    // LINE 1: Resolve active term context for fair per-term load balancing.
-    $activeTerm = AcademicTerm::where('is_active', true)->first();
-
-    // LINE 2: Get busy faculty IDs in overlapping defense windows.
-    $conflictingFacultyIds = $this->getConflictingFacultyIds($startAt, $endAt, $excludeScheduleId);
-
-    // LINE 3: Build eligible candidate pool (already excludes adviser/offering coordinator).
-    $availableFaculty = $this->panelChairMemberCandidates($group)
-        ->whereNotIn('id', $conflictingFacultyIds)
-        ->whereNotIn('id', $excludedFacultyIds)
-        ->values();
-
-    // LINE 4: Count each candidate's panel assignments in active term.
-    $assignmentCounts = DefensePanel::select('faculty_id', DB::raw('COUNT(*) as assignment_count'))
-        ->whereHas('defenseSchedule', function ($query) use ($activeTerm, $excludeScheduleId) {
-            if ($activeTerm) $query->where('academic_term_id', $activeTerm->id);
-            if ($excludeScheduleId) $query->where('id', '!=', $excludeScheduleId);
-        })
-        ->groupBy('faculty_id')
-        ->pluck('assignment_count', 'faculty_id');
-
-    // LINE 5: Sort least-loaded first (then by name), and pick top 2.
-    $selectedFaculty = $availableFaculty
-        ->map(function ($facultyMember) use ($assignmentCounts) {
-            $facultyMember->assignment_count = (int) ($assignmentCounts[$facultyMember->id] ?? 0);
-            return $facultyMember;
-        })
-        ->sortBy([['assignment_count', 'asc'], ['name', 'asc']])
-        ->take(2)
-        ->values();
-
-    // LINE 6: Convert deterministic top-2 into fixed roles.
-    return collect([
-        ['faculty_id' => $selectedFaculty[0]->id, 'role' => 'chair'],
-        ['faculty_id' => $selectedFaculty[1]->id, 'role' => 'member'],
-    ]);
-}
-```
-
-### B. Milestone Template Cloning (`MilestoneTemplateController@assignToGroup`)
-Panel Question: *"Explain line-by-line how a template becomes an active trackable milestone for a specific group."*
-
-```php
-public function assignToGroup(Request $request) {
-    // LINE 1: Find the master Template using the ID from the request, and eagerly load all its attached 'tasks'.
-    $template = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
-    
-    // LINE 2: Find the specific student Group that is receiving the assignment.
-    $group = Group::findOrFail($request->group_id);
-
-    // LINE 3: Prevent duplicate assignments. Check if this exact group already has this exact template assigned.
-    if (GroupMilestone::where('group_id', $group->id)->where('milestone_template_id', $template->id)->exists()) {
-        return back()->withErrors(['assign' => 'Already assigned.']); // Stop execution if true.
-    }
-
-    // LINE 4: Create the new 'GroupMilestone' record, essentially cloning the template's title and linking it to the group.
-    $groupMilestone = GroupMilestone::create([
-        'group_id' => $group->id,
-        'milestone_template_id' => $template->id,
-        'title' => $template->name,
-        'status' => 'not_started',
-    ]);
-
-    // LINE 5: Loop through every single task defined in the original master template.
-    foreach ($template->tasks as $task) {
-        // LINE 6: For each task, create a brand new tracking row in 'GroupMilestoneTask' linked to the cloned group milestone.
-        GroupMilestoneTask::create([
-            'group_milestone_id' => $groupMilestone->id,
-            'milestone_task_id' => $task->id,
-            'status' => 'pending', // Default status for the Kanban board
-        ]);
-    }
-
-    // LINE 7: Trigger the NotificationService to alert the students that a new milestone was assigned to their dashboard.
-    NotificationService::coordinatorAssignedMilestoneToGroup($group, $groupMilestone, $template);
-}
-```
-
-### C. Bulk Updating Proposals (`CoordinatorProposalController@bulkUpdate`)
-Panel Question: *"Explain line-by-line how you process approving multiple submissions simultaneously."*
-
-```php
-public function bulkUpdate(Request $request) {
-    // LINE 1: Validate payload and require reviewer comment for auditability.
-    $request->validate([
-        'proposal_ids' => 'required|array',
-        'proposal_ids.*' => 'integer|exists:project_submissions,id',
-        'status' => 'required|in:approved,rejected',
-        'teacher_comment' => 'required|string|min:10',
-    ]);
-
-    // LINE 2: Iterate selected proposals, enforce coordinator ownership, then update + notify.
-    foreach ($request->proposal_ids as $proposalId) {
-        // ownership check + update status/comment + notification
-    }
-
-    // LINE 3: Redirect back with result summary.
-    return back()->with('success', 'Selected proposals processed successfully.');
-}
-```
-
-## 6. Exhaustive Feature & Endpoint List (All Functions)
-For complete system coverage, here is every single specific function the Coordinator can perform across the application:
-
-**Dashboard & General Actions**
-
-Routes under `coordinator.dashboard` resolve to `CoordinatorDashboardController@index`. The legacy `/coordinator-dashboard` (no name namespace) resolves to `CoordinatorController@index`. Almost all coordinator-scoped queries below filter by `Offering.faculty_id == auth()->user()->faculty_id` AND the active `AcademicTerm`.
-
-- **`CoordinatorDashboardController@index()`**: Builds the main dashboard payload — student/group/faculty/submission counts, pending/approved/rejected proposal counts, milestone template totals, recent students/groups/submissions, pending adviser invitations, and computed `upcomingDeadlines` — all scoped to the coordinator's offerings within the active term.
-- **`CoordinatorDashboardController@getUpcomingDeadlines()`** *(private)*: Derives upcoming milestone deadlines and seeds two static placeholders (Proposal Submission, Final Defense Schedule) for the dashboard widget.
-- **`CoordinatorController@index()`**: Legacy dashboard entry that uses the `Notification::visibleToCoordinatorWorkspace()` scope so a coordinator who is also an adviser sees both workspaces' notifications.
-- **`CoordinatorController@classlist()`**: Retrieves all enrolled students linked to the coordinator's active offerings, with name/course/offering filters, search, sort, and pagination.
-- **`CoordinatorController@importStudentsForm()` / `importStudents()`**: Renders the CSV upload form scoped to the coordinator's offerings, then delegates the upload to `StudentImportService::importFromRequest($request, MODE_COORDINATOR)` which validates ownership before enrolling rows.
-- **`CoordinatorController@groups()`, `create()`, `store()`, `show()`, `edit()`, `update()`, `destroy()`**: Standard group lifecycle. `update()` doubles as the assign-adviser endpoint and enforces two conflict-of-interest guards: (1) the chosen adviser must not coordinate the group's offering, and (2) the chosen adviser must not be a confirmed chair/member of an active or completed-proposal defense for that group.
-- **`CoordinatorController@assignAdviser()`**: Renders the assign-adviser picker, eligible pool excludes confirmed panelists for the group and faculty members teaching the group's offering.
-- **`CoordinatorController@getConfirmedPanelistUserIdsForGroup()`** *(private)*: Builds the COI exclusion list of confirmed chair/member panelists for the assign-adviser dropdown.
-- **`CoordinatorController@groupMilestones()`**: Read-only view showing a group's `groupMilestones`, their template, and tasks.
-- **Notifications (`CoordinatorController`)**: `notifications()`, `markNotificationAsRead()`, `markAllNotificationsAsRead()`, `markMultipleAsRead()`, `deleteNotification()`, `deleteMultiple()` — all gated by the `visibleToCoordinatorWorkspace` notification scope.
-- **`CoordinatorController@activityLog()`**: Lists `ActivityLog` rows for students enrolled under the coordinator's offerings, with a "filter by student" dropdown that only lists students who actually have logged activity.
-- **`CoordinatorController@facultyMatrix()`**: Builds coordinator-scoped rows from owned offerings + groups + adviser + latest defense panel composition (chair, members, schedule stage, schedule status) for the matrix view.
-
-**Proposal Management (`app/Http/Controllers/CoordinatorProposalController.php`)**
-- `index()`: Groups all proposals by offering for the coordinator and computes per-offering counts (`pending`, `approved`, `rejected`, `total_groups`).
-- `show($id)`: Detail page with version history (sorted by `version` then `submitted_at`) and threaded `SubmissionComment`s. Re-checks the offering ownership before rendering.
-- `preview($id)`: Renders an embedded document preview using `DocumentPreviewService::panelForSubmission()`. Verifies ownership via `coordinatorCanReviewProposal()` and that the file actually exists on the `public` disk.
-- `compareVersions($left, $right)`: Side-by-side delta view of two `ProjectSubmission` rows belonging to the same student. Validates: not the same row, both `type === 'proposal'`, both belong to the coordinator's scope, and both files exist.
-- `update(Request, $id)`: Single proposal approve/reject. Requires `status` ∈ {approved, rejected} and a `teacher_comment` ≥ 10 chars. Saves the decision, then dispatches either `NotificationService::proposalApproved()` or `NotificationService::proposalRejected()`.
-- `bulkUpdate(Request)`: Same approve/reject contract as `update()` but iterates over an array of `proposal_ids`. Re-validates ownership *per row* and increments `$updatedCount`. Returns a summary message.
-- `getStats()`: JSON endpoint returning total/pending/approved/rejected proposal counts and total offerings/groups for the dashboard cards.
-- `storeComment(Request, $id)`: Posts a threaded comment on a proposal. Verifies ownership, validates the optional `parent_id` belongs to the same submission, then logs the activity via `ActivityLogService::logSubmissionCommentAdded()`.
-- `coordinatorCanReviewProposal()` *(private)*: Reusable ownership guard — student must exist, must belong to a group, and the group's offering's `faculty_id` must match the logged-in coordinator.
-
-**Defense Scheduling (`app/Http/Controllers/Coordinator/DefenseScheduleController.php`)**
-- `defenseRequestsIndex()`: Lists pending student defense requests scoped to the coordinator's offerings.
-- `index()`, `create()`, `store()`, `show()`, `edit()`, `update()`, `destroy()`: Core CRUD for `DefenseSchedule` records (group, stage, room, date/time, panel composition).
-- `getAvailableFaculty()`: Returns the **full eligible faculty pool** plus a `autoAssignedFacultyIds` list of the suggested top-2 (chair/member) for the selected date/time/room. The actual deterministic auto-assign is the private `resolveAutoPanelMembers()`.
-- `createSchedule()` / `storeSchedule()`: Legacy "create-from-defense-request" flow (still wired under `coordinator.defense-requests.*` routes) that finalizes a schedule and creates the `DefensePanel` rows.
-- `approve()` / `reject()`: Processes the student's initial defense request before scheduling. `approve()` redirects to the create form; `reject()` requires `coordinator_notes`.
-- `markAsCompleted()`: Closes a schedule. Guarded by panel readiness (all required rating sheets submitted) AND a finalized `DefenseEvaluationSummary` — it is **not** a simple status toggle.
-
-**Defense Rubrics (`app/Http/Controllers/Coordinator/DefenseRubricController.php`)**
-- `index()` / `create()` / `store()` / `edit()` / `update()` / `destroy()`: Full CRUD for `DefenseRubricTemplate` records. Each rubric is scoped to a stage (`proposal`, `60`, `100`) and has relational `criteria` rows (no JSON blob), each with `name`, `scope` (group/individual), `max_points`, and `sort_order`. Setting a rubric `is_active = true` automatically deactivates other rubrics for the same stage. Active rubrics cannot be deleted.
-
-**Milestone Templates (`app/Http/Controllers/MilestoneTemplateController.php`)**
-- `index(Request)`: Lists all `MilestoneTemplate` rows + groups under the coordinator's offerings. Builds a `groupAssignmentMeta` map via `MilestoneAssignmentService::assignmentMeta()` so the UI can decide which template each group is allowed to assign next (sequencing-aware).
-- `create()` / `store(Request)`: New-template form + persist. `store()` blocks: (a) duplicate names (case-insensitive), (b) sequence step already used by another active template, (c) same name + same sequence step.
-- `edit(MilestoneTemplate)` / `update(Request, MilestoneTemplate)`: Edit form + persist with the same uniqueness guards as `store()`, scoped to "other rows".
-- `destroy(MilestoneTemplate)`: Deletes a template.
-- `updateStatus(Request, MilestoneTemplate)`: Updates a template's status flag.
-- `storeTask(Request, MilestoneTemplate)`, `updateTask(Request, MilestoneTemplate, MilestoneTask)`, `destroyTask(MilestoneTemplate, MilestoneTask)`: Adds/renames/deletes a checklist item inside a template. Both update/destroy `abort_if` the task's `milestone_template_id` doesn't match the URL's template (defense against ID tampering).
-- `assignToGroup(Request)`: Clones a template (and all its tasks) into a `GroupMilestone` + `GroupMilestoneTask` rows for a specific group. Guarded by `MilestoneAssignmentService::validateAssignment()` (sequencing rule) and a duplicate-assignment check. Sends `NotificationService::coordinatorAssignedMilestoneToGroup()` to the group's members.
-- `removeAssignmentFromGroup(Group, GroupMilestone)`: Detaches a cloned milestone (and via cascade its tasks) from a group, effectively deleting their progress on it. Authorization comes from `coordinatorMayAccessGroup()`.
-- `coordinatorMayAccessGroup(Group)` *(private)*: Verifies the group's offering belongs to the logged-in coordinator's active-term offerings.
-
-**Calendar (`app/Http/Controllers/CalendarController.php`)**
-- `coordinatorCalendar()`: Fetches all defense schedules in the active term and derives a `panel_state` (`confirmed` / `awaiting_confirmation` / `replacement_needed`) and `display_status` for each event. Color-codes events green (`#28a745`) when the group belongs to the coordinator's offerings and gray (`#6c757d`) otherwise.
-
-**Coordinator-as-Adviser Dual-Role (`app/Http/Controllers/AdviserController.php`)**
-A coordinator who is also assigned as a group's adviser uses these adviser routes mounted under `coordinator/`:
-- `invitations()` / `respondToInvitation($invitation)`: Lists adviser invitations and accepts/declines them.
-- `panelInvitations()` / `respondToPanelInvitation($panel)`: Lists pending panel chair/member invitations (where the coordinator was selected as a panelist for *another* coordinator's defense) and accepts/declines them.
-
-**Rating Sheets (Defense Grading) (`app/Http/Controllers/RatingSheetController.php`)**
-Mounted under `coordinator/` in `routes/web.php` (lines 353–358):
-- `showAdviserForm($schedule)` / `submitAdviserRating($schedule)`: Coordinator submits their own panel rating sheet (acting as a panelist).
-- `showCoordinatorRatings($schedule)`: Aggregated, read-only view of all panelists' rating sheets for the schedule.
-- `printCoordinatorRatings($schedule)`: Print-optimized view of the aggregated ratings.
-- `finalizeCoordinatorRatings($schedule)`: Locks the result by creating a `DefenseEvaluationSummary`. This is the gate that `markAsCompleted()` checks before allowing a defense to be closed.
-- `reopenCoordinatorRatings($schedule)`: Reopens a previously finalized result so panelists can re-edit.
-
-**Authentication (`app/Http/Controllers/AuthController.php`)**
-- `showLoginForm()` / `login(Request)` / `logout(Request)`: Validates `school_id` (faculty or student) and routes to the role-appropriate dashboard. `login()` first attempts faculty login then falls back to student login.
-- `showChangePasswordForm()` / `changePassword(Request)`: Receives a new password, hashes it using `Hash::make()` (bcrypt under the hood), and updates the user's account row.
 
 ---
 
-## 7. 🎤 The "Cheat Sheet" Defense Script
-If a panelist points at these functions and asks you to explain them line-by-line without reading the syntax, use these exact scripts:
+## 3) Milestone Rule Engine (Code + Line-by-Line)
 
-### A. Auto-Assign Algorithm (`DefenseScheduleController@resolveAutoPanelMembers`)
-**The Code:**
+Source: `app/Services/MilestoneAssignmentService.php`
+
 ```php
-private function resolveAutoPanelMembers(
-    Group $group,
-    Carbon $startAt,
-    Carbon $endAt,
-    ?int $excludeScheduleId = null,
-    array $excludedFacultyIds = []
-): Collection {
-    $activeTerm = AcademicTerm::where('is_active', true)->first();
-    $conflictingFacultyIds = $this->getConflictingFacultyIds($startAt, $endAt, $excludeScheduleId);
+public static function validateAssignment(Group $group, MilestoneTemplate $template): ?string
+{
+    $meta = self::assignmentMeta($group);
+    $hasApprovedProposal = self::groupHasApprovedProposal($group);
 
-    $availableFaculty = $this->panelChairMemberCandidates($group)
-        ->whereNotIn('id', $conflictingFacultyIds)
-        ->whereNotIn('id', $excludedFacultyIds)
-        ->values();
-
-    $assignmentCounts = DefensePanel::select('faculty_id', DB::raw('COUNT(*) as assignment_count'))
-        ->whereHas('defenseSchedule', function ($q) use ($activeTerm) {
-            $q->where('academic_term_id', $activeTerm->id);
-        })
-        ->groupBy('faculty_id')
-        ->pluck('assignment_count', 'faculty_id');
-
-    $selected = $availableFaculty
-        ->map(fn ($f) => tap($f, fn () => $f->assignment_count = (int) ($assignmentCounts[$f->id] ?? 0)))
-        ->sortBy([['assignment_count', 'asc'], ['name', 'asc']])
-        ->take(2)
-        ->values();
-
-    return collect([
-        ['faculty_id' => $selected[0]->id, 'role' => 'chair'],
-        ['faculty_id' => $selected[1]->id, 'role' => 'member'],
-    ]);
-}
-```
-**Panel Question:** *"Explain how your Auto-Assign algorithm works without double-booking teachers."*
-* **The Goal:** To automatically assign Chair and Member with fairness and no schedule overlap.
-* **The Process:** Exclude conflicted faculty and conflict-of-interest roles, rank by least assignment load, and pick top two deterministically.
-
-> *"Sir, the goal of this function is to automatically find available panelists for a defense.*
-> *First, the system checks overlap conflicts for the selected date/time window and removes busy faculty.*
-> *Next, the eligible pool already excludes the group adviser and offering coordinator for Chair/Member slots.*
-> *Then, it computes each candidate’s current assignment count for the active term and sorts ascending.*
-> *Finally, it picks the top 2 and maps them as Chair and Member. Adviser and coordinator are auto-included separately."*
-
-### B. Faculty Matrix & Group Coverage (`CoordinatorController@facultyMatrix`)
-**The Code:**
-```php
-public function facultyMatrix() {
-    $user = auth()->user();
-    $activeTerm = AcademicTerm::where('is_active', true)->first();
-
-    $coordinatedOfferings = Offering::with(['teacher', 'academicTerm'])
-        ->where('faculty_id', $user->faculty_id)
-        ->when($activeTerm, fn ($q) => $q->where('academic_term_id', $activeTerm->id))
-        ->get();
-
-    $groups = Group::with([
-        'offering.teacher',
-        'adviser',
-        'defenseSchedules' => fn ($q) => $q->latest('start_at'),
-        'defenseSchedules.defensePanels.faculty',
-    ])->whereIn('offering_id', $coordinatedOfferings->pluck('id'))->get();
-
-    // map each group to matrix rows (adviser, chair, member, stage, status)
-    return view('coordinator.faculty-matrix', compact('groups'));
-}
-```
-**Panel Question:** *"How does your Faculty Matrix stay aligned to the coordinator's scope?"*
-* **The Goal:** To show only coordinator-owned offerings and their groups, including adviser and latest panel composition.
-* **The Process:** Resolve coordinator-owned offerings first, then eager-load group/adviser/schedule/panel relations and map them into matrix rows.
-
-> *"Sir, this matrix is scoped to the logged-in coordinator's offerings. We first fetch offerings where `faculty_id` matches the coordinator, then load only groups under those offerings with adviser and latest defense panel relations. This keeps the data accurate to coordinator scope and avoids N+1 by eager loading related models."*
-
-### C. Milestone Template Cloning (`MilestoneTemplateController@assignToGroup`)
-**The Code:**
-```php
-public function assignToGroup(Request $request) {
-    $template = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
-    $group = Group::findOrFail($request->group_id);
-
-    $groupMilestone = GroupMilestone::create([
-        'group_id' => $group->id,
-        'milestone_template_id' => $template->id,
-        'title' => $template->name,
-        'status' => 'not_started',
-    ]);
-
-    foreach ($template->tasks as $task) {
-        GroupMilestoneTask::create([
-            'group_milestone_id' => $groupMilestone->id,
-            'milestone_task_id' => $task->id,
-            'status' => 'pending',
-        ]);
+    if (! $meta['can_assign']) {
+        return $meta['block_message'];
     }
-}
-```
-**Panel Question:** *"Explain how a blueprint template is turned into trackable tasks for a specific student group."*
-* **The Goal:** To assign a milestone blueprint to a group.
-* **The Process:** Create a new `GroupMilestone`, then loop through the template's tasks and duplicate them as `GroupMilestoneTask`s.
 
-> *"Sir, the goal of this function is to clone a master template so students can start tracking their progress.*
-> *First, it fetches the requested template and the target student group. It creates a brand new `GroupMilestone` record linked specifically to that group.*
-> *Then, it loops through every single task contained in the master template. Inside the loop, it creates a new `GroupMilestoneTask` for each one, setting its status to 'pending'. This essentially duplicates the blueprint and turns it into an active Kanban board for the students."*
+    if ($meta['sequencing_enabled']) {
+        if (! self::hasActiveSequenceStep(self::PROPOSAL_SEQUENCE_ORDER) && ! $hasApprovedProposal) {
+            return 'Cannot assign 60%/100% milestones yet. Either approve at least one proposal for this group, or add an active Proposal milestone with step 1.';
+        }
 
-### D. Bulk Updating Proposals (`CoordinatorProposalController@bulkUpdate`)
-**The Code:**
-```php
-public function bulkUpdate(Request $request) {
-    $request->validate([
-        'proposal_ids' => 'required|array',
-        'proposal_ids.*' => 'integer|exists:project_submissions,id',
-        'status' => 'required|in:approved,rejected',
-        'teacher_comment' => 'required|string|min:10',
-    ]);
+        if ($template->sequence_order === null) {
+            return 'This template has no sequence order. Set step order (1 = Proposal, 2 = 60%, 3 = 100%) on the template edit page.';
+        }
 
-    foreach ($request->proposal_ids as $proposalId) {
-        // ownership check + update + notification
+        if ((int) $template->sequence_order > self::PROPOSAL_SEQUENCE_ORDER && ! $hasApprovedProposal) {
+            return 'Cannot assign 60%/100% milestones until the group has at least one approved proposal.';
+        }
     }
+
+    return null;
 }
 ```
-**Panel Question:** *"How does the system handle approving 50 proposals at the exact same time?"*
-* **The Goal:** To mass-approve or mass-reject project proposals.
-* **The Process:** Validate proposal IDs, enforce coordinator ownership per proposal, then update status/comments and trigger notifications.
 
-> *"Sir, we support multi-select processing, but still enforce security per record. The coordinator sends an array of proposal IDs, the backend validates them, checks each belongs to the coordinator's offering scope, updates status plus teacher comment, and dispatches notifications. So it is bulk in UX, but still safe in authorization and audit behavior."*
+Line-by-line explanation:
+1-4. Builds metadata and proposal-approval state.
+6-8. If UI/service says blocked, immediately return human-readable reason.
+10. Applies sequencing checks only when sequencing is active.
+11-13. If no step-1 template and no approved proposal, block later steps.
+15-17. Blocks templates with missing `sequence_order`.
+19-21. Hard business rule: step > 1 requires approved proposal.
+24. Returns `null` when assignment is valid.
 
 ---
 
-## 8. Methods Used (Simple Terms)
+## 4) Faculty Matrix Logic (Code + Line-by-Line)
 
-Use this section when panelists ask what specific Laravel/PHP methods mean.
-
-- `first()` - Returns only the first matching row (single model), or `null` if none found.  
-  Example in coordinator code:  
-  `$activeTerm = AcademicTerm::where('is_active', true)->first();`  
-  Meaning: get one active term record (not a collection/list).
-- `pluck('column')` - Gets only one column from query results (for example, just IDs), instead of loading full records.
-- `whereIn('column', [...])` - Filters rows where the value matches any item in a list.
-- `whereNotIn('column', [...])` - Filters rows by excluding values from a list.
-- `withCount('relation')` - Adds a count of related records (for example, how many panels a faculty already has) without manually looping.
-- `whereHas('relation', fn...)` - Filters a model based on conditions inside a related model.
-- `findOrFail(id)` - Finds one record by ID; throws an error automatically if not found.
-- `create([...])` - Inserts a new record in the database in one call.
-- `update([...])` - Updates existing record fields in one call.
-- `delete()` - Removes a record.
-- `exists()` - Fast true/false check if at least one row matches.
-- `collect([...])` - Creates a Laravel Collection object so we can chain helpers (sort, map, filter, etc.).
-- `map(fn...)` - Transforms each item in a collection into a new shape/value.
-- `sortBy([...])` - Sorts collection items (for auto-panel ranking by load, then name).
-- `take(2)` - Gets only the first two items (used for Chair and Member picks).
-- `values()` - Reindexes collection keys to clean 0..n ordering.
-- `unique('field')` - Removes duplicates by a specific field.
-- `toArray()` - Converts a collection/object into a plain PHP array.
-- `return back()->withErrors([...])->withInput()` - Sends user back to form with validation errors and keeps typed input.
-- `DB::beginTransaction()` / `DB::commit()` / `DB::rollback()` - Groups multiple DB writes into one safe unit: all succeed together, or all are undone on failure.
-- `Carbon::parse(...)` - Converts date/time text into a date object for comparisons and scheduling.
-- `response()->json([...])` - Returns structured JSON data to frontend JavaScript.
-
-### Symbols / Operators (Q&A quick guide)
-- `?` (ternary) - Short if/else in one line.
-- `??` (null coalescing) - Use fallback value when left side is `null`.
-- `?:` (elvis shorthand) - Use left side if truthy, otherwise fallback.
-- `?->` (null-safe operator) - Access property/method only if object is not `null`.
-- `=>` - Key/value separator in arrays, and short function arrow syntax.
-- `===` - Strict comparison (value and type must match).
-
-## 9. Quick Oral Cheat Sheet (Top 10 Terms)
-
-Use these one-liners when panelists ask suddenly during Q&A.
-
-1. **`pluck`** - "Get only one column, like IDs, from many rows."
-2. **`whereIn`** - "Filter rows that match any value in a list."
-3. **`withCount`** - "Add relationship counts directly from DB, no manual loops."
-4. **`whereHas`** - "Filter by a condition inside a related table."
-5. **`create`** - "Insert a new database row quickly."
-6. **`update`** - "Modify existing row values."
-7. **`exists`** - "Fast yes/no check if a matching record exists."
-8. **`sortBy`** - "Order results by a rule, like least workload first."
-9. **`take(2)`** - "Get only the first two ranked candidates."
-10. **`DB transaction`** - "All-or-nothing save: commit if all pass, rollback if any fail."
-
----
-
-## 10. Updated Coordinator-Side Functions (With Line-by-Line Explanation)
-
-Use this section as your **latest source-of-truth** for defense. These snippets reflect current coordinator behavior in CapTrack.
-
-### A. Defense Schedule Update (Manual Chair/Member + Safety Rules)
-**File:** `app/Http/Controllers/Coordinator/DefenseScheduleController.php`  
-**Function:** `update(Request $request, $id)`
-
-```php
-public function update(Request $request, $id)
-{
-    // LINE 1: Validate all form inputs including the two invited panel slots.
-    $validated = $request->validate([
-        'group_id' => 'required|exists:groups,id',
-        'stage' => 'required|in:proposal,60,100',
-        'academic_term_id' => 'required|exists:academic_terms,id',
-        'room' => 'required|string|max:255',
-        'date' => 'required|date',
-        'start_time' => 'required|date_format:H:i',
-        'end_time' => 'required|date_format:H:i|after:start_time',
-        'milestone_override_reason' => 'nullable|string|max:1000',
-        'panel_members' => 'required|array|size:2',
-        'panel_members.*.faculty_id' => 'required|exists:users,id',
-        'panel_members.*.role' => 'required|in:chair,member',
-    ]);
-
-    // LINE 2: Load schedule and enforce coordinator scope (only own offerings).
-    $schedule = DefenseSchedule::findOrFail($id);
-    $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
-    $group = Group::with('offering')->findOrFail($validated['group_id']);
-    if (!in_array($group->offering_id, $coordinatorOfferings)) {
-        abort(403, 'You can only edit defense schedules for groups in your offerings.');
-    }
-
-    // LINE 3: Enforce milestone gate, allow override only with reason.
-    $gate = $this->defenseMilestoneGateService->evaluate($group, $validated['stage']);
-    $gateOverridden = false;
-    if (!$gate['eligible']) {
-        if (blank($validated['milestone_override_reason'] ?? null)) {
-            return back()->withErrors([
-                'milestone_override_reason' => $gate['message'] . ' Add override reason to schedule anyway.',
-            ])->withInput();
-        }
-        $gateOverridden = true;
-    }
-
-    // LINE 4: Build datetime values and block duplicate date/room conflicts.
-    $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
-    $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
-    if ($this->hasGroupScheduleOnDate($validated['group_id'], $request->date, $id)) {
-        return back()->withErrors(['date' => 'This group already has a defense schedule on the selected date.'])->withInput();
-    }
-    if ($this->checkDoubleBooking($startAt, $endAt, $request->room, $id)) {
-        return back()->withErrors(['room' => 'This room is already booked for the selected time slot.'])->withInput();
-    }
-
-    // LINE 5: Normalize selected panel payload (chair/member picks).
-    $requestedPanelMembers = collect($validated['panel_members'] ?? [])
-        ->map(fn ($row) => [
-            'faculty_id' => (int) ($row['faculty_id'] ?? 0),
-            'role' => (string) ($row['role'] ?? ''),
-        ])->values()->all();
-
-    // LINE 6: Enforce composition rules and no duplicate selected faculty.
-    $compositionError = $this->validatePanelComposition($requestedPanelMembers);
-    if ($compositionError) {
-        return back()->withErrors(['panel_members' => $compositionError])->withInput();
-    }
-    $pickedFacultyIds = collect($requestedPanelMembers)->pluck('faculty_id')->filter()->values()->all();
-    if (count(array_unique($pickedFacultyIds)) !== 2) {
-        return back()->withErrors(['panel_members' => 'Chair and Member must be different faculty members.'])->withInput();
-    }
-
-    // LINE 7: Enforce COI + time collision checks for selected panelists.
-    $blockedSelectionError = $this->panelMembersMustNotIncludeAdviserOrCoordinator($group, $requestedPanelMembers);
-    if ($blockedSelectionError) {
-        return back()->withErrors(['panel_members' => $blockedSelectionError])->withInput();
-    }
-    if ($this->checkPanelMemberConflicts($pickedFacultyIds, $startAt, $endAt, $id)) {
-        return back()->withErrors([
-            'panel_members' => 'One or more selected panel members are already assigned to another defense at this time.',
-        ])->withInput();
-    }
-
-    // LINE 8: Prevent re-selecting previously declined invited panelists.
-    $schedule->loadMissing('defensePanels');
-    $declinedPanelistIds = $schedule->defensePanels
-        ->whereIn('role', ['chair', 'member'])
-        ->where('status', 'declined')
-        ->pluck('faculty_id')->unique()->values()->all();
-    if (!empty($declinedPanelistIds) && count(array_intersect($pickedFacultyIds, $declinedPanelistIds)) > 0) {
-        return back()->withErrors([
-            'panel_members' => 'Replacement required: previously declined panelist cannot be re-selected for this update.',
-        ])->withInput();
-    }
-
-    // LINE 9: Save schedule + rebuild panel rows in one transaction.
-    DB::beginTransaction();
-    try {
-        $schedule->update([
-            'group_id' => $validated['group_id'],
-            'stage' => $validated['stage'],
-            'academic_term_id' => $validated['academic_term_id'],
-            'start_at' => $startAt,
-            'end_at' => $endAt,
-            'room' => $validated['room'],
-            'milestone_gate_overridden' => $gateOverridden,
-            'milestone_override_reason' => $gateOverridden ? $validated['milestone_override_reason'] : null,
-        ]);
-
-        $existingInvitedPanelsByRole = $schedule->defensePanels
-            ->whereIn('role', ['chair', 'member'])
-            ->keyBy('role');
-        DefensePanel::where('defense_schedule_id', $schedule->id)->delete();
-
-        // LINE 10: Keep accepted status if same person remains in same role.
-        foreach (collect($requestedPanelMembers)->sortBy(fn ($row) => $row['role'] === 'chair' ? 0 : 1) as $member) {
-            $existingPanelForRole = $existingInvitedPanelsByRole->get($member['role']);
-            $preserveAccepted = $existingPanelForRole
-                && (int) $existingPanelForRole->faculty_id === (int) $member['faculty_id']
-                && $existingPanelForRole->status === 'accepted';
-
-            DefensePanel::create([
-                'defense_schedule_id' => $schedule->id,
-                'faculty_id' => $member['faculty_id'],
-                'role' => $member['role'],
-                'status' => $preserveAccepted ? 'accepted' : 'pending',
-                'responded_at' => $preserveAccepted ? ($existingPanelForRole->responded_at ?? now()) : null,
-            ]);
-        }
-
-        // LINE 11: Auto-include adviser + offering coordinator as accepted roles.
-        // (same logic continues in controller)
-
-        DB::commit();
-        return redirect()->route('coordinator.defense.index')->with('success', 'Defense schedule updated successfully.');
-    } catch (\Exception $e) {
-        DB::rollback();
-        return back()->withErrors(['error' => 'Failed to update defense schedule. Please try again or contact support if the problem persists.'])->withInput();
-    }
-}
-```
-
-### B. Auto-Assign Candidate API (Used by Coordinator Defense UI)
-**File:** `app/Http/Controllers/Coordinator/DefenseScheduleController.php`  
-**Function:** `getAvailableFaculty(Request $request)`
-
-```php
-public function getAvailableFaculty(Request $request)
-{
-    // LINE 1: Validate required date/time/room/group inputs.
-    $request->validate([
-        'date' => 'required|date',
-        'start_time' => 'required|date_format:H:i',
-        'end_time' => 'required|date_format:H:i',
-        'room' => 'required|string',
-        'group_id' => 'required|exists:groups,id'
-    ]);
-
-    // LINE 2: Enforce coordinator scope by offering ownership.
-    $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
-    $group = Group::with(['adviser', 'offering'])->find($request->group_id);
-    if (!in_array($group->offering_id, $coordinatorOfferings)) {
-        abort(403, 'You can only access faculty for groups in your offerings.');
-    }
-
-    // LINE 3: Compute schedule overlap and room collision.
-    $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
-    $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
-    $conflict = $this->checkDoubleBooking($startAt, $endAt, $request->room);
-    $conflictingFacultyIds = $this->getConflictingFacultyIds($startAt, $endAt);
-
-    // LINE 4: Build eligible pool and rank by least workload.
-    $availableFaculty = $this->panelChairMemberCandidates($group)
-        ->whereNotIn('id', $conflictingFacultyIds)
-        ->values();
-    $assignmentCounts = DefensePanel::select('faculty_id', DB::raw('COUNT(*) as assignment_count'))
-        ->whereHas('defenseSchedule', function ($query) use ($activeTerm) {
-            if ($activeTerm) {
-                $query->where('academic_term_id', $activeTerm->id);
-            }
-        })
-        ->groupBy('faculty_id')
-        ->pluck('assignment_count', 'faculty_id');
-
-    $availableFaculty = $availableFaculty
-        ->map(function ($facultyMember) use ($assignmentCounts) {
-            $facultyMember->assignment_count = (int) ($assignmentCounts[$facultyMember->id] ?? 0);
-            return $facultyMember;
-        })
-        ->sortBy([['assignment_count', 'asc'], ['name', 'asc']])
-        ->values();
-
-    // LINE 5: Return full list plus suggested top-2 IDs for auto-prefill.
-    $autoAssignedFacultyIds = $availableFaculty
-        ->take(2)
-        ->pluck('id')
-        ->map(fn ($id) => (string) $id)
-        ->values();
-
-    return response()->json([
-        'availableFaculty' => $availableFaculty,
-        'autoAssignedFacultyIds' => $autoAssignedFacultyIds,
-        'conflict' => $conflict,
-        'message' => $conflict ? 'This room is already booked for the selected time slot.' : null
-    ]);
-}
-```
-
-### C. Coordinator Calendar Status Derivation (Aligned with Panel Confirmation)
-**File:** `app/Http/Controllers/CalendarController.php`  
-**Function:** `coordinatorCalendar()`
-
-```php
-public function coordinatorCalendar()
-{
-    // LINE 1: Load active term + all defense schedules in display scope.
-    $user = Auth::user();
-    $activeTerm = AcademicTerm::where('is_active', true)->first();
-    $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'group.offering.teacher', 'panelists'])
-        ->whereIn('status', ['scheduled', 'in_progress', 'completed'])
-        ->when($activeTerm, fn ($query) => $query->where('academic_term_id', $activeTerm->id))
-        ->orderBy('start_at')
-        ->get();
-
-    // LINE 2: Compute which groups belong to this coordinator.
-    $myGroupIds = Group::whereHas('offering', function ($query) use ($user) {
-        $query->where('faculty_id', $user->faculty_id);
-    })->pluck('id')->toArray();
-
-    // LINE 3: Derive panel state and display status for each event.
-    $calendarEvents = $defenses->map(function ($defense) use ($myGroupIds) {
-        $startDate = \Carbon\Carbon::parse($defense->start_at);
-        $endDate   = \Carbon\Carbon::parse($defense->end_at);
-        $invitedPanels = $defense->panelists->whereIn('role', ['chair', 'member']);
-        $hasConfirmedChair = $invitedPanels->where('role', 'chair')->where('status', 'accepted')->isNotEmpty();
-        $hasConfirmedMember = $invitedPanels->where('role', 'member')->where('status', 'accepted')->isNotEmpty();
-        $hasDeclinedInvite = $invitedPanels->where('status', 'declined')->isNotEmpty();
-
-        $panelState = $hasDeclinedInvite
-            ? 'replacement_needed'
-            : (($hasConfirmedChair && $hasConfirmedMember) ? 'confirmed' : 'awaiting_confirmation');
-
-        // LINE 4: Build modal-friendly status labels and badge variants.
-        $displayStatus = match ($defense->status) {
-            'completed' => 'Completed',
-            'in_progress' => 'In progress',
-            default => match ($panelState) {
-                'replacement_needed' => 'Replacement needed',
-                'awaiting_confirmation' => 'Awaiting panel confirmation',
-                default => 'Scheduled',
-            },
-        };
-
-        return [
-            'id' => $defense->id,
-            'title' => $defense->group->name ?? 'Defense',
-            'start' => $startDate->toISOString(),
-            'end' => $endDate->toISOString(),
-            'extendedProps' => [
-                'status' => $defense->status,
-                'panel_state' => $panelState,
-                'display_status' => $displayStatus,
-                'local_date' => $startDate->format('m/d/Y'),
-                'is_mine' => in_array($defense->group_id, $myGroupIds),
-            ],
-        ];
-    })->toArray();
-
-    // LINE 5: Return coordinator calendar with enriched event payload.
-    return view('calendar.coordinator', compact('defenses', 'calendarEvents', 'myGroupIds'));
-}
-```
-
-### D. Proposal Bulk Update with Ownership Guard
-**File:** `app/Http/Controllers/CoordinatorProposalController.php`  
-**Function:** `bulkUpdate(Request $request)`
-
-```php
-public function bulkUpdate(Request $request)
-{
-    // LINE 1: Validate IDs, final decision, and required coordinator comment.
-    $request->validate([
-        'proposal_ids' => 'required|array',
-        'proposal_ids.*' => 'integer|exists:project_submissions,id',
-        'status' => 'required|in:approved,rejected',
-        'teacher_comment' => 'required|string|min:10',
-    ]);
-
-    $user = Auth::user();
-    $updatedCount = 0;
-
-    // LINE 2: Iterate selected proposals and enforce coordinator scope per item.
-    foreach ($request->proposal_ids as $proposalId) {
-        $proposal = ProjectSubmission::find($proposalId);
-        $student = $proposal->getStudentData();
-        if (!$student) continue;
-        $studentGroup = $student->groups()->first();
-        if (!$studentGroup) continue;
-        $offering = $studentGroup->offering;
-        if (!$offering || $offering->faculty_id !== $user->faculty_id) continue;
-
-        // LINE 3: Save decision + comment.
-        $proposal->update([
-            'status' => $request->status,
-            'teacher_comment' => $request->teacher_comment,
-        ]);
-
-        // LINE 4: Notify student side based on decision type.
-        if ($request->status === 'approved') {
-            NotificationService::proposalApproved($student, $studentGroup->name, $proposal->title ?? 'Project Proposal');
-        } else {
-            NotificationService::proposalRejected($student, $studentGroup->name, $proposal->title ?? 'Project Proposal', $request->teacher_comment);
-        }
-        $updatedCount++;
-    }
-
-    // LINE 5: Return summary feedback to coordinator UI.
-    $statusMessage = $request->status === 'approved' ? 'approved' : 'rejected';
-    return redirect()->route('coordinator.proposals.index')->with('success', "{$updatedCount} proposals {$statusMessage} successfully.");
-}
-```
-
-### E. Faculty Matrix Aggregation (Coordinator Scope)
-**File:** `app/Http/Controllers/CoordinatorController.php`  
-**Function:** `facultyMatrix()`
+Source: `app/Http/Controllers/CoordinatorController.php`
 
 ```php
 public function facultyMatrix()
 {
-    // LINE 1: Determine coordinator identity + active academic term.
     $user = auth()->user();
     $activeTerm = AcademicTerm::where('is_active', true)->first();
 
-    // LINE 2: Get offerings owned by this coordinator.
     $coordinatedOfferings = Offering::with(['teacher', 'academicTerm'])
         ->where('faculty_id', $user->faculty_id)
         ->when($activeTerm, function ($query) use ($activeTerm) {
@@ -1064,7 +157,8 @@ public function facultyMatrix()
         })
         ->get();
 
-    // LINE 3: Pull groups + adviser + latest defense panels for matrix rows.
+    $coordinatedOfferingIds = $coordinatedOfferings->pluck('id');
+
     $groups = Group::with([
         'offering.teacher',
         'adviser',
@@ -1072,81 +166,226 @@ public function facultyMatrix()
             $query->latest('start_at');
         },
         'defenseSchedules.defensePanels.faculty',
-    ])->whereIn('offering_id', $coordinatedOfferings->pluck('id'))->get();
-
-    // LINE 4: Transform into UI rows (group, adviser, chair/member, schedule stage/status).
-    $matrixRows = $groups->map(function ($group) {
-        $latestSchedule = $group->defenseSchedules->first();
-        // mapping continues in actual file...
-    });
-
-    // LINE 5: Build summary cards and return view.
-    $summary = [
-        'total_offerings' => $coordinatedOfferings->count(),
-        'total_groups' => $groups->count(),
-    ];
-    return view('coordinator.faculty-matrix', compact('matrixRows', 'summary'));
+    ])
+        ->whereIn('offering_id', $coordinatedOfferingIds)
+        ->get();
 }
 ```
 
-### F. Milestone Template Assignment to Group
-**File:** `app/Http/Controllers/MilestoneTemplateController.php`  
-**Function:** `assignToGroup(Request $request)`
+Line-by-line explanation:
+1-3. Gets current user and active term.
+5-11. Fetches only offerings coordinated by that faculty, term-scoped when active term exists.
+13. Extracts offering IDs.
+15-22. Loads groups with adviser, latest schedules, and panel faculty relations.
+24-25. Restricts groups to coordinator-owned offerings only.
+
+---
+
+## 5) Defense Scheduling Gate + Override (Code + Line-by-Line)
+
+Source: `app/Http/Controllers/Coordinator/DefenseScheduleController.php`
 
 ```php
-public function assignToGroup(Request $request)
-{
-    // LINE 1: Validate group/template IDs and optional due date rule.
-    $request->validate([
-        'group_id' => 'required|exists:groups,id',
-        'milestone_template_id' => 'required|exists:milestone_templates,id',
-        'due_date' => 'nullable|date|after:today',
-    ]);
+$defenseRequest->loadMissing('group.groupMilestones.milestoneTemplate');
+$gate = $this->defenseMilestoneGateService->evaluate($defenseRequest->group, $defenseRequest->defense_type);
+$gateOverridden = false;
 
-    // LINE 2: Load template (with tasks) and target group.
-    $template = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
-    $group = Group::findOrFail($request->group_id);
-
-    // LINE 3: Prevent duplicate assignment of same template to same group.
-    $alreadyAssigned = GroupMilestone::where('group_id', $group->id)
-        ->where('milestone_template_id', $template->id)
-        ->exists();
-    if ($alreadyAssigned) {
-        return redirect()->route('coordinator.milestones.index')
-            ->withErrors(['assign' => "\"{$template->name}\" is already assigned to {$group->name}."]);
+if (!$gate['eligible']) {
+    if (blank($request->milestone_override_reason)) {
+        return back()->withErrors([
+            'milestone_override_reason' => $gate['message'] . ' Add override reason to schedule anyway.',
+        ])->withInput();
     }
+    $gateOverridden = true;
+}
 
-    // LINE 4: Apply central assignment validation policy.
-    $assignmentError = MilestoneAssignmentService::validateAssignment($group, $template);
-    if ($assignmentError !== null) {
-        return redirect()->route('coordinator.milestones.index')
-            ->withErrors(['assign' => $assignmentError]);
-    }
+$defenseSchedule = DefenseSchedule::create([
+    'milestone_gate_overridden' => $gateOverridden,
+    'milestone_override_reason' => $gateOverridden ? $request->milestone_override_reason : null,
+]);
+```
 
-    // LINE 5: Create group milestone header + clone all template tasks.
-    $groupMilestone = GroupMilestone::create([
-        'group_id' => $group->id,
-        'milestone_template_id' => $template->id,
-        'title' => $template->name,
-        'description' => $template->description,
-        'target_date' => $request->due_date,
-        'due_date' => $request->due_date,
-        'progress_percentage' => 0,
-        'status' => 'not_started',
-    ]);
-    foreach ($template->tasks as $task) {
-        GroupMilestoneTask::create([
-            'group_milestone_id' => $groupMilestone->id,
-            'milestone_task_id' => $task->id,
-            'status' => 'pending',
-            'is_completed' => false,
-        ]);
-    }
+Line-by-line explanation:
+1. Ensures milestone/template relations are loaded before gate check.
+2. Evaluates eligibility for requested defense stage.
+3. Initializes override flag.
+5-11. If not eligible, require override reason; otherwise block scheduling.
+12. Marks request as overridden when reason is provided.
+14-17. Persists override metadata into defense schedule for auditability.
 
-    // LINE 6: Notify group members and redirect with success message.
-    $group->load(['members.account']);
-    NotificationService::coordinatorAssignedMilestoneToGroup($group, $groupMilestone, $template);
+---
+
+## 6) Proposal Review
+
+Routes:
+- `/coordinator/proposals`
+- Preview, compare, update status, comments, and bulk update actions.
+
+Purpose:
+- coordinator handles operational pipeline decisions separate from adviser mentoring flow.
+
+---
+
+## 7) Defense Rubrics and Rating Oversight
+
+- Rubrics: `/coordinator/defense-rubrics` (coordinator-only middleware)
+- Coordinator can view panel ratings, print, finalize, and reopen rating windows.
+
+---
+
+## 8) Notifications, Calendar, Activity Log
+
+- Notifications: list/mark/delete operations under coordinator namespace
+- Calendar: `/coordinator/calendar`
+- Activity log: `/coordinator/activity-log`
+
+---
+
+## 9) Final Coordinator Workflow
+
+1. Verify coordinated offerings and groups
+2. Maintain milestone templates
+3. Assign milestones with service-level prerequisites
+4. Review proposals and comments
+5. Process defense requests and schedules
+6. Finalize/reopen rating sheets as needed
+
+---
+
+## 10) Connected Code and Functions (Coordinator)
+
+This section lists the exact methods connected to coordinator logic so you can quickly trace behavior in code review or defense Q&A.
+
+### A. Main coordinator controller
+
+File: `app/Http/Controllers/CoordinatorController.php`
+
+- `index()` - coordinator dashboard metrics.
+- `classlist()` - class list view/filter scoped to coordinator offerings.
+- `importStudentsForm()` / `importStudents()` - class list import flow.
+- `groups()`, `create()`, `store()`, `show()`, `edit()`, `update()`, `destroy()` - group CRUD.
+- `assignAdviser()` - adviser selection entry for a group.
+- `groupMilestones()` - per-group assignment/progress page.
+- `notifications()`, `markNotificationAsRead()`, `markAllNotificationsAsRead()`, `markMultipleAsRead()`, `deleteNotification()`, `deleteMultiple()` - notification operations.
+- `activityLog()` - coordinator activity timeline.
+- `facultyMatrix()` - group-to-faculty matrix generation.
+
+### B. Milestone templates and assignment
+
+File: `app/Http/Controllers/MilestoneTemplateController.php`
+
+- `index()`, `create()`, `store()`, `edit()`, `update()`, `destroy()` - template lifecycle.
+- `updateStatus()` - quick status update endpoint.
+- `storeTask()`, `updateTask()`, `destroyTask()` - template task CRUD.
+- `assignToGroup()` - creates group milestone + seeded tasks.
+- `removeAssignmentFromGroup()` - unassigns template from group.
+
+File: `app/Services/MilestoneAssignmentService.php`
+
+- `assignmentMeta()` - computes UI-state (can assign, reason, next allowed template).
+- `validateAssignment()` - final server-side rule enforcement before assignment.
+- `resolveNextSequencedTemplate()` - computes next step in sequencing.
+- `groupHasApprovedProposal()` - checks approved proposal prerequisite.
+- `hasActiveSequenceStep()` - verifies required sequence step exists.
+
+### C. Defense scheduling and requests
+
+File: `app/Http/Controllers/Coordinator/DefenseScheduleController.php`
+
+- `defenseRequestsIndex()` - pending request queue.
+- `index()` - defense management list.
+- `create()`, `store()`, `show()`, `edit()`, `update()`, `destroy()` - manual defense schedule lifecycle.
+- `getAvailableFaculty()` - panel candidate filtering.
+- `createSchedule()`, `storeSchedule()` - request-to-schedule conversion flow.
+- `approve()`, `reject()` - request decision endpoints.
+- `markAsCompleted()` - closes schedule and marks complete.
+
+File: `app/Services/DefenseMilestoneGateService.php`
+
+- `evaluate()` - stage eligibility decision.
+- `evaluateProposalStage()` - proposal-stage specific check.
+- `isProposalStage()`, `stageToOrder()`, `stageLabel()` - stage normalization helpers.
+
+### D. Proposal and rating side modules used by coordinator routes
+
+File: `app/Http/Controllers/CoordinatorProposalController.php`
+
+- `index()`, `show()`, `preview()`, `compareVersions()`, `update()`, `storeComment()`, `bulkUpdate()`, `getStats()`.
+
+File: `app/Http/Controllers/RatingSheetController.php`
+
+- `showCoordinatorRatings()`, `printCoordinatorRatings()`, `finalizeCoordinatorRatings()`, `reopenCoordinatorRatings()`.
+
+---
+
+## 11) Core Connected Functions (Snippet + Line-by-Line)
+
+### A) `MilestoneTemplateController::assignToGroup`
+
+```php
+$template = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
+$group    = Group::findOrFail($request->group_id);
+$assignmentError = MilestoneAssignmentService::validateAssignment($group, $template);
+if ($assignmentError !== null) {
     return redirect()->route('coordinator.milestones.index')
-        ->with('success', "\"{$template->name}\" assigned to {$group->name} with {$template->tasks->count()} tasks.");
+        ->withErrors(['assign' => $assignmentError]);
 }
 ```
+
+Line-by-line:
+1. Loads selected milestone template plus its tasks.
+2. Loads target group.
+3. Calls service-layer gate for assignment rules.
+4. Checks if service returned an error string.
+5-6. Redirects back and shows reason when blocked.
+
+### B) `MilestoneAssignmentService::validateAssignment`
+
+```php
+$meta = self::assignmentMeta($group);
+$hasApprovedProposal = self::groupHasApprovedProposal($group);
+if (! $meta['can_assign']) {
+    return $meta['block_message'];
+}
+if ((int) $template->sequence_order > self::PROPOSAL_SEQUENCE_ORDER && ! $hasApprovedProposal) {
+    return 'Cannot assign 60%/100% milestones until the group has at least one approved proposal.';
+}
+```
+
+Line-by-line:
+1. Reads computed assignment metadata for current group.
+2. Checks proposal approval prerequisite.
+3-4. Immediately blocks if metadata says assignment is not allowed.
+5-7. Applies hard rule for later stages (step > 1).
+
+### C) `CoordinatorController::facultyMatrix`
+
+```php
+$coordinatedOfferings = Offering::with(['teacher', 'academicTerm'])
+    ->where('faculty_id', $user->faculty_id)
+    ->when($activeTerm, fn ($query) => $query->where('academic_term_id', $activeTerm->id))
+    ->get();
+$groups = Group::with(['offering.teacher', 'adviser', 'defenseSchedules.defensePanels.faculty'])
+    ->whereIn('offering_id', $coordinatedOfferings->pluck('id'))
+    ->get();
+```
+
+Line-by-line:
+1-4. Fetches offerings owned by coordinator (active-term scoped when available).
+5-7. Loads groups tied to those offerings with adviser and panel relations.
+
+### D) `DefenseScheduleController::storeSchedule`
+
+```php
+$gate = $this->defenseMilestoneGateService->evaluate($defenseRequest->group, $defenseRequest->defense_type);
+if (!$gate['eligible'] && blank($request->milestone_override_reason)) {
+    return back()->withErrors([
+        'milestone_override_reason' => $gate['message'] . ' Add override reason to schedule anyway.',
+    ])->withInput();
+}
+```
+
+Line-by-line:
+1. Evaluates defense-stage readiness from milestone gate service.
+2. Checks if stage is ineligible and no override reason was provided.
+3-5. Blocks request and returns a form-level error with preserved input.

@@ -16,7 +16,7 @@ class ProjectSubmissionController extends Controller
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->isTeacher()) {
-                // Adviser project listing is consolidated into Adviser Groups page.
+                
                 return redirect()->route('adviser.groups');
             } else {
                 return $this->studentIndex($user);
@@ -309,7 +309,7 @@ class ProjectSubmissionController extends Controller
         $secureFileUrl = route('student.project.submission.file', $projectSubmission);
         $panel['downloadUrl'] = $secureFileUrl;
 
-        // Use an authenticated inline file route for PDFs to avoid web-server-level 403 on /storage links.
+        
         if (($panel['kind'] ?? null) === 'pdf') {
             $panel['iframeSrc'] = $secureFileUrl . '#toolbar=1';
         }

@@ -154,7 +154,7 @@
                             <p class="text-muted text-center py-2">No tasks yet. Add one below.</p>
                         @endif
 
-                        {{-- Add new task --}}
+                        
                         <form action="{{ route('coordinator.milestones.tasks.store', $milestone->id) }}"
                               method="POST"
                               class="d-flex gap-2 mt-2">

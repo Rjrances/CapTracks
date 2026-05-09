@@ -14,9 +14,9 @@ class StudentDashboardController extends Controller
 {
     public function index()
     {
-        // Check student guard FIRST — a coordinator may also be logged in on the web guard
-        // simultaneously, and Auth::check() (web) would win if checked first, causing a false
-        // "Student record not found" error even when a valid student session exists.
+        
+        
+        
         if (Auth::guard('student')->check()) {
             $studentAccount = Auth::guard('student')->user();
             $student = $studentAccount->student;
@@ -27,7 +27,7 @@ class StudentDashboardController extends Controller
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
 
-        // Check if student record exists
+        
         if (!$student) {
             return redirect('/login')->withErrors(['auth' => 'Student record not found. Please contact administrator.']);
         }
@@ -71,7 +71,7 @@ class StudentDashboardController extends Controller
             $totalProgress = $group->groupMilestones->sum('progress_percentage');
             return round($totalProgress / $group->groupMilestones->count());
         }
-        return 0; //0 progress
+        return 0; 
     }
     private function getTaskStatistics($student, $group = null)
     {
@@ -327,7 +327,7 @@ class StudentDashboardController extends Controller
     }
     private function getOfferingInfo($group = null, $student = null)
     {
-        // Use the student passed from the main method
+        
         $offering = $student ? $student->getCurrentOffering() : null;
         
         if (!$offering) {

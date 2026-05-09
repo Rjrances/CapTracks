@@ -22,7 +22,7 @@ class CheckDataIntegrity extends Command
 
         $issues = [];
 
-        // Check for groups without offering
+        
         $groupsWithoutOffering = Group::whereNull('offering_id')->count();
         if ($groupsWithoutOffering > 0) {
             $issues[] = "ERROR: {$groupsWithoutOffering} groups without offering_id";
@@ -36,7 +36,7 @@ class CheckDataIntegrity extends Command
             $this->info("PASS: All groups have offering_id");
         }
 
-        // Check for groups without members
+        
         $groupsWithoutMembers = Group::whereDoesntHave('members')->count();
         if ($groupsWithoutMembers > 0) {
             $issues[] = "ERROR: {$groupsWithoutMembers} groups without members";
@@ -50,7 +50,7 @@ class CheckDataIntegrity extends Command
             $this->info("PASS: All groups have members");
         }
 
-        // Check for students without groups
+        
         $studentsWithoutGroups = Student::whereDoesntHave('groups')->count();
         if ($studentsWithoutGroups > 0) {
             $issues[] = "WARNING: {$studentsWithoutGroups} students without groups";
@@ -59,7 +59,7 @@ class CheckDataIntegrity extends Command
             $this->info("PASS: All students have groups");
         }
 
-        // Check for students without offering enrollment
+        
         $studentsWithoutOffering = Student::whereDoesntHave('offerings')->count();
         if ($studentsWithoutOffering > 0) {
             $issues[] = "ERROR: {$studentsWithoutOffering} students not enrolled in any offering";
@@ -68,7 +68,7 @@ class CheckDataIntegrity extends Command
             $this->info("PASS: All students are enrolled in offerings");
         }
 
-        // Check for defense schedules without defense requests
+        
         $schedulesWithoutRequests = DefenseSchedule::whereNotNull('defense_request_id')
             ->whereDoesntHave('defenseRequest')->count();
         if ($schedulesWithoutRequests > 0) {
@@ -78,7 +78,7 @@ class CheckDataIntegrity extends Command
             $this->info("PASS: All defense schedules have valid defense_request_id");
         }
 
-        // Check for orphaned defense requests
+        
         $orphanedRequests = DefenseRequest::whereDoesntHave('group')->count();
         if ($orphanedRequests > 0) {
             $issues[] = "ERROR: {$orphanedRequests} defense requests without groups";
@@ -87,7 +87,7 @@ class CheckDataIntegrity extends Command
             $this->info("PASS: All defense requests have valid groups");
         }
 
-        // Check for users without roles
+        
         $usersWithoutRoles = User::whereDoesntHave('roles')->count();
         if ($usersWithoutRoles > 0) {
             $issues[] = "ERROR: {$usersWithoutRoles} users without roles";

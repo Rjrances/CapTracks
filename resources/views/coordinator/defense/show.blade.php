@@ -162,8 +162,8 @@ Defense — {{ $defenseSchedule->group->name }}
                                 </div>
                             @endif
                             @php
-                                // "Additional Members" should only show panel chair/member.
-                                // Adviser and coordinator are rendered in the "Automatically Included" section.
+                                
+                                
                                 $manualMembers = $defenseSchedule->defensePanels
                                     ->whereIn('role', ['chair', 'member'])
                                     ->values();

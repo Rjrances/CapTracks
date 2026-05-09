@@ -206,8 +206,8 @@ class AuthController extends Controller
             return null;
         }
 
-        // If a DIFFERENT student is already logged in on this browser, block the login
-        // and show a clear message instead of a misleading error downstream.
+        
+        
         if (Auth::guard('student')->check()) {
             $activeAccount = Auth::guard('student')->user();
             if ($activeAccount->student_id !== $studentAccount->student_id) {

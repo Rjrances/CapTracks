@@ -65,7 +65,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
-    {{-- Form Card --}}
+    
     <div class="card shadow-sm">
         <div class="card-body">
             <form action="{{ route('chairperson.upload-students') }}" method="POST" enctype="multipart/form-data" id="importForm">
@@ -87,7 +87,7 @@
                     </span>
                 </button>
             </form>
-            {{-- Format Information --}}
+            
             <div class="mt-3">
                 <div class="alert alert-info">
                     <h6 class="alert-heading">

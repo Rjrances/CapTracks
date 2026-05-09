@@ -45,7 +45,7 @@ class AdviserController extends Controller
         });
         $panelGroups = Group::with(['academicTerm', 'defenseSchedules.defensePanels'])
             ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-                // Only true panel roles should count here.
+                
                 $query->where('faculty_id', $user->id)
                     ->whereIn('role', ['chair', 'member'])
                     ->where('status', 'accepted');
@@ -717,12 +717,12 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
 
-        // Only the assigned adviser of this group can view
+        
         if ((int) $group->faculty_id !== (int) $user->faculty_id) {
             abort(403, 'You are not the adviser of this group.');
         }
 
-        // Ensure the milestone belongs to this group
+        
         if ((int) $groupMilestone->group_id !== (int) $group->id) {
             abort(404);
         }

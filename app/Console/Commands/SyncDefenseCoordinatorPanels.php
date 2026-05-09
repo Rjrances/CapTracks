@@ -86,10 +86,7 @@ class SyncDefenseCoordinatorPanels extends Command
         return self::SUCCESS;
     }
 
-    /**
-     * When CAP II (12002) shares the same offerings.faculty_id as CAP I (12000) for the active term,
-     * assign CAP II to the other coordinator user (faculty_id 10004) when present.
-     */
+    
     private function fixCap402OfferingCoordinator(bool $dryRun): void
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();

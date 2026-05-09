@@ -27,7 +27,7 @@
                                         <td>{{ $term->school_year }}</td>
                                         <td>
                                             @php
-                                                // Extract semester part from full string (e.g., "2024-2025 First Semester" -> "First Semester")
+                                                
                                                 $semesterDisplay = $term->semester;
                                                 if (strpos($semesterDisplay, 'First Semester') !== false) {
                                                     $semesterDisplay = 'First Semester';

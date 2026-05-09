@@ -10,7 +10,7 @@
             ->pluck('id')
             ->toArray()
         : [];
-    // Same scope as Coordinator\DefenseScheduleController@defenseRequestsIndex
+    
     $pendingDefenseRequestsCount = ($user && count($coordinatorOfferingIds) > 0)
         ? \App\Models\DefenseRequest::where('status', 'pending')
             ->whereHas('group', function ($q) use ($coordinatorOfferingIds) {

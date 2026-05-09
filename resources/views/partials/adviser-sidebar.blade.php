@@ -5,7 +5,7 @@
     $pendingAdviserInvitations = $user
         ? \App\Models\AdviserInvitation::where('faculty_id', $user->id)->where('status', 'pending')->count()
         : 0;
-    // Match AdviserController@panelInvitations: chair/member roles only (not adviser/coordinator rows)
+    
     $pendingPanelInvitations = $user
         ? \App\Models\DefensePanel::where('faculty_id', $user->id)
             ->whereIn('role', ['chair', 'member'])

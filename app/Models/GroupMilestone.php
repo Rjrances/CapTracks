@@ -104,11 +104,7 @@ class GroupMilestone extends Model
             ->count();
     }
 
-    /**
-     * Label + badge class for coordinator read-only view (aligned with task + percent progress).
-     *
-     * @return array{label: string, class: string}
-     */
+    
     public function coordinatorDisplayStatus(): array
     {
         $pct = (int) $this->progress_percentage;

@@ -61,7 +61,7 @@
                 </a>
             </li>
             @php
-                // Check if student has a group
+                
                 $studentHasGroup = false;
                 if (Auth::guard('student')->check()) {
                     $studentAccount = Auth::guard('student')->user();

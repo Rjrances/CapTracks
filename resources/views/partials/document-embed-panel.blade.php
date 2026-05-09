@@ -1,6 +1,4 @@
-{{--
-    Expects: $panel with keys: label, kind, iframeSrc, downloadUrl
---}}
+
 @php
     $iframeSrc = $panel['iframeSrc'] ?? null;
     $kind = $panel['kind'] ?? 'unknown';

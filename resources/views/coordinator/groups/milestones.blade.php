@@ -127,7 +127,7 @@
                                     $coordStatus = $groupMilestone->coordinatorDisplayStatus();
                                     $hasTaskList = $taskRows->isNotEmpty();
                                 @endphp
-                                {{-- Main row: summary metrics stay top-aligned and do not stretch when tasks expand --}}
+                                
                                 <tr class="align-top coordinator-milestone-main-row">
                                     <td class="{{ $hasTaskList ? 'border-bottom-0 pb-0' : '' }}">
                                         <div class="fw-semibold">{{ $groupMilestone->milestoneTemplate->name }}</div>

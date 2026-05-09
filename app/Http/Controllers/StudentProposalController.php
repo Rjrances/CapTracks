@@ -90,7 +90,7 @@ class StudentProposalController extends Controller
             'methodology' => 'required|string|min:100',
             'timeline' => 'required|string|min:50',
             'expected_outcomes' => 'required|string|min:50',
-            'file' => 'required|file|mimes:pdf,doc,docx|max:10240', // 10MB max
+            'file' => 'required|file|mimes:pdf,doc,docx|max:10240', 
         ]);
         if (Auth::guard('student')->check()) {
             $studentAccount = Auth::guard('student')->user();
@@ -180,7 +180,7 @@ class StudentProposalController extends Controller
             'methodology' => 'required|string|min:100',
             'timeline' => 'required|string|min:50',
             'expected_outcomes' => 'required|string|min:50',
-            'file' => 'nullable|file|mimes:pdf,doc,docx|max:10240', // 10MB max
+            'file' => 'nullable|file|mimes:pdf,doc,docx|max:10240', 
         ]);
         if (Auth::guard('student')->check()) {
             $studentAccount = Auth::guard('student')->user();

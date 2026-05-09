@@ -17,11 +17,11 @@ class ChairpersonStudentController extends Controller
     {
         $activeTerm = $this->getActiveTerm();
         
-        //filter students
+        
         $query = Student::query();
         
         if ($activeTerm) {
-            //show students
+            
             $query->where('semester', $activeTerm->semester);
         }
         
@@ -60,11 +60,11 @@ class ChairpersonStudentController extends Controller
     {
         $activeTerm = $this->getActiveTerm();
         
-        //filter students
+        
         $query = Student::query();
         
         if ($activeTerm) {
-            //show students
+            
             $query->where('semester', $activeTerm->semester);
         }
         

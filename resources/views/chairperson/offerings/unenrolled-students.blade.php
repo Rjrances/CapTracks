@@ -97,7 +97,7 @@
                                                 <span class="badge bg-info">{{ $student->semester }}</span>
                                             </td>
                                             <td>
-                                                {{-- Single add — opens modal instead of browser confirm --}}
+                                                
                                                 <button type="button" class="btn btn-sm btn-outline-success single-add-btn"
                                                         data-student-id="{{ $student->student_id }}"
                                                         data-student-name="{{ $student->name }}"
@@ -125,19 +125,19 @@
     </div>
 </div>
 
-{{-- Hidden bulk form --}}
+
 <form id="bulkAddForm" method="POST" action="{{ route('chairperson.offerings.enroll-multiple-students', $offering->id) }}" style="display: none;">
     @csrf
     <input type="hidden" name="student_ids" id="bulkAddStudentIds">
 </form>
 
-{{-- Hidden single-add form --}}
+
 <form id="singleAddForm" method="POST" style="display: none;">
     @csrf
     <input type="hidden" name="student_id" id="singleAddStudentId">
 </form>
 
-{{-- ─── Single Add Confirm Modal ─────────────────────────────── --}}
+
 <div class="modal fade" id="singleConfirmModal" tabindex="-1" aria-labelledby="singleConfirmModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -168,7 +168,7 @@
     </div>
 </div>
 
-{{-- ─── Bulk Add Confirm Modal ───────────────────────────────── --}}
+
 <div class="modal fade" id="bulkConfirmModal" tabindex="-1" aria-labelledby="bulkConfirmModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg">
@@ -207,7 +207,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    /* ── Single Add Modal ─────────────────────────── */
+    
     document.querySelectorAll('.single-add-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             document.getElementById('singleStudentName').textContent = this.dataset.studentName;
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('singleAddForm').submit();
     });
 
-    /* ── Bulk Add Modal ───────────────────────────── */
+    
     const selectAllCheckbox = document.getElementById('selectAll');
     const studentCheckboxes = document.querySelectorAll('.student-checkbox');
     const addSelectedBtn    = document.getElementById('addSelectedBtn');
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function () {
         selectedCountSpan.textContent = count;
     }
 
-    /* Populate bulk modal content before it shows */
+    
     document.getElementById('bulkConfirmModal').addEventListener('show.bs.modal', function () {
         const checked      = document.querySelectorAll('.student-checkbox:checked');
         const studentIds   = Array.from(checked).map(cb => cb.value);

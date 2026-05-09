@@ -9,12 +9,12 @@ class StudentAuthMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        //check auth
+        
         if (!Auth::guard('student')->check()) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         
-        //get auth
+        
         $student = Auth::guard('student')->user();
         if (!$student->isStudent()) {
             return redirect('/login')->withErrors(['auth' => 'Access denied. Student account required.']);

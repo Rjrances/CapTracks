@@ -33,7 +33,7 @@
 <div class="card-wrapper">
     <div class="bg-white rounded-4 shadow p-5">
 
-        {{-- Header --}}
+        
         <div class="text-center mb-4">
             <div class="brand mb-2">
                 <i class="fas fa-graduation-cap me-1 text-primary"></i>CapTrack
@@ -51,7 +51,7 @@
             </p>
         </div>
 
-        {{-- Alerts --}}
+        
         @if(session('warning'))
             <div class="alert alert-warning alert-dismissible fade show py-2" role="alert">
                 <i class="fas fa-exclamation-triangle me-2"></i>{{ session('warning') }}
@@ -76,7 +76,7 @@
             </div>
         @endif
 
-        {{-- Form --}}
+        
         <form method="POST" action="{{ route('student.update-password') }}">
             @csrf
 
@@ -134,7 +134,7 @@
             </div>
         </form>
 
-        {{-- Security tip --}}
+        
         <div class="alert alert-light border mt-4 mb-0 py-2 small">
             <i class="fas fa-lightbulb me-1 text-warning"></i>
             <strong>Security Tip:</strong> Choose a strong password that you haven't used before and keep it secure.

@@ -14,8 +14,8 @@ class CalendarController extends Controller
         $user = Auth::user();
         $activeTerm = AcademicTerm::where('is_active', true)->first();
 
-        // Show ALL scheduled defenses in the active term so coordinators
-        // can see other groups' schedules and avoid room/time conflicts.
+        
+        
         $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'group.offering.teacher', 'panelists'])
             ->whereIn('status', ['scheduled', 'in_progress', 'completed'])
             ->when($activeTerm, function ($query) use ($activeTerm) {
@@ -24,7 +24,7 @@ class CalendarController extends Controller
             ->orderBy('start_at')
             ->get();
 
-        // Only defenses for this coordinator's own groups can be edited.
+        
         $myGroupIds = Group::whereHas('offering', function ($query) use ($user) {
             $query->where('faculty_id', $user->faculty_id);
         })->pluck('id')->toArray();

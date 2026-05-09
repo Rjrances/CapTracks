@@ -69,9 +69,7 @@ class DefenseSchedule extends Model
         };
     }
 
-    /**
-     * Label for UI: linked defense request type when present, otherwise manual schedule stage.
-     */
+    
     public function getDefenseTypeLabelAttribute(): string
     {
         if ($this->defense_request_id) {
@@ -119,7 +117,7 @@ class DefenseSchedule extends Model
         return $this->status === 'cancelled';
     }
 
-    /** Bootstrap background variant for status badges (primary, success, …). */
+    
     public function getStatusBadgeVariantAttribute(): string
     {
         return match ($this->status) {
@@ -131,7 +129,7 @@ class DefenseSchedule extends Model
         };
     }
 
-    /** Human-readable workflow status for lists and detail views. */
+    
     public function getStatusLabelAttribute(): string
     {
         return ucfirst(str_replace('_', ' ', (string) $this->status));

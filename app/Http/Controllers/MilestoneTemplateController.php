@@ -26,7 +26,7 @@ class MilestoneTemplateController extends Controller
         
         $milestoneTemplates = MilestoneTemplate::with('tasks')->get();
         
-        //group filter
+        
         $groupsQuery = \App\Models\Group::with(['members', 'adviser', 'milestones.template']);
         if ($activeTerm) {
             $groupsQuery->where('academic_term_id', $activeTerm->id);
@@ -211,7 +211,7 @@ class MilestoneTemplateController extends Controller
         $template = MilestoneTemplate::with('tasks')->findOrFail($request->milestone_template_id);
         $group    = Group::findOrFail($request->group_id);
 
-        // Prevent assigning the same template twice to the same group
+        
         $alreadyAssigned = GroupMilestone::where('group_id', $group->id)
             ->where('milestone_template_id', $template->id)
             ->exists();
@@ -232,7 +232,7 @@ class MilestoneTemplateController extends Controller
             'milestone_template_id' => $template->id,
             'title'                 => $template->name,
             'description'           => $template->description,
-            // Keep both fields in sync; existing views may read either target_date or due_date.
+            
             'target_date'           => $request->due_date,
             'due_date'              => $request->due_date,
             'progress_percentage'   => 0,

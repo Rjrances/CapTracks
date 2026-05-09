@@ -32,7 +32,7 @@
                 </div>
                 <div class="card-body">
 
-                    {{-- Group Info --}}
+                    
                     <div class="alert alert-info">
                         <h6 class="mb-2"><i class="fas fa-users me-2"></i>Group Information</h6>
                         <div class="row">
@@ -49,7 +49,7 @@
                     <form action="{{ route('student.defense-requests.store') }}" method="POST">
                         @csrf
 
-                        {{-- Defense Type --}}
+                        
                         <div class="mb-4">
                             <label for="defense_type" class="form-label fw-bold">
                                 <i class="fas fa-gavel me-1"></i>Defense Type *
@@ -71,7 +71,7 @@
                             </div>
                         </div>
 
-                        {{-- Info Note --}}
+                        
                         <div class="alert alert-success">
                             <i class="fas fa-check-circle me-2"></i>
                             Clicking <strong>Submit Request</strong> will notify your coordinator that your group is ready for defense scheduling.
@@ -90,7 +90,7 @@
                 </div>
             </div>
 
-            {{-- What Happens Next --}}
+            
             <div class="card mt-4 border-info">
                 <div class="card-header bg-info text-white">
                     <h6 class="mb-0">

@@ -98,10 +98,10 @@ class NotificationService
             return Notification::create([
                 'title' => 'New Teacher Invitation',
                 'description' => "You have received a teacher invitation from group: {$groupName}",
-                'role' => $role, // Use the actual user role
+                'role' => $role, 
                 'redirect_url' => $redirectUrl ?? route('adviser.invitations'),
                 'is_read' => false,
-                'user_id' => $adviser->id, // Add specific user ID
+                'user_id' => $adviser->id, 
             ]);
         } catch (\Exception $e) {
             Log::error('Error creating adviser invitation notification', [
@@ -113,9 +113,7 @@ class NotificationService
         }
     }
 
-    /**
-     * Notify faculty when a coordinator assigns or changes the group's adviser (direct assignment).
-     */
+    
     public static function adviserAssignedByCoordinator(User $adviser, Group $group, ?string $coordinatorName = null, ?string $redirectUrl = null): ?Notification
     {
         $group->loadMissing('offering');
@@ -218,9 +216,7 @@ class NotificationService
         );
     }
 
-    /**
-     * Notify each group member when a coordinator assigns a milestone template to their group.
-     */
+    
     public static function coordinatorAssignedMilestoneToGroup(
         Group $group,
         GroupMilestone $groupMilestone,
@@ -242,9 +238,7 @@ class NotificationService
         }
     }
 
-    /**
-     * Notify each group member when their adviser comments on a milestone task thread.
-     */
+    
     public static function adviserCommentOnMilestoneTask(User $adviser, GroupMilestoneTask $task): void
     {
         $task->loadMissing([
@@ -274,9 +268,7 @@ class NotificationService
         }
     }
 
-    /**
-     * Match Notification::visibleToStudent targeting (student_accounts.id preferred).
-     */
+    
     private static function studentNotificationUserId(Student $student): ?int
     {
         $account = $student->relationLoaded('account')
@@ -303,7 +295,7 @@ class NotificationService
                 'role' => $role,
                 'redirect_url' => $redirectUrl,
                 'is_read' => false,
-                'user_id' => $userId, // Add user_id if provided
+                'user_id' => $userId, 
             ]);
         } catch (\Exception $e) {
             Log::error('Error creating simple notification', [

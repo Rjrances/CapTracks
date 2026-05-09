@@ -14,7 +14,7 @@ class ChairpersonFacultyController extends Controller
         return AcademicTerm::where('is_active', true)->first();
     }
 
-    //show faculty
+    
     public function index(Request $request)
     {
         $activeTerm = $this->getActiveTerm();
@@ -120,7 +120,7 @@ class ChairpersonFacultyController extends Controller
         ]);
         $user->assignRoles([$request->role]);
 
-        //create account
+        
         \App\Models\UserAccount::create([
             'faculty_id' => $facultyId,
             'user_id' => $user->id,
@@ -165,7 +165,7 @@ class ChairpersonFacultyController extends Controller
                 ->withErrors(['first_name' => 'A faculty member with the same first, middle, and last name already exists for this semester. Use a different suffix if this is a different person.']);
         }
         
-        //email validation
+        
         if ($activeTerm) {
             $existingEmail = User::where('email', $request->email)
                 ->where('semester', $activeTerm->semester)
@@ -186,7 +186,7 @@ class ChairpersonFacultyController extends Controller
         
         $facultyId = $request->faculty_id;
         
-        //create user
+        
         $user = User::create([
             'name' => $fullName,
             'name_prefix' => $namePrefix,
@@ -202,7 +202,7 @@ class ChairpersonFacultyController extends Controller
         ]);
         $user->assignRoles(['teacher']);
 
-        //create account
+        
         \App\Models\UserAccount::create([
             'faculty_id' => $facultyId,
             'user_id' => $user->id,
@@ -242,7 +242,7 @@ class ChairpersonFacultyController extends Controller
         
         $faculty = $query->firstOrFail();
         
-        //email validation
+        
         $request->validate([
             'name_prefix' => 'nullable|string|max:20',
             'first_name' => 'required|string|max:100',

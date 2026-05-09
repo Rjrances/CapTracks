@@ -11,7 +11,7 @@
                     </p>
                 @endif
 
-                {{-- Assigned Student --}}
+                
                 <div class="mb-2">
                     @if($task->assignedStudent)
                         <span class="badge bg-info text-dark small">
@@ -24,7 +24,7 @@
                     @endif
                 </div>
 
-                {{-- Deadline --}}
+                
                 @if($task->deadline)
                     <div class="small {{ $task->deadline && now()->isAfter($task->deadline) && $task->status !== 'done' ? 'text-danger' : 'text-muted' }}">
                         <i class="fas fa-calendar me-1"></i>
@@ -35,7 +35,7 @@
                     </div>
                 @endif
 
-                {{-- Comments count --}}
+                
                 @if(($task->task_comments_count ?? 0) > 0)
                     <div class="small text-muted mt-1">
                         <i class="fas fa-comments me-1"></i>{{ $task->task_comments_count }} comment(s)
@@ -45,7 +45,7 @@
                 @endif
             </div>
 
-            {{-- Status Badge --}}
+            
             <div class="ms-2">
                 @if($task->status === 'done')
                     <span class="badge bg-success"><i class="fas fa-check me-1"></i>Done</span>

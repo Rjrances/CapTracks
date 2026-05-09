@@ -17,7 +17,7 @@ class CoordinatorDashboardController extends Controller
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         
-        // Filter all data by active term and coordinator offerings
+        
         $coordinatorOfferings = auth()->user()->offerings()
             ->when($activeTerm, function($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);

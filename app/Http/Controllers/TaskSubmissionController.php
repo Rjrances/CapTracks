@@ -44,7 +44,7 @@ class TaskSubmissionController extends Controller
             'description' => 'required|string|min:10',
             'notes' => 'nullable|string|max:1000',
             'progress_percentage' => 'nullable|integer|min:0|max:100',
-            'file' => 'required_if:submission_type,document,screenshots|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:10240', // 10MB max
+            'file' => 'required_if:submission_type,document,screenshots|file|mimes:pdf,doc,docx,jpg,jpeg,png,zip|max:10240', 
         ]);
         $filePath = null;
         if ($request->hasFile('file')) {

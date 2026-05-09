@@ -18,7 +18,7 @@ class StudentPasswordController extends Controller
                 ->with('info', 'Your password is already up to date.');
         }
         
-        //first-time validaiton
+        
         $isFirstTime = is_null($student->password);
         
         return view('student.change-password', compact('isFirstTime'));
@@ -28,7 +28,7 @@ class StudentPasswordController extends Controller
     {
         $student = Auth::guard('student')->user();
         
-        //no password
+        
         $isFirstTime = is_null($student->password);
         
         $rules = [
@@ -56,7 +56,7 @@ class StudentPasswordController extends Controller
                 ->withInput();
         }
         
-        //verify password
+        
         if (!$isFirstTime) {
             if (!Hash::check($request->current_password, $student->password)) {
                 return redirect()->back()

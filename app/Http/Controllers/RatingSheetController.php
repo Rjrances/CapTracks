@@ -52,7 +52,7 @@ class RatingSheetController extends Controller
             ->where('faculty_id', $panelFacultyUserId)
             ->first();
 
-        // Treat legacy placeholder rows (all-zero, no recommendation/remarks) as empty state.
+        
         if (
             $existingRating &&
             (float) $existingRating->total_score <= 0 &&
@@ -230,14 +230,14 @@ class RatingSheetController extends Controller
             ->orderBy('start_at')
             ->first();
 
-        // After submitting, coordinators go back to the overview/results page.
-        // Panelists/advisers go back to their own rating form view.
+        
+        
         $isCoordinatorRoute = request()->routeIs('coordinator.*');
         $redirectRoute = $isCoordinatorRoute
             ? 'coordinator.rating-sheets.show'
             : 'adviser.rating-sheets.show';
 
-        // If there is a next unrated schedule, the "next" link uses the rating form route.
+        
         $nextRatingRoute = $isCoordinatorRoute
             ? 'coordinator.rating-sheets.rate.show'
             : 'adviser.rating-sheets.show';
@@ -435,7 +435,7 @@ class RatingSheetController extends Controller
 
     private function resolvePanelFacultyUserId(DefenseSchedule $schedule, $user): int
     {
-        // Match accepted panel row by stable faculty code.
+        
         return (int) (
             $schedule->defensePanels()
                 ->whereIn('role', ['coordinator', 'chair', 'member'])

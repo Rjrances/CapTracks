@@ -23,10 +23,10 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
             $roleName = 'teacher';
         }
 
-        // Use faculty_id from CSV (required field)
+        
         $facultyId = $row['faculty_id'];
         
-        // Use semester from CSV or constructor
+        
         $semester = $this->semester ?? $row['semester'] ?? null;
         [$firstName, $middleName, $lastName] = $this->extractNameParts($row);
         $namePrefix = isset($row['name_prefix']) ? trim((string) $row['name_prefix']) : null;
@@ -39,7 +39,7 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
             $suffix,
         ])));
 
-        // Create the user first
+        
         $user = new User([
             'name' => $displayName,
             'name_prefix' => $namePrefix ?: null,
@@ -56,7 +56,7 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
         $user->save();
         $user->assignRoles([strtolower($roleName)]);
 
-        // Create faculty account
+        
         UserAccount::create([
             'faculty_id' => $facultyId,
             'email' => $row['email'],

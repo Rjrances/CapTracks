@@ -109,7 +109,7 @@
                                         <input type="text" id="student_search" class="form-control" placeholder="Search for student name..." onkeyup="filterStudents()">
                                         <select name="student_ids[]" id="student_select_1" class="form-select mt-2" {{ $remainingSlots <= 0 ? 'disabled' : '' }} required>
                                             <option value="">Select student...</option>
-                                            {{-- Available students are now passed from the controller with consistent filtering --}}
+                                            
                                             @foreach($availableStudents as $student)
                                                 <option value="{{ $student->student_id }}" data-name="{{ strtolower($student->name) }}">
                                                     {{ $student->name }} ({{ $student->student_id }})

@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-fluid mt-4">
 
-    {{-- Header --}}
+    
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="mb-0">
@@ -19,7 +19,7 @@
         </a>
     </div>
 
-    {{-- Progress Bar --}}
+    
     <div class="card mb-4 border-0 shadow-sm">
         <div class="card-body py-3">
             <div class="d-flex align-items-center gap-3">
@@ -49,10 +49,10 @@
         </div>
     </div>
 
-    {{-- Kanban Columns --}}
+    
     <div class="row g-3">
 
-        {{-- Pending --}}
+        
         <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
@@ -72,7 +72,7 @@
             </div>
         </div>
 
-        {{-- In Progress --}}
+        
         <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
@@ -92,7 +92,7 @@
             </div>
         </div>
 
-        {{-- Done --}}
+        
         <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
                 <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">

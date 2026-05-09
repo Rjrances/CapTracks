@@ -21,25 +21,25 @@ class DemoSetupCommand extends Command
         $this->info('========================================');
         $this->newLine();
 
-        // Safety confirmation
+        
         if (!$this->confirm('This will set up the demo environment. Make sure you have already run [php artisan migrate:fresh]. Continue?')) {
             $this->warn('Aborted.');
             return self::FAILURE;
         }
 
-        // Step 1: Seed roles
+        
         $this->info('Step 1/3 — Seeding roles...');
         $this->call('db:seed', ['--class' => RoleSeeder::class]);
         $this->line('  ✓ Roles created: chairperson, coordinator, adviser, panelist, teacher');
         $this->newLine();
 
-        // Step 2: Seed academic terms
+        
         $this->info('Step 2/3 — Seeding academic terms...');
         $this->call('db:seed', ['--class' => AcademicTermSeeder::class]);
         $this->line('  ✓ Active term set: 2024-2025 First Semester');
         $this->newLine();
 
-        // Step 3: Create real chairperson
+        
         $this->info('Step 3/3 — Creating chairperson account...');
 
         $chairpersonData = [
@@ -51,7 +51,7 @@ class DemoSetupCommand extends Command
             'semester'   => '2024-2025 First Semester',
         ];
 
-        // Check if already exists (safety guard)
+        
         $existing = User::where('faculty_id', $chairpersonData['faculty_id'])
             ->where('semester', $chairpersonData['semester'])
             ->first();
@@ -62,7 +62,7 @@ class DemoSetupCommand extends Command
             $user = User::create($chairpersonData);
             $user->assignRoles(['chairperson']);
 
-            // Check if UserAccount already exists
+            
             $accountExists = UserAccount::where('faculty_id', $chairpersonData['faculty_id'])->exists();
             if (!$accountExists) {
                 UserAccount::create([

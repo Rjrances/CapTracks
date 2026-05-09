@@ -322,7 +322,7 @@
     </div>
 </div>
 
-{{-- Assign Milestone Modal --}}
+
 <div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -369,7 +369,7 @@
 @endsection
 @push('scripts')
 <script>
-    // Populate modal with group info when opened
+    
     document.getElementById('assignModal').addEventListener('show.bs.modal', function(event) {
         var button = event.relatedTarget;
         var groupId   = button.getAttribute('data-group-id');

@@ -151,7 +151,7 @@ class ChairpersonOfferingController extends Controller
         $teacherFacultyId = $offering->faculty_id;
         $offeringCode = $offering->subject_code;
 
-        // Clear pivot rows first to satisfy FK constraints.
+        
         $offering->students()->detach();
         $offering->delete();
 

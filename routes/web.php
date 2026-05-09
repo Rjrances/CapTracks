@@ -30,7 +30,7 @@ use App\Http\Controllers\AdviserProposalController;
 use App\Http\Controllers\RatingSheetController;
 use App\Http\Controllers\Coordinator\DefenseRubricController;
 
-// Health check route for Railway
+
 Route::get('/health', function () {
     return response()->json([
         'status' => 'ok',
@@ -40,41 +40,41 @@ Route::get('/health', function () {
     ]);
 });
 
-// Landing page
+
 Route::get('/', fn () => view('welcome'))->name('welcome');
 
-// Login & Logout
+
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Password Management (accessible by both authenticated users and students)
+
 Route::get('/change-password', [AuthController::class, 'showChangePasswordForm']);
 Route::post('/change-password', [AuthController::class, 'changePassword']);
 
-// Authenticated Routes (faculty/staff only)
+
 Route::middleware(['auth'])->group(function () {
-    // Dashboards
+    
     Route::get('/coordinator-dashboard', [CoordinatorController::class, 'index'])->name('coordinator-dashboard');
     Route::get('/chairperson-dashboard', [ChairpersonDashboardController::class, 'index'])->name('chairperson-dashboard');
 
-    // Class Management
+    
     Route::get('/classes', [ClassController::class, 'index'])->name('classes.index');
     Route::get('/classes/create', [ClassController::class, 'create'])->name('classes.create');
     Route::post('/classes', [ClassController::class, 'store'])->name('classes.store');
 
-    // Coordinator Routes
+    
 Route::middleware(['auth', 'role:coordinator|adviser'])->prefix('coordinator')->name('coordinator.')->group(function () {
-    // Coordinator Dashboard
+    
     Route::get('/dashboard', [CoordinatorDashboardController::class, 'index'])->name('dashboard');
 
-    // View Class List by Semester
+    
     Route::get('/classlist', [CoordinatorController::class, 'classlist'])->name('classlist.index');
     Route::get('/classlist/import', [CoordinatorController::class, 'importStudentsForm'])->name('classlist.import');
     Route::post('/classlist/import', [CoordinatorController::class, 'importStudents'])->name('classlist.import.store');
     Route::get('/faculty-matrix', [CoordinatorController::class, 'facultyMatrix'])->name('faculty-matrix');
 
-    // Defense Scheduling
+    
     Route::resource('defense', DefenseScheduleController::class);
     Route::match(['get', 'post'], '/defense/available-faculty', [DefenseScheduleController::class, 'getAvailableFaculty'])->name('defense.available-faculty');
     Route::patch('/defense/{defenseSchedule}/complete', [DefenseScheduleController::class, 'markAsCompleted'])->name('defense.complete');
@@ -84,7 +84,7 @@ Route::middleware(['auth', 'role:coordinator|adviser'])->prefix('coordinator')->
             ->parameters(['defense-rubrics' => 'defenseRubric']);
     });
 
-    // Groups
+    
     Route::get('/groups', [CoordinatorController::class, 'groups'])->name('groups.index');
     Route::get('/groups/create', [CoordinatorController::class, 'create'])->name('groups.create');
     Route::post('/groups', [CoordinatorController::class, 'store'])->name('groups.store');
@@ -95,7 +95,7 @@ Route::middleware(['auth', 'role:coordinator|adviser'])->prefix('coordinator')->
     Route::get('/groups/{group}/assign-adviser', [CoordinatorController::class, 'assignAdviser'])->name('groups.assignAdviser');
     Route::get('/groups/{group}/milestones', [CoordinatorController::class, 'groupMilestones'])->name('groups.milestones');
 
-    // Notifications
+    
     Route::get('/notifications', [CoordinatorController::class, 'notifications'])->name('notifications');
     Route::post('/notifications/mark-all-read', [CoordinatorController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/mark-multiple-read', [CoordinatorController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read');
@@ -103,14 +103,14 @@ Route::middleware(['auth', 'role:coordinator|adviser'])->prefix('coordinator')->
     Route::post('/notifications/{notification}/mark-read', [CoordinatorController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
     Route::delete('/notifications/{notification}', [CoordinatorController::class, 'deleteNotification'])->name('notifications.delete');
 
-    // Profile
+    
     Route::get('/profile', [CoordinatorController::class, 'profile'])->name('profile');
 
-    // Calendar
+    
     Route::get('/calendar', [CalendarController::class, 'coordinatorCalendar'])->name('calendar');
     Route::get('/activity-log', [CoordinatorController::class, 'activityLog'])->name('activity-log');
 
-    // Proposal Review
+    
     Route::get('/proposals', [CoordinatorProposalController::class, 'index'])->name('proposals.index');
     Route::get('/proposals/{id}/preview', [CoordinatorProposalController::class, 'preview'])->name('proposals.preview');
     Route::get('/proposals/{left}/compare/{right}', [CoordinatorProposalController::class, 'compareVersions'])
@@ -122,23 +122,23 @@ Route::middleware(['auth', 'role:coordinator|adviser'])->prefix('coordinator')->
     Route::post('/proposals/bulk-update', [CoordinatorProposalController::class, 'bulkUpdate'])->name('proposals.bulk-update');
     Route::get('/proposals/stats', [CoordinatorProposalController::class, 'getStats'])->name('proposals.stats');
 
-    // Milestone Templates Management
+    
     Route::resource('milestones', MilestoneTemplateController::class);
     Route::patch('milestones/{milestone}/status', [MilestoneTemplateController::class, 'updateStatus'])->name('milestones.updateStatus');
-    // Milestone Tasks Management
+    
     Route::post('milestones/{milestone}/tasks', [MilestoneTemplateController::class, 'storeTask'])->name('milestones.tasks.store');
     Route::patch('milestones/{milestone}/tasks/{task}', [MilestoneTemplateController::class, 'updateTask'])->name('milestones.tasks.update');
     Route::delete('milestones/{milestone}/tasks/{task}', [MilestoneTemplateController::class, 'destroyTask'])->name('milestones.tasks.destroy');
-    // Assign Milestone to Group
+    
     Route::post('milestones/assign-to-group', [MilestoneTemplateController::class, 'assignToGroup'])->name('milestones.assignToGroup');
     Route::delete('groups/{group}/milestone-assignments/{groupMilestone}', [MilestoneTemplateController::class, 'removeAssignmentFromGroup'])->name('milestones.removeFromGroup');
 });
 
-// Chairperson Routes
+
 Route::middleware(['auth', 'role:chairperson'])->prefix('chairperson')->name('chairperson.')->group(function () {
     Route::get('/dashboard', [ChairpersonDashboardController::class, 'index'])->name('dashboard');
 
-    // Offerings
+    
     Route::get('/offerings', [ChairpersonOfferingController::class, 'index'])->name('offerings.index');
     Route::get('/offerings/create', [ChairpersonOfferingController::class, 'create'])->name('offerings.create');
     Route::post('/offerings', [ChairpersonOfferingController::class, 'store'])->name('offerings.store');
@@ -148,12 +148,12 @@ Route::middleware(['auth', 'role:chairperson'])->prefix('chairperson')->name('ch
     Route::delete('/offerings/{id}', [ChairpersonOfferingController::class, 'destroy'])->name('offerings.delete');
     Route::delete('/offerings/{offeringId}/students/{studentId}', [ChairpersonOfferingController::class, 'removeStudent'])->name('offerings.remove-student');
 
-    // Student Enrollment Management
+    
     Route::get('/offerings/{offeringId}/unenrolled-students', [ChairpersonOfferingController::class, 'showUnenrolledStudents'])->name('offerings.unenrolled-students');
     Route::post('/offerings/{offeringId}/enroll-student', [ChairpersonOfferingController::class, 'enrollStudent'])->name('offerings.enroll-student');
     Route::post('/offerings/{offeringId}/enroll-multiple-students', [ChairpersonOfferingController::class, 'enrollMultipleStudents'])->name('offerings.enroll-multiple-students');
 
-    // Teachers/Faculty Management
+    
     Route::get('/teachers', [ChairpersonFacultyController::class, 'index'])->name('teachers.index');
     Route::get('/teachers/create', [ChairpersonFacultyController::class, 'create'])->name('teachers.create');
     Route::post('/teachers', [ChairpersonFacultyController::class, 'upload'])->name('teachers.store');
@@ -165,7 +165,7 @@ Route::middleware(['auth', 'role:chairperson'])->prefix('chairperson')->name('ch
     Route::post('/teachers/{id}/remove-coordinator', [ChairpersonFacultyController::class, 'removeCoordinator'])->name('teachers.remove-coordinator');
     Route::delete('/teachers/{id}', [ChairpersonFacultyController::class, 'destroy'])->name('teachers.delete');
 
-    // Student Management
+    
     Route::get('/students', [ChairpersonStudentController::class, 'index'])->name('students.index');
     Route::get('/students/export', [ChairpersonStudentController::class, 'export'])->name('students.export');
     Route::get('/students/{id}/edit', [ChairpersonStudentController::class, 'edit'])->name('students.edit');
@@ -173,16 +173,16 @@ Route::middleware(['auth', 'role:chairperson'])->prefix('chairperson')->name('ch
     Route::delete('/students/bulk-delete', [ChairpersonStudentController::class, 'bulkDelete'])->name('students.bulk-delete');
     Route::delete('/students/{id}', [ChairpersonStudentController::class, 'destroy'])->name('students.delete');
 
-    // Student Import
+    
     Route::get('/upload-students', fn () => view('chairperson.students.import'))->name('upload-form');
     Route::post('/upload-students', [ChairpersonStudentController::class, 'upload'])->name('upload-students');
 
-    // Academic Terms
+    
     Route::resource('academic-terms', AcademicTermController::class);
     Route::post('/academic-terms/{academicTerm}/toggle-active', [AcademicTermController::class, 'toggleActive'])->name('academic-terms.toggle-active');
     Route::post('/academic-terms/{academicTerm}/toggle-archived', [AcademicTermController::class, 'toggleArchived'])->name('academic-terms.toggle-archived');
 
-    // Notification Management
+    
     Route::get('/notifications', [ChairpersonController::class, 'notifications'])->name('notifications');
     Route::post('/notifications/mark-all-read', [ChairpersonController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/mark-multiple-read', [ChairpersonController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read');
@@ -190,20 +190,20 @@ Route::middleware(['auth', 'role:chairperson'])->prefix('chairperson')->name('ch
     Route::post('/notifications/{notification}/mark-read', [ChairpersonController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
     Route::delete('/notifications/{notification}', [ChairpersonController::class, 'deleteNotification'])->name('notifications.delete');
 
-    // Calendar
+    
     Route::get('/calendar', [CalendarController::class, 'chairpersonCalendar'])->name('calendar');
 });
 });
 
-// Student Routes
+
 Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\StudentAuthMiddleware::class, \App\Http\Middleware\CheckStudentPasswordChange::class])->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
 
-    // Password change routes (excluded from password change middleware)
+    
     Route::get('/change-password', [StudentPasswordController::class, 'showChangePasswordForm'])->name('change-password')->withoutMiddleware(\App\Http\Middleware\CheckStudentPasswordChange::class);
     Route::post('/update-password', [StudentPasswordController::class, 'updatePassword'])->name('update-password')->withoutMiddleware(\App\Http\Middleware\CheckStudentPasswordChange::class);
 
-    // Project Submission
+    
     Route::get('/project/submissions/preview/{projectSubmission}', [ProjectSubmissionController::class, 'studentPreviewSubmission'])->name('project.submission.preview');
     Route::get('/project/submissions/file/{projectSubmission}', [ProjectSubmissionController::class, 'studentSubmissionFile'])->name('project.submission.file');
     Route::get('/project/submissions/{left}/compare/{right}', [ProjectSubmissionController::class, 'studentCompareSubmissions'])->name('project.submissions.compare');
@@ -213,7 +213,7 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::get('/project/{id}', [ProjectSubmissionController::class, 'show'])->name('project.show');
     Route::delete('/project/{id}', [ProjectSubmissionController::class, 'destroy'])->name('project.destroy');
 
-    // Group Management
+    
     Route::get('/group', [StudentGroupController::class, 'show'])->name('group');
     Route::get('/groups', [StudentGroupController::class, 'index'])->name('group.index');
     Route::get('/group/create', [StudentGroupController::class, 'create'])->name('group.create');
@@ -224,13 +224,13 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::post('/group/invite-member', [StudentGroupController::class, 'inviteMember'])->name('group.invite-member');
     Route::delete('/group/remove-member/{memberId}', [StudentGroupController::class, 'removeMember'])->name('group.remove-member');
 
-    // Group Invitations
+    
     Route::get('/group/invitations', [StudentGroupController::class, 'invitations'])->name('group.invitations');
     Route::post('/group/accept-invitation/{invitationId}', [StudentGroupController::class, 'acceptInvitation'])->name('group.accept-invitation');
     Route::post('/group/decline-invitation/{invitationId}', [StudentGroupController::class, 'declineInvitation'])->name('group.decline-invitation');
     Route::delete('/group/cancel-invitation/{invitationId}', [StudentGroupController::class, 'cancelInvitation'])->name('group.cancel-invitation');
 
-    // Proposal
+    
     Route::get('/proposal/versions/preview/{projectSubmission}', [StudentProposalController::class, 'previewVersion'])->name('proposal.version.preview');
     Route::get('/proposal/versions/{left}/compare/{right}', [StudentProposalController::class, 'compareVersions'])->name('proposal.versions.compare');
     Route::get('/proposal', [StudentProposalController::class, 'index'])->name('proposal');
@@ -241,7 +241,7 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::put('/proposal/{id}', [StudentProposalController::class, 'update'])->name('proposal.update');
     Route::post('/proposal/{id}/rollback', [StudentProposalController::class, 'rollback'])->name('proposal.rollback');
 
-    // Milestones
+    
     Route::get('/milestones', [StudentMilestoneController::class, 'index'])->name('milestones');
     Route::get('/milestones/checklist', [StudentMilestoneChecklistController::class, 'checklist'])->name('milestones.checklist');
     Route::get('/milestones/{milestone}', [StudentMilestoneController::class, 'show'])->name('milestones.show');
@@ -253,25 +253,25 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::patch('/milestones/{milestoneId}/bulk-update', [StudentMilestoneController::class, 'bulkUpdateTasks'])->name('milestones.bulk-update');
     Route::post('/milestones/{milestoneId}/recompute-progress', [StudentMilestoneController::class, 'recomputeProgress'])->name('milestones.recompute-progress');
 
-    // Milestone Tasks
+    
     Route::patch('/task/{groupMilestoneTask}/assign', [StudentMilestoneController::class, 'assignTask'])->name('milestones.assign-task');
     Route::delete('/task/{groupMilestoneTask}/unassign', [StudentMilestoneController::class, 'unassignTask'])->name('milestones.unassign-task');
     Route::patch('/task/{groupMilestoneTask}', [StudentMilestoneController::class, 'updateTask'])->name('milestones.update-task');
     Route::post('/milestones/tasks/{groupMilestoneTask}/comments', [StudentMilestoneController::class, 'storeTaskComment'])->name('milestones.task-comments.store');
 
-    // Task Submission
+    
     Route::get('/task-submission/{task}/create', [TaskSubmissionController::class, 'create'])->name('task-submission.create');
     Route::post('/task-submission/{task}/store', [TaskSubmissionController::class, 'store'])->name('task-submission.store');
     Route::get('/task-submission/{submission}/show', [TaskSubmissionController::class, 'show'])->name('task-submission.show');
 
-    // Defense Requests
+    
     Route::get('/defense-requests', [StudentDefenseRequestController::class, 'index'])->name('defense-requests.index');
     Route::get('/defense-requests/create', [StudentDefenseRequestController::class, 'create'])->name('defense-requests.create');
     Route::post('/defense-requests', [StudentDefenseRequestController::class, 'store'])->name('defense-requests.store');
     Route::get('/defense-requests/{defenseRequest}', [StudentDefenseRequestController::class, 'show'])->name('defense-requests.show');
     Route::delete('/defense-requests/{defenseRequest}', [StudentDefenseRequestController::class, 'cancel'])->name('defense-requests.cancel');
 
-    // Notification Management
+    
     Route::get('/notifications', [StudentController::class, 'notifications'])->name('notifications');
     Route::post('/notifications/mark-all-read', [StudentController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/mark-multiple-read', [StudentController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read');
@@ -279,23 +279,23 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::post('/notifications/{notification}/mark-read', [StudentController::class, 'markNotificationAsRead'])->name('notifications.mark-read');
     Route::delete('/notifications/{notification}', [StudentController::class, 'deleteNotification'])->name('notifications.delete');
 
-    // Calendar
+    
     Route::get('/calendar', [CalendarController::class, 'studentCalendar'])->name('calendar');
 });
 
-// Adviser Routes
+
 Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function () {
     Route::get('/dashboard', [AdviserController::class, 'dashboard'])->name('dashboard');
 
-    // Invitations
+    
     Route::get('/invitations', [AdviserController::class, 'invitations'])->name('invitations');
     Route::post('/invitations/{invitation}/respond', [AdviserController::class, 'respondToInvitation'])->name('invitations.respond');
 
-    // Panel Invitations
+    
     Route::get('/panel-invitations', [AdviserController::class, 'panelInvitations'])->name('panel-invitations');
     Route::post('/panel-invitations/{panel}/respond', [AdviserController::class, 'respondToPanelInvitation'])->name('panel-invitations.respond');
 
-    // Groups
+    
     Route::get('/groups', [AdviserController::class, 'myGroups'])->name('groups');
     Route::get('/all-groups', [AdviserController::class, 'myGroups'])->name('all-groups');
     Route::get('/panel-groups', [AdviserController::class, 'panelSubmissions'])->name('panel-groups');
@@ -305,13 +305,13 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::post('/groups/{group}/milestone-tasks/{groupMilestoneTask}/comments', [AdviserController::class, 'storeMilestoneTaskComment'])->name('groups.milestone-task-comments.store');
     Route::get('/panel-submissions', [AdviserController::class, 'panelSubmissions'])->name('panel-submissions');
 
-    // Project Review
+    
     Route::get('/projects', [ProjectSubmissionController::class, 'index'])->name('project.index');
     Route::get('/projects/{id}', [ProjectSubmissionController::class, 'show'])->name('project.show');
     Route::get('/projects/{id}/edit', [ProjectSubmissionController::class, 'edit'])->name('project.edit');
     Route::put('/projects/{id}', [ProjectSubmissionController::class, 'update'])->name('project.update');
 
-    // Proposal Review
+    
     Route::get('/proposals', [AdviserProposalController::class, 'index'])->name('proposal.index');
     Route::get('/proposals/{id}/preview', [AdviserProposalController::class, 'preview'])->name('proposal.preview');
     Route::get('/proposals/{left}/compare/{right}', [AdviserProposalController::class, 'compareVersions'])
@@ -324,7 +324,7 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::post('/proposals/bulk-update', [AdviserProposalController::class, 'bulkUpdate'])->name('proposal.bulk-update');
     Route::get('/proposals/stats', [AdviserProposalController::class, 'getStats'])->name('proposal.stats');
 
-    // Notification Management
+    
     Route::get('/notifications', [AdviserController::class, 'notifications'])->name('notifications');
     Route::post('/notifications/mark-all-read', [AdviserController::class, 'markAllNotificationsAsRead'])->name('notifications.mark-all-read-adviser');
     Route::post('/notifications/mark-multiple-read', [AdviserController::class, 'markMultipleAsRead'])->name('notifications.mark-multiple-read-adviser');
@@ -332,16 +332,16 @@ Route::middleware(['auth'])->prefix('adviser')->name('adviser.')->group(function
     Route::delete('/notifications/delete-multiple', [AdviserController::class, 'deleteMultiple'])->name('notifications.delete-multiple-adviser');
     Route::delete('/notifications/{notification}', [AdviserController::class, 'deleteNotification'])->name('notifications.delete-adviser');
 
-    // Calendar
+    
     Route::get('/calendar', [CalendarController::class, 'adviserCalendar'])->name('calendar');
     Route::get('/activity-log', [AdviserController::class, 'activityLog'])->name('activity-log');
 
-    // Rating Sheets
+    
     Route::get('/rating-sheets/{schedule}', [RatingSheetController::class, 'showAdviserForm'])->name('rating-sheets.show');
     Route::post('/rating-sheets/{schedule}', [RatingSheetController::class, 'submitAdviserRating'])->name('rating-sheets.submit');
 });
 
-// Coordinator Defense Request Management
+
 Route::middleware(['auth', 'role:coordinator'])->prefix('coordinator')->name('coordinator.')->group(function () {
     Route::get('/defense-requests', [DefenseScheduleController::class, 'defenseRequestsIndex'])->name('defense-requests.index');
     Route::get('/defense-requests/{defenseRequest}/create-schedule', [DefenseScheduleController::class, 'createSchedule'])->name('defense-requests.create-schedule');
@@ -357,11 +357,11 @@ Route::middleware(['auth', 'role:coordinator'])->prefix('coordinator')->name('co
     Route::post('/rating-sheets/{schedule}/finalize', [RatingSheetController::class, 'finalizeCoordinatorRatings'])->name('rating-sheets.finalize');
     Route::post('/rating-sheets/{schedule}/reopen', [RatingSheetController::class, 'reopenCoordinatorRatings'])->name('rating-sheets.reopen');
 
-    // Coordinator acting as Adviser — Adviser Invitations
+    
     Route::get('/adviser-invitations', [AdviserController::class, 'invitations'])->name('adviser-invitations');
     Route::post('/adviser-invitations/{invitation}/respond', [AdviserController::class, 'respondToInvitation'])->name('adviser-invitations.respond');
 
-    // Coordinator acting as Adviser — Panel Invitations
+    
     Route::get('/panel-invitations', [AdviserController::class, 'panelInvitations'])->name('panel-invitations');
     Route::post('/panel-invitations/{panel}/respond', [AdviserController::class, 'respondToPanelInvitation'])->name('panel-invitations.respond');
 });

@@ -43,9 +43,7 @@ class DocumentPreviewService
         };
     }
 
-    /**
-     * @return string|null URL suitable for an iframe, or null when preview must fall back to download
-     */
+    
     public static function iframeSrc(?string $relativePath): ?string
     {
         if (!$relativePath) {

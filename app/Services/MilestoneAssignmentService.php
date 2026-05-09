@@ -10,16 +10,7 @@ class MilestoneAssignmentService
 {
     private const PROPOSAL_SEQUENCE_ORDER = 1;
 
-    /**
-     * Metadata for coordinator UI and validation (one active milestone + optional sequence).
-     *
-     * @return array{
-     *     can_assign: bool,
-     *     block_message: ?string,
-     *     allowed_template_id: ?int,
-     *     sequencing_enabled: bool
-     * }
-     */
+    
     public static function assignmentMeta(Group $group): array
     {
         $group->loadMissing(['groupMilestones.milestoneTemplate']);
@@ -88,9 +79,7 @@ class MilestoneAssignmentService
         ];
     }
 
-    /**
-     * Human-readable validation for POST assignToGroup.
-     */
+    
     public static function validateAssignment(Group $group, MilestoneTemplate $template): ?string
     {
         $meta = self::assignmentMeta($group);
@@ -149,8 +138,8 @@ class MilestoneAssignmentService
             })
             ->map(fn ($gm) => (int) $gm->milestoneTemplate->sequence_order);
 
-        // Clean alignment with proposal flow:
-        // If the group's project proposal is already approved, consider sequence step 1 satisfied.
+        
+        
         if (self::groupHasApprovedProposal($group)) {
             $completedOrders->push(1);
         }

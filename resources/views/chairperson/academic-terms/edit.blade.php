@@ -29,7 +29,7 @@
                                 <option value="">Select Semester</option>
                                 @php
                                     $currentSemester = $academicTerm->semester;
-                                    // Extract semester part from full string (e.g., "2024-2025 First Semester" -> "First Semester")
+                                    
                                     if (strpos($currentSemester, 'First Semester') !== false) {
                                         $currentSemester = 'First Semester';
                                     } elseif (strpos($currentSemester, 'Second Semester') !== false) {
