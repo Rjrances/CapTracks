@@ -209,7 +209,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-route me-2"></i>Next Steps to 60% Defense
+                        <i class="fas fa-route me-2"></i>Proposal Workflow
                     </h5>
                 </div>
                 <div class="card-body">
