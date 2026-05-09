@@ -1,245 +1,217 @@
-# 🚀 CapTrack Live Defense Demo Flow — Full Script
+# CapTrack Live Defense Demo Flow — Full Script
 
-When you are standing in front of the panel and it is time to demonstrate the system, do not just click around randomly. You need to tell a **story**.
+When you demonstrate the system to a panel, follow a **story**, not random clicks.
 
-Follow this exact step-by-step workflow. **Read the text inside the quotation marks out loud to the panel** as you perform the actions on the screen. Lines labeled `[ACTION]` are what you DO; lines labeled `[SAY]` are what you SPEAK.
-
----
-
-## 🛠️ Pre-Demo Setup (Do this BEFORE you present)
-
-> **How browser sessions work in CapTrack:**
-> - The `student` guard and the `web` (faculty) guard use **separate session keys** — so a student and a faculty/coordinator can be logged in at the same time in the same browser with no conflict.
-> - **Two accounts of the same type** (e.g., two students, or two faculty) **share one session** — logging in as the second one will immediately log out the first. Use a separate browser or Incognito for those.
-
-| What you need open | How to do it |
-|---|---|
-| Student + Coordinator | Same browser, different tabs ✅ |
-| Student + Adviser | Same browser, different tabs ✅ |
-| Coordinator + Chairperson | Need Incognito or a second browser ⚠️ |
-| Two different students | Need Incognito or a second browser ⚠️ |
-
-1. **Tab Setup:**
-   - **Tab 1 (Normal browser):** Log in as the **Student**.
-   - **Tab 2 (Normal browser):** Log in as the **Coordinator** — same browser works because they use different guards.
-   - **Incognito window (or Edge/Firefox):** Log in as the **Chairperson** or **Panelist** — needed because they share the `web` guard with the Coordinator.
-2. **Prepare a Dummy File:** Have a sample PDF on your desktop named `Chapter_1_Draft.pdf` ready to upload.
-3. **Prepare a CSV:** Have a small CSV file with 2 fake students ready to demonstrate the import.
-4. **Reset the Kanban board** so at least one task is in "Pending" — so you can drag it live during the demo.
+Use this workflow as your guide. **Read the text inside the quotation marks out loud** when it helps the narrative. Lines labeled `[ACTION]` are what you **do**; lines labeled `[SAY]` are optional spoken narration.
 
 ---
 
-## 🎬 Phase 1: The Setup (Chairperson)
-*Start your presentation as the highest admin to show how a semester begins.*
+## How this maps to CapTrack (quick reference)
 
-**Step 1 — Login as Chairperson**
+| Area | Base URL (after your app host) |
+|------|--------------------------------|
+| Shared faculty login | `/login` |
+| Chairperson | `/chairperson/...` |
+| Coordinator | `/coordinator/...` |
+| Adviser / Teacher (faculty) | `/adviser/...` |
+| Student | `/student/...` (after logging in as a student from `/login`) |
 
-> [SAY] *"Good morning, panelists. To begin our demonstration, I will be showing you the full lifecycle of a capstone project inside our system, CapTrack, starting from the very first step — the Chairperson setting up the semester."*
-
-[ACTION] Navigate to the login page. Type in the Chairperson credentials.
-
-> [SAY] *"The Chairperson is the highest-level administrator in the system. Think of this account as the one who turns on the lights before everyone else arrives."*
-
-[ACTION] Click Login.
-
----
-
-**Step 2 — CSV Import**
-
-[ACTION] Navigate to the Student Management page.
-
-> [SAY] *"The first thing a Chairperson does at the start of a new semester is populate the system with students. Manually entering hundreds of students one by one is not practical, so we built a CSV import feature."*
-
-[ACTION] Click "Import Students" and upload your prepared CSV file.
-
-> [SAY] *"Now, a question that might come to mind is — what happens if the Chairperson accidentally uploads the same file twice? Will the database crash with duplicate errors?"*
-
-[ACTION] Upload the same CSV file a second time.
-
-> [SAY] *"It does not crash. We handle de-duplication inside the backend using Eloquent's `firstOrCreate` method. As the controller loops through each row in the CSV, it checks if a student with that ID already exists. If yes, it skips the row entirely. If no, it inserts the new student and automatically encrypts their default password. No duplicates, no errors."*
+**Guards:** The student session uses the `student` guard; faculty use the `web` guard. A **student** and a **faculty** account can be logged in together in one browser (different tabs). Two faculty accounts, or two student accounts, share one session—use **Incognito** or a second browser when you need two faculty users or two students at once.
 
 ---
 
-**Step 3 — Create a Class Offering**
+## Pre-demo setup (before you present)
 
-[ACTION] Go to Offerings and create a new class section. Assign a Coordinator to it. Enroll one of the newly imported students.
+1. **Tabs**
+   - **Normal browser:** Student on `/login` → student dashboard; Coordinator or Adviser on `/login` → their dashboard (faculty).
+   - **Incognito (or second browser):** Another faculty role if needed (e.g., Chairperson plus Coordinator), or a second student.
 
-> [SAY] *"With students in the system, the Chairperson can now create a class offering — essentially a section — and assign a Coordinator to manage it. We will come back to what the Coordinator can do in a moment."*
+2. **Academic term:** Ensure an **active academic term** exists (`/chairperson/academic-terms` — toggle active term). Without it, many flows warn or filter oddly.
 
----
+3. **Sample file:** A PDF (e.g., `Chapter_1_Draft.pdf`) for project/proposal uploads.
 
-## 👨‍🎓 Phase 2: The Core Workflow (Student)
-*Switch to the Student tab (normal browser) and log in as the student you just enrolled.*
+4. **Student import CSV:** Must satisfy import validation (see `StudentsImport`): e.g. **student ID** (10 digits), **semester** exactly one of `2024-2025 First Semester`, `2024-2025 Second Semester`, `2024-2025 Summer`, **course**, **email**, and optional **offer_code** matching an existing offering’s `offer_code` for auto-enrollment. Use the project’s CSV template if one is provided.
 
-**Step 4 — Forced Password Change (Security Middleware)**
-
-[ACTION] Open the Student tab. Go to the student login page. Type in the student ID and the default password `password123`. Click Login.
-
-> [SAY] *"I am now logging in as one of our newly imported students using the default password assigned to them. Watch what happens."*
-
-[ACTION] The system redirects to the Change Password page.
-
-> [SAY] *"Notice that the system immediately blocks the student from accessing the dashboard and forces them to change their password first. This is not just a frontend trick — we implemented a security Middleware in Laravel for this. Every time any user logs in, the middleware runs a Hash Check in the background. It takes the stored encrypted password and checks if it matches the hash of our default 'password123'. If it matches, the middleware intercepts the request and redirects the user here, before they can see anything. Once the student changes their password, that Hash Check will fail on the next login, and they are granted full access. This ensures no student can ever operate the system under a default, insecure credential."*
-
-[ACTION] Set a new password and log in.
+5. **Kanban demo:** Have at least one milestone task in **Pending** on the student board so you can drag it during the demo.
 
 ---
 
-**Step 5 — Form a Group and Invite an Adviser**
+## Phase 1: Setup (Chairperson)
 
-[ACTION] Navigate to My Group. Create a new group. Then go to the Invite Adviser section and send an invitation to a faculty member.
+*Show how a semester is prepared.*
 
-> [SAY] *"Once inside, the student's first task is to form their capstone group and invite a faculty adviser. The invitation is sent as a notification inside the system, and the adviser will be able to accept or decline it from their own dashboard."*
+### Step 1 — Log in as Chairperson
 
----
+> [SAY] *"We begin with the Chairperson, who sets up the academic term, users, offerings, and enrollments."*
 
-**Step 6 — The Kanban Board (AUTO-PROGRESS — MOST IMPORTANT DEMO)**
-
-[ACTION] Navigate to Milestones. Open a milestone. The Kanban board is now visible with columns: Pending, In Progress, and Completed.
-
-> [SAY] *"This is the heart of the student experience — the Milestone Kanban Board. Each card represents a requirement that the group must complete for their capstone project. The coordinator assigns these tasks to the group, and the students manage them here."*
-
-[ACTION] Slowly drag a task card from the "Pending" column to the "Completed" column.
-
-> [SAY] *"Watch the top-right corner as I drag this task to 'Completed'."*
-
-[ACTION] Release the card. The progress percentage and progress bar update immediately without any page reload.
-
-> [SAY] *"The progress percentage updated instantly — no page refresh needed. Let me explain what just happened behind the scenes, because this is an architecture decision we are proud of."*
-
-> [SAY] *"When I dropped that card, our frontend sent a single asynchronous PATCH request to the backend. The backend updated the task's status in the database and then immediately calculated the new progress: it counts the total number of tasks in this milestone, counts how many are in the 'Done' column, and computes the percentage. That new number is saved directly into the milestone record and returned in the same API response. The frontend reads that number from the response and updates the progress bar on the spot — with zero extra network calls. No page reload, no second request. One drag, one call, one update. This makes the system feel fast and real-time, and it keeps the database consistent even if multiple students are working simultaneously."*
+[ACTION] Open `/login`, sign in with Chairperson credentials, land on **`/chairperson/dashboard`** (sidebar: **Dashboard**, **Offerings**, **Teachers**, **Students**, **Calendar**).
 
 ---
 
-**Step 7 — Document Versioning**
+### Step 2 — Import students (CSV)
 
-[ACTION] Navigate to Project Proposals. Click "Upload" and submit the `Chapter_1_Draft.pdf`.
+[ACTION] Go to **`/chairperson/upload-students`** (sidebar: **Students** → import/upload flow as labeled in the UI).
 
-> [SAY] *"Now the student uploads their Chapter 1 draft for adviser review. But here is where our system is different from a basic file upload."*
+> [SAY] *"Bulk student onboarding uses CSV import instead of manual entry."*
 
-[ACTION] Upload the same file again, simulating a revised version.
+[ACTION] Upload your prepared CSV.
 
-> [SAY] *"Instead of overwriting the existing file, our `ProjectSubmissionController` checks the highest version number already on record for this student, adds one to it, and creates a brand new database row. So Version 1 is never touched. Version 2 is stored separately. The adviser can now open both versions side-by-side and compare the student's revisions over time. This version history is permanent and cannot be deleted by the student."*
+> [SAY] *"If we upload the same students again, the importer skips rows whose student ID or email already exists—it does not insert duplicates."*
 
----
-
-## 📋 Phase 3: First Review (Adviser)
-*Switch to the Adviser's tab — the assigned faculty adviser reviews the proposal FIRST before the Coordinator.*
-
-> **Browser note:** The Adviser uses the `web` guard (same as Coordinator). If they are different people, log the Adviser in on a separate Incognito window, or log out the Coordinator first.
-
-**Step 8 — Adviser Reviews the Proposal**
-
-[ACTION] Log in as the Adviser (e.g., Engr. Vicente Patalita III). Navigate to **Proposal Review** in the sidebar.
-
-> [SAY] *"I am now logged in as the group's assigned faculty adviser. When the student submitted their proposal, the system automatically set its status to 'Under Review' and routed it here — to the adviser's inbox. The adviser is the first line of review."*
-
-[ACTION] Open the student's submitted proposal. Click "Preview" to open the document inline.
-
-> [SAY] *"The adviser can read the full document without downloading it. They can also open two versions side-by-side using our Version Compare feature, which pulls both files from storage and renders them in a split-pane view — useful for comparing what changed between revisions."*
-
-[ACTION] Fill in a feedback comment. Select **Approved**. Click Submit.
-
-> [SAY] *"Once the adviser submits, two things happen simultaneously: the proposal status updates to 'approved' in the database, and the student receives an in-system notification immediately. If the adviser had rejected it, the comment they wrote becomes the revision instruction the student sees on their dashboard."*
-
-> [SAY] *"The adviser can only see proposals from groups they are assigned to. The backend query filters strictly by `faculty_id` — Adviser A cannot see or approve Adviser B's students. Access is scoped at the database layer, not just hidden in the UI."*
+[ACTION] Upload the same file a second time and show that new rows are skipped / messaging reflects existing students (see `StudentsImport` and `StudentImportService`).
 
 ---
 
-## 👨‍🏫 Phase 4: Management & Auto-Assign (Coordinator)
-*Switch tabs to the Coordinator account.*
+### Step 3 — Offerings and enrollment
 
-**Step 9 — Faculty Matrix Dashboard**
+[ACTION] Open **`/chairperson/offerings`** → **Add New Offering**. Fill subject title, code, **offer code**, assign the **Teacher** (faculty in charge—this ties the offering to that faculty record), and term.
 
-[ACTION] Log in as the Coordinator. Navigate to the Faculty Matrix dashboard.
+> [SAY] *"An offering is a class section for the active term. The assigned teacher is the faculty record linked to this section."*
 
+[ACTION] Open the offering’s detail/enrollment UI and **enroll** the imported student(s), or rely on **offer_code** in the CSV if you demonstrated auto-enrollment.
 
-> [SAY] *"I am now logged in as the Coordinator, who manages the operational side of the capstone program. On this dashboard, the Coordinator can see at a glance how many groups every faculty member is currently advising."*
-
-> [SAY] *"What makes this fast is how we query it. We use Laravel's `withCount` method, which translates into a single SQL query using an aggregated subquery. The database does the counting for us at the SQL level — we are not looping through records in PHP, which would be extremely slow for large departments. This eliminates what is known as the 'N+1 Query Problem'."*
+[ACTION] Optionally **`/chairperson/teachers`** — use **Assign Coordinator** so a faculty member has the coordinator role when your demo needs a Coordinator who manages that offering’s groups.
 
 ---
 
-**Step 10 — Assign a Milestone to the Group**
+## Phase 2: Core workflow (Student)
 
-[ACTION] Go to Milestones. Find the student's group in the group list. Select a milestone template from the dropdown (e.g., "Chapter 1 — Proposal") and set a due date. Click Assign.
+*Use the student tab (`/student/...`).*
 
-> [SAY] *"Before the student can begin working on tasks, the Coordinator must assign a milestone template to their group. A milestone template is a pre-built checklist — created by the Coordinator — that contains all the tasks the group must complete for that phase of their project. When I click Assign here, the system does two things: it creates a new milestone record linked to this group, and it automatically generates a task card for every item inside that template. The students do not build their own task list — the Coordinator defines the requirements, and the system provisions them instantly."*
+### Step 4 — First login and password
 
-> [SAY] *"Another rule the system enforces: the same template cannot be assigned to the same group twice. If I try to assign 'Chapter 1' again, the backend checks the `group_milestones` table for an existing match and rejects the duplicate. This prevents accidental double-assignment."*
+[ACTION] Log out any student session if switching students. On **`/login`**, enter the **student ID** in **ID Number**. For accounts created by CSV import, **`StudentAccount`** may have **no password yet** with **`must_change_password`** set—the login form allows leaving **Password** blank for first-time setup.
 
-[ACTION] The group now shows the assigned milestone. The student's Kanban board is now populated.
+> [SAY] *"Imported students are prompted to set a password before using the rest of the app. That is enforced by `CheckStudentPasswordChange` middleware, not by comparing against a shared default password string."*
 
----
-
-**Step 11 — Approve a Proposal**
-
-[ACTION] Go to Proposal Submissions. Find the student's uploaded document. Click Approve.
-
-> [SAY] *"The Coordinator reviews and approves the student's submitted proposal. Once approved, the student is notified inside the system and can proceed to the next stage."*
+[ACTION] Complete **`/student/change-password`** as prompted, then continue to **`/student/dashboard`**.
 
 ---
 
-**Step 12 — The Auto-Assign Algorithm (CRITICAL FEATURE)**
+### Step 5 — Group and adviser invitation
 
+[ACTION] **`/student/group`** (create/join group), then invite an adviser per your UI (**invite adviser**).
 
-[ACTION] Navigate to Defense Scheduling. Find a group that has requested a defense. Click "Schedule Panel" and open the faculty dropdown.
-
-> [SAY] *"This is one of the most technically significant features we built — the Auto-Assign Panel algorithm."*
-
-> [SAY] *"When a group is ready to defend, the Coordinator needs to pick three faculty members to sit on the panel. But they cannot just pick anyone. There are three rules our system enforces automatically:"*
-
-> [SAY] *"First — no double booking. The system checks the requested defense date and time, and completely filters out any faculty who already have a defense scheduled at that exact slot. You will not see them in this list at all."*
-
-> [SAY] *"Second — no conflict of interest. The group's own adviser is automatically removed from the selectable pool. An adviser cannot be a panelist for their own advisee."*
-
-> [SAY] *"Third — workload balancing. The remaining eligible faculty are sorted from the least number of assigned groups to the most. The top of this list shows the three least-busy teachers, so the Coordinator naturally gravitates toward balanced assignments."*
-
-[ACTION] Select three panelists from the top of the list and save the schedule.
-
-> [SAY] *"All three rules are enforced by the backend query — not by the UI. Even if someone tried to bypass the frontend, the controller would reject the invalid selection. The system is secure at the data layer."*
+> [SAY] *"The group invites an adviser; notifications carry the invitation to faculty."*
 
 ---
 
-## 📝 Phase 5: The Final Grade (Adviser / Panelist)
-*Log in as one of the assigned panelists.*
+### Step 6 — Milestones Kanban
 
-**Step 13 — Dynamic JSON Grading Rubric**
+[ACTION] Open **`/student/milestones`**, enter a milestone (**`/student/milestones/{id}`**). The board shows columns **Pending**, **In Progress**, and **Completed**.
 
-[ACTION] Log in as a Panelist. Navigate to Active Defenses. Open the Grading Sheet for the group.
+> [SAY] *"Tasks are assigned from coordinator milestone templates; students move cards across columns."*
 
-> [SAY] *"I am now logged in as one of the panelists assigned to this defense. After the group presents, I need to submit my grades using this rubric."*
+[ACTION] Drag a card from **Pending** toward **Completed** (or use the controls that move status toward **done**).
 
-[ACTION] Fill in scores for the visible criteria — Methodology, Presentation, Delivery, etc. Click Submit.
-
-> [SAY] *"As I submit this grading sheet, I want to highlight something about how we store this data, because it is a deliberate architectural decision."*
-
-> [SAY] *"We did not create a separate database column for every grading criterion — Grammar, Methodology, Delivery, and so on. If we did that, and the university changed their rubric next semester, we would need to run a database migration just to add or remove columns. That is fragile and not scalable."*
-
-> [SAY] *"Instead, our backend takes the entire submitted form and serializes it into a single JSON string, which is saved into one text column in the database. The criteria names, the weights, the scores — all of it lives inside that JSON blob. This means the university can completely overhaul their grading criteria next semester, and our system will support it immediately without touching the database schema."*
+> [SAY] *"Moving a task triggers an update on the server (`moveTask` / related routes); progress is recalculated for the milestone."*
 
 ---
 
-## 🏁 The Closing Statement
+### Step 7 — Project uploads and versioning
 
-[ACTION] Return to the student's dashboard. Show the final progress bar and defense schedule card.
+[ACTION] Go to **`/student/project`** (**My Project** / project submissions). Upload a PDF; choose submission **type** appropriate to your demo (e.g., **proposal**).
 
-> [SAY] *"As you can see, panelists, CapTrack is not just a task tracker. It is a fully automated capstone management pipeline that secures student data at the middleware layer, auto-calculates progress in real time using a single-request architecture, versions documents without overwriting history, balances faculty workload algorithmically, and stores grading data in a flexible JSON format that can adapt to any rubric."*
+> [SAY] *"Each upload gets the next version number for that student and type—handled in `ProjectSubmissionController` / `ProjectSubmission::getNextVersionFor`—so revisions accumulate instead of silently overwriting history."*
 
-> [SAY] *"Every design decision we made was driven by one question: 'What happens when this scales to hundreds of students and dozens of faculty?' We believe CapTrack answers that question. Thank you, panelists, and we are now open for your questions."*
+[ACTION] Upload again to show **version 2**.
 
 ---
 
-## ❓ Anticipated Panel Questions & Answers
+## Phase 3: Adviser — proposal / project review
 
-**Q: "What happens if two students drag the same task at the same time?"**
-> *"Each drag-and-drop fires an independent PATCH request scoped to a specific task ID. The backend validates the task, updates its status, and recalculates progress atomically on the server side. The last write wins at the database level, and the next page load will reflect the correct state."*
+*Faculty use **`/adviser/...`** after logging in on **`/login`**.*
 
-**Q: "How do you prevent students from accessing other groups' data?"**
-> *"Every controller method first retrieves the authenticated student, then retrieves only the groups that student belongs to, and scopes all queries through that group. A student cannot pass in a different group ID and get data — the backend ignores it because the query is always filtered by the session's authenticated user."*
+**Browser note:** Coordinator and Adviser both use the `web` guard—use Incognito if you need both logged in as different people.
 
-**Q: "Why did you use Laravel instead of building it from scratch?"**
-> *"Laravel provides a proven security foundation — CSRF protection, SQL injection prevention through Eloquent's parameterized queries, and authentication guards. Building those from scratch introduces risk. We used the framework for its security and infrastructure, and focused our development effort on the business logic that is unique to capstone management."*
+### Step 8 — Adviser reviews work
 
-**Q: "How does the system handle a coordinator who is also an adviser?"**
-> *"We implemented a Switch View mechanism. A faculty member with dual roles — coordinator and adviser — sees a toggle in their sidebar. When they switch to Coordinator View, only coordinator features are visible. When they switch to Adviser View, only adviser features are visible. The backend checks the role on every request, so there is no permission bleed between the two contexts."*
+[ACTION] Log in as the assigned **adviser** faculty user.
+
+> [SAY] *"Advisers see assigned groups and submissions scoped to those groups."*
+
+[ACTION] Open **`/adviser/proposals`** for proposal workflow (`AdviserProposalController`), and/or **`/adviser/projects`** for document review (`ProjectSubmissionController`), depending on what you uploaded. The sidebar highlights **Adviser Groups**, **Panel Groups**, etc.; **Proposal Review** is not a separate sidebar item—use the routes above or links from **Adviser Groups** / dashboard.
+
+[ACTION] Preview a document, add feedback, approve or reject per the form.
+
+> [SAY] *"Queries are scoped so an adviser only sees groups they advise."*
+
+---
+
+## Phase 4: Coordinator — operations
+
+*Coordinator sidebar:** Dashboard, Groups, Class List, **Faculty Matrix**, **Proposal Review**, **Defense Management**, **Milestone Templates**, Calendar, Activity Log.*
+
+### Step 9 — Faculty Matrix
+
+[ACTION] **`/coordinator/faculty-matrix`** (**Faculty Matrix**).
+
+> [SAY] *"This screen lists coordinated groups with adviser and defense panel roles and schedule stage—it is a group–faculty matrix for defenses, not a generic query of every teacher’s advisee counts."*
+
+---
+
+### Step 10 — Assign a milestone to a group
+
+[ACTION] **`/coordinator/milestones`** (**Milestone Templates**). Scroll to **Group Milestone Assignments**, pick the group, click **Assign**, choose a template and optional due date.
+
+> [SAY] *"The same template cannot be assigned twice to the same group—the backend checks existing `GroupMilestone` rows."*
+
+[ACTION] Confirm tasks appear on the student milestone board.
+
+---
+
+### Step 11 — Coordinator proposal review
+
+[ACTION] **`/coordinator/proposals`** (**Proposal Review**) — align coordinator decision with your adviser demo.
+
+---
+
+### Step 12 — Defense scheduling and panel rules
+
+[ACTION] Students request defenses from **`/student/defense-requests`**. As Coordinator, open **`/coordinator/defense`** (**Defense Management**) and work pending items (e.g., **`/coordinator/defense-requests`** routes) to **schedule** a defense.
+
+[ACTION] On the scheduling form, assign date, room, and panelists (use **`getAvailableFaculty`** / panel picker as implemented).
+
+> [SAY] *"The backend filters faculty for conflicts, excludes the adviser from being a panelist for their own group where enforced, and applies workload-style ordering for fair distribution—validate on the server, not only in the browser."*
+
+---
+
+## Phase 5: Panel grading (faculty)
+
+*Panelists are faculty users; they use the same **`/login`** and typically the **Adviser** UI.*
+
+### Step 13 — Rating sheet (JSON rubric)
+
+[ACTION] Log in as a faculty panelist. Use **`/adviser/panel-groups`** or **`/adviser/panel-invitations`**, then open the **Rating Sheet** for the scheduled defense (`/adviser/rating-sheets/{schedule}`).
+
+> [SAY] *"Scores are stored in a flexible structure (JSON-friendly) so criteria can evolve without constant schema churn."*
+
+[ACTION] Submit the rating form.
+
+---
+
+## Closing
+
+[ACTION] Return to **`/student/dashboard`** — show progress and defense calendar cards if data exists.
+
+> [SAY] *"CapTrack ties together term setup, enrollment, milestones, submissions with versioning, coordinated reviews, defense scheduling, and panel grading in one pipeline."*
+
+---
+
+## Anticipated panel questions (aligned with the codebase)
+
+**Q: What happens if two students drag tasks at once?**  
+> *"Updates are per task ID on the server; last successful write wins; refreshing shows the persisted state."*
+
+**Q: How do you isolate student data?**  
+> *"Controllers resolve the authenticated student and constrain queries to that student’s groups and IDs."*
+
+**Q: Why Laravel?**  
+> *"We rely on the framework for CSRF, validated queries via Eloquent, guards, and middleware, and focus custom code on capstone domain logic."*
+
+**Q: Can someone be both Coordinator and Adviser?**  
+> *"Faculty use one `web` session. The Coordinator sidebar can show **Switch to Adviser View** when applicable (`partials/coordinator-sidebar`), linking to the adviser dashboard—there is not a separate toggle for every role pair, but coordinators who advise can jump to the adviser area."*
+
+---
+
+*This document was aligned to routes in `routes/web.php` and the chairperson, coordinator, adviser, and student areas as of the CapTracks codebase. If labels change in Blade, follow the UI text and keep these URLs as fallbacks.*

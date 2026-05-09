@@ -2,18 +2,8 @@
 @section('title', 'Chairperson Dashboard')
 @section('content')
 <div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <p class="text-muted mb-0">Welcome back, {{ auth()->check() ? auth()->user()->name : 'Chairperson' }}! Oversee capstone projects and academic operations</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{{ route('chairperson.offerings.index') }}" class="btn btn-outline-primary">
-                <i class="fas fa-book me-2"></i>Manage Offerings
-            </a>
-            <a href="{{ route('chairperson.teachers.index') }}" class="btn btn-outline-warning">
-                <i class="fas fa-user-tag me-2"></i>Manage Coordinator Access
-            </a>
-        </div>
+    <div class="mb-4">
+        <p class="text-muted mb-0">Welcome back, {{ auth()->check() ? auth()->user()->name : 'Chairperson' }}! Oversee capstone projects and academic operations</p>
     </div>
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -31,40 +21,26 @@
                 </div>
                 <div class="card-body">
                     @if($activeTerm)
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <div class="d-flex align-items-center mb-2">
-                                    <h4 class="mb-0 me-3">{{ $activeTerm->semester }}</h4>
-                                    <span class="badge bg-success fs-6">Active</span>
-                                </div>
-                                <p class="text-muted mb-0">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Current term for all academic operations and scheduling
-                                </p>
+                        <div>
+                            <div class="d-flex align-items-center mb-2">
+                                <h4 class="mb-0 me-3">{{ $activeTerm->semester }}</h4>
+                                <span class="badge bg-success fs-6">Active</span>
                             </div>
-                            <div class="col-md-4 text-end">
-                                <a href="{{ route('chairperson.academic-terms.index') }}" class="btn btn-outline-primary">
-                                    <i class="fas fa-cog me-1"></i> Manage Terms
-                                </a>
-                            </div>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Current term for all academic operations and scheduling
+                            </p>
                         </div>
                     @else
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <div class="d-flex align-items-center mb-2">
-                                    <h4 class="mb-0 me-3 text-warning">No Active Term</h4>
-                                    <span class="badge bg-warning fs-6">Inactive</span>
-                                </div>
-                                <p class="text-muted mb-0">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>
-                                    Please set an active academic term to continue operations
-                                </p>
+                        <div>
+                            <div class="d-flex align-items-center mb-2">
+                                <h4 class="mb-0 me-3 text-warning">No Active Term</h4>
+                                <span class="badge bg-warning fs-6">Inactive</span>
                             </div>
-                            <div class="col-md-4 text-end">
-                                <a href="{{ route('chairperson.academic-terms.index') }}" class="btn btn-warning">
-                                    <i class="fas fa-plus me-1"></i> Set Active Term
-                                </a>
-                            </div>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Please set an active academic term to continue operations
+                            </p>
                         </div>
                     @endif
                 </div>

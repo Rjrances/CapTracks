@@ -24,9 +24,6 @@
                 <i class="fas fa-exclamation-triangle me-1"></i>No active term
             </div>
         @endif
-        <a href="{{ route('chairperson.academic-terms.index') }}" class="btn btn-sm btn-outline-light mt-2 w-100">
-            <i class="fas fa-cog"></i> Manage Terms
-        </a>
     </div>
     <nav class="p-3">
         <ul class="nav flex-column">

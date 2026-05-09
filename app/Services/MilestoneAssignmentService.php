@@ -8,6 +8,8 @@ use App\Models\ProjectSubmission;
 
 class MilestoneAssignmentService
 {
+    private const PROPOSAL_SEQUENCE_ORDER = 1;
+
     /**
      * Metadata for coordinator UI and validation (one active milestone + optional sequence).
      *
@@ -22,6 +24,7 @@ class MilestoneAssignmentService
     {
         $group->loadMissing(['groupMilestones.milestoneTemplate']);
         $milestones = $group->groupMilestones;
+        $hasApprovedProposal = self::groupHasApprovedProposal($group);
 
         $incomplete = $milestones->first(fn ($gm) => (int) $gm->progress_percentage < 100);
         if ($incomplete) {
@@ -49,11 +52,29 @@ class MilestoneAssignmentService
             ];
         }
 
+        if (! self::hasActiveSequenceStep(self::PROPOSAL_SEQUENCE_ORDER) && ! $hasApprovedProposal) {
+            return [
+                'can_assign' => false,
+                'block_message' => 'Cannot assign 60%/100% milestones yet. Either approve at least one proposal for this group, or add an active Proposal milestone with step 1.',
+                'allowed_template_id' => null,
+                'sequencing_enabled' => true,
+            ];
+        }
+
         $next = self::resolveNextSequencedTemplate($group, $milestones);
         if (! $next) {
             return [
                 'can_assign' => false,
                 'block_message' => 'All milestones in the configured sequence are complete for this group.',
+                'allowed_template_id' => null,
+                'sequencing_enabled' => true,
+            ];
+        }
+
+        if ((int) $next->sequence_order > self::PROPOSAL_SEQUENCE_ORDER && ! $hasApprovedProposal) {
+            return [
+                'can_assign' => false,
+                'block_message' => 'Cannot assign 60%/100% milestones until the group has at least one approved proposal.',
                 'allowed_template_id' => null,
                 'sequencing_enabled' => true,
             ];
@@ -73,14 +94,23 @@ class MilestoneAssignmentService
     public static function validateAssignment(Group $group, MilestoneTemplate $template): ?string
     {
         $meta = self::assignmentMeta($group);
+        $hasApprovedProposal = self::groupHasApprovedProposal($group);
 
         if (! $meta['can_assign']) {
             return $meta['block_message'];
         }
 
         if ($meta['sequencing_enabled']) {
+            if (! self::hasActiveSequenceStep(self::PROPOSAL_SEQUENCE_ORDER) && ! $hasApprovedProposal) {
+                return 'Cannot assign 60%/100% milestones yet. Either approve at least one proposal for this group, or add an active Proposal milestone with step 1.';
+            }
+
             if ($template->sequence_order === null) {
                 return 'This template has no sequence order. Set step order (1 = Proposal, 2 = 60%, 3 = 100%) on the template edit page.';
+            }
+
+            if ((int) $template->sequence_order > self::PROPOSAL_SEQUENCE_ORDER && ! $hasApprovedProposal) {
+                return 'Cannot assign 60%/100% milestones until the group has at least one approved proposal.';
             }
 
             if ($meta['allowed_template_id'] !== null
@@ -157,6 +187,14 @@ class MilestoneAssignmentService
             ->whereIn('student_id', $memberStudentIds)
             ->where('type', 'proposal')
             ->where('status', 'approved')
+            ->exists();
+    }
+
+    private static function hasActiveSequenceStep(int $order): bool
+    {
+        return MilestoneTemplate::query()
+            ->where('status', 'active')
+            ->where('sequence_order', $order)
             ->exists();
     }
 }

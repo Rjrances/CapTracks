@@ -121,36 +121,6 @@
             </div>
         </div>
         <div class="col-md-4">
-            @if(($viewMode ?? 'adviser') !== 'panel')
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-clipboard-check me-2"></i>Review Actions
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-grid gap-2">
-                            @if($submission->status === 'pending')
-                                <button class="btn btn-success" onclick="approveSubmission()">
-                                    <i class="fas fa-check me-2"></i>Approve Submission
-                                </button>
-                                <button class="btn btn-danger" onclick="rejectSubmission()">
-                                    <i class="fas fa-times me-2"></i>Reject Submission
-                                </button>
-                            @else
-                                <div class="alert alert-info">
-                                    <strong>Status:</strong> {{ ucfirst($submission->status) }}
-                                    <br>
-                                    <small>This submission has already been reviewed.</small>
-                                </div>
-                            @endif
-                            <a href="{{ route('adviser.project.edit', $submission->id) }}" class="btn btn-warning">
-                                <i class="fas fa-edit me-2"></i>Add/Edit Feedback
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            @endif
             <div class="card mt-3">
                 <div class="card-header">
                     <h5 class="mb-0">
@@ -205,18 +175,4 @@
         </div>
     </div>
 </div>
-@if(($viewMode ?? 'adviser') !== 'panel')
-    <script>
-    function approveSubmission() {
-        if (confirm('Are you sure you want to approve this submission?')) {
-            window.location.href = "{{ route('adviser.project.edit', $submission->id) }}?action=approve";
-        }
-    }
-    function rejectSubmission() {
-        if (confirm('Are you sure you want to reject this submission?')) {
-            window.location.href = "{{ route('adviser.project.edit', $submission->id) }}?action=reject";
-        }
-    }
-    </script>
-@endif
 @endsection 
