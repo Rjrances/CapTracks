@@ -19,6 +19,15 @@ class MilestoneAssignmentService
         $hasApprovedProposal = self::groupHasApprovedProposal($group);
         $hasCompletedProposalDefense = self::groupHasCompletedProposalDefense($group);
 
+        if (empty($group->faculty_id)) {
+            return [
+                'can_assign' => false,
+                'block_message' => 'Assign an adviser to this group before assigning milestones.',
+                'allowed_template_id' => null,
+                'sequencing_enabled' => true,
+            ];
+        }
+
         $incomplete = $milestones->first(fn ($gm) => (int) $gm->progress_percentage < 100);
         if ($incomplete) {
             $label = $incomplete->milestoneTemplate->name ?? $incomplete->title;
