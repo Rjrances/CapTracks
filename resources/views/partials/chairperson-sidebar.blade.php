@@ -4,14 +4,10 @@
 @endphp
 <div class="sidebar bg-dark text-white" style="width: 280px; min-height: 100vh; position: fixed; left: 0; top: 0; z-index: 1000;">
     <div class="p-3 border-bottom border-secondary">
-        <div class="d-flex align-items-center">
-            <div class="ct-badge me-2">
-                <span>CT</span>
-            </div>
-            <a class="navbar-brand fw-bold text-white text-decoration-none mb-0" href="{{ route('chairperson.dashboard') }}">
-                CapTrack
-            </a>
-        </div>
+        @include('partials.sidebar-brand', [
+            'homeRoute' => route('chairperson.dashboard'),
+            'roleLabel' => 'Chairperson',
+        ])
     </div>
     <div class="px-3 py-2 border-bottom border-secondary text-center">
         @if($activeTerm)
@@ -32,6 +28,13 @@
                    href="{{ route('chairperson.dashboard') }}">
                     <i class="fas fa-tachometer-alt me-2"></i>
                     Dashboard
+                </a>
+            </li>
+            <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('chairperson.academic-terms.*') ? 'active bg-primary' : '' }}"
+                   href="{{ route('chairperson.academic-terms.index') }}">
+                    <i class="fas fa-calendar-week me-2"></i>
+                    Academic terms
                 </a>
             </li>
             <li class="nav-item mb-2">
@@ -73,35 +76,3 @@
         </div>
     </div>
 </div>
-<style>
-.ct-badge {
-    width: 34px;
-    height: 34px;
-    background: linear-gradient(135deg, #0d6efd, #0a58ca);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: white;
-    letter-spacing: 0.5px;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.4);
-}
-.sidebar .nav-link {
-    border-radius: 6px;
-    transition: all 0.3s ease;
-}
-.sidebar .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    text-decoration: none;
-}
-.sidebar .nav-link.active {
-    background-color: #0d6efd !important;
-    color: white !important;
-}
-.sidebar {
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-}
-</style>

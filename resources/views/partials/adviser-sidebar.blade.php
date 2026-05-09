@@ -13,17 +13,26 @@
             ->count()
         : 0;
     $isPanelSubmissionContext = request()->routeIs('adviser.project.show') && request()->query('context') === 'panel';
+
+    $sidebarRoleLabel = 'Teacher';
+    if ($user) {
+        $pr = $user->primary_role;
+        $sidebarRoleLabel = match ($pr) {
+            'chairperson' => 'Chairperson',
+            'coordinator' => 'Coordinator',
+            'adviser' => 'Adviser',
+            'panelist' => 'Panelist',
+            'teacher' => 'Teacher',
+            default => $pr ? ucfirst((string) $pr) : 'Teacher',
+        };
+    }
 @endphp
 <div class="sidebar bg-dark text-white" style="width: 280px; min-height: 100vh; position: fixed; left: 0; top: 0; z-index: 1000;">
     <div class="p-3 border-bottom border-secondary">
-        <div class="d-flex align-items-center">
-            <div class="ct-badge me-2">
-                <span>CT</span>
-            </div>
-            <a class="navbar-brand fw-bold text-white text-decoration-none mb-0" href="{{ route('adviser.dashboard') }}">
-                CapTrack
-            </a>
-        </div>
+        @include('partials.sidebar-brand', [
+            'homeRoute' => route('adviser.dashboard'),
+            'roleLabel' => $sidebarRoleLabel,
+        ])
     </div>
     <div class="px-3 py-2 border-bottom border-secondary text-center">
         @if($activeTerm)
@@ -105,56 +114,4 @@
         </div>
     </div>
 </div>
-<style>
-.ct-badge {
-    width: 34px;
-    height: 34px;
-    background: linear-gradient(135deg, #0d6efd, #0a58ca);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: white;
-    letter-spacing: 0.5px;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.4);
-}
-.sidebar .nav-link {
-    border-radius: 6px;
-    transition: all 0.3s ease;
-}
-.sidebar .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    text-decoration: none;
-}
-.sidebar .nav-link.active {
-    background-color: #0d6efd !important;
-    color: white !important;
-}
-.sidebar {
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-}
-.sidebar-invitation-badge {
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    min-width: 1.35rem;
-    height: 1.35rem;
-    padding: 0 0.4rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    border-radius: 9999px;
-    color: #fff;
-    background: linear-gradient(145deg, #dc3545 0%, #b02a37 100%);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-}
-.sidebar .nav-link.active .sidebar-invitation-badge {
-    background: rgba(255, 255, 255, 0.22);
-    color: #fff;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
-}
-</style>
+@include('partials.dark-sidebar-shared-styles')

@@ -1,7 +1,7 @@
 @extends('layouts.chairperson')
 @section('title', 'Chairperson Dashboard')
 @section('content')
-<div class="container-fluid mt-4">
+<div class="chairperson-dashboard-page container-fluid mt-4">
     <div class="mb-4">
         <p class="text-muted mb-0">Welcome back, {{ auth()->check() ? auth()->user()->name : 'Chairperson' }}! Oversee capstone projects and academic operations</p>
     </div>
@@ -22,9 +22,15 @@
                 <div class="card-body">
                     @if($activeTerm)
                         <div>
-                            <div class="d-flex align-items-center mb-2">
-                                <h4 class="mb-0 me-3">{{ $activeTerm->semester }}</h4>
-                                <span class="badge bg-success fs-6">Active</span>
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                    <h4 class="mb-0">{{ $activeTerm->semester }}</h4>
+                                    <span class="badge bg-success fs-6">Active</span>
+                                </div>
+                                <a href="{{ route('chairperson.academic-terms.index') }}" class="btn btn-outline-primary btn-sm flex-shrink-0">
+                                    <i class="fas fa-exchange-alt me-1"></i>
+                                    Switch or activate term
+                                </a>
                             </div>
                             <p class="text-muted mb-0">
                                 <i class="fas fa-info-circle me-1"></i>
@@ -33,9 +39,15 @@
                         </div>
                     @else
                         <div>
-                            <div class="d-flex align-items-center mb-2">
-                                <h4 class="mb-0 me-3 text-warning">No Active Term</h4>
-                                <span class="badge bg-warning fs-6">Inactive</span>
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                    <h4 class="mb-0 text-warning">No Active Term</h4>
+                                    <span class="badge bg-warning fs-6">Inactive</span>
+                                </div>
+                                <a href="{{ route('chairperson.academic-terms.index') }}" class="btn btn-warning btn-sm flex-shrink-0">
+                                    <i class="fas fa-calendar-check me-1"></i>
+                                    Activate a term
+                                </a>
                             </div>
                             <p class="text-muted mb-0">
                                 <i class="fas fa-exclamation-triangle me-1"></i>
@@ -140,76 +152,77 @@
 </div>
 
 <style>
-.bg-gradient-primary {
+/* Scoped to this page only — unscoped rules were leaking and shifting global UI vs other chairperson routes */
+.chairperson-dashboard-page .bg-gradient-primary {
     background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
 }
 
-.bg-gradient-success {
+.chairperson-dashboard-page .bg-gradient-success {
     background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
 }
 
-.bg-gradient-warning {
+.chairperson-dashboard-page .bg-gradient-warning {
     background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
 }
 
-.bg-gradient-info {
+.chairperson-dashboard-page .bg-gradient-info {
     background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
 }
 
-.card {
+.chairperson-dashboard-page .card {
     border: none;
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     transition: all 0.2s ease-in-out;
 }
 
-.card:hover {
+.chairperson-dashboard-page .card:hover {
     transform: translateY(-2px);
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
-.card-header {
+.chairperson-dashboard-page .card-header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.125);
 }
 
-.btn-outline-primary:hover,
-.btn-outline-secondary:hover,
-.btn-outline-warning:hover,
-.btn-outline-info:hover {
+.chairperson-dashboard-page .btn-outline-primary:hover,
+.chairperson-dashboard-page .btn-outline-secondary:hover,
+.chairperson-dashboard-page .btn-outline-warning:hover,
+.chairperson-dashboard-page .btn-outline-info:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.table-hover tbody tr:hover {
+.chairperson-dashboard-page .table-hover tbody tr:hover {
     background-color: rgba(0, 123, 255, 0.05);
 }
 
-.badge {
+.chairperson-dashboard-page .badge {
     font-size: 0.75em;
 }
 
-.alert {
+.chairperson-dashboard-page .alert {
     border: none;
     border-radius: 0.5rem;
 }
 
-.list-group-item {
+.chairperson-dashboard-page .list-group-item {
     border: none;
     padding: 0.75rem 0;
 }
 
-.list-group-item:not(:last-child) {
+.chairperson-dashboard-page .list-group-item:not(:last-child) {
     border-bottom: 1px solid #f8f9fa;
 }
 
-.avatar-sm {
+.chairperson-dashboard-page .avatar-sm {
     width: 40px;
     height: 40px;
     font-size: 16px;
 }
 
-.text-primary { color: #007bff !important; }
-.text-success { color: #28a745 !important; }
-.text-warning { color: #ffc107 !important; }
-.text-info { color: #17a2b8 !important; }
+.chairperson-dashboard-page .text-primary { color: #007bff !important; }
+.chairperson-dashboard-page .text-success { color: #28a745 !important; }
+.chairperson-dashboard-page .text-warning { color: #ffc107 !important; }
+.chairperson-dashboard-page .text-info { color: #17a2b8 !important; }
 </style>
 @endsection
