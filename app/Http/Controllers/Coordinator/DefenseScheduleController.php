@@ -247,6 +247,10 @@ class DefenseScheduleController extends Controller
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
 
+        if ($msg = $this->defenseStartMustBeInFuture($startAt)) {
+            return back()->withErrors(['start_time' => $msg])->withInput();
+        }
+
         if ($this->hasGroupScheduleOnDate($validated['group_id'], $request->date)) {
             return back()->withErrors([
                 'date' => 'This group already has a defense schedule on the selected date.'
@@ -413,6 +417,10 @@ class DefenseScheduleController extends Controller
 
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
+
+        if ($msg = $this->defenseStartMustBeInFuture($startAt)) {
+            return back()->withErrors(['start_time' => $msg])->withInput();
+        }
 
         if ($this->hasGroupScheduleOnDate($validated['group_id'], $request->date, $id)) {
             return back()->withErrors([
@@ -607,6 +615,14 @@ class DefenseScheduleController extends Controller
 
         $startAt = Carbon::parse($request->date . ' ' . $request->start_time);
         $endAt = Carbon::parse($request->date . ' ' . $request->end_time);
+        if ($msg = $this->defenseStartMustBeInFuture($startAt)) {
+            return response()->json([
+                'message' => $msg,
+                'availableFaculty' => [],
+                'autoAssignedFacultyIds' => [],
+                'conflict' => false,
+            ], 422);
+        }
         $conflict = $this->checkDoubleBooking($startAt, $endAt, $request->room);
         $conflictingFacultyIds = $this->getConflictingFacultyIds($startAt, $endAt);
 
@@ -918,7 +934,7 @@ class DefenseScheduleController extends Controller
         }
 
         $request->validate([
-            'scheduled_date' => 'required|date|after:today',
+            'scheduled_date' => 'required|date',
             'scheduled_time' => 'required',
             'room' => 'required|string|max:255',
             'coordinator_notes' => 'nullable|string|max:1000',
@@ -942,6 +958,10 @@ class DefenseScheduleController extends Controller
 
         $startAt = Carbon::parse($request->scheduled_date . ' ' . $request->scheduled_time);
         $endAt = $startAt->copy()->addHours(2);
+
+        if ($msg = $this->defenseStartMustBeInFuture($startAt)) {
+            return back()->withErrors(['scheduled_time' => $msg])->withInput();
+        }
 
         $defenseSchedule = DefenseSchedule::create([
             'defense_request_id' => $defenseRequest->id,
@@ -1094,5 +1114,17 @@ class DefenseScheduleController extends Controller
         return DefenseSchedule::where('group_id', $groupId)
             ->whereIn('status', ['scheduled', 'in_progress'])
             ->exists();
+    }
+
+    /**
+     * Application timezone (see config/app.php, default Asia/Manila) defines "now".
+     */
+    private function defenseStartMustBeInFuture(Carbon $startAt): ?string
+    {
+        if (! $startAt->gt(now())) {
+            return 'The defense must be scheduled for a future date and time (Philippines time).';
+        }
+
+        return null;
     }
 }
