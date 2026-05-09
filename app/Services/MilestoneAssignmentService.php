@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\DefenseSchedule;
 use App\Models\Group;
 use App\Models\MilestoneTemplate;
 use App\Models\ProjectSubmission;
@@ -16,6 +17,7 @@ class MilestoneAssignmentService
         $group->loadMissing(['groupMilestones.milestoneTemplate']);
         $milestones = $group->groupMilestones;
         $hasApprovedProposal = self::groupHasApprovedProposal($group);
+        $hasCompletedProposalDefense = self::groupHasCompletedProposalDefense($group);
 
         $incomplete = $milestones->first(fn ($gm) => (int) $gm->progress_percentage < 100);
         if ($incomplete) {
@@ -62,10 +64,10 @@ class MilestoneAssignmentService
             ];
         }
 
-        if ((int) $next->sequence_order > self::PROPOSAL_SEQUENCE_ORDER && ! $hasApprovedProposal) {
+        if ((int) $next->sequence_order > self::PROPOSAL_SEQUENCE_ORDER && ! $hasCompletedProposalDefense) {
             return [
                 'can_assign' => false,
-                'block_message' => 'Cannot assign 60%/100% milestones until the group has at least one approved proposal.',
+                'block_message' => 'Cannot assign 60%/100% milestones until the group completes Proposal Defense.',
                 'allowed_template_id' => null,
                 'sequencing_enabled' => true,
             ];
@@ -84,6 +86,7 @@ class MilestoneAssignmentService
     {
         $meta = self::assignmentMeta($group);
         $hasApprovedProposal = self::groupHasApprovedProposal($group);
+        $hasCompletedProposalDefense = self::groupHasCompletedProposalDefense($group);
 
         if (! $meta['can_assign']) {
             return $meta['block_message'];
@@ -98,8 +101,8 @@ class MilestoneAssignmentService
                 return 'This template has no sequence order. Set step order (1 = Proposal, 2 = 60%, 3 = 100%) on the template edit page.';
             }
 
-            if ((int) $template->sequence_order > self::PROPOSAL_SEQUENCE_ORDER && ! $hasApprovedProposal) {
-                return 'Cannot assign 60%/100% milestones until the group has at least one approved proposal.';
+            if ((int) $template->sequence_order > self::PROPOSAL_SEQUENCE_ORDER && ! $hasCompletedProposalDefense) {
+                return 'Cannot assign 60%/100% milestones until the group completes Proposal Defense.';
             }
 
             if ($meta['allowed_template_id'] !== null
@@ -184,6 +187,20 @@ class MilestoneAssignmentService
         return MilestoneTemplate::query()
             ->where('status', 'active')
             ->where('sequence_order', $order)
+            ->exists();
+    }
+
+    private static function groupHasCompletedProposalDefense(Group $group): bool
+    {
+        return DefenseSchedule::query()
+            ->where('group_id', $group->getKey())
+            ->where('status', 'completed')
+            ->where(function ($query) {
+                $query->where('stage', 'proposal')
+                    ->orWhereHas('defenseRequest', function ($q) {
+                        $q->where('defense_type', 'proposal');
+                    });
+            })
             ->exists();
     }
 }
