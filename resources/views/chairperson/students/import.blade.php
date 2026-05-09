@@ -100,9 +100,11 @@
                         <li><strong>middle_name</strong> - Optional</li>
                         <li><strong>last_name</strong> - Required</li>
                         <li><strong>suffix</strong> - Optional</li>
-                        <li><strong>email</strong> - Email address (must be unique)</li>
-                        <li><strong>semester</strong> - Current semester (format: "2024-2025 First Semester", "2024-2025 Second Semester", "2024-2025 Summer")</li>
+                        <li><strong>email</strong> - Email address</li>
                         <li><strong>course</strong> - Course/Program (BS Computer Science, BS Information Technology, BS Entertainment and Multimedia Computing)</li>
+                        <li><strong>year_level</strong> - Optional (e.g., "4th Year"); legacy column name <code>year</code> still works</li>
+                        <li><strong>school_year</strong> - School year in the form <code>2025-2026</code> (required when semester is <code>1st</code>, <code>2nd</code>, or <code>summer</code>)</li>
+                        <li><strong>semester</strong> - Either <code>1st</code>, <code>2nd</code>, or <code>summer</code> (with <code>school_year</code>), <strong>or</strong> the full term text exactly as in Academic Terms (e.g., <code>2024-2025 First Semester</code>) for older spreadsheets</li>
                         <li><strong>offer_code</strong> - Offering code for automatic enrollment (e.g., "11000", "11001", "11002")</li>
                     </ul>
                     <hr class="my-2">

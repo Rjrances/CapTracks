@@ -13,7 +13,8 @@ class Student extends Model
         'suffix',
         'email',
         'course',
-        'year',
+        'school_year',
+        'year_level',
         'semester',
         'offer_code',
     ];

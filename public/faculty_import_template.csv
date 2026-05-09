@@ -1,0 +1,2 @@
+faculty_id,first_name,middle_name,last_name,name_prefix,suffix,email,role,department,school_year,semester
+10001,Juan,,Dela Cruz,Engr.,,juan.delacruz@university.edu,teacher,Computer Science,2024-2025,1st

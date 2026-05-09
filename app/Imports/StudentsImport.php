@@ -1,41 +1,55 @@
 <?php
+
 namespace App\Imports;
+
 use App\Models\Student;
 use App\Models\StudentAccount;
 use App\Services\StudentEnrollmentService;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
+use App\Support\ImportAcademicFieldsResolver;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
-use Illuminate\Support\Facades\Log;
+
 class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBatchInserts, WithChunkReading, SkipsOnError, SkipsEmptyRows, WithMapping, WithEvents
 {
     protected $offeringId;
+
     protected $importedStudentIds = [];
+
     protected $enrollmentService;
+
     protected $importedStudents = [];
+
     protected $createdStudentsCount = 0;
-    protected $existingStudentsCount = 0;
-    protected $existingStudentIds = [];
-    
+
+    protected $updatedStudentsCount = 0;
+
+    /** Existing rows where at least one imported field differed from the database. */
+    protected $existingStudentsChangedCount = 0;
+
     public function __construct($offeringId = null)
     {
         $this->offeringId = $offeringId;
         $this->enrollmentService = new StudentEnrollmentService();
     }
+
     public function map($row): array
     {
         $normalized = $this->normalizeStudentRow($row);
         $offerCode = trim((string) ($normalized['offer_code'] ?? ''));
+        $canonicalSemester = trim((string) ($normalized['semester'] ?? ''));
 
         return [
-            'student_id' => (string) $normalized['student_id'], 
+            'student_id' => (string) $normalized['student_id'],
             'name_prefix' => trim((string) ($normalized['name_prefix'] ?? '')),
             'first_name' => trim((string) ($normalized['first_name'] ?? '')),
             'middle_name' => trim((string) ($normalized['middle_name'] ?? '')),
@@ -49,11 +63,16 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
                 $normalized['suffix'] ?? ''
             ),
             'email' => trim((string) ($normalized['email'] ?? '')),
-            'semester' => trim((string) ($normalized['semester'] ?? '')),
+            'semester' => $canonicalSemester,
+            // Maatwebsite validates the mapped row (not prepareForValidation alone); keep for exists:academic_terms
+            'semester_normalized' => $canonicalSemester,
+            'school_year' => $normalized['school_year'],
             'course' => trim((string) ($normalized['course'] ?? '')),
+            'year_level' => $normalized['year_level'],
             'offer_code' => $offerCode === '' ? null : $offerCode,
         ];
     }
+
     public function model(array $row)
     {
         $student = Student::where('student_id', $row['student_id'])->first();
@@ -61,14 +80,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             $student = Student::where('email', $row['email'])->first();
         }
 
-        if ($student) {
-            $this->existingStudentsCount++;
-            $this->existingStudentIds[] = (string) $student->student_id;
-            return null;
-        }
-
-        $student = new Student([
-            'student_id' => $row['student_id'],
+        $attributes = [
             'name' => $row['name'],
             'name_prefix' => $row['name_prefix'] ?: null,
             'first_name' => $row['first_name'] ?: null,
@@ -77,29 +89,61 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             'suffix' => $row['suffix'] ?: null,
             'email' => $row['email'],
             'semester' => $row['semester'],
+            'school_year' => $this->normalizeOptionalString($row['school_year'] ?? null),
             'course' => $row['course'],
+            'year_level' => $this->normalizeOptionalString($row['year_level'] ?? null),
             'offer_code' => $row['offer_code'],
-        ]);
+        ];
+
+        if ($student) {
+            $student->fill($attributes);
+            if ($student->isDirty()) {
+                $student->save();
+                $this->existingStudentsChangedCount++;
+            }
+            $this->updatedStudentsCount++;
+            $this->ensureStudentAccount($student, $row);
+            $this->pushImportedForEnrollment($student);
+
+            return null;
+        }
+
+        $student = new Student(array_merge(
+            ['student_id' => $row['student_id']],
+            $attributes
+        ));
         $student->save();
         $this->createdStudentsCount++;
 
-        
-        StudentAccount::firstOrCreate(
+        $this->ensureStudentAccount($student, $row);
+        $this->pushImportedForEnrollment($student);
+
+        return $student;
+    }
+
+    private function pushImportedForEnrollment(Student $student): void
+    {
+        $this->importedStudents[] = $student;
+        if ($this->offeringId) {
+            $this->importedStudentIds[] = $student->student_id;
+        }
+    }
+
+    private function ensureStudentAccount(Student $student, array $row): void
+    {
+        $email = $student->email ?: trim((string) ($row['email'] ?? ''));
+        $account = StudentAccount::firstOrCreate(
             ['student_id' => $student->student_id],
             [
-                'email' => $student->email ?: $row['email'],
-                'password' => null, 
-                'must_change_password' => true, 
+                'email' => $email,
+                'password' => null,
+                'must_change_password' => true,
             ]
         );
-
-        
-        $this->importedStudents[] = $student;
-
-        if ($this->offeringId) {
-            $this->importedStudentIds[] = $row['student_id'];
+        if (!$account->wasRecentlyCreated && $email !== '' && $account->email !== $email) {
+            $account->email = $email;
+            $account->save();
         }
-        return $student;
     }
 
     public function getCreatedStudentsCount(): int
@@ -107,22 +151,28 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
         return $this->createdStudentsCount;
     }
 
-    public function getExistingStudentsCount(): int
+    public function getUpdatedStudentsCount(): int
     {
-        return $this->existingStudentsCount;
+        return $this->updatedStudentsCount;
     }
 
-    public function getExistingStudentIds(int $limit = 10): array
+    public function getExistingStudentsChangedCount(): int
     {
-        return array_slice(array_values(array_unique($this->existingStudentIds)), 0, $limit);
+        return $this->existingStudentsChangedCount;
     }
+
+    public function getExistingStudentsUnchangedCount(): int
+    {
+        return max(0, $this->updatedStudentsCount - $this->existingStudentsChangedCount);
+    }
+
     public function rules(): array
     {
         return [
             '*.student_id' => [
                 'required',
                 'string',
-                'regex:/^\d{10}$/', 
+                'regex:/^\d{10}$/',
             ],
             '*.name' => 'nullable|string|max:255',
             '*.name_prefix' => 'nullable|string|max:20',
@@ -131,11 +181,15 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             '*.last_name' => 'nullable|string|max:255',
             '*.suffix' => 'nullable|string|max:20',
             '*.email' => 'nullable|email',
-            '*.semester' => 'required|string|in:2024-2025 First Semester,2024-2025 Second Semester,2024-2025 Summer',
+            '*.semester' => 'required|string',
+            '*.semester_normalized' => 'required|exists:academic_terms,semester',
+            '*.school_year' => 'nullable|regex:/^\d{4}-\d{4}$/',
+            '*.year_level' => 'nullable|string|max:50',
             '*.course' => 'required|string|max:255',
             '*.offer_code' => 'nullable|string|max:20|exists:offerings,offer_code',
         ];
     }
+
     public function prepareForValidation($data, $index)
     {
         if (isset($data['student_id'])) {
@@ -147,9 +201,21 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
         if (isset($data['offer_code']) && trim((string) $data['offer_code']) === '') {
             $data['offer_code'] = null;
         }
+        if (!isset($data['year_level']) && isset($data['year'])) {
+            $data['year_level'] = $data['year'];
+        }
+
+        $ac = ImportAcademicFieldsResolver::resolve($data);
+        if (trim((string) ($data['semester'] ?? '')) !== '' && $ac['semester'] === '') {
+            throw ValidationException::withMessages([
+                'school_year' => ["Row {$index}: Enter school_year (e.g. 2025-2026) when semester is 1st, 2nd, or summer."],
+            ]);
+        }
+        $data['semester_normalized'] = $ac['semester'];
 
         return $data;
     }
+
     public function customValidationMessages(): array
     {
         return [
@@ -157,55 +223,55 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             '*.student_id.regex' => 'Student ID must be exactly 10 digits on row :index.',
             '*.email.email' => 'Invalid email format on row :index.',
             '*.semester.required' => 'Semester is required on row :index.',
+            '*.semester_normalized.exists' => 'No matching academic term on row :index. Create the term under Academic Terms first, using the same school year and semester wording.',
             '*.course.required' => 'Course is required on row :index.',
             '*.offer_code.exists' => 'Offer code :input does not exist in the system on row :index.',
         ];
     }
+
     public function batchSize(): int
     {
         return 100;
     }
+
     public function chunkSize(): int
     {
         return 100;
     }
+
     public function onError(\Throwable $e)
     {
         Log::error('Student import error on row: ' . $e->getMessage());
     }
+
     public function afterImport()
     {
         try {
-            
             if (!empty($this->importedStudents)) {
                 $enrollmentResults = $this->enrollmentService->enrollStudentsByOfferCode(collect($this->importedStudents));
                 $stats = $this->enrollmentService->getEnrollmentStats($enrollmentResults);
-                
-                Log::info("Student import enrollment results:", $stats);
-                
-                
+
+                Log::info('Student import enrollment results:', $stats);
+
                 if (!empty($enrollmentResults['enrolled'])) {
                     foreach ($enrollmentResults['enrolled'] as $result) {
                         Log::info("Student {$result['student']->student_id} enrolled in offering {$result['offering']->subject_code}");
                     }
                 }
-                
-                
+
                 if (!empty($enrollmentResults['failed'])) {
                     foreach ($enrollmentResults['failed'] as $result) {
                         Log::warning("Failed to enroll student {$result['student']->student_id}: {$result['reason']}");
                     }
                 }
-                
-                
+
                 if (!empty($enrollmentResults['not_found'])) {
                     foreach ($enrollmentResults['not_found'] as $result) {
                         Log::warning("Offering not found for student {$result['student']->student_id} with offer code: {$result['offer_code']}");
                     }
                 }
             }
-            
-            
+
             if ($this->offeringId && !empty($this->importedStudentIds)) {
                 $offering = \App\Models\Offering::find($this->offeringId);
                 if ($offering) {
@@ -222,13 +288,25 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             Log::error('Error processing student enrollments: ' . $e->getMessage());
         }
     }
+
     public function registerEvents(): array
     {
         return [
-            AfterImport::class => function(AfterImport $event) {
+            AfterImport::class => function (AfterImport $event) {
                 $this->afterImport();
             },
         ];
+    }
+
+    private function normalizeOptionalString($raw): ?string
+    {
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        $s = trim((string) $raw);
+
+        return $s === '' ? null : $s;
     }
 
     private function composeStudentName(string $namePrefix, string $firstName, string $middleName, string $lastName, string $suffix): string
@@ -243,16 +321,14 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             return '';
         }
 
-        $fullName = trim(implode(' ', array_filter([$namePrefix, $firstName, $middleName, $lastName, $suffix])));
-
-        return $fullName;
+        return trim(implode(' ', array_filter([$namePrefix, $firstName, $middleName, $lastName, $suffix])));
     }
 
     private function normalizeStudentRow(array $row): array
     {
-        
         if (!empty($row['name']) && !empty($row['email'])) {
             [$firstName, $middleName, $lastName, $suffix] = $this->splitLegacyName((string) $row['name']);
+            $ac = ImportAcademicFieldsResolver::resolve($row);
 
             return [
                 'student_id' => $row['student_id'] ?? '',
@@ -262,8 +338,10 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
                 'last_name' => $lastName,
                 'suffix' => $suffix,
                 'email' => $row['email'] ?? '',
-                'semester' => $row['semester'] ?? '',
+                'semester' => $ac['semester'],
+                'school_year' => $ac['school_year'],
                 'course' => $row['course'] ?? '',
+                'year_level' => $ac['year_level'],
                 'offer_code' => $row['offer_code'] ?? '',
             ];
         }
@@ -277,8 +355,6 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
         $course = trim((string) ($row['course'] ?? ''));
         $offerCode = trim((string) ($row['offer_code'] ?? ''));
 
-        
-        
         if (
             $email === '' &&
             filter_var($middleName, FILTER_VALIDATE_EMAIL) &&
@@ -300,6 +376,11 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             $suffix = $suffix !== '' ? $suffix : $parsedSuffix;
         }
 
+        $mergedForAc = array_merge($row, [
+            'semester' => $semester,
+        ]);
+        $ac = ImportAcademicFieldsResolver::resolve($mergedForAc);
+
         return [
             'student_id' => $row['student_id'] ?? '',
             'name_prefix' => trim((string) ($row['name_prefix'] ?? '')),
@@ -308,8 +389,10 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             'last_name' => $lastName,
             'suffix' => $suffix,
             'email' => $email,
-            'semester' => $semester,
+            'semester' => $ac['semester'],
+            'school_year' => $ac['school_year'],
             'course' => $course,
+            'year_level' => $ac['year_level'],
             'offer_code' => $offerCode,
         ];
     }
@@ -321,7 +404,6 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             return ['', '', '', ''];
         }
 
-        
         if (str_contains($name, ',')) {
             [$lastPart, $restPart] = array_map('trim', explode(',', $name, 2));
             $restTokens = preg_split('/\s+/', $restPart) ?: [];

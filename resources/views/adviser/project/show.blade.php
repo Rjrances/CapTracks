@@ -110,7 +110,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <strong>Year Level:</strong>
-                            <p>{{ $submission->student->year ?? 'N/A' }}</p>
+                            <p>{{ $submission->student->year_level ?? 'N/A' }}</p>
                         </div>
                         <div class="col-md-6">
                             <strong>Semester:</strong>

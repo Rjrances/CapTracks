@@ -18,6 +18,7 @@ class User extends Authenticatable
         'email',
         'birthday',
         'department',
+        'school_year',
         'role',
         'semester',
     ];

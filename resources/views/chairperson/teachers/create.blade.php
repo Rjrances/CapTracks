@@ -39,16 +39,17 @@
                             </h6>
                             <p class="mb-2">Your CSV file should have these columns:</p>
                             <ul class="mb-0">
-                                <li><strong>faculty_id</strong> - Required and must be unique</li>
+                                <li><strong>faculty_id</strong> - Required (existing IDs are updated on re-import)</li>
                                 <li><strong>first_name</strong> - Required</li>
                                 <li><strong>middle_name</strong> - Optional</li>
                                 <li><strong>last_name</strong> - Required</li>
                                 <li><strong>name_prefix</strong> - Optional (e.g., Dr., Engr.)</li>
                                 <li><strong>suffix</strong> - Optional (e.g., Jr., III)</li>
-                                <li><strong>email</strong> - Required and must be unique</li>
+                                <li><strong>email</strong> - Required (used to match existing faculty when re-importing)</li>
                                 <li><strong>role</strong> - Optional (defaults to teacher)</li>
                                 <li><strong>department</strong> - Optional</li>
-                                <li><strong>semester</strong> - Required (e.g., 2024-2025 First Semester)</li>
+                                <li><strong>school_year</strong> - e.g. <code>2025-2026</code> (required when semester is <code>1st</code>, <code>2nd</code>, or <code>summer</code>)</li>
+                                <li><strong>semester</strong> - <code>1st</code>, <code>2nd</code>, or <code>summer</code> with <code>school_year</code>, or the full term text matching Academic Terms (e.g. <code>2024-2025 First Semester</code>)</li>
                             </ul>
                             <hr class="my-2">
                             <div class="d-flex align-items-center">
@@ -71,8 +72,8 @@
                             <ul class="mb-0">
                                 <li>All faculty members will have a default password: <strong>password123</strong></li>
                                 <li>They will be required to change their password on first login</li>
-                                <li>Email addresses must be unique</li>
-                                <li>Faculty IDs must be provided in the CSV and must be unique</li>
+                                <li>Re-importing the same file adds new rows and updates existing faculty when IDs or emails match</li>
+                                <li>Faculty IDs must be provided in the CSV</li>
                             </ul>
                         </div>
                         <div class="d-flex gap-2">

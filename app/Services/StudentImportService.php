@@ -57,11 +57,11 @@ class StudentImportService
             Excel::import($import, $file);
 
             $createdCount = $import->getCreatedStudentsCount();
-            $existingCount = $import->getExistingStudentsCount();
-            if ($createdCount === 0 && $existingCount > 0) {
-                $existingIds = $import->getExistingStudentIds();
-                $existingPreview = !empty($existingIds) ? ' IDs: ' . implode(', ', $existingIds) . (count($existingIds) >= 10 ? '...' : '') : '';
-                return back()->with('error', "Import failed: all {$existingCount} students in the file already exist in the system.{$existingPreview}");
+            $updatedCount = $import->getUpdatedStudentsCount();
+            $existingChangedCount = $import->getExistingStudentsChangedCount();
+            $existingUnchangedCount = $import->getExistingStudentsUnchangedCount();
+            if ($createdCount === 0 && $updatedCount === 0) {
+                return back()->with('error', 'Import failed: no student rows could be processed. Check that your file has data rows and required columns.');
             }
 
             if ($offeringId) {
@@ -80,10 +80,25 @@ class StudentImportService
                 }
             }
 
-            $successMessage = "Students imported successfully from '{$fileName}'!";
-            if ($existingCount > 0) {
-                $successMessage .= " {$existingCount} existing student(s) were skipped.";
+            $summaryParts = [];
+            if ($createdCount > 0) {
+                $summaryParts[] = $createdCount === 1 ? '1 new student added' : "{$createdCount} new students added";
             }
+            if ($updatedCount > 0) {
+                if ($existingChangedCount > 0 && $existingUnchangedCount > 0) {
+                    $summaryParts[] = "{$existingChangedCount} existing student(s) had information updated; {$existingUnchangedCount} already matched the file with no field changes.";
+                } elseif ($existingChangedCount > 0) {
+                    $summaryParts[] = $existingChangedCount === 1
+                        ? '1 existing student had information updated.'
+                        : "{$existingChangedCount} existing students had information updated.";
+                } else {
+                    $summaryParts[] = $updatedCount === 1
+                        ? '1 existing student matched the import with no field changes.'
+                        : "{$updatedCount} existing students matched the import with no field changes.";
+                }
+            }
+            $successMessage = "Import completed from '{$fileName}'";
+            $successMessage .= !empty($summaryParts) ? ': ' . implode('; ', $summaryParts) . '.' : '.';
 
             if ($request->has('offering_id')) {
                 $oid = $request->get('offering_id');
