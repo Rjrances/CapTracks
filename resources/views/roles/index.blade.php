@@ -8,9 +8,6 @@
                     <h2 class="mb-0">Manage User Roles</h2>
                 </div>
                 <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>

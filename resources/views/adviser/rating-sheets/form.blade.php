@@ -23,25 +23,22 @@
         <a href="{{ $isCoordinatorRoute ? route('coordinator.rating-sheets.show', $schedule) : route('adviser.dashboard') }}" class="btn btn-outline-secondary flex-shrink-0">Back</a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">
-            <div>{{ session('success') }}</div>
-            <div class="mt-2 d-flex gap-2 flex-wrap">
-                @if($isCoordinatorRoute)
-                    <a href="{{ route('coordinator.rating-sheets.show', $schedule) }}" class="btn btn-sm btn-success">
-                        Back to Rating Overview
-                    </a>
-                @else
-                    <a href="{{ route('adviser.panel-groups') }}" class="btn btn-sm btn-success">
-                        Back to Panel Groups
-                    </a>
-                @endif
-                @if(session('next_rating_sheet_url'))
-                    <a href="{{ session('next_rating_sheet_url') }}" class="btn btn-sm btn-outline-success">
-                        Go to Next Pending Rating ({{ session('next_rating_group_name', 'next group') }})
-                    </a>
-                @endif
-            </div>
+    @if(session('success') || session('next_rating_sheet_url'))
+        <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
+            @if($isCoordinatorRoute)
+                <a href="{{ route('coordinator.rating-sheets.show', $schedule) }}" class="btn btn-sm btn-success">
+                    Back to Rating Overview
+                </a>
+            @else
+                <a href="{{ route('adviser.panel-groups') }}" class="btn btn-sm btn-success">
+                    Back to Panel Groups
+                </a>
+            @endif
+            @if(session('next_rating_sheet_url'))
+                <a href="{{ session('next_rating_sheet_url') }}" class="btn btn-sm btn-outline-success">
+                    Go to Next Pending Rating ({{ session('next_rating_group_name', 'next group') }})
+                </a>
+            @endif
         </div>
     @endif
 

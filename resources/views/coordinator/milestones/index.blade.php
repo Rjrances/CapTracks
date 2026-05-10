@@ -8,12 +8,6 @@
             </a>
         </x-coordinator.intro>
     <div class="bg-white rounded-4 shadow-sm pt-3 px-4 pb-5">
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
         @if($errors->any())
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="fas fa-exclamation-circle me-2"></i>
@@ -179,15 +173,10 @@
                                                 </td>
                                                 <td>
                                                     @if($group->members->count() > 0)
-                                                        <div class="d-flex flex-column gap-1">
-                                                            @foreach($group->members->take(2) as $member)
-                                                                <span class="text-truncate" style="max-width: 150px;" title="{{ $member->name }}">
-                                                                    {{ $member->name }}
-                                                                </span>
+                                                        <div class="d-flex flex-column gap-1 small">
+                                                            @foreach($group->members as $member)
+                                                                <span>{{ $member->name }}</span>
                                                             @endforeach
-                                                            @if($group->members->count() > 2)
-                                                                <small class="text-muted">+{{ $group->members->count() - 2 }} more</small>
-                                                            @endif
                                                         </div>
                                                     @else
                                                         <span class="text-muted">No members</span>

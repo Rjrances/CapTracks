@@ -5,12 +5,6 @@
     <div class="mb-4">
         <p class="text-muted mb-0">Welcome back, {{ auth()->check() ? auth()->user()->name : 'Chairperson' }}! Oversee capstone projects and academic operations</p>
     </div>
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-primary">

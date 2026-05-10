@@ -11,19 +11,6 @@
             </a>
         </x-coordinator.intro>
 
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
             <div class="row mb-4">
                 <div class="col-md-3">
                     <div class="card bg-warning text-white h-100">
@@ -406,9 +393,6 @@
                             <p class="text-muted">
                                 You don't have any defense schedules yet, or there are no groups assigned to your offerings.
                             </p>
-                            <a href="{{ route('coordinator.defense.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i>Create First Schedule
-                            </a>
                         </div>
                     @endif
                 </div>

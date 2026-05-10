@@ -7,12 +7,6 @@
                 <p class="text-muted mb-4">Track your capstone project progress</p>
             </div>
         </div>
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
         @if($offeringInfo['has_offering'])
         <div class="row mb-4">
             <div class="col-12">

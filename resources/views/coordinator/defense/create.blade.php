@@ -32,12 +32,6 @@
                 The academic term is automatically set to the current active term.
                 <br><small class="text-muted">Select <strong>Chair</strong> and <strong>Member</strong>. The adviser and offering coordinator are added automatically. You may add up to {{ $optionalPanelistCapacity }} additional <strong>Member</strong> {{ $optionalPanelistCapacity === 1 ? 'slot' : 'slots' }} when needed.</small>
             </div>
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
             @if(! empty($prefillGroupUnavailable))
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>

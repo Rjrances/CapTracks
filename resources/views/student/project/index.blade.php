@@ -29,12 +29,6 @@
     <a href="{{ route('student.project.create') }}" class="btn btn-success mb-3">
         <i class="fas fa-upload me-2"></i>Upload New File
     </a>
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
     @if($submissions && count($submissions))
     <div class="table-responsive">
         <table class="table table-bordered table-hover">

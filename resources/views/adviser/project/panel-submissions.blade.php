@@ -10,18 +10,12 @@
             <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
         </a>
     </div>
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            @if(session('panel_rating_sheet_url'))
-                <div class="mt-2">
-                    <a href="{{ session('panel_rating_sheet_url') }}" class="btn btn-sm btn-success">
-                        <i class="fas fa-clipboard-check me-1"></i>
-                        Go to Rating Sheet for {{ session('panel_group_name', 'this group') }}
-                    </a>
-                </div>
-            @endif
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    @if(session('panel_rating_sheet_url'))
+        <div class="mb-3">
+            <a href="{{ session('panel_rating_sheet_url') }}" class="btn btn-success btn-sm">
+                <i class="fas fa-clipboard-check me-1"></i>
+                Go to Rating Sheet for {{ session('panel_group_name', 'this group') }}
+            </a>
         </div>
     @endif
 

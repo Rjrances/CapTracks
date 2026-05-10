@@ -7,12 +7,6 @@
         @endphp
         <x-coordinator.intro :description="'Welcome, '.$coordinatorName.' — manage capstone projects, groups, and academic activities for the current term.'">
         </x-coordinator.intro>
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
         @if($isTeacherCoordinator && $coordinatedOfferings->count() > 0)
         <div class="row mb-4">
             <div class="col-12">

@@ -9,13 +9,6 @@
         </a>
     </x-coordinator.intro>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
-
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">

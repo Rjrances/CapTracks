@@ -11,18 +11,6 @@
 <div class="d-flex justify-content-center align-items-start" style="min-height: 80vh; background: transparent;">
     <div class="bg-white rounded-4 shadow-sm p-5 w-100" style="max-width: 600px;">
         <h2 class="fw-bold mb-4 h4">Edit details</h2>
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
         <form method="POST" action="{{ route('coordinator.groups.update', $group->id) }}">
             @csrf
             @method('PUT')

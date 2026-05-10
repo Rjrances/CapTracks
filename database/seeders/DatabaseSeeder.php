@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Run seeders in proper order for dependencies
-        $this->call([
+        $seeders = [
             RoleSeeder::class,              // 1. Create roles first
             AcademicTermSeeder::class,      // 2. Create academic terms
             UserSeeder::class,              // 3. Create faculty users with accounts
@@ -23,6 +23,13 @@ class DatabaseSeeder extends Seeder
             GroupSeeder::class,             // 8. Create groups and assignments
             NotificationSeeder::class,      // 9. Create test notifications
             DefenseScheduleSeeder::class    // 10. Create defense schedules
-        ]);
+        ];
+
+        // Optional defense roster dataset (groups + members); set DEFENSE_DATASET_SEED=true when running db:seed.
+        if (filter_var(env('DEFENSE_DATASET_SEED', false), FILTER_VALIDATE_BOOL)) {
+            $seeders[] = DefenseDatasetSeeder::class;
+        }
+
+        $this->call($seeders);
     }
 }

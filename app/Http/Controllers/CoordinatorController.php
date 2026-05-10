@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Services\NotificationService;
 use App\Services\StudentImportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class CoordinatorController extends Controller
 {
@@ -210,33 +211,67 @@ class CoordinatorController extends Controller
             })
             ->pluck('id');
 
-        $query = Group::with(['adviser', 'members']);
-
-        if ($coordinatedOfferingIds->isNotEmpty()) {
-            $query->whereIn('offering_id', $coordinatedOfferingIds);
-        } else {
-            $query->whereRaw('1 = 0');
-        }
-
-        if ($activeTerm) {
-            $query->where('academic_term_id', $activeTerm->id);
-        }
+        $listQueryForAdvisers = Group::query();
+        $this->applyCoordinatorManagedGroupsScope($listQueryForAdvisers, $coordinatedOfferingIds, $activeTerm);
 
         if ($request->filled('offering') && $coordinatedOfferingIds->contains((int) $request->input('offering'))) {
-            $query->where('offering_id', (int) $request->input('offering'));
+            $listQueryForAdvisers->where('offering_id', (int) $request->input('offering'));
         }
 
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                    ->orWhere('description', 'like', "%$search%");
-            });
+        $adviserFacultyIdsForFilter = (clone $listQueryForAdvisers)
+            ->whereNotNull('faculty_id')
+            ->distinct()
+            ->pluck('faculty_id')
+            ->map(fn ($id) => (string) $id)
+            ->values();
+
+        $advisersForFilter = User::query()
+            ->whereIn('faculty_id', $adviserFacultyIdsForFilter)
+            ->orderBy('name')
+            ->get(['faculty_id', 'name']);
+
+        $hasGroupsWithoutAdviser = (clone $listQueryForAdvisers)
+            ->whereNull('faculty_id')
+            ->exists();
+
+        $statsQuery = Group::query();
+        $this->applyCoordinatorManagedGroupsScope($statsQuery, $coordinatedOfferingIds, $activeTerm);
+        $this->applyCoordinatorGroupsListFilters($statsQuery, $request, $coordinatedOfferingIds, $adviserFacultyIdsForFilter);
+
+        $groupStats = [
+            'total' => (clone $statsQuery)->count(),
+            'with_adviser' => (clone $statsQuery)->whereNotNull('faculty_id')->count(),
+            'without_adviser' => (clone $statsQuery)->whereNull('faculty_id')->count(),
+            'total_students' => (int) (clone $statsQuery)->withCount('members')->get()->sum('members_count'),
+        ];
+
+        $listQuery = Group::with(['adviser', 'members']);
+        $this->applyCoordinatorManagedGroupsScope($listQuery, $coordinatedOfferingIds, $activeTerm);
+        $this->applyCoordinatorGroupsListFilters($listQuery, $request, $coordinatedOfferingIds, $adviserFacultyIdsForFilter);
+
+        $groups = $listQuery->paginate(10)->appends($request->only(['search', 'offering', 'adviser']));
+
+        if ($groups->total() > 0 && $groups->isEmpty()) {
+            return redirect()->route('coordinator.groups.index', array_merge(
+                $request->except('page'),
+                ['page' => 1]
+            ));
         }
 
-        $groups = $query->paginate(10)->appends($request->only(['search', 'offering']));
+        if ($groups->total() > 0 && $groups->currentPage() > $groups->lastPage()) {
+            return redirect()->route('coordinator.groups.index', array_merge(
+                $request->query(),
+                ['page' => $groups->lastPage()]
+            ));
+        }
 
-        return view('coordinator.groups.index', compact('groups', 'activeTerm'));
+        return view('coordinator.groups.index', compact(
+            'groups',
+            'activeTerm',
+            'advisersForFilter',
+            'hasGroupsWithoutAdviser',
+            'groupStats'
+        ));
     }
 
     public function create()
@@ -391,6 +426,51 @@ class CoordinatorController extends Controller
         $notification->update(['is_read' => true]);
 
         return response()->json(['success' => true, 'message' => 'Notification marked as read']);
+    }
+
+    /**
+     * Limit groups to offerings coordinated by the current user (and optional active term).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder  $query
+     */
+    private function applyCoordinatorManagedGroupsScope($query, $coordinatedOfferingIds, ?AcademicTerm $activeTerm): void
+    {
+        if ($coordinatedOfferingIds->isNotEmpty()) {
+            $query->whereIn('offering_id', $coordinatedOfferingIds);
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        if ($activeTerm) {
+            $query->where('academic_term_id', $activeTerm->id);
+        }
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<\App\Models\Group>  $query
+     */
+    private function applyCoordinatorGroupsListFilters($query, Request $request, $coordinatedOfferingIds, Collection $adviserFacultyIdsForFilter): void
+    {
+        if ($request->filled('offering') && $coordinatedOfferingIds->contains((int) $request->input('offering'))) {
+            $query->where('offering_id', (int) $request->input('offering'));
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                    ->orWhere('description', 'like', "%$search%");
+            });
+        }
+
+        if ($request->filled('adviser')) {
+            $adviserKey = (string) $request->input('adviser');
+            if ($adviserKey === '__none__') {
+                $query->whereNull('faculty_id');
+            } elseif ($adviserFacultyIdsForFilter->contains($adviserKey)) {
+                $query->where('faculty_id', $adviserKey);
+            }
+        }
     }
 
     private function getConfirmedPanelistUserIdsForGroup(int $groupId)

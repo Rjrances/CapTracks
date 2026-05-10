@@ -10,18 +10,6 @@
                 <i class="fas fa-sync-alt me-2"></i>Refresh
             </button>
         </x-coordinator.intro>
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
             <div class="card">
                 <div class="card-header">
                     <div class="d-flex justify-content-between align-items-center">

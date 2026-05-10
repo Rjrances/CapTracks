@@ -119,6 +119,7 @@
             </div>
         </nav>
         <div class="p-4">
+            @include('partials.flash-messages')
             @yield('content')
         </div>
     </div>

@@ -63,7 +63,7 @@
     </div>
     @endauth
     <main class="container mx-auto p-6">
-        
+        @include('partials.flash-messages')
         @yield('content')
     </main>
     

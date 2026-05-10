@@ -6,20 +6,6 @@
 <div class="container-fluid">
         <x-coordinator.intro description="Review proposal submissions from groups in offerings you coordinate." />
 
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
             @if(empty($proposalsByOffering))
                 <div class="text-center py-5">
                     <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
