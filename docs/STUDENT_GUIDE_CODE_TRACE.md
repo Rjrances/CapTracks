@@ -253,9 +253,25 @@ When a student submits files via **`TaskSubmissionController@store`**, if the ta
 
 ## 7. File reference cheat sheet
 
+### 7.1 First-time temporary password email — where it lives and what the code does
+
+**URLs and routes (guest, no login):** Registered in **`routes/web.php`**: GET **`/login/student-credentials`** → `StudentTemporaryPasswordController@create` (named `login.student-credentials`); POST the same path → `StudentTemporaryPasswordController@store` (named `login.student-credentials.store`) with middleware **`throttle:6,1`** (six POSTs per minute per IP). The main login template **`resources/views/auth/login.blade.php`** links to this flow (“Email me a temporary password”).
+
+**Request form:** **`resources/views/auth/request-student-temporary-password.blade.php`** renders the page where the student enters **`student_id`** only; submitting POSTs to the route above.
+
+**Validation:** **`app/Http/Requests/RequestStudentTemporaryPasswordRequest.php`** requires a non-empty **`student_id`** and applies the custom rule **`StudentTemporaryPasswordEligible`** (**`app/Rules/StudentTemporaryPasswordEligible.php`**). That rule ensures the ID is not a faculty **`faculty_id`**, that both **`Student`** and **`StudentAccount`** rows exist, that **`Student.email`** is a real address (not empty, not ending in **`@student.placeholder.local`**, passes **`filter_var`**), and that the account still qualifies for this flow (password never set in the DB *or* **`must_change_password`** is still true). Otherwise it fails with messages that steer the user to normal login or coordinator help.
+
+**HTTP controller:** **`app/Http/Controllers/StudentTemporaryPasswordController.php`** — **`create`** returns the request form view; **`store`** reads the validated ID, loads **`Student`** and **`StudentAccount`**, calls **`syncAccountEmailFromStudent`** so **`StudentAccount.email`** matches the roster **`Student.email`** when they differ, refreshes the account, then delegates to **`StudentCredentialProvisioner::assignTemporaryPasswordAndNotify(..., true)`**. On success it redirects to **`login`** with a success flash; on mail failure it redirects with a **`mail`** error that mentions **`.env`** and **`php artisan mail:test`**.
+
+**Provisioning and email send:** **`app/Services/StudentCredentialProvisioner.php`** — **`assignTemporaryPasswordAndNotify`** builds a **16-character** plain password with **`Str::password(16)`**. When **`$sendEmail`** is true, it wraps **hash + save + send** in **`DB::transaction`**: it assigns the plain string to **`$account->password`** (the **`StudentAccount`** model hashes it via its casts), sets **`must_change_password`** to **true**, saves, then **`Mail::to($account->email)->send(new StudentTemporaryPasswordMail(...))`**. Any throwable (including SMTP errors) rolls back the transaction so the password is not persisted without a successful send; the method then returns **`email_sent: false`** and the controller shows the mail error. On success it returns **`email_sent: true`**.
+
+**The actual email:** **`app/Mail/StudentTemporaryPasswordMail.php`** is a Laravel **`Mailable`** whose subject is **`config('app.name').': Your login credentials'`** and whose body is the Blade view **`emails.student-temporary-password`** → **`resources/views/emails/student-temporary-password.blade.php`**, which outputs the plain temporary password and reminders about changing it after first login.
+
+**After delivery (not part of sending, but same “first-time” story):** **`AuthController`** handles **`POST /login`** for students; **`CheckStudentPasswordChange`** and **`StudentPasswordController`** enforce changing the password until **`must_change_password`** is cleared — see **§2.5**.
+
 | Students see… | Primary files |
 |----------------|---------------|
-| First-time temp password email | `routes/web.php` (`login.student-credentials*`), `StudentTemporaryPasswordController.php`, `RequestStudentTemporaryPasswordRequest.php`, `StudentTemporaryPasswordEligible.php`, `StudentCredentialProvisioner.php`, `StudentTemporaryPasswordMail.php`, `resources/views/auth/request-student-temporary-password.blade.php`, `resources/views/emails/student-temporary-password.blade.php`, `AuthController.php` (student login + redirect), `CheckStudentPasswordChange.php`, `StudentPasswordController.php` |
+| First-time temp password email | **§7.1** — `routes/web.php` (`login.student-credentials*`), `app/Http/Controllers/StudentTemporaryPasswordController.php`, `app/Http/Requests/RequestStudentTemporaryPasswordRequest.php`, `app/Rules/StudentTemporaryPasswordEligible.php`, `app/Services/StudentCredentialProvisioner.php`, `app/Mail/StudentTemporaryPasswordMail.php`, `resources/views/auth/request-student-temporary-password.blade.php`, `resources/views/auth/login.blade.php` (link), `resources/views/emails/student-temporary-password.blade.php`; post-login: `AuthController.php`, `CheckStudentPasswordChange`, `StudentPasswordController.php` |
 | Dashboard | `resources/views/dashboards/student.blade.php`, `StudentDashboardController.php` |
 | Kanban | `resources/views/student/milestones/show.blade.php`, `resources/views/student/milestones/partials/task-card.blade.php`, `StudentMilestoneController.php`, `GroupMilestoneTask.php` |
 | Groups | `StudentGroupController.php`, views under `resources/views/student/group*` |

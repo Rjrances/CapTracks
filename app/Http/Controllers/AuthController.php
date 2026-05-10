@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use App\Models\User;
 use App\Models\Student;
 use App\Models\UserAccount;
@@ -191,7 +192,7 @@ class AuthController extends Controller
     {
         $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
 
-        if ($activeTerm) {
+        if ($activeTerm && Schema::hasColumn('users', 'academic_term_id')) {
             $activeTermUser = User::where('faculty_id', $userAccount->faculty_id)
                 ->where('academic_term_id', $activeTerm->id)
                 ->first();
