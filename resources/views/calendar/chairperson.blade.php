@@ -54,8 +54,10 @@
                             @php
                                 $isToday = $currentDate->eq($today);
                                 $isOtherMonth = $currentDate->month !== $currentMonth;
-                                $dayEvents = collect($calendarEvents)->filter(function($event) use ($currentDate) {
-                                    return \Carbon\Carbon::parse($event['start'])->startOfDay()->eq($currentDate);
+                                $dayEvents = collect($calendarEvents)->filter(function ($event) use ($currentDate) {
+                                    return \Carbon\Carbon::parse($event['start'])
+                                        ->timezone(config('app.timezone'))
+                                        ->isSameDay($currentDate);
                                 });
                             @endphp
                             <td class="calendar-day {{ $isToday ? 'today' : '' }} {{ $isOtherMonth ? 'other-month' : '' }}">

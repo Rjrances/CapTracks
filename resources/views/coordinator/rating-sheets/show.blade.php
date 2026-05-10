@@ -1,22 +1,37 @@
 @extends('layouts.coordinator')
 
 @section('title')
-Rating sheets — {{ $schedule->group->name }}
+Rating Sheets
 @endsection
 
 @section('content')
 <div class="container-fluid">
-        <x-coordinator.intro :description="'Aggregated panel scores and recommendations for '.$schedule->group->name.' — '.$schedule->stage_label.'.'">
-            <a href="{{ route('coordinator.defense.show', $schedule) }}" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-arrow-left me-1"></i>Defense details
-            </a>
-            <a href="{{ route('coordinator.rating-sheets.rate.show', $schedule) }}" class="btn btn-primary btn-sm">
-                <i class="fas fa-clipboard-check me-1"></i>Rate as Coordinator
-            </a>
-            <a href="{{ route('coordinator.rating-sheets.print', $schedule) }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                <i class="fas fa-print me-1"></i>Print
-            </a>
-        </x-coordinator.intro>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body py-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3">
+                <header class="min-w-0 flex-grow-1">
+                    <div class="d-flex flex-wrap align-items-center gap-2 gap-md-3 mb-2">
+                        <h1 class="h3 mb-0 fw-semibold text-dark">{{ $schedule->group->name }}</h1>
+                        <x-rating-sheet.stage-badge :schedule="$schedule" />
+                    </div>
+                    <p class="text-body-secondary small mb-0">
+                        Aggregated panel scores, recommendations, and finalization for this defense session.
+                    </p>
+                </header>
+                <div class="d-flex flex-wrap gap-2 flex-shrink-0 align-items-start">
+                    <a href="{{ route('coordinator.defense.show', $schedule) }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left me-1"></i>Defense details
+                    </a>
+                    <a href="{{ route('coordinator.rating-sheets.rate.show', $schedule) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-clipboard-check me-1"></i>Rate as coordinator
+                    </a>
+                    <a href="{{ route('coordinator.rating-sheets.print', $schedule) }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-print me-1"></i>Print
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     @if($errors->has('finalize'))
         <div class="alert alert-danger">{{ $errors->first('finalize') }}</div>
@@ -28,7 +43,7 @@ Rating sheets — {{ $schedule->group->name }}
                 <strong>Finalized:</strong>
                 {{ optional($schedule->evaluationSummary->finalized_at)->format('M d, Y h:i A') }}
                 by {{ $schedule->evaluationSummary->finalizedBy->name ?? 'Coordinator' }}.
-                <span class="ms-2">Final Recommendation:
+                <span class="ms-2">Final recommendation:
                     @php
                         $finalRecommendation = $schedule->evaluationSummary->final_recommendation;
                         $finalBadgeClass = match($finalRecommendation) {
@@ -42,7 +57,7 @@ Rating sheets — {{ $schedule->group->name }}
                 </span>
                 <span class="ms-2">Average: {{ number_format((float) $schedule->evaluationSummary->final_average_score, 2) }}</span>
             </div>
-            <form method="POST" action="{{ route('coordinator.rating-sheets.reopen', $schedule) }}" class="d-flex gap-2 align-items-center">
+            <form method="POST" action="{{ route('coordinator.rating-sheets.reopen', $schedule) }}" class="d-flex gap-2 align-items-center flex-wrap">
                 @csrf
                 <input type="text" name="reopen_reason" class="form-control form-control-sm" placeholder="Reason for reopening" required style="min-width: 260px;">
                 <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -51,82 +66,105 @@ Rating sheets — {{ $schedule->group->name }}
             </form>
         </div>
     @else
-        <div class="card mb-3">
+        <div class="card mb-4">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-                    <div>
-                        <h6 class="mb-1">Finalize Result</h6>
+                <div class="row g-4 align-items-start">
+                    <div class="col-lg-7">
+                        <h2 class="h6 text-uppercase text-muted fw-semibold mb-3">Finalize defense result</h2>
                         @if($readiness['is_ready'])
-                            <p class="text-success mb-0">All required accepted panelists have submitted. You can finalize now.</p>
+                            <div class="alert alert-success py-2 mb-0 d-flex align-items-start gap-2">
+                                <i class="fas fa-check-circle mt-1"></i>
+                                <span>All required accepted panelists have submitted. You may finalize when ready.</span>
+                            </div>
                         @else
-                            <p class="text-muted mb-2">
-                                Waiting for {{ count($missingPanelNames) }} required panelist(s):
-                            </p>
-                            <ul class="mb-0">
+                            <p class="text-muted mb-2 small fw-semibold text-uppercase">Outstanding submissions</p>
+                            <p class="mb-2">Waiting for {{ count($missingPanelNames) }} required panelist(s) before finalization:</p>
+                            <ul class="mb-0 ps-3">
                                 @foreach($missingPanelNames as $name)
-                                    <li>{{ $name }}</li>
+                                    <li class="mb-1">{{ $name }}</li>
                                 @endforeach
                             </ul>
                         @endif
                     </div>
-                    <form method="POST" action="{{ route('coordinator.rating-sheets.finalize', $schedule) }}" class="d-flex flex-column gap-2" style="min-width: 320px;">
-                        @csrf
-                        <textarea name="final_notes" rows="2" class="form-control" placeholder="Optional final notes"></textarea>
-                        <button type="submit" class="btn btn-primary" {{ $readiness['is_ready'] ? '' : 'disabled' }}>
-                            <i class="fas fa-check-circle me-1"></i>Finalize Result
-                        </button>
-                    </form>
+                    <div class="col-lg-5">
+                        <form method="POST" action="{{ route('coordinator.rating-sheets.finalize', $schedule) }}" class="border rounded-3 p-3 bg-light bg-opacity-50">
+                            @csrf
+                            <label for="final_notes" class="form-label small fw-semibold text-muted mb-1">Final notes <span class="fw-normal">(optional)</span></label>
+                            <textarea name="final_notes" id="final_notes" rows="3" class="form-control form-control-sm mb-3" placeholder="Summary notes for the record (optional)"></textarea>
+                            <button
+                                type="submit"
+                                class="btn btn-primary w-100"
+                                @disabled(! $readiness['is_ready'])
+                                title="{{ $readiness['is_ready'] ? '' : 'Finalize is available after all required panelists submit.' }}"
+                            >
+                                <i class="fas fa-check-circle me-1"></i>Finalize result
+                            </button>
+                            @if(! $readiness['is_ready'])
+                                <p class="small text-muted mb-0 mt-2 text-center">This action unlocks when every required panelist has submitted.</p>
+                            @endif
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     @endif
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <strong>Average Score:</strong>
-            @if(!is_null($averageScore))
-                {{ number_format((float) $averageScore, 2) }}
-            @else
-                No submissions yet
-            @endif
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header py-2 bg-white">
+                    <h2 class="h6 mb-0 fw-semibold"><i class="fas fa-chart-line text-muted me-2"></i>Average score</h2>
+                </div>
+                <div class="card-body">
+                    @if(!is_null($averageScore))
+                        <p class="display-6 fw-semibold text-dark mb-0">{{ number_format((float) $averageScore, 2) }}</p>
+                        <p class="small text-muted mb-0 mt-1">Mean of submitted panel totals</p>
+                    @else
+                        <p class="text-muted mb-0">No submissions yet.</p>
+                    @endif
+                </div>
+            </div>
         </div>
-    </div>
-
-    <div class="card mb-3">
-        <div class="card-body">
-            <strong>Panel Recommendations:</strong>
-            <div class="mt-2 d-flex gap-2 flex-wrap">
-                <span class="badge bg-success">Pass: {{ $recommendationCounts['pass'] ?? 0 }}</span>
-                <span class="badge bg-warning text-dark">Conditional Pass: {{ $recommendationCounts['conditional_pass'] ?? 0 }}</span>
-                <span class="badge bg-danger">Re-Defend: {{ $recommendationCounts['redefend'] ?? 0 }}</span>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header py-2 bg-white">
+                    <h2 class="h6 mb-0 fw-semibold"><i class="fas fa-poll text-muted me-2"></i>Panel recommendations</h2>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-success rounded-pill px-3 py-2">Pass: {{ $recommendationCounts['pass'] ?? 0 }}</span>
+                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Conditional pass: {{ $recommendationCounts['conditional_pass'] ?? 0 }}</span>
+                        <span class="badge bg-danger rounded-pill px-3 py-2">Re-defend: {{ $recommendationCounts['redefend'] ?? 0 }}</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="card mb-3">
-        <div class="card-header">
-            <strong>Per-member Final Results</strong>
+    <div class="card mb-4">
+        <div class="card-header py-2 bg-white">
+            <h2 class="h6 mb-0 fw-semibold"><i class="fas fa-user-graduate text-muted me-2"></i>Per-member final results</h2>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-sm mb-0">
-                    <thead>
+                <table class="table table-hover table-sm mb-0 align-middle">
+                    <thead class="table-light">
                         <tr>
-                            <th>Student</th>
+                            <th class="ps-3">Student</th>
                             <th>Student ID</th>
-                            <th>Final Score</th>
+                            <th>Final score</th>
                             <th>Equivalent</th>
-                            <th>Status</th>
+                            <th class="pe-3">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($memberResults as $result)
                             <tr>
-                                <td>{{ $result['student_name'] }}</td>
+                                <td class="ps-3">{{ $result['student_name'] }}</td>
                                 <td>{{ $result['student_id'] }}</td>
                                 <td>{{ is_null($result['final_score']) ? 'N/A' : number_format((float) $result['final_score'], 2) }}</td>
                                 <td>{{ $result['grade_label'] }}</td>
-                                <td>
+                                <td class="pe-3">
                                     <span class="badge {{ $result['status'] === 'Passed' ? 'bg-success' : ($result['status'] === 'Pending' ? 'bg-secondary' : 'bg-danger') }}">
                                         {{ $result['status'] }}
                                     </span>
@@ -134,7 +172,7 @@ Rating sheets — {{ $schedule->group->name }}
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-3">No member results yet.</td>
+                                <td colspan="5" class="text-center text-muted py-4">No member results yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -144,22 +182,25 @@ Rating sheets — {{ $schedule->group->name }}
     </div>
 
     <div class="card">
+        <div class="card-header py-2 bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h2 class="h6 mb-0 fw-semibold"><i class="fas fa-file-alt text-muted me-2"></i>Submitted rating sheets</h2>
+        </div>
         <div class="card-body">
             @if($ratingSheets->isEmpty())
-                <div class="text-muted">No rating sheets submitted yet.</div>
+                <p class="text-muted mb-0">No rating sheets submitted yet.</p>
             @else
                 @foreach($ratingSheets as $sheet)
-                    <div class="border rounded p-3 mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="border rounded-3 p-3 mb-3 mb-md-4 bg-light bg-opacity-25">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
                             <div>
-                                <strong>{{ $sheet->faculty->name ?? 'Unknown Faculty' }}</strong>
-                                <small class="text-muted ms-2">{{ optional($sheet->submitted_at)->format('M d, Y h:i A') }}</small>
+                                <span class="fw-semibold">{{ $sheet->faculty->name ?? 'Unknown faculty' }}</span>
+                                <span class="text-muted small ms-2">{{ optional($sheet->submitted_at)->format('M d, Y h:i A') }}</span>
                             </div>
-                            <span class="badge bg-primary">Total: {{ number_format((float) $sheet->total_score, 2) }}</span>
+                            <span class="badge bg-primary rounded-pill">Total: {{ number_format((float) $sheet->total_score, 2) }}</span>
                         </div>
 
                         <div class="mb-2">
-                            <strong>Recommendation:</strong>
+                            <span class="small text-muted me-2">Recommendation:</span>
                             @php
                                 $recommendation = $sheet->recommendation;
                             @endphp
@@ -172,34 +213,34 @@ Rating sheets — {{ $schedule->group->name }}
                                 };
                                 $recommendationLabel = match($recommendation) {
                                     'pass' => 'Pass',
-                                    'conditional_pass' => 'Conditional Pass',
-                                    'redefend' => 'Re-Defend',
-                                    default => 'Not Set',
+                                    'conditional_pass' => 'Conditional pass',
+                                    'redefend' => 'Re-defend',
+                                    default => 'Not set',
                                 };
                             @endphp
                             <span class="badge {{ $recommendationBadgeClass }}">{{ $recommendationLabel }}</span>
                         </div>
 
                         @if($sheet->recommendation_reason)
-                            <div class="mb-2">
-                                <strong>Re-Defend Reason:</strong>
-                                <p class="mb-0">{{ $sheet->recommendation_reason }}</p>
+                            <div class="mb-3">
+                                <span class="small fw-semibold text-muted">Re-defend reason</span>
+                                <p class="mb-0 small">{{ $sheet->recommendation_reason }}</p>
                             </div>
                         @endif
 
                         <div class="table-responsive">
-                            <table class="table table-sm mb-2">
-                                <thead>
+                            <table class="table table-sm table-bordered mb-2 bg-white">
+                                <thead class="table-light">
                                     <tr>
                                         <th>Criterion</th>
-                                        <th>Score</th>
+                                        <th class="text-end" style="width: 7rem">Score</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach(($sheet->criteria ?? []) as $criterion)
                                         <tr>
-                                            <td>{{ $criterion['name'] ?? '-' }}</td>
-                                            <td>{{ $criterion['score'] ?? 0 }}</td>
+                                            <td>{{ $criterion['name'] ?? '—' }}</td>
+                                            <td class="text-end">{{ $criterion['score'] ?? 0 }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -208,8 +249,8 @@ Rating sheets — {{ $schedule->group->name }}
 
                         @if($sheet->remarks)
                             <div>
-                                <strong>Remarks:</strong>
-                                <p class="mb-0">{{ $sheet->remarks }}</p>
+                                <span class="small fw-semibold text-muted">Remarks</span>
+                                <p class="mb-0 small">{{ $sheet->remarks }}</p>
                             </div>
                         @endif
                     </div>

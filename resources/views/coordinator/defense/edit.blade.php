@@ -129,6 +129,10 @@
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             <span id="warningMessage"></span>
                         </div>
+                        <div id="timeOrderWarning" class="alert alert-danger d-none" role="alert">
+                            <i class="fas fa-arrows-alt-v me-2"></i>
+                            <span id="timeOrderMessage">End time must be after start time on the same day.</span>
+                        </div>
                         <hr>
                         <div class="mb-4">
                             <h6 class="mb-3">
@@ -236,6 +240,34 @@
             </div>
 </div>
 <script>
+function defenseTimeInputToMinutes(value) {
+    if (value == null || value === '') return null;
+    const parts = String(value).split(':');
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1] != null ? parts[1] : '0', 10);
+    if (Number.isNaN(h) || Number.isNaN(m)) return null;
+    return h * 60 + m;
+}
+function defenseUpdateTimeOrderWarning() {
+    const startEl = document.getElementById('start_time');
+    const endEl = document.getElementById('end_time');
+    const box = document.getElementById('timeOrderWarning');
+    if (!startEl || !endEl || !box) return;
+    const sm = defenseTimeInputToMinutes(startEl.value);
+    const em = defenseTimeInputToMinutes(endEl.value);
+    if (sm === null || em === null) {
+        box.classList.add('d-none');
+        endEl.classList.remove('is-invalid');
+        return;
+    }
+    if (em <= sm) {
+        box.classList.remove('d-none');
+        endEl.classList.add('is-invalid');
+    } else {
+        box.classList.add('d-none');
+        endEl.classList.remove('is-invalid');
+    }
+}
 document.addEventListener('DOMContentLoaded', function() {
     const chairSelect = document.querySelector('select[name="panel_members[0][faculty_id]"]');
     const memberSelect = document.querySelector('select[name="panel_members[1][faculty_id]"]');
@@ -274,7 +306,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const startTime = document.getElementById('start_time').value;
         const endTime = document.getElementById('end_time').value;
         const room = document.getElementById('room').value;
-        if (date && startTime && endTime && room) {
+        defenseUpdateTimeOrderWarning();
+        const sm = defenseTimeInputToMinutes(startTime);
+        const em = defenseTimeInputToMinutes(endTime);
+        if (sm !== null && em !== null && em <= sm) {
+            document.getElementById('doubleBookingWarning').classList.add('d-none');
+            return;
+        }
+        const groupId = document.getElementById('group_id')?.value;
+        if (date && startTime && endTime && room && groupId) {
             fetch('{{ route("coordinator.defense.available-faculty") }}', {
                 method: 'POST',
                 headers: {
@@ -282,14 +322,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
+                    group_id: groupId,
                     date: date,
                     start_time: startTime,
                     end_time: endTime,
                     room: room
                 })
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(async response => {
+                const data = await response.json().catch(() => ({}));
+                const orderBox = document.getElementById('timeOrderWarning');
+                const orderMsg = document.getElementById('timeOrderMessage');
+                if (!response.ok) {
+                    document.getElementById('doubleBookingWarning').classList.add('d-none');
+                    if (data.invalid_time_window && orderMsg && orderBox && data.message) {
+                        orderMsg.textContent = data.message;
+                        orderBox.classList.remove('d-none');
+                    }
+                    return;
+                }
+                if (orderBox) {
+                    orderBox.classList.add('d-none');
+                }
+                defenseUpdateTimeOrderWarning();
                 if (data.conflict) {
                     document.getElementById('warningMessage').textContent = data.message;
                     document.getElementById('doubleBookingWarning').classList.remove('d-none');
@@ -301,14 +356,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     document.getElementById('date').addEventListener('change', checkDoubleBooking);
     document.getElementById('start_time').addEventListener('change', checkDoubleBooking);
+    document.getElementById('start_time').addEventListener('input', defenseUpdateTimeOrderWarning);
     document.getElementById('end_time').addEventListener('change', checkDoubleBooking);
+    document.getElementById('end_time').addEventListener('input', defenseUpdateTimeOrderWarning);
     document.getElementById('room').addEventListener('input', checkDoubleBooking);
+    defenseUpdateTimeOrderWarning();
     document.getElementById('defenseForm').addEventListener('submit', function(e) {
         const startTime = document.getElementById('start_time').value;
         const endTime = document.getElementById('end_time').value;
-        if (startTime && endTime && startTime >= endTime) {
+        const sm = defenseTimeInputToMinutes(startTime);
+        const em = defenseTimeInputToMinutes(endTime);
+        if (sm !== null && em !== null && em <= sm) {
             e.preventDefault();
-            alert('End time must be after start time.');
+            defenseUpdateTimeOrderWarning();
+            document.getElementById('timeOrderWarning')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            alert('End time must be after start time on the same day.');
             return false;
         }
     });

@@ -9,12 +9,18 @@
 
 @section('content')
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h4 class="mb-0">Panel Rating Sheet</h4>
-            <small class="text-muted">{{ $schedule->group->name }} - {{ $schedule->stage_label }}</small>
-        </div>
-        <a href="{{ $isCoordinatorRoute ? route('coordinator.rating-sheets.show', $schedule) : route('adviser.dashboard') }}" class="btn btn-outline-secondary">Back</a>
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4 pb-3 border-bottom">
+        <header class="flex-grow-1 min-w-0">
+            <p class="small fw-semibold text-uppercase text-secondary mb-2 mb-md-1">
+                {{ $isCoordinatorRoute ? 'Coordinator rating' : 'Panel rating' }}
+            </p>
+            <h1 class="fs-2 fw-bold text-dark mb-3">Panel Rating Sheet</h1>
+            <div class="mb-3">
+                <x-rating-sheet.stage-badge :schedule="$schedule" />
+            </div>
+            <p class="lead fs-5 text-body-secondary mb-0">{{ $schedule->group->name }}</p>
+        </header>
+        <a href="{{ $isCoordinatorRoute ? route('coordinator.rating-sheets.show', $schedule) : route('adviser.dashboard') }}" class="btn btn-outline-secondary flex-shrink-0">Back</a>
     </div>
 
     @if(session('success'))

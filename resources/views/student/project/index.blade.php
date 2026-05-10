@@ -36,95 +36,21 @@
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
     @if($submissions && count($submissions))
-    @php
-        $subCollection = collect($submissions);
-        $projectCompareByType = $subCollection->groupBy('type')->filter(function ($g) {
-            return $g->count() >= 2;
-        });
-        $projectCompareTemplate = str_replace(
-            ['11111111', '22222222'],
-            ['__L__', '__R__'],
-            route('student.project.submissions.compare', ['left' => 11111111, 'right' => 22222222])
-        );
-    @endphp
-    @if($projectCompareByType->isNotEmpty())
-        <div class="card mb-3">
-            <div class="card-header py-2">
-                <h6 class="mb-0"><i class="fas fa-columns me-2"></i>Compare two versions (same type)</h6>
-            </div>
-            <div class="card-body py-2">
-                <p class="small text-muted mb-2">Side-by-side preview for two uploads of the same category.</p>
-                @foreach($projectCompareByType as $type => $versions)
-                    <div class="row g-2 align-items-end mb-2">
-                        <div class="col-auto">
-                            <span class="badge bg-secondary text-uppercase">{{ $type }}</span>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small mb-0" for="proj-cmp-{{ $type }}-a">Version A</label>
-                            <select id="proj-cmp-{{ $type }}-a" class="form-select form-select-sm">
-                                @foreach($versions as $s)
-                                    <option value="{{ $s->id }}">v{{ $s->version ?? 1 }} — {{ $s->submitted_at ? \Carbon\Carbon::parse($s->submitted_at)->format('M d, Y') : 'N/A' }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small mb-0" for="proj-cmp-{{ $type }}-b">Version B</label>
-                            <select id="proj-cmp-{{ $type }}-b" class="form-select form-select-sm">
-                                @foreach($versions as $s)
-                                    <option value="{{ $s->id }}">v{{ $s->version ?? 1 }} — {{ $s->submitted_at ? \Carbon\Carbon::parse($s->submitted_at)->format('M d, Y') : 'N/A' }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="button" class="btn btn-sm btn-outline-primary project-compare-go" data-t="{{ $type }}">
-                                <i class="fas fa-columns me-1"></i>Compare
-                            </button>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-        @push('scripts')
-        <script>
-            (function () {
-                var tpl = @json($projectCompareTemplate);
-                document.querySelectorAll('.project-compare-go').forEach(function (btn) {
-                    btn.addEventListener('click', function () {
-                        var t = btn.getAttribute('data-t');
-                        var l = document.getElementById('proj-cmp-' + t + '-a').value;
-                        var r = document.getElementById('proj-cmp-' + t + '-b').value;
-                        if (!l || !r || l === r) {
-                            alert('Choose two different submissions.');
-                            return;
-                        }
-                        window.location.href = tpl.replace('__L__', l).replace('__R__', r);
-                    });
-                });
-            })();
-        </script>
-        @endpush
-    @endif
     <div class="table-responsive">
         <table class="table table-bordered table-hover">
             <thead class="table-light">
                 <tr>
-                    <th style="width: 12%;">Type</th>
-                    <th style="width: 25%;">Title/Description</th>
-                    <th style="width: 10%;">File</th>
-                    <th style="width: 10%;">Review Status</th>
-                    <th style="width: 20%;">Teacher Comment</th>
-                    <th style="width: 13%;">Submitted At</th>
-                    <th style="width: 14%;">Actions</th>
+                    <th style="width: 32%;">Title/Description</th>
+                    <th style="width: 11%;">File</th>
+                    <th style="width: 11%;">Review Status</th>
+                    <th style="width: 22%;">Teacher Comment</th>
+                    <th style="width: 12%;">Submitted At</th>
+                    <th style="width: 12%;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($submissions as $submission)
                 <tr>
-                    <td class="text-center">
-                        <span class="badge bg-{{ $submission->type === 'other' ? 'info' : ($submission->type === 'proposal' ? 'primary' : 'success') }}">
-                            {{ $submission->type === 'other' ? 'Task' : ucfirst($submission->type) }}
-                        </span>
-                    </td>
                     <td>
                         @if($submission->title)
                             <div class="text-truncate" style="max-width: 200px;" title="{{ $submission->title }}">

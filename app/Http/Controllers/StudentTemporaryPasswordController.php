@@ -48,6 +48,29 @@ final class StudentTemporaryPasswordController extends Controller
                 ]);
         }
 
+        if ($student !== null && $account !== null) {
+            $email = trim((string) $student->email);
+            $emailOk = $email !== ''
+                && ! str_ends_with(strtolower($email), self::PLACEHOLDER_EMAIL_SUFFIX)
+                && filter_var($email, FILTER_VALIDATE_EMAIL);
+
+            if (! $emailOk) {
+                return redirect()
+                    ->route('login')
+                    ->with(
+                        'credential_warning',
+                        'That student ID is registered, but there is no valid email on file for delivery. Ask your coordinator to correct the email on your student record.',
+                    );
+            }
+
+            return redirect()
+                ->route('login')
+                ->with(
+                    'credential_warning',
+                    'That student ID is registered, but a temporary password is only sent before first login is finished. This account already has an active password — sign in with it. If you forgot it, ask your coordinator to reset the student account.',
+                );
+        }
+
         return redirect()
             ->route('login')
             ->with(

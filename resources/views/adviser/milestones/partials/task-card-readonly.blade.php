@@ -50,7 +50,7 @@
                 @if($task->status === 'done')
                     <span class="badge bg-success"><i class="fas fa-check me-1"></i>Done</span>
                 @elseif($task->status === 'doing')
-                    <span class="badge bg-warning text-dark"><i class="fas fa-play me-1"></i>Doing</span>
+                    <span class="badge bg-warning text-dark"><i class="fas fa-play me-1"></i>In Progress</span>
                 @else
                     <span class="badge bg-secondary"><i class="fas fa-clock me-1"></i>Pending</span>
                 @endif

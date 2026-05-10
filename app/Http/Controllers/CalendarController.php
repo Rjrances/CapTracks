@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AcademicTerm;
+use App\Models\DefensePanel;
 use App\Models\DefenseSchedule;
 use App\Models\Group;
-use App\Models\AcademicTerm;
 use Illuminate\Support\Facades\Auth;
 
 class CalendarController extends Controller
@@ -14,23 +15,30 @@ class CalendarController extends Controller
         $user = Auth::user();
         $activeTerm = AcademicTerm::where('is_active', true)->first();
 
-        
-        
-        $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'group.offering.teacher', 'panelists'])
+        $coordinatorOfferings = $user->offerings()
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->pluck('id')
+            ->toArray();
+
+        $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'group.offering.teacher', 'panelists.faculty'])
             ->whereIn('status', ['scheduled', 'in_progress', 'completed'])
+            ->whereHas('group', function ($query) use ($coordinatorOfferings) {
+                $query->whereIn('offering_id', $coordinatorOfferings);
+            })
             ->when($activeTerm, function ($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);
             })
             ->orderBy('start_at')
             ->get();
 
-        
         $myGroupIds = Group::whereHas('offering', function ($query) use ($user) {
             $query->where('faculty_id', $user->faculty_id);
         })->pluck('id')->toArray();
         $calendarEvents = $defenses->map(function ($defense) use ($myGroupIds) {
             $startDate = \Carbon\Carbon::parse($defense->start_at);
-            $endDate   = \Carbon\Carbon::parse($defense->end_at);
+            $endDate = \Carbon\Carbon::parse($defense->end_at);
             $invitedPanels = $defense->panelists->whereIn('role', ['chair', 'member']);
             $hasConfirmedChair = $invitedPanels->where('role', 'chair')->where('status', 'accepted')->isNotEmpty();
             $hasConfirmedMember = $invitedPanels->where('role', 'member')->where('status', 'accepted')->isNotEmpty();
@@ -71,35 +79,59 @@ class CalendarController extends Controller
             };
 
             return [
-                'id'              => $defense->id,
-                'title'           => $defense->group->name ?? 'Defense',
-                'start'           => $startDate->toISOString(),
-                'end'             => $endDate->toISOString(),
-                'className'       => $eventClass,
+                'id' => $defense->id,
+                'title' => $defense->group->name ?? 'Defense',
+                'start' => $startDate->toISOString(),
+                'end' => $endDate->toISOString(),
+                'className' => $eventClass,
                 'backgroundColor' => in_array($defense->group_id, $myGroupIds) ? '#28a745' : '#6c757d',
-                'borderColor'     => in_array($defense->group_id, $myGroupIds) ? '#28a745' : '#6c757d',
-                'textColor'       => '#ffffff',
-                'extendedProps'   => [
-                    'group'       => $defense->group->name ?? 'N/A',
+                'borderColor' => in_array($defense->group_id, $myGroupIds) ? '#28a745' : '#6c757d',
+                'textColor' => '#ffffff',
+                'extendedProps' => [
+                    'group' => $defense->group->name ?? 'N/A',
                     'defenseType' => $defense->stage_label ?? 'Defense',
-                    'adviser'     => $defense->group->adviser->name ?? 'N/A',
+                    'adviser' => $defense->group->adviser->name ?? 'N/A',
                     'coordinator' => $defense->group->offering->teacher->name ?? 'N/A',
-                    'status'      => $defense->status,
+                    'status' => $defense->status,
                     'panel_state' => $panelState,
                     'display_status' => $displayStatus,
                     'display_status_variant' => $displayStatusVariant,
-                    'local_date'  => $startDate->format('m/d/Y'),
-                    'room'        => $defense->room ?? 'TBD',
-                    'time'        => $startDate->format('g:i A'),
-                    'students'    => $defense->group->members->pluck('name')->join(', '),
-                    'is_mine'     => in_array($defense->group_id, $myGroupIds),
+                    'local_date' => $startDate->format('m/d/Y'),
+                    'room' => $defense->room ?? 'TBD',
+                    'time' => $startDate->format('g:i A'),
+                    'students' => $defense->group->members->pluck('name')->join(', '),
+                    'is_mine' => in_array($defense->group_id, $myGroupIds),
+                    'panelists' => self::panelistsPayloadForCalendar($defense->panelists),
                 ],
             ];
         })->toArray();
         if (empty($calendarEvents)) {
             $calendarEvents = [];
         }
+
         return view('calendar.coordinator', compact('defenses', 'calendarEvents', 'myGroupIds'));
+    }
+
+    /**
+     * Chair and member panelists for coordinator calendar modal (ordered: chair, then member).
+     *
+     * @param  \Illuminate\Support\Collection<int, DefensePanel>  $panels
+     * @return list<array{role: string, role_label: string, name: string, status: string, status_label: string}>
+     */
+    private static function panelistsPayloadForCalendar($panels): array
+    {
+        return $panels
+            ->whereIn('role', ['chair', 'member'])
+            ->sortBy(fn (DefensePanel $p) => $p->role === 'chair' ? 0 : 1)
+            ->values()
+            ->map(fn (DefensePanel $p) => [
+                'role' => $p->role,
+                'role_label' => $p->role_label,
+                'name' => $p->faculty?->name ?? 'Unknown',
+                'status' => $p->status ?? 'pending',
+                'status_label' => $p->status_label,
+            ])
+            ->all();
     }
 
     public function adviserCalendar()
@@ -107,7 +139,7 @@ class CalendarController extends Controller
         $user = Auth::user();
         $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
             ->whereIn('status', ['scheduled', 'in_progress', 'completed'])
-            ->whereHas('group', function($query) use ($user) {
+            ->whereHas('group', function ($query) use ($user) {
                 $query->where('faculty_id', $user->faculty_id);
             })
             ->orderBy('start_at')
@@ -115,6 +147,7 @@ class CalendarController extends Controller
         $calendarEvents = $defenses->map(function ($defense) {
             $startDate = \Carbon\Carbon::parse($defense->start_at);
             $endDate = \Carbon\Carbon::parse($defense->end_at);
+
             return [
                 'id' => $defense->id,
                 'title' => $defense->group->name ?? 'Defense',
@@ -130,13 +163,14 @@ class CalendarController extends Controller
                     'status' => $defense->status,
                     'room' => $defense->room ?? 'TBD',
                     'time' => $startDate->format('g:i A'),
-                    'students' => $defense->group->members->pluck('name')->join(', ')
-                ]
+                    'students' => $defense->group->members->pluck('name')->join(', '),
+                ],
             ];
         })->toArray();
         if (empty($calendarEvents)) {
             $calendarEvents = [];
         }
+
         return view('calendar.adviser', compact('defenses', 'calendarEvents'));
     }
 
@@ -149,10 +183,10 @@ class CalendarController extends Controller
         } else {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
-        if (!$studentId) {
+        if (! $studentId) {
             return redirect('/login')->withErrors(['auth' => 'Student access required for this page.']);
         }
-        $group = Group::whereHas('members', function($query) use ($studentId) {
+        $group = Group::whereHas('members', function ($query) use ($studentId) {
             $query->where('group_members.student_id', $studentId);
         })->first();
         $defenses = collect();
@@ -166,6 +200,7 @@ class CalendarController extends Controller
             $calendarEvents = $defenses->map(function ($defense) {
                 $startDate = \Carbon\Carbon::parse($defense->start_at);
                 $endDate = \Carbon\Carbon::parse($defense->end_at);
+
                 return [
                     'id' => $defense->id,
                     'title' => $defense->group->name ?? 'Defense',
@@ -180,14 +215,15 @@ class CalendarController extends Controller
                         'status' => $defense->status,
                         'room' => $defense->room ?? 'TBD',
                         'time' => $startDate->format('g:i A'),
-                        'adviser' => $defense->group->adviser->name ?? 'N/A'
-                    ]
+                        'adviser' => $defense->group->adviser->name ?? 'N/A',
+                    ],
                 ];
             })->toArray();
         }
         if (empty($calendarEvents)) {
             $calendarEvents = [];
         }
+
         return view('calendar.student', compact('defenses', 'group', 'calendarEvents'));
     }
 
@@ -200,6 +236,7 @@ class CalendarController extends Controller
         $calendarEvents = $defenses->map(function ($defense) {
             $startDate = \Carbon\Carbon::parse($defense->start_at);
             $endDate = \Carbon\Carbon::parse($defense->end_at);
+
             return [
                 'id' => $defense->id,
                 'title' => $defense->group->name ?? 'Defense',
@@ -215,13 +252,14 @@ class CalendarController extends Controller
                     'status' => $defense->status,
                     'room' => $defense->room ?? 'TBD',
                     'time' => $startDate->format('g:i A'),
-                    'students' => $defense->group->members->pluck('name')->join(', ')
-                ]
+                    'students' => $defense->group->members->pluck('name')->join(', '),
+                ],
             ];
         })->toArray();
         if (empty($calendarEvents)) {
             $calendarEvents = [];
         }
+
         return view('calendar.chairperson', compact('defenses', 'calendarEvents'));
     }
 }

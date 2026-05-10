@@ -292,7 +292,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-function moveTask(taskId, newStatus) {
+
+function updateTaskCardStatusUI(taskId, newStatus) {
+    const card = document.querySelector('.task-card[data-task-id="' + taskId + '"]');
+    if (!card) {
+        return;
+    }
+
+    const badge = card.querySelector('.task-card-header > .ms-2 .badge.status-badge');
+    if (badge) {
+        const badgeClasses = {
+            pending: 'bg-secondary',
+            doing: 'bg-warning text-dark',
+            done: 'bg-success'
+        };
+        badge.className = 'badge status-badge ' + (badgeClasses[newStatus] || 'bg-secondary');
+        if (newStatus === 'done') {
+            badge.innerHTML = '<i class="fas fa-check me-1"></i>Done';
+        } else if (newStatus === 'doing') {
+            badge.innerHTML = '<i class="fas fa-play me-1"></i>In Progress';
+        } else {
+            badge.innerHTML = '<i class="fas fa-clock me-1"></i>Pending';
+        }
+    }
+
+    const title = card.querySelector('.task-card-content h6');
+    if (title) {
+        title.classList.toggle('text-decoration-line-through', newStatus === 'done');
+        title.classList.toggle('text-muted', newStatus === 'done');
+    }
+}
+
+function moveTask(taskId, newStatus, successMessage) {
+    const message = typeof successMessage === 'string' ? successMessage : 'Task moved successfully!';
     fetch(`/student/milestones/tasks/${taskId}/move`, {
         method: 'PATCH',
         headers: {
@@ -305,12 +337,14 @@ function moveTask(taskId, newStatus) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showAlert('Task moved successfully!', 'success');
-            
-            updateProgressBarUI(data.milestone_progress);
+            updateTaskCardStatusUI(taskId, newStatus);
+            if (typeof data.milestone_progress === 'number') {
+                updateProgressBarUI(data.milestone_progress);
+            }
             updateColumnCounts();
+            showAlert(message, 'success');
         } else {
-            showAlert('Failed to move task: ' + data.message, 'danger');
+            showAlert('Failed to move task: ' + (data.message || 'Unknown error'), 'danger');
             setTimeout(() => location.reload(), 1000);
         }
     })

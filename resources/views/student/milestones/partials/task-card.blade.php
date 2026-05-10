@@ -77,62 +77,16 @@
                 </div>
             </div>
             <div class="ms-2">
-                <span class="badge bg-{{ $task->status_badge_class }} status-badge">
+                <span class="badge bg-{{ $task->status_badge_class }} {{ $task->status === 'doing' ? 'text-dark' : '' }} status-badge">
                     @if($task->status === 'done')
                         <i class="fas fa-check me-1"></i>Done
                     @elseif($task->status === 'doing')
-                        <i class="fas fa-play me-1"></i>Doing
+                        <i class="fas fa-play me-1"></i>In Progress
                     @else
                         <i class="fas fa-clock me-1"></i>Pending
                     @endif
                 </span>
             </div>
         </div>
-        <div class="mt-3 d-flex gap-1">
-            <button type="button" 
-                    class="btn btn-sm {{ $task->status === 'pending' ? 'btn-secondary' : 'btn-outline-secondary' }}"
-                    onclick="changeTaskStatus({{ $task->id }}, 'pending')"
-                    title="Mark as Pending">
-                <i class="fas fa-clock"></i>
-            </button>
-            <button type="button" 
-                    class="btn btn-sm {{ $task->status === 'doing' ? 'btn-warning' : 'btn-outline-warning' }}"
-                    onclick="changeTaskStatus({{ $task->id }}, 'doing')"
-                    title="Mark as In Progress">
-                <i class="fas fa-play"></i>
-            </button>
-            <button type="button" 
-                    class="btn btn-sm {{ $task->status === 'done' ? 'btn-success' : 'btn-outline-success' }}"
-                    onclick="changeTaskStatus({{ $task->id }}, 'done')"
-                    title="Mark as Done">
-                <i class="fas fa-check"></i>
-            </button>
-        </div>
     </div>
 </div>
-<script>
-function changeTaskStatus(taskId, newStatus) {
-    fetch(`{{ url('/student/milestones/tasks') }}/${taskId}/move`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showAlert('Task status updated successfully!', 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showAlert('Failed to update task status: ' + (data.message || 'Unknown error'), 'danger');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('Error updating task status. Please try again.', 'danger');
-    });
-}
-</script>

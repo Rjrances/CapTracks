@@ -96,8 +96,8 @@
                 </div>
                 <div class="card-body">
                     <form method="GET" action="{{ route('coordinator.defense.index') }}" id="filterForm">
-                        <div class="row">
-                            <div class="col-md-3">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-lg-3 col-md-6">
                                 <label for="defense_type" class="form-label">Defense Type</label>
                                 <select name="defense_type" id="defense_type" class="form-select form-select-sm">
                                     <option value="">All Types</option>
@@ -108,12 +108,24 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-5">
+                            <div class="col-lg-3 col-md-6">
+                                <label for="adviser_faculty_id" class="form-label">Adviser</label>
+                                <select name="adviser_faculty_id" id="adviser_faculty_id" class="form-select form-select-sm">
+                                    <option value="">All advisers</option>
+                                    @foreach($adviserFilterChoices as $adviserUser)
+                                        @continue($adviserUser->faculty_id === null)
+                                        <option value="{{ $adviserUser->faculty_id }}" {{ (string) ($requestFilters['adviser_faculty_id'] ?? '') === (string) $adviserUser->faculty_id ? 'selected' : '' }}>
+                                            {{ $adviserUser->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-lg-4 col-md-6">
                                 <label for="search" class="form-label">Search Groups</label>
                                 <input type="text" name="search" id="search" class="form-control form-control-sm" 
                                        placeholder="Search by group name..." value="{{ $requestFilters['search'] ?? '' }}">
                             </div>
-                            <div class="col-md-4 d-flex align-items-end">
+                            <div class="col-lg-2 col-md-6">
                                 <button type="submit" class="btn btn-primary btn-sm me-2">
                                     <i class="fas fa-search me-1"></i>Apply
                                 </button>

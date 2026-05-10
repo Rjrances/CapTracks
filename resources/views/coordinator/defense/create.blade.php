@@ -144,6 +144,14 @@
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             <span id="warningMessage"></span>
                         </div>
+                        <div id="pastStartWarning" class="alert alert-danger d-none" role="alert">
+                            <i class="fas fa-clock me-2"></i>
+                            <span id="pastStartMessage"></span>
+                        </div>
+                        <div id="timeOrderWarning" class="alert alert-danger d-none" role="alert">
+                            <i class="fas fa-arrows-alt-v me-2"></i>
+                            <span id="timeOrderMessage">End time must be after start time on the same day.</span>
+                        </div>
                         <hr>
                         <div class="mb-4">
                             <h6 class="mb-3">
@@ -210,6 +218,81 @@
             </div>
 </div>
 <script>
+(function () {
+    const APP_TIMEZONE_OFFSET = @json(now()->timezone(config('app.timezone'))->format('P'));
+
+    function defenseStartInstant(dateStr, timeStr) {
+        if (!dateStr || !timeStr) {
+            return null;
+        }
+        const normalized = timeStr.length === 5 ? timeStr + ':00' : timeStr;
+
+        return new Date(dateStr + 'T' + normalized + APP_TIMEZONE_OFFSET);
+    }
+
+    function timeInputToMinutes(value) {
+        if (value == null || value === '') {
+            return null;
+        }
+        const s = String(value);
+        const parts = s.split(':');
+        const h = parseInt(parts[0], 10);
+        const m = parseInt(parts[1] != null ? parts[1] : '0', 10);
+        if (Number.isNaN(h) || Number.isNaN(m)) {
+            return null;
+        }
+        return h * 60 + m;
+    }
+
+    function isEndTimeAfterStartOnSameDay() {
+        const startM = timeInputToMinutes(document.getElementById('start_time')?.value);
+        const endM = timeInputToMinutes(document.getElementById('end_time')?.value);
+        if (startM === null || endM === null) {
+            return true;
+        }
+        return endM > startM;
+    }
+
+    function updateTimeOrderWarning() {
+        const box = document.getElementById('timeOrderWarning');
+        const startEl = document.getElementById('start_time');
+        const endEl = document.getElementById('end_time');
+        if (!box || !startEl || !endEl) {
+            return;
+        }
+        if (!isEndTimeAfterStartOnSameDay()) {
+            box.classList.remove('d-none');
+            endEl.classList.add('is-invalid');
+        } else {
+            box.classList.add('d-none');
+            endEl.classList.remove('is-invalid');
+        }
+    }
+
+    function updatePastStartWarning() {
+        const box = document.getElementById('pastStartWarning');
+        const msgEl = document.getElementById('pastStartMessage');
+        const dateEl = document.getElementById('date');
+        const startEl = document.getElementById('start_time');
+        if (!box || !msgEl || !dateEl || !startEl) {
+            return;
+        }
+        const inst = defenseStartInstant(dateEl.value, startEl.value);
+        if (!inst || isNaN(inst.getTime())) {
+            box.classList.add('d-none');
+            startEl.classList.remove('is-invalid');
+            return;
+        }
+        if (inst.getTime() <= Date.now()) {
+            msgEl.textContent = 'Start date and time must be later than right now. You cannot schedule a defense in the past.';
+            box.classList.remove('d-none');
+            startEl.classList.add('is-invalid');
+        } else {
+            box.classList.add('d-none');
+            startEl.classList.remove('is-invalid');
+        }
+    }
+
 document.addEventListener('DOMContentLoaded', function() {
     let currentAvailableFaculty = [];
     let currentAutoAssignedFacultyIds = [];
@@ -232,12 +315,29 @@ document.addEventListener('DOMContentLoaded', function() {
             togglePanelAssignmentState();
         });
     }
-    document.getElementById('date').addEventListener('change', togglePanelAssignmentState);
-    document.getElementById('start_time').addEventListener('change', togglePanelAssignmentState);
-    document.getElementById('end_time').addEventListener('change', togglePanelAssignmentState);
+    document.getElementById('date').addEventListener('change', function () {
+        togglePanelAssignmentState();
+        updatePastStartWarning();
+    });
+    document.getElementById('start_time').addEventListener('change', function () {
+        togglePanelAssignmentState();
+        updatePastStartWarning();
+        updateTimeOrderWarning();
+    });
+    document.getElementById('start_time').addEventListener('input', function () {
+        updatePastStartWarning();
+        updateTimeOrderWarning();
+    });
+    document.getElementById('end_time').addEventListener('change', function () {
+        togglePanelAssignmentState();
+        updateTimeOrderWarning();
+    });
+    document.getElementById('end_time').addEventListener('input', updateTimeOrderWarning);
     document.getElementById('room').addEventListener('input', togglePanelAssignmentState);
     loadInitialFaculty();
     togglePanelAssignmentState();
+    updateTimeOrderWarning();
+    updatePastStartWarning();
 
     function hasCompleteSchedulingInputs() {
         return !!(
@@ -295,6 +395,15 @@ document.addEventListener('DOMContentLoaded', function() {
             return Promise.resolve(base);
         }
 
+        if (!isEndTimeAfterStartOnSameDay()) {
+            updateTimeOrderWarning();
+            document.getElementById('doubleBookingWarning')?.classList.add('d-none');
+            currentAvailableFaculty = base;
+            currentAutoAssignedFacultyIds = [];
+            clearFacultyOptions();
+            return Promise.resolve(base);
+        }
+
         return fetch('{{ route("coordinator.defense.available-faculty") }}', {
             method: 'POST',
             headers: {
@@ -309,8 +418,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 room: room
             })
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            const pastBox = document.getElementById('pastStartWarning');
+            const pastMsg = document.getElementById('pastStartMessage');
+            const orderBox = document.getElementById('timeOrderWarning');
+            const orderMsg = document.getElementById('timeOrderMessage');
+            if (!response.ok) {
+                document.getElementById('doubleBookingWarning')?.classList.add('d-none');
+                pastBox?.classList.add('d-none');
+                orderBox?.classList.add('d-none');
+                if (data.invalid_time_window && orderMsg && orderBox && data.message) {
+                    orderMsg.textContent = data.message;
+                    orderBox.classList.remove('d-none');
+                } else if (pastBox && pastMsg && data.message) {
+                    pastMsg.textContent = data.message;
+                    pastBox.classList.remove('d-none');
+                }
+                currentAvailableFaculty = base;
+                currentAutoAssignedFacultyIds = [];
+                clearFacultyOptions();
+                return base;
+            }
+            if (pastBox) {
+                pastBox.classList.add('d-none');
+            }
+            if (orderBox) {
+                orderBox.classList.add('d-none');
+            }
+            updateTimeOrderWarning();
+            updatePastStartWarning();
             const list = data.availableFaculty || base;
             currentAvailableFaculty = list;
             currentAutoAssignedFacultyIds = (data.autoAssignedFacultyIds || list.slice(0, 2).map(member => String(member.id))).map(String);
@@ -365,6 +502,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (!isEndTimeAfterStartOnSameDay()) {
+            updateTimeOrderWarning();
+            document.getElementById('doubleBookingWarning').classList.add('d-none');
+            return;
+        }
+
         const requestId = ++latestDoubleBookingRequestId;
         const requestPayload = {
             group_id: groupId,
@@ -385,8 +528,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(requestPayload)
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(async response => {
+                const data = await response.json().catch(() => ({}));
                 const currentSignature = JSON.stringify({
                     group_id: document.getElementById('group_id').value,
                     date: document.getElementById('date').value,
@@ -398,6 +541,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (requestId !== latestDoubleBookingRequestId || requestSignature !== currentSignature) {
                     return;
                 }
+
+                const pastBox = document.getElementById('pastStartWarning');
+                const pastMsg = document.getElementById('pastStartMessage');
+                const orderBox = document.getElementById('timeOrderWarning');
+                const orderMsg = document.getElementById('timeOrderMessage');
+                if (!response.ok) {
+                    document.getElementById('doubleBookingWarning')?.classList.add('d-none');
+                    pastBox?.classList.add('d-none');
+                    orderBox?.classList.add('d-none');
+                    if (data.invalid_time_window && orderMsg && orderBox && data.message) {
+                        orderMsg.textContent = data.message;
+                        orderBox.classList.remove('d-none');
+                    } else if (pastBox && pastMsg && data.message) {
+                        pastMsg.textContent = data.message;
+                        pastBox.classList.remove('d-none');
+                    }
+                    return;
+                }
+                if (pastBox) {
+                    pastBox.classList.add('d-none');
+                }
+                if (orderBox) {
+                    orderBox.classList.add('d-none');
+                }
+                updateTimeOrderWarning();
+                updatePastStartWarning();
 
                 currentAvailableFaculty = data.availableFaculty || [];
                 updateFacultyOptions(currentAvailableFaculty);
@@ -420,14 +589,25 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('end_time').addEventListener('change', checkDoubleBooking);
     document.getElementById('room').addEventListener('input', checkDoubleBooking);
     document.getElementById('defenseForm').addEventListener('submit', function(e) {
+        const dateVal = document.getElementById('date').value;
         const startTime = document.getElementById('start_time').value;
-        const endTime = document.getElementById('end_time').value;
-        if (startTime && endTime && startTime >= endTime) {
+        if (!isEndTimeAfterStartOnSameDay()) {
             e.preventDefault();
-            alert('End time must be after start time.');
+            updateTimeOrderWarning();
+            document.getElementById('timeOrderWarning')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            alert('End time must be after start time on the same day.');
+            return false;
+        }
+        const startInst = defenseStartInstant(dateVal, startTime);
+        if (startInst && !isNaN(startInst.getTime()) && startInst.getTime() <= Date.now()) {
+            e.preventDefault();
+            updatePastStartWarning();
+            document.getElementById('pastStartWarning')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            alert('Defense start must be in the future. Choose a later time or another day.');
             return false;
         }
     });
 });
+})();
 </script>
 @endsection
