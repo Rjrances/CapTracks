@@ -38,8 +38,6 @@ class CoordinatorDashboardController extends Controller
                     $offeringQuery->whereIn('offerings.id', $coordinatorOfferings);
                 });
         })->count() : 0;
-        $groupsWithAdviser = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->whereNotNull('faculty_id')->count() : 0;
-        $groupsWithoutAdviser = $groupCount - $groupsWithAdviser;
         $totalGroupMembers = $activeTerm ? Group::where('academic_term_id', $activeTerm->id)->whereIn('offering_id', $coordinatorOfferings)->withCount('members')->get()->sum('members_count') : 0;
         $pendingSubmissions = $activeTerm ? ProjectSubmission::where('status', 'pending')
             ->whereHas('student', function($query) use ($activeTerm, $coordinatorOfferings) {
@@ -108,8 +106,6 @@ class CoordinatorDashboardController extends Controller
             'groupCount',
             'facultyCount',
             'submissionCount',
-            'groupsWithAdviser',
-            'groupsWithoutAdviser',
             'totalGroupMembers',
             'pendingSubmissions',
             'approvedSubmissions',

@@ -48,8 +48,6 @@ class CoordinatorController extends Controller
             'submissionCount' => ProjectSubmission::count(),
             'pendingSubmissions' => ProjectSubmission::where('status', 'pending')->count(),
             'totalGroupMembers' => Group::withCount('members')->get()->sum('members_count'),
-            'groupsWithAdviser' => Group::whereNotNull('faculty_id')->count(),
-            'groupsWithoutAdviser' => Group::whereNull('faculty_id')->count(),
         ];
         $recentGroups = Group::with(['adviser', 'members'])
             ->latest()

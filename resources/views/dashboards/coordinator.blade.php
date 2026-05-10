@@ -97,7 +97,7 @@
             </div>
         </div>
         <div class="row mb-4">
-            <div class="col-md-6 mb-3 mb-md-0">
+            <div class="col-12">
                 <div class="card h-100">
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
@@ -132,25 +132,6 @@
                                 <p class="text-muted small mb-0">No pending invitations</p>
                             </div>
                         @endif
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-chart-line me-2"></i>System Status
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <h6 class="mb-1">Group Assignment Status</h6>
-                            <p class="text-muted mb-0">{{ $groupsWithAdviser ?? 0 }} groups have advisers, {{ $groupsWithoutAdviser ?? 0 }} need assignment</p>
-                            <div class="progress mt-2" style="height: 8px;">
-                                <div class="progress-bar bg-success" style="width: {{ ($groupCount ?? 0) > 0 ? (($groupsWithAdviser ?? 0) / ($groupCount ?? 1)) * 100 : 0 }}%"></div>
-                            </div>
-                            <small class="text-muted">{{ ($groupCount ?? 0) > 0 ? round((($groupsWithAdviser ?? 0) / ($groupCount ?? 1)) * 100) : 0 }}% assigned</small>
-                        </div>
                     </div>
                 </div>
             </div>
