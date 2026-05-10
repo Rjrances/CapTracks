@@ -1,17 +1,36 @@
 @extends('layouts.coordinator')
 @section('title', 'Create Defense Schedule')
 @section('content')
+@php
+    $oldPm = old('panel_members');
+    if (is_array($oldPm) && count($oldPm) >= 2) {
+        $invitedSlots = [];
+        foreach ($oldPm as $i => $row) {
+            $invitedSlots[] = [
+                'role' => $row['role'] ?? ($i === 0 ? 'chair' : ($i === 1 ? 'member' : 'panelist')),
+                'selected_id' => (string) ($row['faculty_id'] ?? ''),
+            ];
+        }
+        $invitedSlots[0]['role'] = 'chair';
+        $invitedSlots[1]['role'] = 'member';
+    } else {
+        $invitedSlots = [
+            ['role' => 'chair', 'selected_id' => ''],
+            ['role' => 'member', 'selected_id' => ''],
+        ];
+    }
+@endphp
 <div class="container-fluid">
-        <x-coordinator.intro description="Set date, room, and panel for a defense in one of your coordinated offerings.">
+        <x-coordinator.intro description="Set date, room, and invited panel for a defense in one of your coordinated offerings.">
             <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Defense management
             </a>
         </x-coordinator.intro>
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>
-                <strong>Note:</strong> You can only create defense schedules for groups that belong to your coordinated offerings (capstone offer codes). 
+                <strong>Note:</strong> You can only create defense schedules for groups that belong to your coordinated offerings (capstone offer codes).
                 The academic term is automatically set to the current active term.
-                <br><small class="text-muted">Invited faculty (Chair, Member, and additional Panelists—{{ $panelSlotCount }} slots by configuration) are assigned automatically (no manual selection). The adviser and subject coordinator are excluded from those slots and are added to the panel automatically.</small>
+                <br><small class="text-muted">Select <strong>Chair</strong> and <strong>Member</strong>. The adviser and offering coordinator are added automatically. You may add up to {{ $optionalPanelistCapacity }} optional <strong>Panelist</strong> ({{ $optionalPanelistCapacity === 1 ? 'slot' : 'slots' }}) when needed.</small>
             </div>
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -110,7 +129,7 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="room" class="form-label">Room <span class="text-danger">*</span></label>
-                                <input type="text" name="room" id="room" class="form-control @error('room') is-invalid @enderror" 
+                                <input type="text" name="room" id="room" class="form-control @error('room') is-invalid @enderror"
                                        value="{{ old('room') }}" placeholder="e.g., Room 101, Computer Lab 2" required>
                                 @error('room')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -133,7 +152,7 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
-                                <input type="date" name="date" id="date" class="form-control @error('date') is-invalid @enderror" 
+                                <input type="date" name="date" id="date" class="form-control @error('date') is-invalid @enderror"
                                        value="{{ old('date') }}" min="{{ date('Y-m-d') }}" required>
                                 @error('date')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -141,7 +160,7 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="start_time" class="form-label">Start Time <span class="text-danger">*</span></label>
-                                <input type="time" name="start_time" id="start_time" class="form-control @error('start_time') is-invalid @enderror" 
+                                <input type="time" name="start_time" id="start_time" class="form-control @error('start_time') is-invalid @enderror"
                                        value="{{ old('start_time') }}" required>
                                 @error('start_time')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -149,7 +168,7 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="end_time" class="form-label">End Time <span class="text-danger">*</span></label>
-                                <input type="time" name="end_time" id="end_time" class="form-control @error('end_time') is-invalid @enderror" 
+                                <input type="time" name="end_time" id="end_time" class="form-control @error('end_time') is-invalid @enderror"
                                        value="{{ old('end_time') }}" required>
                                 @error('end_time')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -173,43 +192,80 @@
                             <h6 class="mb-3">
                                 <i class="fas fa-users me-2"></i>Panel Members
                             </h6>
-                            <div class="form-group">
-                                <label>Panel (invited faculty)</label>
-                                <div class="alert alert-info mb-3">
-                                    <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
-                                    Chair, Member, and additional Panelists are assigned by the system from available faculty (availability, no double-booking, workload balancing). You cannot change them on this screen—the same rules apply when you submit.
+                            <div class="alert alert-info mb-3">
+                                <strong>Note:</strong> The group's adviser and offering coordinator are included automatically.
+                                Choose <strong>Chair</strong> and <strong>Member</strong> from eligible faculty for the selected group.
+                                Optional panelists can be added when you need more than two invited faculty beyond adviser/coordinator.
+                            </div>
+                            @php
+                                $chairSel = $invitedSlots[0]['selected_id'] ?? '';
+                                $memberSel = $invitedSlots[1]['selected_id'] ?? '';
+                            @endphp
+                            <div class="chair-row mb-3" data-slot-type="chair">
+                                <div class="row align-items-end g-2">
+                                    <div class="col-md-3">
+                                        <span class="badge bg-primary">Chair</span>
+                                        <span class="text-danger">*</span>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="hidden" name="panel_members[0][role]" value="chair">
+                                        <select name="panel_members[0][faculty_id]" id="panel_chair_select" class="form-select invited-panel-select @error('panel_members.0.faculty_id') is-invalid @enderror" required>
+                                            <option value="">Select faculty</option>
+                                        </select>
+                                        @error('panel_members.0.faculty_id')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 </div>
-                                <div id="panel-auto-assignment-hint" class="alert alert-warning mb-3">
-                                    Fill in Group, Date, Start Time, End Time, and Room to preview the auto-assigned panel ({{ $panelSlotCount }} slots).
+                            </div>
+                            <div class="member-row mb-3" data-slot-type="member">
+                                <div class="row align-items-end g-2">
+                                    <div class="col-md-3">
+                                        <span class="badge bg-secondary">Member</span>
+                                        <span class="text-danger">*</span>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="hidden" name="panel_members[1][role]" value="member">
+                                        <select name="panel_members[1][faculty_id]" id="panel_member_select" class="form-select invited-panel-select @error('panel_members.1.faculty_id') is-invalid @enderror" required>
+                                            <option value="">Select faculty</option>
+                                        </select>
+                                        @error('panel_members.1.faculty_id')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 </div>
-                                <div id="panel-insufficient-faculty" class="alert alert-danger d-none mb-3" role="alert">
-                                    <i class="fas fa-user-slash me-2"></i>
-                                    Fewer than {{ $panelSlotCount }} faculty are available for the invited panel slots. Adjust date, time, or room and check again.
-                                </div>
-                                @php
-                                    $slotLabels = [];
-                                    for ($i = 0; $i < $panelSlotCount; $i++) {
-                                        $slotLabels[] = $i === 0 ? 'Chair' : ($i === 1 ? 'Member' : 'Panelist');
-                                    }
-                                @endphp
-                                <div id="panel-members-container">
-                                    @for($i = 0; $i < $panelSlotCount; $i++)
-                                    <div class="panel-member-row mb-3">
-                                        <div class="row align-items-center g-2">
-                                            <div class="col-sm-3 col-md-2">
-                                                <span class="badge {{ $i === 0 ? 'bg-primary' : ($i === 1 ? 'bg-secondary' : 'bg-info text-dark') }}">{{ $slotLabels[$i] }}</span>
-                                            </div>
-                                            <div class="col-sm-9 col-md-10">
-                                                <div id="panel-display-{{ $i }}" class="border rounded px-3 py-2 bg-light text-muted">—</div>
+                            </div>
+                            <div id="optional-panelist-rows">
+                                @foreach($invitedSlots as $idx => $slot)
+                                    @if($idx >= 2)
+                                        <div class="panel-member-row mb-2 optional-panelist-row">
+                                            <div class="row align-items-end g-2">
+                                                <div class="col-md-3">
+                                                    <span class="badge bg-info text-dark">Panelist</span>
+                                                    <span class="text-muted small">(optional)</span>
+                                                </div>
+                                                <div class="col-md-7">
+                                                    <input type="hidden" name="panel_members[{{ $idx }}][role]" value="panelist">
+                                                    <select name="panel_members[{{ $idx }}][faculty_id]" class="form-select invited-panel-select" required>
+                                                        <option value="">Select faculty</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-2 text-end">
+                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-panelist-btn" title="Remove">&times;</button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    @endfor
-                                </div>
-                                @error('panel_members')
-                                    <span class="text-danger">{{ $message }}</span>
-                                @enderror
+                                    @endif
+                                @endforeach
                             </div>
+                            @if($optionalPanelistCapacity > 0)
+                                <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="add-panelist-btn">
+                                    <i class="fas fa-plus me-1"></i>Add optional panelist
+                                </button>
+                            @endif
+                            @error('panel_members')
+                                <span class="text-danger d-block">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
@@ -225,15 +281,21 @@
 </div>
 <script>
 (function () {
-    const PANEL_SLOT_COUNT = {{ (int) $panelSlotCount }};
+    const OPTIONAL_CAPACITY = {{ (int) $optionalPanelistCapacity }};
+    const PREFILL_GROUP_ID = @json($prefillGroupId ? (string) $prefillGroupId : '');
+    const INITIAL_CHAIR = @json((string) ($chairSel ?? ''));
+    const INITIAL_MEMBER = @json((string) ($memberSel ?? ''));
+    const INITIAL_OPTIONAL_IDS = @json(collect($invitedSlots)->slice(2)->pluck('selected_id')->values()->all());
     const APP_TIMEZONE_OFFSET = @json(now()->timezone(config('app.timezone'))->format('P'));
+    const panelFacultyByGroupId = @json($panelFacultyByGroupId);
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+    let latestDoubleBookingRequestId = 0;
 
     function defenseStartInstant(dateStr, timeStr) {
         if (!dateStr || !timeStr) {
             return null;
         }
         const normalized = timeStr.length === 5 ? timeStr + ':00' : timeStr;
-
         return new Date(dateStr + 'T' + normalized + APP_TIMEZONE_OFFSET);
     }
 
@@ -241,8 +303,7 @@
         if (value == null || value === '') {
             return null;
         }
-        const s = String(value);
-        const parts = s.split(':');
+        const parts = String(value).split(':');
         const h = parseInt(parts[0], 10);
         const m = parseInt(parts[1] != null ? parts[1] : '0', 10);
         if (Number.isNaN(h) || Number.isNaN(m)) {
@@ -300,109 +361,148 @@
         }
     }
 
-document.addEventListener('DOMContentLoaded', function() {
-    let currentAvailableFaculty = [];
-    let currentAutoAssignedFacultyIds = [];
-    let latestDoubleBookingRequestId = 0;
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-    const panelFacultyByGroupId = @json($panelFacultyByGroupId);
-    const groupSelectEl = document.getElementById('group_id');
-    if (groupSelectEl) {
-        groupSelectEl.addEventListener('change', function() {
-            const groupId = this.value;
-            if (groupId && hasCompleteSchedulingInputs()) {
-                loadFacultyForGroup(groupId);
-            } else {
-                clearPanelDisplay();
-            }
-            togglePanelAssignmentState();
+    function syncPanelDropdowns() {
+        const selects = Array.from(document.querySelectorAll('.invited-panel-select'));
+        const values = selects.map(s => s.value).filter(Boolean);
+        selects.forEach(select => {
+            const myVal = select.value;
+            Array.from(select.options).forEach(option => {
+                if (!option.value) {
+                    return;
+                }
+                const takenElsewhere = values.some(v => v === option.value && v !== myVal);
+                option.hidden = takenElsewhere;
+                option.disabled = takenElsewhere;
+            });
         });
     }
-    document.getElementById('date').addEventListener('change', function () {
-        togglePanelAssignmentState();
-        updatePastStartWarning();
-    });
-    document.getElementById('start_time').addEventListener('change', function () {
-        togglePanelAssignmentState();
-        updatePastStartWarning();
-        updateTimeOrderWarning();
-    });
-    document.getElementById('start_time').addEventListener('input', function () {
-        updatePastStartWarning();
-        updateTimeOrderWarning();
-    });
-    document.getElementById('end_time').addEventListener('change', function () {
-        togglePanelAssignmentState();
-        updateTimeOrderWarning();
-    });
-    document.getElementById('end_time').addEventListener('input', updateTimeOrderWarning);
-    document.getElementById('room').addEventListener('input', togglePanelAssignmentState);
-    loadInitialFaculty();
-    togglePanelAssignmentState();
-    updateTimeOrderWarning();
-    updatePastStartWarning();
 
-    function hasCompleteSchedulingInputs() {
-        return !!(
-            document.getElementById('group_id').value &&
-            document.getElementById('date').value &&
-            document.getElementById('start_time').value &&
-            document.getElementById('end_time').value &&
-            document.getElementById('room').value
-        );
+    function fillSelectOptions(selectEl, groupId, selectedId) {
+        const list = panelFacultyByGroupId[groupId] || [];
+        const prev = selectedId != null ? String(selectedId) : selectEl.value;
+        selectEl.innerHTML = '<option value="">Select faculty</option>';
+        list.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.id;
+            opt.textContent = f.name;
+            selectEl.appendChild(opt);
+        });
+        if (prev && list.some(item => String(item.id) === prev)) {
+            selectEl.value = prev;
+        }
     }
 
-    function togglePanelAssignmentState() {
-        const enabled = hasCompleteSchedulingInputs();
-        const hint = document.getElementById('panel-auto-assignment-hint');
+    function refillAllPanelSelects(preserveSelections) {
+        const gid = document.getElementById('group_id')?.value || '';
+        const prevChair = preserveSelections ? (document.getElementById('panel_chair_select')?.value || '') : '';
+        const prevMember = preserveSelections ? (document.getElementById('panel_member_select')?.value || '') : '';
+        fillSelectOptions(document.getElementById('panel_chair_select'), gid, preserveSelections ? prevChair : '');
+        fillSelectOptions(document.getElementById('panel_member_select'), gid, preserveSelections ? prevMember : '');
+        document.querySelectorAll('#optional-panelist-rows .invited-panel-select').forEach(sel => {
+            const keep = preserveSelections ? sel.value : '';
+            fillSelectOptions(sel, gid, keep);
+        });
+        syncPanelDropdowns();
+    }
 
-        if (hint) {
-            hint.classList.toggle('d-none', enabled);
+    function optionalPanelistDomCount() {
+        return document.querySelectorAll('#optional-panelist-rows .optional-panelist-row').length;
+    }
+
+    function updateAddPanelistButton() {
+        const btn = document.getElementById('add-panelist-btn');
+        if (!btn) {
+            return;
         }
+        btn.disabled = OPTIONAL_CAPACITY <= 0 || optionalPanelistDomCount() >= OPTIONAL_CAPACITY;
+    }
 
-        if (enabled) {
-            const groupId = document.getElementById('group_id').value;
-            if (groupId) {
-                loadFacultyForGroup(groupId);
+    function renumberPanelMemberFields() {
+        let idx = 0;
+        const chairH = document.querySelector('.chair-row input[type="hidden"]');
+        const chairS = document.getElementById('panel_chair_select');
+        if (chairH && chairS) {
+            chairH.setAttribute('name', 'panel_members[' + idx + '][role]');
+            chairS.setAttribute('name', 'panel_members[' + idx + '][faculty_id]');
+            idx++;
+        }
+        const memberH = document.querySelector('.member-row input[type="hidden"]');
+        const memberS = document.getElementById('panel_member_select');
+        if (memberH && memberS) {
+            memberH.setAttribute('name', 'panel_members[' + idx + '][role]');
+            memberS.setAttribute('name', 'panel_members[' + idx + '][faculty_id]');
+            idx++;
+        }
+        document.querySelectorAll('#optional-panelist-rows .optional-panelist-row').forEach(row => {
+            const hid = row.querySelector('input[type="hidden"][data-role-hidden]') || row.querySelector('input[type="hidden"]');
+            const sel = row.querySelector('.invited-panel-select');
+            if (hid && sel) {
+                hid.setAttribute('name', 'panel_members[' + idx + '][role]');
+                sel.setAttribute('name', 'panel_members[' + idx + '][faculty_id]');
+                idx++;
             }
-        } else {
-            clearPanelDisplay();
-        }
+        });
     }
 
-    function loadInitialFaculty() {
-        const groupSelect = document.getElementById('group_id');
-        const gid = groupSelect ? groupSelect.value : '';
-        if (gid && hasCompleteSchedulingInputs()) {
-            loadFacultyForGroup(gid);
-        } else {
-            clearPanelDisplay();
+    function addOptionalPanelistRow(prefillId) {
+        if (optionalPanelistDomCount() >= OPTIONAL_CAPACITY) {
+            return;
         }
+        const gid = document.getElementById('group_id')?.value || '';
+        const wrap = document.getElementById('optional-panelist-rows');
+        const row = document.createElement('div');
+        row.className = 'panel-member-row mb-2 optional-panelist-row';
+        row.innerHTML = `
+            <div class="row align-items-end g-2">
+                <div class="col-md-3">
+                    <span class="badge bg-info text-dark">Panelist</span>
+                    <span class="text-muted small">(optional)</span>
+                </div>
+                <div class="col-md-7">
+                    <input type="hidden" value="panelist" data-role-hidden="1">
+                    <select class="form-select invited-panel-select" required>
+                        <option value="">Select faculty</option>
+                    </select>
+                </div>
+                <div class="col-md-2 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-panelist-btn" title="Remove">&times;</button>
+                </div>
+            </div>`;
+        wrap.appendChild(row);
+        const hid = row.querySelector('input[type="hidden"]');
+        const sel = row.querySelector('select');
+        fillSelectOptions(sel, gid, prefillId || '');
+        hid.addEventListener('change', () => {});
+        sel.addEventListener('change', syncPanelDropdowns);
+        row.querySelector('.remove-panelist-btn').addEventListener('click', function () {
+            row.remove();
+            renumberPanelMemberFields();
+            syncPanelDropdowns();
+            updateAddPanelistButton();
+        });
+        renumberPanelMemberFields();
+        syncPanelDropdowns();
+        updateAddPanelistButton();
     }
-    function loadFacultyForGroup(groupId) {
-        const base = panelFacultyByGroupId[groupId] || [];
-        const date = document.getElementById('date').value || '';
-        const startTime = document.getElementById('start_time').value || '';
-        const endTime = document.getElementById('end_time').value || '';
-        const room = document.getElementById('room').value || '';
 
-        if (!date || !startTime || !endTime || !room) {
-            currentAvailableFaculty = base;
-            currentAutoAssignedFacultyIds = [];
-            clearPanelDisplay();
-            return Promise.resolve(base);
-        }
+    function checkDoubleBookingRoom() {
+        const groupId = document.getElementById('group_id')?.value;
+        const date = document.getElementById('date')?.value;
+        const startTime = document.getElementById('start_time')?.value;
+        const endTime = document.getElementById('end_time')?.value;
+        const room = document.getElementById('room')?.value;
 
-        if (!isEndTimeAfterStartOnSameDay()) {
-            updateTimeOrderWarning();
+        if (!groupId || !date || !startTime || !endTime || !room) {
             document.getElementById('doubleBookingWarning')?.classList.add('d-none');
-            currentAvailableFaculty = base;
-            currentAutoAssignedFacultyIds = [];
-            clearPanelDisplay();
-            return Promise.resolve(base);
+            return;
+        }
+        if (!isEndTimeAfterStartOnSameDay()) {
+            document.getElementById('doubleBookingWarning')?.classList.add('d-none');
+            return;
         }
 
-        return fetch('{{ route("coordinator.defense.available-faculty") }}', {
+        const requestId = ++latestDoubleBookingRequestId;
+        fetch('{{ route("coordinator.defense.available-faculty") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -411,221 +511,116 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify({
                 group_id: groupId,
                 date: date,
-                start_time: startTime,
-                end_time: endTime,
+                start_time: startTime.length >= 8 ? startTime.slice(0, 5) : startTime,
+                end_time: endTime.length >= 8 ? endTime.slice(0, 5) : endTime,
                 room: room
             })
         })
-        .then(async response => {
-            const data = await response.json().catch(() => ({}));
-            const pastBox = document.getElementById('pastStartWarning');
-            const pastMsg = document.getElementById('pastStartMessage');
-            const orderBox = document.getElementById('timeOrderWarning');
-            const orderMsg = document.getElementById('timeOrderMessage');
-            if (!response.ok) {
-                document.getElementById('doubleBookingWarning')?.classList.add('d-none');
-                pastBox?.classList.add('d-none');
-                orderBox?.classList.add('d-none');
-                if (data.invalid_time_window && orderMsg && orderBox && data.message) {
-                    orderMsg.textContent = data.message;
-                    orderBox.classList.remove('d-none');
-                } else if (pastBox && pastMsg && data.message) {
-                    pastMsg.textContent = data.message;
-                    pastBox.classList.remove('d-none');
-                }
-                currentAvailableFaculty = base;
-                currentAutoAssignedFacultyIds = [];
-                clearPanelDisplay();
-                return base;
-            }
-            if (pastBox) {
-                pastBox.classList.add('d-none');
-            }
-            if (orderBox) {
-                orderBox.classList.add('d-none');
-            }
-            updateTimeOrderWarning();
-            updatePastStartWarning();
-            const list = data.availableFaculty || base;
-            currentAvailableFaculty = list;
-            currentAutoAssignedFacultyIds = (data.autoAssignedFacultyIds || list.slice(0, PANEL_SLOT_COUNT).map(member => String(member.id))).map(String);
-            renderAutoAssignedPanel(list, currentAutoAssignedFacultyIds);
-            return list;
-        })
-        .catch(error => {
-            console.error('Error loading faculty:', error);
-            currentAvailableFaculty = base;
-            currentAutoAssignedFacultyIds = base.slice(0, PANEL_SLOT_COUNT).map(member => String(member.id));
-            renderAutoAssignedPanel(base, currentAutoAssignedFacultyIds);
-            return base;
-        });
-    }
-    function renderAutoAssignedPanel(faculty, autoIds) {
-        const insufficientEl = document.getElementById('panel-insufficient-faculty');
-        const list = faculty || [];
-        const ids = (autoIds && autoIds.length) ? autoIds.map(String) : list.slice(0, PANEL_SLOT_COUNT).map(m => String(m.id));
-
-        function labelForUserId(id) {
-            if (id == null || id === '') {
-                return null;
-            }
-            const m = list.find(f => String(f.id) === String(id));
-            if (!m) {
-                return null;
-            }
-            return `${m.name} (${m.faculty_id != null ? m.faculty_id : 'N/A'})`;
-        }
-
-        for (let i = 0; i < PANEL_SLOT_COUNT; i++) {
-            const el = document.getElementById('panel-display-' + i);
-            if (!el) {
-                continue;
-            }
-            const label = ids[i] ? labelForUserId(ids[i]) : null;
-            el.textContent = label || '—';
-            el.classList.toggle('text-muted', !label);
-        }
-
-        if (insufficientEl) {
-            const insufficient = list.length < PANEL_SLOT_COUNT;
-            insufficientEl.classList.toggle('d-none', !insufficient);
-        }
-    }
-    function clearPanelDisplay() {
-        const insufficientEl = document.getElementById('panel-insufficient-faculty');
-        for (let i = 0; i < PANEL_SLOT_COUNT; i++) {
-            const el = document.getElementById('panel-display-' + i);
-            if (el) {
-                el.textContent = '—';
-                el.classList.add('text-muted');
-            }
-        }
-        if (insufficientEl) {
-            insufficientEl.classList.add('d-none');
-        }
-    }
-    function checkDoubleBooking() {
-        const groupId = document.getElementById('group_id').value;
-        const date = document.getElementById('date').value;
-        const startTime = document.getElementById('start_time').value;
-        const endTime = document.getElementById('end_time').value;
-        const room = document.getElementById('room').value;
-
-        if (!groupId || !date || !startTime || !endTime || !room) {
-            document.getElementById('doubleBookingWarning').classList.add('d-none');
-            return;
-        }
-
-        if (!isEndTimeAfterStartOnSameDay()) {
-            updateTimeOrderWarning();
-            document.getElementById('doubleBookingWarning').classList.add('d-none');
-            return;
-        }
-
-        const requestId = ++latestDoubleBookingRequestId;
-        const requestPayload = {
-            group_id: groupId,
-            date: date,
-            start_time: startTime,
-            end_time: endTime,
-            room: room
-        };
-
-        const requestSignature = JSON.stringify(requestPayload);
-
-        if (groupId && date && startTime && endTime && room) {
-            fetch('{{ route("coordinator.defense.available-faculty") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                body: JSON.stringify(requestPayload)
-            })
             .then(async response => {
                 const data = await response.json().catch(() => ({}));
-                const currentSignature = JSON.stringify({
-                    group_id: document.getElementById('group_id').value,
-                    date: document.getElementById('date').value,
-                    start_time: document.getElementById('start_time').value,
-                    end_time: document.getElementById('end_time').value,
-                    room: document.getElementById('room').value
-                });
-
-                if (requestId !== latestDoubleBookingRequestId || requestSignature !== currentSignature) {
+                if (requestId !== latestDoubleBookingRequestId) {
                     return;
                 }
-
-                const pastBox = document.getElementById('pastStartWarning');
-                const pastMsg = document.getElementById('pastStartMessage');
-                const orderBox = document.getElementById('timeOrderWarning');
-                const orderMsg = document.getElementById('timeOrderMessage');
+                const warn = document.getElementById('doubleBookingWarning');
                 if (!response.ok) {
-                    document.getElementById('doubleBookingWarning')?.classList.add('d-none');
-                    pastBox?.classList.add('d-none');
-                    orderBox?.classList.add('d-none');
-                    if (data.invalid_time_window && orderMsg && orderBox && data.message) {
-                        orderMsg.textContent = data.message;
-                        orderBox.classList.remove('d-none');
-                    } else if (pastBox && pastMsg && data.message) {
-                        pastMsg.textContent = data.message;
-                        pastBox.classList.remove('d-none');
-                    }
-                    currentAvailableFaculty = [];
-                    currentAutoAssignedFacultyIds = [];
-                    clearPanelDisplay();
+                    warn?.classList.add('d-none');
                     return;
                 }
-                if (pastBox) {
-                    pastBox.classList.add('d-none');
-                }
-                if (orderBox) {
-                    orderBox.classList.add('d-none');
-                }
-                updateTimeOrderWarning();
-                updatePastStartWarning();
-
-                currentAvailableFaculty = data.availableFaculty || [];
-                currentAutoAssignedFacultyIds = (data.autoAssignedFacultyIds || []).map(String);
-                renderAutoAssignedPanel(currentAvailableFaculty, currentAutoAssignedFacultyIds);
-                if (data.conflict) {
+                if (data.conflict && data.message) {
                     document.getElementById('warningMessage').textContent = data.message;
-                    document.getElementById('doubleBookingWarning').classList.remove('d-none');
+                    warn?.classList.remove('d-none');
                 } else {
-                    document.getElementById('doubleBookingWarning').classList.add('d-none');
+                    warn?.classList.add('d-none');
                 }
             })
             .catch(() => {
                 if (requestId === latestDoubleBookingRequestId) {
-                    document.getElementById('doubleBookingWarning').classList.add('d-none');
+                    document.getElementById('doubleBookingWarning')?.classList.add('d-none');
+                }
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('group_id')?.addEventListener('change', function () {
+            refillAllPanelSelects(false);
+            document.getElementById('optional-panelist-rows').innerHTML = '';
+            renumberPanelMemberFields();
+            updateAddPanelistButton();
+            checkDoubleBookingRoom();
+        });
+        ['date', 'start_time', 'end_time'].forEach(id => {
+            document.getElementById(id)?.addEventListener('change', () => {
+                updatePastStartWarning();
+                updateTimeOrderWarning();
+                checkDoubleBookingRoom();
+            });
+            document.getElementById(id)?.addEventListener('input', () => {
+                updatePastStartWarning();
+                updateTimeOrderWarning();
+            });
+        });
+        document.getElementById('room')?.addEventListener('input', checkDoubleBookingRoom);
+
+        document.getElementById('panel_chair_select')?.addEventListener('change', syncPanelDropdowns);
+        document.getElementById('panel_member_select')?.addEventListener('change', syncPanelDropdowns);
+
+        document.getElementById('add-panelist-btn')?.addEventListener('click', () => addOptionalPanelistRow(''));
+
+        document.querySelectorAll('#optional-panelist-rows .remove-panelist-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                btn.closest('.optional-panelist-row')?.remove();
+                renumberPanelMemberFields();
+                syncPanelDropdowns();
+                updateAddPanelistButton();
+            });
+        });
+        document.querySelectorAll('#optional-panelist-rows .invited-panel-select').forEach(sel => {
+            sel.addEventListener('change', syncPanelDropdowns);
+        });
+
+        const startGroup = document.getElementById('group_id')?.value || PREFILL_GROUP_ID;
+        if (startGroup) {
+            if (!document.getElementById('group_id').value && PREFILL_GROUP_ID) {
+                document.getElementById('group_id').value = PREFILL_GROUP_ID;
+            }
+            fillSelectOptions(document.getElementById('panel_chair_select'), startGroup, INITIAL_CHAIR);
+            fillSelectOptions(document.getElementById('panel_member_select'), startGroup, INITIAL_MEMBER);
+            document.querySelectorAll('#optional-panelist-rows .optional-panelist-row').forEach((row, i) => {
+                const sel = row.querySelector('.invited-panel-select');
+                const pid = INITIAL_OPTIONAL_IDS[i] || '';
+                if (sel) {
+                    fillSelectOptions(sel, startGroup, pid);
                 }
             });
         }
-    }
-    document.getElementById('date').addEventListener('change', checkDoubleBooking);
-    document.getElementById('start_time').addEventListener('change', checkDoubleBooking);
-    document.getElementById('end_time').addEventListener('change', checkDoubleBooking);
-    document.getElementById('room').addEventListener('input', checkDoubleBooking);
-    document.getElementById('defenseForm').addEventListener('submit', function(e) {
-        const dateVal = document.getElementById('date').value;
-        const startTime = document.getElementById('start_time').value;
-        if (!isEndTimeAfterStartOnSameDay()) {
-            e.preventDefault();
-            updateTimeOrderWarning();
-            document.getElementById('timeOrderWarning')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            alert('End time must be after start time on the same day.');
-            return false;
-        }
-        const startInst = defenseStartInstant(dateVal, startTime);
-        if (startInst && !isNaN(startInst.getTime()) && startInst.getTime() <= Date.now()) {
-            e.preventDefault();
-            updatePastStartWarning();
-            document.getElementById('pastStartWarning')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            alert('Defense start must be in the future. Choose a later time or another day.');
-            return false;
-        }
+        renumberPanelMemberFields();
+        syncPanelDropdowns();
+        updateAddPanelistButton();
+
+        updateTimeOrderWarning();
+        updatePastStartWarning();
+        checkDoubleBookingRoom();
+
+        document.getElementById('defenseForm')?.addEventListener('submit', function (e) {
+            const dateVal = document.getElementById('date')?.value;
+            const startTime = document.getElementById('start_time')?.value;
+            if (!isEndTimeAfterStartOnSameDay()) {
+                e.preventDefault();
+                updateTimeOrderWarning();
+                document.getElementById('timeOrderWarning')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                alert('End time must be after start time on the same day.');
+                return false;
+            }
+            const startInst = defenseStartInstant(dateVal, startTime);
+            if (startInst && !isNaN(startInst.getTime()) && startInst.getTime() <= Date.now()) {
+                e.preventDefault();
+                updatePastStartWarning();
+                document.getElementById('pastStartWarning')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                alert('Defense start must be in the future. Choose a later time or another day.');
+                return false;
+            }
+        });
     });
-});
 })();
 </script>
 @endsection

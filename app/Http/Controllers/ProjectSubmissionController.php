@@ -16,24 +16,24 @@ class ProjectSubmissionController extends Controller
 {
     public function index(Request $request)
     {
+        // Student guard must win when both faculty (web) and student sessions exist (e.g. coordinator testing the student portal).
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
+
+            return $this->studentIndexFromSession($student);
+        }
+
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->isTeacher()) {
-
                 return redirect()->route('adviser.groups');
-            } else {
-                return $this->studentIndex($user);
             }
-        } else {
-            if (Auth::guard('student')->check()) {
-                $studentAccount = Auth::guard('student')->user();
-                $student = $studentAccount->student;
 
-                return $this->studentIndexFromSession($student);
-            } else {
-                return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
-            }
+            return $this->studentIndex($user);
         }
+
+        return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
     }
 
     private function adviserIndex($user, Request $request)
@@ -194,6 +194,17 @@ class ProjectSubmissionController extends Controller
     {
         $submission = ProjectSubmission::findOrFail($id);
         $viewMode = 'adviser';
+
+        if (Auth::guard('student')->check()) {
+            $studentAccount = Auth::guard('student')->user();
+            $student = $studentAccount->student;
+            if ($submission->student_id !== $student->student_id) {
+                abort(403, 'Unauthorized access to this submission.');
+            }
+
+            return view('adviser.project.show', compact('submission', 'viewMode'));
+        }
+
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->isTeacher()) {
@@ -226,19 +237,11 @@ class ProjectSubmissionController extends Controller
                     abort(403, 'Unauthorized access to this submission.');
                 }
             }
-        } else {
-            if (Auth::guard('student')->check()) {
-                $studentAccount = Auth::guard('student')->user();
-                $student = $studentAccount->student;
-                if ($submission->student_id !== $student->student_id) {
-                    abort(403, 'Unauthorized access to this submission.');
-                }
-            } else {
-                return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
-            }
+
+            return view('adviser.project.show', compact('submission', 'viewMode'));
         }
 
-        return view('adviser.project.show', compact('submission', 'viewMode'));
+        return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
     }
 
     public function edit($id)

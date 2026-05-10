@@ -134,16 +134,34 @@
                             <span id="timeOrderMessage">End time must be after start time on the same day.</span>
                         </div>
                         <hr>
+                        @php
+                            if (is_array(old('panel_members')) && count(old('panel_members')) >= 2) {
+                                $invitedEditSlots = [];
+                                foreach (old('panel_members') as $i => $row) {
+                                    $invitedEditSlots[] = [
+                                        'role' => $row['role'] ?? ($i === 0 ? 'chair' : ($i === 1 ? 'member' : 'panelist')),
+                                        'selected_id' => (string) ($row['faculty_id'] ?? ''),
+                                    ];
+                                }
+                                $invitedEditSlots[0]['role'] = 'chair';
+                                $invitedEditSlots[1]['role'] = 'member';
+                            }
+                            $optionalPanelistCapacity = max(0, $panelSlotCount - 2);
+                            $autoIncludedPanelIds = collect([
+                                optional($defenseSchedule->group->adviser)->id,
+                                optional(optional($defenseSchedule->group->offering)->faculty)->id,
+                            ])->filter()->map(fn ($id) => (string) $id)->all();
+                        @endphp
                         <div class="mb-4">
                             <h6 class="mb-3">
                                 <i class="fas fa-users me-2"></i>Panel Members
                             </h6>
                             <div class="form-group">
-                                <label>Panel Members <span class="text-danger">*</span></label>
+                                <label>Invited faculty <span class="text-danger">*</span></label>
                                 <div class="alert alert-info mb-3">
-                                    <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
-                                    Select faculty for each invited slot (Chair, Member, and {{ max(0, $panelSlotCount - 2) }} additional Panelist{{ max(0, $panelSlotCount - 2) === 1 ? '' : 's' }}). Each slot must be a different faculty member.
-                                    Changing <strong>Group</strong> reloads each dropdown to that group’s eligible faculty (same rules as creating a defense).
+                                    <strong>Note:</strong> The group's adviser and offering coordinator are automatically included.
+                                    Select <strong>Chair</strong> and <strong>Member</strong>. Add optional panelists only when needed (up to {{ $optionalPanelistCapacity }}).
+                                    Changing <strong>Group</strong> reloads dropdowns and clears optional panelist rows.
                                 </div>
                                 @if($defenseSchedule->group->adviser || ($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id))
                                     <div class="alert alert-success mb-3">
@@ -158,53 +176,76 @@
                                         </ul>
                                     </div>
                                 @endif
-                                @php
-                                    $autoIncludedPanelIds = collect([
-                                        optional($defenseSchedule->group->adviser)->id,
-                                        optional(optional($defenseSchedule->group->offering)->faculty)->id,
-                                    ])->filter()->map(fn ($id) => (string) $id)->all();
-                                @endphp
-                                <div id="panel-members-container">
+                                <div class="chair-row mb-3">
+                                    <div class="row align-items-end g-2">
+                                        <div class="col-md-3"><span class="badge bg-primary">Chair</span> <span class="text-danger">*</span></div>
+                                        <div class="col-md-9">
+                                            <input type="hidden" name="panel_members[0][role]" value="chair">
+                                            <select name="panel_members[0][faculty_id]" id="edit_panel_chair" class="form-select faculty-select" required>
+                                                <option value="">Select faculty</option>
+                                                @foreach($currentPanelFacultyOptions as $facultyMember)
+                                                    @continue(in_array((string) $facultyMember['id'], $autoIncludedPanelIds, true))
+                                                    <option value="{{ $facultyMember['id'] }}" {{ (string) old('panel_members.0.faculty_id', $invitedEditSlots[0]['selected_id'] ?? '') === (string) $facultyMember['id'] ? 'selected' : '' }}>{{ $facultyMember['name'] }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="member-row mb-3">
+                                    <div class="row align-items-end g-2">
+                                        <div class="col-md-3"><span class="badge bg-secondary">Member</span> <span class="text-danger">*</span></div>
+                                        <div class="col-md-9">
+                                            <input type="hidden" name="panel_members[1][role]" value="member">
+                                            <select name="panel_members[1][faculty_id]" id="edit_panel_member" class="form-select faculty-select" required>
+                                                <option value="">Select faculty</option>
+                                                @foreach($currentPanelFacultyOptions as $facultyMember)
+                                                    @continue(in_array((string) $facultyMember['id'], $autoIncludedPanelIds, true))
+                                                    <option value="{{ $facultyMember['id'] }}" {{ (string) old('panel_members.1.faculty_id', $invitedEditSlots[1]['selected_id'] ?? '') === (string) $facultyMember['id'] ? 'selected' : '' }}>{{ $facultyMember['name'] }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="optional-panelist-rows">
                                     @foreach($invitedEditSlots as $idx => $slot)
-                                        @php
-                                            $roleLabel = match ($slot['role']) {
-                                                'chair' => 'Chair',
-                                                'member' => 'Member',
-                                                default => 'Panelist',
-                                            };
-                                            $selectedId = (string) old('panel_members.'.$idx.'.faculty_id', $slot['selected_id']);
-                                        @endphp
-                                        <div class="panel-member-row mb-2">
-                                            <div class="row">
-                                                <div class="col-md-5">
-                                                    <select name="panel_members[{{ $idx }}][faculty_id]" class="form-control faculty-select" required>
-                                                        <option value="">Select Faculty</option>
-                                                        @foreach($currentPanelFacultyOptions as $facultyMember)
-                                                            @continue(in_array((string) $facultyMember['id'], $autoIncludedPanelIds, true))
-                                                            <option
-                                                                value="{{ $facultyMember['id'] }}"
-                                                                {{ $selectedId === (string) $facultyMember['id'] ? 'selected' : '' }}
-                                                            >
-                                                                {{ $facultyMember['name'] }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-5">
-                                                    <input type="text" class="form-control" value="{{ $roleLabel }}" readonly>
-                                                    <input type="hidden" name="panel_members[{{ $idx }}][role]" value="{{ $slot['role'] }}">
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <span class="badge bg-secondary">Required</span>
+                                        @if($idx >= 2)
+                                            @php
+                                                $selectedId = (string) old('panel_members.'.$idx.'.faculty_id', $slot['selected_id']);
+                                            @endphp
+                                            <div class="panel-member-row mb-2 optional-panelist-row">
+                                                <div class="row align-items-end g-2">
+                                                    <div class="col-md-3">
+                                                        <span class="badge bg-info text-dark">Panelist</span>
+                                                        <span class="text-muted small">(optional)</span>
+                                                    </div>
+                                                    <div class="col-md-7">
+                                                        <input type="hidden" name="panel_members[{{ $idx }}][role]" value="panelist">
+                                                        <select name="panel_members[{{ $idx }}][faculty_id]" class="form-select faculty-select" required>
+                                                            <option value="">Select faculty</option>
+                                                            @foreach($currentPanelFacultyOptions as $facultyMember)
+                                                                @continue(in_array((string) $facultyMember['id'], $autoIncludedPanelIds, true))
+                                                                <option value="{{ $facultyMember['id'] }}" {{ $selectedId === (string) $facultyMember['id'] ? 'selected' : '' }}>{{ $facultyMember['name'] }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-2 text-end">
+                                                        <button type="button" class="btn btn-outline-danger btn-sm remove-panelist-btn">&times;</button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        @endif
                                     @endforeach
                                 </div>
+                                @if($optionalPanelistCapacity > 0)
+                                    <button type="button" class="btn btn-outline-secondary btn-sm mb-2" id="edit-add-panelist-btn">
+                                        <i class="fas fa-plus me-1"></i>Add optional panelist
+                                    </button>
+                                @endif
                                 @error('panel_members')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                        </div>
                         <div class="d-flex justify-content-end gap-2">
                             <a href="{{ route('coordinator.defense.index') }}" class="btn btn-outline-secondary">
                                 Cancel
@@ -247,20 +288,17 @@ function defenseUpdateTimeOrderWarning() {
     }
 }
 document.addEventListener('DOMContentLoaded', function() {
+    const OPTIONAL_CAPACITY = {{ (int) ($optionalPanelistCapacity ?? 0) }};
     const panelFacultyByGroupId = @json($panelFacultyByGroupId);
 
     function syncPanelDropdowns() {
         const selects = Array.from(document.querySelectorAll('.faculty-select'));
-        if (!selects.length) {
-            return;
-        }
+        if (!selects.length) return;
         const values = selects.map(s => s.value).filter(Boolean);
         selects.forEach(select => {
             const myVal = select.value;
             Array.from(select.options).forEach(option => {
-                if (!option.value) {
-                    return;
-                }
+                if (!option.value) return;
                 const takenElsewhere = values.some(v => v === option.value && v !== myVal);
                 option.hidden = takenElsewhere;
                 option.disabled = takenElsewhere;
@@ -268,34 +306,133 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function refillPanelSelectsForGroup(groupId) {
-        const list = panelFacultyByGroupId[groupId] || [];
-        document.querySelectorAll('.faculty-select').forEach(select => {
-            const prev = select.value;
-            select.innerHTML = '<option value="">Select Faculty</option>';
-            list.forEach(f => {
-                const opt = document.createElement('option');
-                opt.value = f.id;
-                opt.textContent = f.name;
-                select.appendChild(opt);
-            });
-            if (prev && list.some(item => String(item.id) === prev)) {
-                select.value = prev;
+    function optionalPanelistDomCount() {
+        return document.querySelectorAll('#optional-panelist-rows .optional-panelist-row').length;
+    }
+
+    function updateAddPanelistButton() {
+        const btn = document.getElementById('edit-add-panelist-btn');
+        if (!btn) return;
+        btn.disabled = OPTIONAL_CAPACITY <= 0 || optionalPanelistDomCount() >= OPTIONAL_CAPACITY;
+    }
+
+    function renumberPanelMemberFields() {
+        let idx = 0;
+        const chairH = document.querySelector('.chair-row input[type="hidden"]');
+        const chairS = document.getElementById('edit_panel_chair');
+        if (chairH && chairS) {
+            chairH.setAttribute('name', 'panel_members[' + idx + '][role]');
+            chairS.setAttribute('name', 'panel_members[' + idx + '][faculty_id]');
+            idx++;
+        }
+        const memberH = document.querySelector('.member-row input[type="hidden"]');
+        const memberS = document.getElementById('edit_panel_member');
+        if (memberH && memberS) {
+            memberH.setAttribute('name', 'panel_members[' + idx + '][role]');
+            memberS.setAttribute('name', 'panel_members[' + idx + '][faculty_id]');
+            idx++;
+        }
+        document.querySelectorAll('#optional-panelist-rows .optional-panelist-row').forEach(row => {
+            const hid = row.querySelector('input[type="hidden"]');
+            const sel = row.querySelector('.faculty-select');
+            if (hid && sel) {
+                hid.setAttribute('name', 'panel_members[' + idx + '][role]');
+                sel.setAttribute('name', 'panel_members[' + idx + '][faculty_id]');
+                idx++;
             }
         });
+    }
+
+    function fillSelectFromList(selectEl, list, selectedId) {
+        const prev = selectedId != null ? String(selectedId) : selectEl.value;
+        selectEl.innerHTML = '<option value="">Select faculty</option>';
+        list.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.id;
+            opt.textContent = f.name;
+            selectEl.appendChild(opt);
+        });
+        if (prev && list.some(item => String(item.id) === prev)) {
+            selectEl.value = prev;
+        }
+    }
+
+    function refillPanelSelectsForGroup(groupId) {
+        const list = panelFacultyByGroupId[groupId] || [];
+        fillSelectFromList(document.getElementById('edit_panel_chair'), list, document.getElementById('edit_panel_chair').value);
+        fillSelectFromList(document.getElementById('edit_panel_member'), list, document.getElementById('edit_panel_member').value);
+        document.querySelectorAll('#optional-panelist-rows .faculty-select').forEach(sel => {
+            fillSelectFromList(sel, list, sel.value);
+        });
         syncPanelDropdowns();
+    }
+
+    function addOptionalPanelistRow() {
+        if (optionalPanelistDomCount() >= OPTIONAL_CAPACITY) return;
+        const groupId = document.getElementById('group_id').value;
+        const list = panelFacultyByGroupId[groupId] || [];
+        const wrap = document.getElementById('optional-panelist-rows');
+        const row = document.createElement('div');
+        row.className = 'panel-member-row mb-2 optional-panelist-row';
+        row.innerHTML = `
+            <div class="row align-items-end g-2">
+                <div class="col-md-3">
+                    <span class="badge bg-info text-dark">Panelist</span>
+                    <span class="text-muted small">(optional)</span>
+                </div>
+                <div class="col-md-7">
+                    <input type="hidden" value="panelist" data-role-hidden="1">
+                    <select class="form-select faculty-select" required><option value="">Select faculty</option></select>
+                </div>
+                <div class="col-md-2 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-panelist-btn">&times;</button>
+                </div>
+            </div>`;
+        wrap.appendChild(row);
+        const sel = row.querySelector('.faculty-select');
+        list.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f.id;
+            opt.textContent = f.name;
+            sel.appendChild(opt);
+        });
+        sel.addEventListener('change', syncPanelDropdowns);
+        row.querySelector('.remove-panelist-btn').addEventListener('click', function () {
+            row.remove();
+            renumberPanelMemberFields();
+            syncPanelDropdowns();
+            updateAddPanelistButton();
+        });
+        renumberPanelMemberFields();
+        syncPanelDropdowns();
+        updateAddPanelistButton();
     }
 
     document.querySelectorAll('.faculty-select').forEach(el => {
         el.addEventListener('change', syncPanelDropdowns);
     });
+    document.querySelectorAll('#optional-panelist-rows .remove-panelist-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            btn.closest('.optional-panelist-row').remove();
+            renumberPanelMemberFields();
+            syncPanelDropdowns();
+            updateAddPanelistButton();
+        });
+    });
+    document.getElementById('edit-add-panelist-btn')?.addEventListener('click', addOptionalPanelistRow);
+
     const groupSelectEl = document.getElementById('group_id');
     if (groupSelectEl) {
         groupSelectEl.addEventListener('change', function () {
+            document.getElementById('optional-panelist-rows').innerHTML = '';
+            renumberPanelMemberFields();
             refillPanelSelectsForGroup(this.value);
+            updateAddPanelistButton();
         });
     }
+    renumberPanelMemberFields();
     syncPanelDropdowns();
+    updateAddPanelistButton();
 
     function checkDoubleBooking() {
         const date = document.getElementById('date').value;
