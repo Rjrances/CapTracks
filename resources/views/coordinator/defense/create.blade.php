@@ -30,7 +30,7 @@
                 <i class="fas fa-info-circle me-2"></i>
                 <strong>Note:</strong> You can only create defense schedules for groups that belong to your coordinated offerings (capstone offer codes).
                 The academic term is automatically set to the current active term.
-                <br><small class="text-muted">Select <strong>Chair</strong> and <strong>Member</strong>. The adviser and offering coordinator are added automatically. You may add up to {{ $optionalPanelistCapacity }} optional <strong>Panelist</strong> ({{ $optionalPanelistCapacity === 1 ? 'slot' : 'slots' }}) when needed.</small>
+                <br><small class="text-muted">Select <strong>Chair</strong> and <strong>Member</strong>. The adviser and offering coordinator are added automatically. You may add up to {{ $optionalPanelistCapacity }} additional <strong>Member</strong> {{ $optionalPanelistCapacity === 1 ? 'slot' : 'slots' }} when needed.</small>
             </div>
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -195,7 +195,7 @@
                             <div class="alert alert-info mb-3">
                                 <strong>Note:</strong> The group's adviser and offering coordinator are included automatically.
                                 Choose <strong>Chair</strong> and <strong>Member</strong> from eligible faculty for the selected group.
-                                Optional panelists can be added when you need more than two invited faculty beyond adviser/coordinator.
+                                Additional members can be added when you need more than two invited faculty beyond adviser/coordinator.
                             </div>
                             @php
                                 $chairSel = $invitedSlots[0]['selected_id'] ?? '';
@@ -241,7 +241,7 @@
                                         <div class="panel-member-row mb-2 optional-panelist-row">
                                             <div class="row align-items-end g-2">
                                                 <div class="col-md-3">
-                                                    <span class="badge bg-info text-dark">Panelist</span>
+                                                    <span class="badge bg-info text-dark">Member</span>
                                                     <span class="text-muted small">(optional)</span>
                                                 </div>
                                                 <div class="col-md-7">
@@ -260,7 +260,7 @@
                             </div>
                             @if($optionalPanelistCapacity > 0)
                                 <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="add-panelist-btn">
-                                    <i class="fas fa-plus me-1"></i>Add optional panelist
+                                    <i class="fas fa-plus me-1"></i>Add panel member
                                 </button>
                             @endif
                             @error('panel_members')
@@ -455,7 +455,7 @@
         row.innerHTML = `
             <div class="row align-items-end g-2">
                 <div class="col-md-3">
-                    <span class="badge bg-info text-dark">Panelist</span>
+                    <span class="badge bg-info text-dark">Member</span>
                     <span class="text-muted small">(optional)</span>
                 </div>
                 <div class="col-md-7">

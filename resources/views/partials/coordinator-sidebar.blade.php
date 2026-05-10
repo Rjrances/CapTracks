@@ -54,12 +54,38 @@
                     Groups
                 </a>
             </li>
+            @php
+                $classMenuOpen = request()->routeIs('coordinator.classlist.*') || request()->routeIs('coordinator.final-grades');
+            @endphp
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('coordinator.classlist.*') ? 'active bg-primary' : '' }}" 
-                   href="{{ route('coordinator.classlist.index') }}">
-                    <i class="fas fa-list me-2"></i>
-                    Class List
+                <a class="nav-link text-white d-flex align-items-center justify-content-between {{ $classMenuOpen ? 'active bg-primary' : '' }}"
+                   data-bs-toggle="collapse"
+                   href="#coordinatorClassMenu"
+                   role="button"
+                   aria-expanded="{{ $classMenuOpen ? 'true' : 'false' }}"
+                   aria-controls="coordinatorClassMenu">
+                    <span>
+                        <i class="fas fa-list me-2"></i>
+                        Students
+                    </span>
+                    <i class="fas fa-chevron-down small sidebar-collapse-chevron"></i>
                 </a>
+                <div class="collapse {{ $classMenuOpen ? 'show' : '' }}" id="coordinatorClassMenu">
+                    <ul class="nav flex-column mt-1 ms-4">
+                        <li class="nav-item mb-1">
+                            <a class="nav-link py-1 px-2 text-white {{ request()->routeIs('coordinator.classlist.*') ? 'active bg-primary' : '' }}"
+                               href="{{ route('coordinator.classlist.index') }}">
+                                Class List
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-1 px-2 text-white {{ request()->routeIs('coordinator.final-grades') ? 'active bg-primary' : '' }}"
+                               href="{{ route('coordinator.final-grades') }}">
+                                Grades
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </li>
             <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('coordinator.faculty-matrix') ? 'active bg-primary' : '' }}"
@@ -102,13 +128,6 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
-                <a class="nav-link text-white {{ request()->routeIs('coordinator.final-grades') ? 'active bg-primary' : '' }}"
-                   href="{{ route('coordinator.final-grades') }}">
-                    <i class="fas fa-table me-2"></i>
-                    Final grades
-                </a>
-            </li>
-            <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('coordinator.activity-log') ? 'active bg-primary' : '' }}"
                    href="{{ route('coordinator.activity-log') }}">
                     <i class="fas fa-history me-2"></i>
@@ -135,5 +154,14 @@
         </div>
     </div>
 </div>
+<style>
+    .sidebar-collapse-chevron {
+        transition: transform 0.2s ease;
+    }
+
+    .sidebar .nav-link[aria-expanded="true"] .sidebar-collapse-chevron {
+        transform: rotate(180deg);
+    }
+</style>
 @include('partials.dark-sidebar-shared-styles')
 

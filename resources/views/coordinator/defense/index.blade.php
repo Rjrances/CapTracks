@@ -335,7 +335,8 @@
                                                     $hasDeclinedMember = $schedule->defensePanels->where('role', 'member')->where('status', 'declined')->isNotEmpty();
                                                     $hasConfirmedChair = $schedule->defensePanels->where('role', 'chair')->where('status', 'accepted')->isNotEmpty();
                                                     $hasConfirmedMember = $schedule->defensePanels->where('role', 'member')->where('status', 'accepted')->isNotEmpty();
-                                                    $canOpenRatings = $hasConfirmedChair && $hasConfirmedMember;
+                                                    $isRatingStage = in_array((string) $schedule->stage, ['60', '100'], true);
+                                                    $canOpenRatings = $isRatingStage && $hasConfirmedChair && $hasConfirmedMember;
                                                     $missingRoles = [];
                                                     $declinedRoles = [];
                                                     if ($hasDeclinedChair) {
@@ -351,7 +352,9 @@
                                                         $missingRoles[] = 'Member';
                                                     }
                                                     $ratingsBlockReason = null;
-                                                    if (!empty($declinedRoles)) {
+                                                    if (!$isRatingStage) {
+                                                        $ratingsBlockReason = 'Proposal defense does not require panel ratings.';
+                                                    } elseif (!empty($declinedRoles)) {
                                                         $ratingsBlockReason = 'Replacement needed: ' . implode(' and ', $declinedRoles) . ' declined.';
                                                     } elseif (!empty($missingRoles)) {
                                                         $ratingsBlockReason = 'Waiting for confirmation: ' . implode(' and ', $missingRoles) . '.';

@@ -151,24 +151,8 @@
                     <small class="text-muted ms-2">Enter at least one non-zero score to submit.</small>
                 </div>
 
-                <div class="mt-3">
-                    <label for="recommendation" class="form-label">Panel Recommendation</label>
-                    <select id="recommendation" name="recommendation" class="form-select" required {{ !empty($isFinalized) ? 'disabled' : '' }}>
-                        @php
-                            $selectedRecommendation = old('recommendation', $existingRating->recommendation ?? 'pass');
-                        @endphp
-                        <option value="pass" {{ $selectedRecommendation === 'pass' ? 'selected' : '' }}>Pass</option>
-                        <option value="conditional_pass" {{ $selectedRecommendation === 'conditional_pass' ? 'selected' : '' }}>Conditional Pass</option>
-                        <option value="redefend" {{ $selectedRecommendation === 'redefend' ? 'selected' : '' }}>Re-Defend</option>
-                    </select>
-                    <small class="text-muted">Choose the panel outcome recommendation for this defense.</small>
-                </div>
-
-                <div class="mt-3" id="redefend-reason-wrapper" style="display: none;">
-                    <label for="recommendation_reason" class="form-label">Reason for Re-Defend</label>
-                    <textarea id="recommendation_reason" name="recommendation_reason" rows="3" class="form-control" {{ !empty($isFinalized) ? 'disabled' : '' }}>{{ old('recommendation_reason', $existingRating->recommendation_reason ?? '') }}</textarea>
-                    <small class="text-muted">Required when recommendation is Re-Defend.</small>
-                </div>
+                <input type="hidden" name="recommendation" value="{{ old('recommendation', $existingRating?->recommendation ?? 'pass') }}">
+                <input type="hidden" name="recommendation_reason" value="{{ old('recommendation_reason', $existingRating?->recommendation_reason ?? '') }}">
 
                 <div class="mt-3">
                     <label for="remarks" class="form-label">Remarks</label>
@@ -206,9 +190,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const individualInputs = document.querySelectorAll('input[name^="individual_scores["]');
     const totalEl = document.getElementById('total-score');
     const submitBtn = document.getElementById('submit-rating-btn');
-    const recommendationSelect = document.getElementById('recommendation');
-    const redefendReasonWrapper = document.getElementById('redefend-reason-wrapper');
-    const redefendReasonInput = document.getElementById('recommendation_reason');
     const validationModalEl = document.getElementById('ratingValidationModal');
     const validationModalMessage = document.getElementById('ratingValidationModalMessage');
     const validationModal = validationModalEl ? new bootstrap.Modal(validationModalEl) : null;
@@ -274,14 +255,6 @@ document.addEventListener('DOMContentLoaded', function () {
         input.addEventListener('blur', updateTotalAndState);
     });
 
-    function toggleRedefendReason() {
-        const isRedefend = recommendationSelect.value === 'redefend';
-        redefendReasonWrapper.style.display = isRedefend ? 'block' : 'none';
-        redefendReasonInput.required = isRedefend;
-    }
-
-    recommendationSelect.addEventListener('change', toggleRedefendReason);
-
     const ratingForm = submitBtn?.closest('form');
     if (ratingForm) {
         ratingForm.addEventListener('submit', function (event) {
@@ -300,7 +273,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     updateTotalAndState();
-    toggleRedefendReason();
 });
 </script>
 @endsection

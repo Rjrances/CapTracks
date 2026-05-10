@@ -123,6 +123,10 @@ class MilestoneTemplateController extends Controller
             'description' => 'nullable|string',
             'status' => 'required|in:active,inactive,draft',
             'sequence_order' => 'nullable|integer|min:1|max:255',
+            'task_ids' => 'nullable|array',
+            'task_ids.*' => 'integer',
+            'task_updates' => 'nullable|array',
+            'task_updates.*' => 'required|string|max:255',
         ]);
         if ($request->input('sequence_order') === '' || $request->input('sequence_order') === null) {
             $data['sequence_order'] = null;
@@ -164,7 +168,30 @@ class MilestoneTemplateController extends Controller
             }
         }
 
-        $milestone->update($data);
+        DB::transaction(function () use ($milestone, $data) {
+            $milestone->update([
+                'name' => $data['name'],
+                'description' => $data['description'] ?? null,
+                'status' => $data['status'],
+                'sequence_order' => $data['sequence_order'] ?? null,
+            ]);
+
+            $taskNames = collect($data['task_updates'] ?? []);
+            if ($taskNames->isNotEmpty()) {
+                $validTaskIds = $milestone->tasks()->pluck('id')->map(fn ($id) => (int) $id)->all();
+                foreach ($taskNames as $taskId => $taskName) {
+                    $taskId = (int) $taskId;
+                    if (! in_array($taskId, $validTaskIds, true)) {
+                        continue;
+                    }
+
+                    MilestoneTask::query()
+                        ->where('id', $taskId)
+                        ->where('milestone_template_id', $milestone->id)
+                        ->update(['name' => $taskName]);
+                }
+            }
+        });
 
         return redirect()->route('coordinator.milestones.index')->with('success', 'Milestone updated successfully.');
     }

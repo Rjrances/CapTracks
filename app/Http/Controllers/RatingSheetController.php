@@ -24,6 +24,9 @@ class RatingSheetController extends Controller
     public function showAdviserForm(DefenseSchedule $schedule)
     {
         $user = Auth::user();
+        if (! $this->isRatingStage($schedule)) {
+            return $this->redirectBlockedRatingAccess($schedule, 'Panel rating is available only for 60% and 100% defenses.');
+        }
         if ($redirect = $this->redirectToPreferredScheduleIfNeeded($schedule, $user)) {
             return $redirect;
         }
@@ -89,6 +92,9 @@ class RatingSheetController extends Controller
     public function submitAdviserRating(Request $request, DefenseSchedule $schedule)
     {
         $user = Auth::user();
+        if (! $this->isRatingStage($schedule)) {
+            return back()->withErrors(['rating' => 'Panel rating is available only for 60% and 100% defenses.']);
+        }
         if (! $this->isRatingWindowOpen($schedule)) {
             return back()->withErrors(['rating' => $this->ratingWindowBlockReason($schedule)]);
         }
@@ -253,6 +259,11 @@ class RatingSheetController extends Controller
     public function showCoordinatorRatings(DefenseSchedule $schedule)
     {
         $user = Auth::user();
+        if (! $this->isRatingStage($schedule)) {
+            return redirect()
+                ->route('coordinator.defense.index')
+                ->with('error', 'Proposal defenses do not use rating sheets. Ratings start at 60% defense.');
+        }
         if ($redirect = $this->redirectToPreferredScheduleIfNeeded($schedule, $user)) {
             return $redirect;
         }
@@ -300,6 +311,9 @@ class RatingSheetController extends Controller
 
     public function finalizeCoordinatorRatings(Request $request, DefenseSchedule $schedule)
     {
+        if (! $this->isRatingStage($schedule)) {
+            return back()->withErrors(['finalize' => 'Proposal defenses do not use rating sheets.']);
+        }
         $coordinatorOfferings = Auth::user()->offerings()->pluck('id')->toArray();
         if (! in_array($schedule->group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only finalize ratings for schedules in your offerings.');
@@ -355,6 +369,9 @@ class RatingSheetController extends Controller
 
     public function reopenCoordinatorRatings(Request $request, DefenseSchedule $schedule)
     {
+        if (! $this->isRatingStage($schedule)) {
+            return back()->withErrors(['finalize' => 'Proposal defenses do not use rating sheets.']);
+        }
         $coordinatorOfferings = Auth::user()->offerings()->pluck('id')->toArray();
         if (! in_array($schedule->group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only reopen ratings for schedules in your offerings.');
@@ -389,6 +406,11 @@ class RatingSheetController extends Controller
 
     public function printCoordinatorRatings(DefenseSchedule $schedule)
     {
+        if (! $this->isRatingStage($schedule)) {
+            return redirect()
+                ->route('coordinator.defense.index')
+                ->with('error', 'Proposal defenses do not use rating sheets.');
+        }
         $coordinatorOfferings = Auth::user()->offerings()->pluck('id')->toArray();
         if (! in_array($schedule->group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only print ratings for schedules in your offerings.');
@@ -579,5 +601,10 @@ class RatingSheetController extends Controller
         }
 
         return back()->withErrors(['rating' => $message]);
+    }
+
+    private function isRatingStage(DefenseSchedule $schedule): bool
+    {
+        return in_array((string) $schedule->stage, ['60', '100'], true);
     }
 }

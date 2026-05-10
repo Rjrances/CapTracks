@@ -11,6 +11,7 @@ use App\Models\Group;
 use App\Models\Notification;
 use App\Models\Offering;
 use App\Models\ProjectSubmission;
+use App\Models\RatingSheet;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\NotificationService;
@@ -602,7 +603,7 @@ class CoordinatorController extends Controller
     }
 
     /**
-     * Latest finalized defense outcome per stage (proposal / 60% / 100%) for coordinator-scoped groups.
+     * Latest finalized defense outcome per stage (60% / 100%) for coordinator-scoped groups.
      */
     public function finalGrades()
     {
@@ -613,10 +614,9 @@ class CoordinatorController extends Controller
             ->when($activeTerm, function ($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);
             })
-            ->pluck('id')
-            ->toArray();
+            ->pluck('id');
 
-        $groups = Group::with(['adviser', 'offering'])
+        $groups = Group::with(['adviser', 'offering', 'members'])
             ->whereIn('offering_id', $coordinatorOfferings)
             ->when($activeTerm, function ($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);
@@ -624,26 +624,109 @@ class CoordinatorController extends Controller
             ->orderBy('name')
             ->get();
 
-        $stageKeys = ['proposal' => 'proposal', '60' => '60', '100' => '100'];
+        $stageKeys = ['60', '100'];
+        $groupIds = $groups->pluck('id')->all();
 
-        $rows = $groups->map(function (Group $group) use ($stageKeys) {
-            $cells = [];
-            foreach ($stageKeys as $stage) {
-                $cells[$stage] = DefenseSchedule::query()
-                    ->where('group_id', $group->id)
-                    ->where('stage', $stage)
-                    ->where('status', 'completed')
-                    ->with('evaluationSummary')
-                    ->orderByDesc('start_at')
-                    ->first();
-            }
+        $latestSchedules = DefenseSchedule::query()
+            ->with([
+                'evaluationSummary',
+                'defensePanels' => function ($query) {
+                    $query->where('status', 'accepted')
+                        ->whereIn('role', ['chair', 'member', 'coordinator'])
+                        ->select(['id', 'defense_schedule_id', 'faculty_id', 'role']);
+                },
+                'ratingSheets',
+            ])
+            ->whereIn('group_id', $groupIds)
+            ->whereIn('stage', $stageKeys)
+            ->where('status', 'completed')
+            ->orderByDesc('start_at')
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy(fn (DefenseSchedule $schedule) => $schedule->group_id.'|'.$schedule->stage)
+            ->map(fn ($schedules) => $schedules->first());
 
-            return [
-                'group' => $group,
-                'schedules' => $cells,
-            ];
-        });
+        $rows = $groups->flatMap(function (Group $group) use ($latestSchedules, $stageKeys) {
+            return $group->members->map(function ($student) use ($group, $latestSchedules, $stageKeys) {
+                $stages = [];
+                foreach ($stageKeys as $stageKey) {
+                    $schedule = $latestSchedules->get($group->id.'|'.$stageKey);
+                    $isFinalized = (bool) $schedule?->evaluationSummary;
+
+                    $stages[$stageKey] = [
+                        'schedule' => $schedule,
+                        'is_finalized' => $isFinalized,
+                        'scores' => [
+                            'chair' => null,
+                            'member' => null,
+                            'coordinator' => null,
+                        ],
+                        'average' => null,
+                        'status' => 'Pending',
+                    ];
+
+                    if (! $schedule || ! $isFinalized) {
+                        continue;
+                    }
+
+                    $scoreByRole = [];
+                    foreach (['chair', 'member', 'coordinator'] as $role) {
+                        $panel = $schedule->defensePanels->firstWhere('role', $role);
+                        if (! $panel) {
+                            continue;
+                        }
+
+                        $sheet = $schedule->ratingSheets->firstWhere('faculty_id', $panel->faculty_id);
+                        if (! $sheet) {
+                            continue;
+                        }
+
+                        $scoreByRole[$role] = $this->scoreStudentFromRatingSheet($sheet, (string) $student->student_id);
+                    }
+
+                    $roleScores = collect($scoreByRole)->filter(fn ($value) => ! is_null($value));
+                    $average = $roleScores->isNotEmpty()
+                        ? round((float) $roleScores->avg(), 2)
+                        : null;
+
+                    $stages[$stageKey]['scores'] = array_merge($stages[$stageKey]['scores'], $scoreByRole);
+                    $stages[$stageKey]['average'] = $average;
+                    $stages[$stageKey]['status'] = is_null($average)
+                        ? 'Pending'
+                        : ($average >= 75 ? 'Passed' : 'Failed');
+                }
+
+                return [
+                    'student' => $student,
+                    'group' => $group,
+                    'stages' => $stages,
+                ];
+            });
+        })->sortBy(fn ($row) => strtolower((string) ($row['student']->name ?? '')))->values();
 
         return view('coordinator.final-grades.index', compact('rows', 'activeTerm'));
+    }
+
+    private function scoreStudentFromRatingSheet(RatingSheet $sheet, string $studentId): ?float
+    {
+        $criteria = collect($sheet->criteria ?? []);
+        $groupScore = (float) $criteria->filter(function ($criterion) {
+            $scope = strtolower((string) ($criterion['scope'] ?? 'group'));
+            $name = strtolower((string) ($criterion['name'] ?? ''));
+
+            return $scope !== 'individual' && ! str_contains($name, 'individual contribution');
+        })->sum(function ($criterion) {
+            return (float) ($criterion['score'] ?? 0);
+        });
+
+        if ($groupScore <= 0) {
+            $groupScore = (float) $sheet->total_score;
+        }
+
+        $individualRow = collect($sheet->individual_scores ?? [])
+            ->firstWhere('student_id', $studentId);
+        $individualScore = (float) ($individualRow['score'] ?? 0);
+
+        return round(($groupScore + $individualScore) / 2, 2);
     }
 }

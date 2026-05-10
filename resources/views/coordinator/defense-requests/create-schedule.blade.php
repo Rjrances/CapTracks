@@ -143,7 +143,7 @@
                         </h6>
                         <div class="alert alert-info mb-3">
                             <strong>Note:</strong> The group's adviser and offering coordinator are included automatically.
-                            Choose <strong>Chair</strong> and <strong>Member</strong>, and add optional panelists if needed (same rules as Create Defense).
+                            Choose <strong>Chair</strong> and <strong>Member</strong>, and add additional members if needed (same rules as Create Defense).
                         </div>
                         <div class="chair-row mb-3">
                             <div class="row align-items-end g-2">
@@ -179,7 +179,7 @@
                                     <div class="panel-member-row mb-2 optional-panelist-row">
                                         <div class="row align-items-end g-2">
                                             <div class="col-md-3">
-                                                <span class="badge bg-info text-dark">Panelist</span>
+                                                <span class="badge bg-info text-dark">Member</span>
                                                 <span class="text-muted small">(optional)</span>
                                             </div>
                                             <div class="col-md-7">
@@ -201,7 +201,7 @@
                         </div>
                         @if($optionalPanelistCapacity > 0)
                             <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="req-add-panelist-btn">
-                                <i class="fas fa-plus me-1"></i>Add optional panelist
+                                <i class="fas fa-plus me-1"></i>Add panel member
                             </button>
                         @endif
                         @error('panel_members')
@@ -318,7 +318,7 @@
         row.className = 'panel-member-row mb-2 optional-panelist-row';
         row.innerHTML = `
             <div class="row align-items-end g-2">
-                <div class="col-md-3"><span class="badge bg-info text-dark">Panelist</span> <span class="text-muted small">(optional)</span></div>
+                <div class="col-md-3"><span class="badge bg-info text-dark">Member</span> <span class="text-muted small">(optional)</span></div>
                 <div class="col-md-7">
                     <input type="hidden" value="panelist" data-role-hidden="1">
                     <select class="form-select invited-panel-select" required><option value="">Select faculty</option></select>

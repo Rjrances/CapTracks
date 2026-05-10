@@ -1438,6 +1438,22 @@ class DefenseScheduleController extends Controller
         }
 
         $defenseSchedule->loadMissing(['group.members', 'defensePanels', 'evaluationSummary']);
+
+        if ((string) $defenseSchedule->stage === 'proposal') {
+            $hasPendingInvitedPanel = $defenseSchedule->defensePanels
+                ->whereIn('role', DefensePanel::INVITED_ROLES)
+                ->contains(fn ($panel) => $panel->status !== 'accepted');
+
+            if ($hasPendingInvitedPanel) {
+                return back()->with('error', 'Cannot complete Proposal defense yet. All invited panelists must confirm first.');
+            }
+
+            $defenseSchedule->update([
+                'status' => 'completed',
+            ]);
+
+            return back()->with('success', 'Proposal defense marked as completed successfully.');
+        }
         $readiness = $this->defenseEvaluationService->readiness($defenseSchedule);
         if (! $readiness['is_ready']) {
             return back()->with('error', 'Cannot complete yet. Required panelists must submit all rating sheets first.');

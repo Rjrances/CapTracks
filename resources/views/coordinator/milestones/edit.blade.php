@@ -35,7 +35,7 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('coordinator.milestones.update', $milestone->id) }}" method="POST">
+                        <form id="milestone-template-form" action="{{ route('coordinator.milestones.update', $milestone->id) }}" method="POST">
                             @csrf
                             @method('PUT')
                             <div class="mb-4">
@@ -130,20 +130,18 @@
                                             <span class="milestone-task-drag-handle text-muted flex-shrink-0 px-1" title="Drag to reorder" role="button" aria-label="Drag to reorder">
                                                 <i class="fas fa-grip-vertical"></i>
                                             </span>
-                                            <form action="{{ route('coordinator.milestones.tasks.update', [$milestone->id, $task->id]) }}"
-                                                  method="POST"
-                                                  class="d-flex flex-grow-1 align-items-center gap-2 min-w-0">
-                                                @csrf
-                                                @method('PATCH')
+                                            <div class="d-flex flex-grow-1 align-items-center gap-2 min-w-0">
+                                                <input type="hidden"
+                                                       name="task_ids[]"
+                                                       value="{{ $task->id }}"
+                                                       form="milestone-template-form">
                                                 <input type="text"
-                                                       name="name"
-                                                       value="{{ $task->name }}"
+                                                       name="task_updates[{{ $task->id }}]"
+                                                       value="{{ old('task_updates.'.$task->id, $task->name) }}"
                                                        class="form-control form-control-sm"
+                                                       form="milestone-template-form"
                                                        required>
-                                                <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap flex-shrink-0">
-                                                    <i class="fas fa-save me-1"></i>Save
-                                                </button>
-                                            </form>
+                                            </div>
                                             <form action="{{ route('coordinator.milestones.tasks.destroy', [$milestone->id, $task->id]) }}"
                                                   method="POST"
                                                   class="d-inline m-0 flex-shrink-0"

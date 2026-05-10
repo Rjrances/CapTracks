@@ -160,8 +160,8 @@
                                 <label>Invited faculty <span class="text-danger">*</span></label>
                                 <div class="alert alert-info mb-3">
                                     <strong>Note:</strong> The group's adviser and offering coordinator are automatically included.
-                                    Select <strong>Chair</strong> and <strong>Member</strong>. Add optional panelists only when needed (up to {{ $optionalPanelistCapacity }}).
-                                    Changing <strong>Group</strong> reloads dropdowns and clears optional panelist rows.
+                                    Select <strong>Chair</strong> and <strong>Member</strong>. Add additional members only when needed (up to {{ $optionalPanelistCapacity }}).
+                                    Changing <strong>Group</strong> reloads dropdowns and clears additional member rows.
                                 </div>
                                 @if($defenseSchedule->group->adviser || ($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id))
                                     <div class="alert alert-success mb-3">
@@ -215,7 +215,7 @@
                                             <div class="panel-member-row mb-2 optional-panelist-row">
                                                 <div class="row align-items-end g-2">
                                                     <div class="col-md-3">
-                                                        <span class="badge bg-info text-dark">Panelist</span>
+                                                        <span class="badge bg-info text-dark">Member</span>
                                                         <span class="text-muted small">(optional)</span>
                                                     </div>
                                                     <div class="col-md-7">
@@ -238,7 +238,7 @@
                                 </div>
                                 @if($optionalPanelistCapacity > 0)
                                     <button type="button" class="btn btn-outline-secondary btn-sm mb-2" id="edit-add-panelist-btn">
-                                        <i class="fas fa-plus me-1"></i>Add optional panelist
+                                        <i class="fas fa-plus me-1"></i>Add panel member
                                     </button>
                                 @endif
                                 @error('panel_members')
@@ -377,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
         row.innerHTML = `
             <div class="row align-items-end g-2">
                 <div class="col-md-3">
-                    <span class="badge bg-info text-dark">Panelist</span>
+                    <span class="badge bg-info text-dark">Member</span>
                     <span class="text-muted small">(optional)</span>
                 </div>
                 <div class="col-md-7">
