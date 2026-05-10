@@ -30,7 +30,22 @@ final class StudentTemporaryPasswordController extends Controller
         if ($this->shouldSendTemporaryPassword($student, $account)) {
             $this->syncAccountEmailFromStudent($student, $account);
             $account->refresh();
-            $provisioner->assignTemporaryPasswordAndNotify($student, $account, true);
+            $result = $provisioner->assignTemporaryPasswordAndNotify($student, $account, true);
+
+            if ($result['email_sent']) {
+                return redirect()
+                    ->route('login')
+                    ->with(
+                        'status',
+                        'We sent a temporary password to the email address on file for that student ID. Check your inbox and spam folder.',
+                    );
+            }
+
+            return redirect()
+                ->route('login')
+                ->withErrors([
+                    'mail' => 'We could not send the email, so your password was not changed. Copy the MAIL_* block from `.env.example` into `.env`, run `php artisan config:clear`, then test with `php artisan mail:test your@email.com`.',
+                ]);
         }
 
         return redirect()
