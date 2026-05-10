@@ -36,9 +36,9 @@ class GroupSeeder extends Seeder
     private function createGroupsForSemester($term)
     {
         // Get students and advisers for this semester
-        $students = Student::where('semester', $term->semester)->get();
+        $students = Student::forAcademicTerm($term)->get();
         $advisers = User::where('role', 'adviser')
-            ->where('semester', $term->semester)
+            ->where('academic_term_id', $term->id)
             ->get();
 
         if ($advisers->isEmpty()) {

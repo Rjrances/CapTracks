@@ -820,7 +820,7 @@ class DefenseScheduleController extends Controller
 
         return User::query()
             ->whereIn('role', ['teacher', 'chairperson', 'panelist', 'adviser', 'coordinator'])
-            ->when($activeTerm, fn ($q) => $q->where('semester', $activeTerm->semester))
+            ->when($activeTerm, fn ($q) => $q->where('academic_term_id', $activeTerm->id))
             ->when($group->faculty_id, fn ($q) => $q->where('faculty_id', '!=', $group->faculty_id))
             ->when($group->offering && $group->offering->faculty_id, fn ($q) => $q->where('faculty_id', '!=', $group->offering->faculty_id))
             ->orderBy('name')

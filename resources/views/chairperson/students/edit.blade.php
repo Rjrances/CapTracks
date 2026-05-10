@@ -101,16 +101,21 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="semester" class="form-label fw-bold">
-                                        <i class="fas fa-calendar me-1"></i>Semester *
+                                    <label for="academic_term_id" class="form-label fw-bold">
+                                        <i class="fas fa-calendar me-1"></i>Academic term *
                                     </label>
-                                    <input type="text" 
-                                           name="semester" 
-                                           id="semester" 
-                                           class="form-control @error('semester') is-invalid @enderror" 
-                                           value="{{ old('semester', $student->semester) }}" 
-                                           required>
-                                    @error('semester')
+                                    <select name="academic_term_id"
+                                            id="academic_term_id"
+                                            class="form-select @error('academic_term_id') is-invalid @enderror"
+                                            required>
+                                        <option value="">Choose term...</option>
+                                        @foreach($academicTerms as $term)
+                                            <option value="{{ $term->id }}" {{ (string) old('academic_term_id', $selectedTermId ?? '') === (string) $term->id ? 'selected' : '' }}>
+                                                {{ $term->semester }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('academic_term_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>

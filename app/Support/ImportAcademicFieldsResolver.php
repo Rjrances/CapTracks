@@ -98,4 +98,19 @@ final class ImportAcademicFieldsResolver
 
         return null;
     }
+
+    /**
+     * Term slot only, e.g. "First Semester", "Summer" (no school year prefix).
+     */
+    public static function termSlotFromCanonical(?string $canonical): ?string
+    {
+        if ($canonical === null || trim($canonical) === '') {
+            return null;
+        }
+
+        $s = self::normalizeFullSemesterSpacing($canonical);
+        $slot = trim((string) preg_replace('/^\d{4}-\d{4}\s+/', '', $s));
+
+        return $slot === '' ? null : $slot;
+    }
 }

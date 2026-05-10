@@ -64,8 +64,6 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             ),
             'email' => trim((string) ($normalized['email'] ?? '')),
             'semester' => $canonicalSemester,
-            // Maatwebsite validates the mapped row (not prepareForValidation alone); keep for exists:academic_terms
-            'semester_normalized' => $canonicalSemester,
             'school_year' => $normalized['school_year'],
             'course' => trim((string) ($normalized['course'] ?? '')),
             'year_level' => $normalized['year_level'],
@@ -88,8 +86,8 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             'last_name' => $row['last_name'] ?: null,
             'suffix' => $row['suffix'] ?: null,
             'email' => $row['email'],
-            'semester' => $row['semester'],
             'school_year' => $this->normalizeOptionalString($row['school_year'] ?? null),
+            'semester' => ImportAcademicFieldsResolver::termSlotFromCanonical(trim((string) ($row['semester'] ?? ''))),
             'course' => $row['course'],
             'year_level' => $this->normalizeOptionalString($row['year_level'] ?? null),
             'offer_code' => $row['offer_code'],
@@ -131,19 +129,25 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
 
     private function ensureStudentAccount(Student $student, array $row): void
     {
-        $email = $student->email ?: trim((string) ($row['email'] ?? ''));
+        $email = trim((string) ($student->email ?: ($row['email'] ?? '')));
+        $effectiveEmail = $email !== ''
+            ? $email
+            : ($student->student_id.'@student.placeholder.local');
+
         $account = StudentAccount::firstOrCreate(
             ['student_id' => $student->student_id],
             [
-                'email' => $email,
-                'password' => null,
+                'email' => $effectiveEmail,
                 'must_change_password' => true,
             ]
         );
-        if (!$account->wasRecentlyCreated && $email !== '' && $account->email !== $email) {
+
+        if ($email !== '' && $account->email !== $email) {
             $account->email = $email;
             $account->save();
         }
+
+        // Credentials are not emailed during import. Students request a temporary password from the login page.
     }
 
     public function getCreatedStudentsCount(): int
@@ -181,8 +185,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             '*.last_name' => 'nullable|string|max:255',
             '*.suffix' => 'nullable|string|max:20',
             '*.email' => 'nullable|email',
-            '*.semester' => 'required|string',
-            '*.semester_normalized' => 'required|exists:academic_terms,semester',
+            '*.semester' => 'required|string|exists:academic_terms,semester',
             '*.school_year' => 'nullable|regex:/^\d{4}-\d{4}$/',
             '*.year_level' => 'nullable|string|max:50',
             '*.course' => 'required|string|max:255',
@@ -205,15 +208,38 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             $data['year_level'] = $data['year'];
         }
 
+        $this->rejectLegacyFullTermInSemesterColumn($data, $index);
+
         $ac = ImportAcademicFieldsResolver::resolve($data);
         if (trim((string) ($data['semester'] ?? '')) !== '' && $ac['semester'] === '') {
             throw ValidationException::withMessages([
                 'school_year' => ["Row {$index}: Enter school_year (e.g. 2025-2026) when semester is 1st, 2nd, or summer."],
             ]);
         }
-        $data['semester_normalized'] = $ac['semester'];
+
+        $data['semester'] = $ac['semester'];
+        $data['school_year'] = $ac['school_year'];
 
         return $data;
+    }
+
+    /**
+     * Student CSV must use school_year + slot (1st / 2nd / summer), not a combined Academic Term label in semester.
+     */
+    private function rejectLegacyFullTermInSemesterColumn(array $data, int|string $index): void
+    {
+        $semRaw = trim((string) ($data['semester'] ?? ''));
+        if ($semRaw === '') {
+            return;
+        }
+
+        if (! ImportAcademicFieldsResolver::looksLikeFullSemesterString($semRaw)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'semester' => ["Row {$index}: Use column school_year (e.g. 2024-2025) and semester slot only (1st, 2nd, summer). Full term labels are not allowed in the semester column."],
+        ]);
     }
 
     public function customValidationMessages(): array
@@ -223,7 +249,7 @@ class StudentsImport implements ToModel, WithHeadingRow, WithValidation, WithBat
             '*.student_id.regex' => 'Student ID must be exactly 10 digits on row :index.',
             '*.email.email' => 'Invalid email format on row :index.',
             '*.semester.required' => 'Semester is required on row :index.',
-            '*.semester_normalized.exists' => 'No matching academic term on row :index. Create the term under Academic Terms first, using the same school year and semester wording.',
+            '*.semester.exists' => 'No matching academic term on row :index. Create the term under Academic Terms first, using the same school year and semester wording.',
             '*.course.required' => 'Course is required on row :index.',
             '*.offer_code.exists' => 'Offer code :input does not exist in the system on row :index.',
         ];

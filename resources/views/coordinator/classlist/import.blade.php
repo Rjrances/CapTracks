@@ -67,7 +67,7 @@
                     <div class="mb-3">
                         <label for="file" class="form-label">CSV file</label>
                         <input type="file" name="file" id="file" class="form-control" required accept=".csv">
-                        <div class="form-text">Maximum 10 MB. <a href="/student_import_template_final.csv" download>Download template</a></div>
+                        <div class="form-text">Maximum 10 MB. <a href="/student_import_template_final.csv" download>Download template</a>. Import does not send login emails. Students use <strong>Email me a temporary password</strong> on the login page (requires a valid <strong>email</strong> on file). Existing students are updated without changing their password.</div>
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-upload me-1"></i>Upload &amp; import

@@ -26,7 +26,7 @@ class ChairpersonFacultyController extends Controller
             ->withAnyRole(['teacher', 'adviser', 'panelist', 'coordinator', 'chairperson']);
         
         if ($activeTerm) {
-            $query->where('semester', $activeTerm->semester);
+            $query->where('academic_term_id', $activeTerm->id);
         }
         
         $teachers = $query->orderBy($sortBy, $sortDirection)
@@ -86,7 +86,7 @@ class ChairpersonFacultyController extends Controller
         
         if ($activeTerm) {
             $existingEmail = User::where('email', $request->email)
-                ->where('semester', $activeTerm->semester)
+                ->where('academic_term_id', $activeTerm->id)
                 ->first();
             
             if ($existingEmail) {
@@ -94,7 +94,7 @@ class ChairpersonFacultyController extends Controller
             }
             
             $existingFacultyId = User::where('faculty_id', $request->faculty_id)
-                ->where('semester', $activeTerm->semester)
+                ->where('academic_term_id', $activeTerm->id)
                 ->first();
             
             if ($existingFacultyId) {
@@ -116,7 +116,7 @@ class ChairpersonFacultyController extends Controller
             'department'           => 'N/A',
             'role'                 => $request->role,
             'faculty_id'           => $facultyId,
-            'semester'             => $activeTerm ? $activeTerm->semester : 'Unknown',
+            'academic_term_id'     => $activeTerm?->id,
         ]);
         $user->assignRoles([$request->role]);
 
@@ -168,7 +168,7 @@ class ChairpersonFacultyController extends Controller
         
         if ($activeTerm) {
             $existingEmail = User::where('email', $request->email)
-                ->where('semester', $activeTerm->semester)
+                ->where('academic_term_id', $activeTerm->id)
                 ->first();
             
             if ($existingEmail) {
@@ -176,7 +176,7 @@ class ChairpersonFacultyController extends Controller
             }
             
             $existingFacultyId = User::where('faculty_id', $request->faculty_id)
-                ->where('semester', $activeTerm->semester)
+                ->where('academic_term_id', $activeTerm->id)
                 ->first();
             
             if ($existingFacultyId) {
@@ -198,7 +198,7 @@ class ChairpersonFacultyController extends Controller
             'department' => $request->department,
             'role' => 'teacher',
             'faculty_id' => $facultyId,
-            'semester' => $activeTerm ? $activeTerm->semester : 'Unknown',
+            'academic_term_id' => $activeTerm?->id,
         ]);
         $user->assignRoles(['teacher']);
 
@@ -224,7 +224,7 @@ class ChairpersonFacultyController extends Controller
         $query = User::where('faculty_id', $id);
         
         if ($activeTerm) {
-            $query->where('semester', $activeTerm->semester);
+            $query->where('academic_term_id', $activeTerm->id);
         }
         
         $teacher = $query->firstOrFail();
@@ -237,7 +237,7 @@ class ChairpersonFacultyController extends Controller
         $query = User::where('faculty_id', $id);
         
         if ($activeTerm) {
-            $query->where('semester', $activeTerm->semester);
+            $query->where('academic_term_id', $activeTerm->id);
         }
         
         $faculty = $query->firstOrFail();
@@ -255,7 +255,7 @@ class ChairpersonFacultyController extends Controller
                 function ($attribute, $value, $fail) use ($faculty) {
                     $existingUser = User::where('email', $value)
                         ->where('id', '!=', $faculty->id)
-                        ->where('semester', $faculty->semester)
+                        ->where('academic_term_id', $faculty->academic_term_id)
                         ->first();
                     
                     if ($existingUser) {
@@ -303,7 +303,7 @@ class ChairpersonFacultyController extends Controller
         $activeTerm = $this->getActiveTerm();
         $faculty = User::where('faculty_id', $id)
             ->when($activeTerm, function($query) use ($activeTerm) {
-                return $query->where('semester', $activeTerm->semester);
+                return $query->where('academic_term_id', $activeTerm->id);
             })
             ->firstOrFail();
 
@@ -323,7 +323,7 @@ class ChairpersonFacultyController extends Controller
         $activeTerm = $this->getActiveTerm();
         $faculty = User::where('faculty_id', $id)
             ->when($activeTerm, function($query) use ($activeTerm) {
-                return $query->where('semester', $activeTerm->semester);
+                return $query->where('academic_term_id', $activeTerm->id);
             })
             ->firstOrFail();
 
@@ -343,7 +343,7 @@ class ChairpersonFacultyController extends Controller
         $activeTerm = $this->getActiveTerm();
         $faculty = User::where('faculty_id', $id)
             ->when($activeTerm, function($query) use ($activeTerm) {
-                return $query->where('semester', $activeTerm->semester);
+                return $query->where('academic_term_id', $activeTerm->id);
             })
             ->firstOrFail();
         $faculty->delete();
@@ -405,7 +405,7 @@ class ChairpersonFacultyController extends Controller
             ->whereRaw('LOWER(TRIM(COALESCE(suffix, ""))) = ?', [strtolower(trim((string) $suffix))]);
 
         if ($activeTerm) {
-            $query->where('semester', $activeTerm->semester);
+            $query->where('academic_term_id', $activeTerm->id);
         }
 
         if ($excludeUserId) {

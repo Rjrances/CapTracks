@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Models\AcademicTerm;
 use App\Models\User;
 use App\Models\UserAccount;
 use App\Support\ImportAcademicFieldsResolver;
@@ -15,6 +16,8 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
 {
     protected $semester;
 
+    protected ?int $defaultAcademicTermId = null;
+
     protected $createdCount = 0;
 
     protected $updatedCount = 0;
@@ -22,9 +25,10 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
     /** Existing rows where attributes or role assignment differed from the database. */
     protected $existingFacultyChangedCount = 0;
 
-    public function __construct($semester = null)
+    public function __construct($semester = null, ?int $defaultAcademicTermId = null)
     {
         $this->semester = $semester;
+        $this->defaultAcademicTermId = $defaultAcademicTermId;
     }
 
     public function getCreatedCount(): int
@@ -57,6 +61,7 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
 
         $facultyId = (string) $row['faculty_id'];
         $canonicalSemester = trim((string) ($row['semester'] ?? ''));
+        $academicTermId = !empty($row['academic_term_id']) ? (int) $row['academic_term_id'] : null;
         $schoolYear = isset($row['school_year']) ? $this->normalizeOptionalString($row['school_year']) : null;
 
         [$firstName, $middleName, $lastName] = $this->extractNameParts($row);
@@ -80,11 +85,11 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
             'email' => $row['email'],
             'department' => $row['department'] ?? null,
             'role' => strtolower($roleName),
-            'semester' => $canonicalSemester,
+            'academic_term_id' => $academicTermId ?: null,
             'school_year' => $schoolYear,
         ];
 
-        $user = $this->resolveUser($row, $facultyId, $canonicalSemester);
+        $user = $this->resolveUser($row, $facultyId, $academicTermId);
 
         if ($user) {
             $rolesBefore = $user->getRoleNames()->sort()->values()->toArray();
@@ -129,13 +134,13 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
         return $user;
     }
 
-    private function resolveUser(array $row, string $facultyId, string $semester): ?User
+    private function resolveUser(array $row, string $facultyId, ?int $academicTermId): ?User
     {
         $email = trim((string) ($row['email'] ?? ''));
 
         $byFaculty = User::query()
             ->where('faculty_id', $facultyId)
-            ->when($semester !== '', fn ($q) => $q->where('semester', $semester))
+            ->when($academicTermId, fn ($q) => $q->where('academic_term_id', $academicTermId))
             ->first();
 
         if ($byFaculty) {
@@ -148,7 +153,7 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
 
         return User::query()
             ->where('email', $email)
-            ->when($semester !== '', fn ($q) => $q->where('semester', $semester))
+            ->when($academicTermId, fn ($q) => $q->where('academic_term_id', $academicTermId))
             ->first()
             ?? User::where('email', $email)->first();
     }
@@ -195,8 +200,7 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
             '*.email' => 'required|email',
             '*.role' => 'nullable|string|in:teacher,adviser,panelist,coordinator,chairperson',
             '*.department' => 'nullable|string|max:255',
-            '*.semester' => 'required|string',
-            '*.semester_normalized' => 'required|exists:academic_terms,semester',
+            '*.academic_term_id' => 'required|exists:academic_terms,id',
             '*.school_year' => 'nullable|regex:/^\d{4}-\d{4}$/',
         ];
     }
@@ -232,7 +236,12 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
 
         $data['semester'] = $ac['semester'];
         $data['school_year'] = $ac['school_year'];
-        $data['semester_normalized'] = $ac['semester'];
+
+        $tid = AcademicTerm::where('semester', $ac['semester'])->value('id');
+        if (! $tid && $this->defaultAcademicTermId) {
+            $tid = $this->defaultAcademicTermId;
+        }
+        $data['academic_term_id'] = $tid;
 
         return $data;
     }
@@ -244,7 +253,8 @@ class FacultyImport implements ToModel, WithHeadingRow, WithValidation
             '*.first_name.required' => 'First name is required on row :index.',
             '*.last_name.required' => 'Last name is required on row :index.',
             '*.role.in' => 'Role must be one of: teacher, adviser, panelist, coordinator, or chairperson. Defaults to teacher if not specified.',
-            '*.semester_normalized.exists' => 'No matching academic term on row :index. Create the term under Academic Terms first (same school year and semester wording).',
+            '*.academic_term_id.required' => 'A valid academic term is required on row :index (check semester and school year columns).',
+            '*.academic_term_id.exists' => 'No matching academic term on row :index. Create the term under Academic Terms first (same school year and semester wording).',
         ];
     }
 

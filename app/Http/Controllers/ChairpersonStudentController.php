@@ -2,9 +2,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\Student;
 use App\Models\AcademicTerm;
 use App\Services\StudentImportService;
+use App\Support\ImportAcademicFieldsResolver;
 
 class ChairpersonStudentController extends Controller
 {
@@ -22,7 +24,7 @@ class ChairpersonStudentController extends Controller
         
         if ($activeTerm) {
             
-            $query->where('semester', $activeTerm->semester);
+            $query->forAcademicTerm($activeTerm);
         }
         
         if ($request->filled('search')) {
@@ -31,7 +33,8 @@ class ChairpersonStudentController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('student_id', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('course', 'like', "%{$search}%");
+                  ->orWhere('course', 'like', "%{$search}%")
+                  ->orWhere('year_level', 'like', "%{$search}%");
             });
         }
         if ($request->filled('course')) {
@@ -40,7 +43,7 @@ class ChairpersonStudentController extends Controller
         
         $sortBy = $request->get('sort_by', 'student_id');
         $sortOrder = $request->get('sort_order', 'asc');
-        $allowedSortFields = ['student_id', 'name', 'email', 'course'];
+        $allowedSortFields = ['student_id', 'name', 'email', 'course', 'year_level'];
         if (!in_array($sortBy, $allowedSortFields)) {
             $sortBy = 'student_id';
         }
@@ -49,7 +52,12 @@ class ChairpersonStudentController extends Controller
         }
         $query->orderBy($sortBy, $sortOrder);
         
-        $courses = Student::distinct()->pluck('course')->sort();
+        $courses = ($activeTerm
+            ? Student::forAcademicTerm($activeTerm)
+            : Student::query())
+            ->distinct()
+            ->pluck('course')
+            ->sort();
         $students = $query->with(['offerings', 'groups'])->paginate(20);
         $students->appends($request->all());
         
@@ -65,7 +73,7 @@ class ChairpersonStudentController extends Controller
         
         if ($activeTerm) {
             
-            $query->where('semester', $activeTerm->semester);
+            $query->forAcademicTerm($activeTerm);
         }
         
         if ($request->filled('search')) {
@@ -74,7 +82,8 @@ class ChairpersonStudentController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('student_id', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('course', 'like', "%{$search}%");
+                  ->orWhere('course', 'like', "%{$search}%")
+                  ->orWhere('year_level', 'like', "%{$search}%");
             });
         }
         if ($request->filled('course')) {
@@ -83,7 +92,7 @@ class ChairpersonStudentController extends Controller
         
         $sortBy = $request->get('sort_by', 'student_id');
         $sortOrder = $request->get('sort_order', 'asc');
-        $allowedSortFields = ['student_id', 'name', 'email', 'course'];
+        $allowedSortFields = ['student_id', 'name', 'email', 'course', 'year_level'];
         if (!in_array($sortBy, $allowedSortFields)) {
             $sortBy = 'student_id';
         }
@@ -99,7 +108,7 @@ class ChairpersonStudentController extends Controller
         ];
         $callback = function() use ($students) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['Student ID', 'Name', 'Email', 'Course', 'Enrolled Offerings', 'Group Status']);
+            fputcsv($file, ['Student ID', 'Name', 'Email', 'Course', 'Year Level', 'Enrolled Offerings', 'Group Status']);
             foreach ($students as $student) {
                 $enrolledOfferings = $student->offerings->pluck('subject_title')->implode(', ');
                 $groupStatus = $student->groups->count() > 0 ? 'In Group: ' . $student->groups->first()->name : 'No Group';
@@ -108,6 +117,7 @@ class ChairpersonStudentController extends Controller
                     $student->name,
                     $student->email,
                     $student->course,
+                    $student->year_level ?? '',
                     $enrolledOfferings ?: 'Not Enrolled',
                     $groupStatus
                 ]);
@@ -120,7 +130,10 @@ class ChairpersonStudentController extends Controller
     public function edit($id)
     {
         $student = Student::where('student_id', $id)->firstOrFail();
-        return view('chairperson.students.edit', compact('student'));
+        $academicTerms = AcademicTerm::query()->orderByDesc('school_year')->orderBy('semester')->get();
+        $selectedTermId = AcademicTerm::query()->get()->first(fn (AcademicTerm $t) => $student->belongsToAcademicTerm($t))?->id;
+
+        return view('chairperson.students.edit', compact('student', 'academicTerms', 'selectedTermId'));
     }
 
     public function update(Request $request, $id)
@@ -128,18 +141,29 @@ class ChairpersonStudentController extends Controller
         $student = Student::where('student_id', $id)->firstOrFail();
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:students,email,' . $id . ',student_id',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('students', 'email')->where(function ($q) use ($request) {
+                    $term = AcademicTerm::findOrFail((int) $request->academic_term_id);
+                    $slot = ImportAcademicFieldsResolver::termSlotFromCanonical($term->semester);
+
+                    return $q->where('school_year', $term->school_year)->where('semester', $slot);
+                })->ignore($id, 'student_id'),
+            ],
             'student_id' => 'required|string|unique:students,student_id,' . $id . ',student_id',
             'course' => 'required|string|max:255',
-            'semester' => 'required|string|max:255',
+            'academic_term_id' => 'required|exists:academic_terms,id',
             'password' => 'nullable|string|min:8',
         ]);
+        $term = AcademicTerm::findOrFail((int) $request->academic_term_id);
         $updateData = [
             'name' => $request->name,
             'email' => $request->email,
             'student_id' => $request->student_id,
             'course' => $request->course,
-            'semester' => $request->semester,
+            'school_year' => $term->school_year,
+            'semester' => ImportAcademicFieldsResolver::termSlotFromCanonical($term->semester),
         ];
         if ($request->filled('password')) {
             $updateData['password'] = bcrypt($request->password);

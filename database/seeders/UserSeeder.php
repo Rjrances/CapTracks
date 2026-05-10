@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\AcademicTerm;
 use App\Models\User;
 use App\Models\UserAccount;
 use Illuminate\Support\Facades\Hash;
@@ -26,6 +27,8 @@ class UserSeeder extends Seeder
 
     private function createFacultyForSemester($semester)
     {
+        $termId = AcademicTerm::where('semester', $semester)->value('id');
+
         echo "Creating faculty for {$semester}...\n";
 
         // Use same email format across all semesters
@@ -106,7 +109,7 @@ class UserSeeder extends Seeder
                 'email' => $email,
                 'department' => 'SCS',  
                 'role' => $member['role'],
-                'semester' => $semester
+                'academic_term_id' => $termId,
             ]);
 
             $user->assignRoles([$member['role']]);

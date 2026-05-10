@@ -36,7 +36,7 @@ class FacultyImportService
             Log::info("Importing file: {$fileName} (Size: {$fileSize} KB)");
             $activeTerm = AcademicTerm::where('is_active', true)->first();
             $semester = $activeTerm ? $activeTerm->semester : null;
-            $import = new FacultyImport($semester);
+            $import = new FacultyImport($semester, $activeTerm?->id);
             Excel::import($import, $file);
             Log::info('Faculty import completed successfully');
 

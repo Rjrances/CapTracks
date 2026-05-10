@@ -40,7 +40,7 @@ class CoordinatorController extends Controller
             'facultyCount' => User::whereHas('roles', function($query) {
                 $query->whereIn('name', ['adviser', 'panelist']);
             })->when($activeTerm, function($query) use ($activeTerm) {
-                return $query->where('semester', $activeTerm->semester);
+                return $query->where('academic_term_id', $activeTerm->id);
             })->count(),
             'submissionCount' => ProjectSubmission::count(),
             'pendingSubmissions' => ProjectSubmission::where('status', 'pending')->count(),
@@ -98,7 +98,7 @@ class CoordinatorController extends Controller
 
         $courses = collect();
         if ($activeTerm && $coordinatedOfferingIds->isNotEmpty()) {
-            $scopedStudentsQuery = Student::where('semester', $activeTerm->semester)
+            $scopedStudentsQuery = Student::forAcademicTerm($activeTerm)
                 ->whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
                     $query->whereIn('offerings.id', $coordinatedOfferingIds);
                 });
@@ -123,7 +123,7 @@ class CoordinatorController extends Controller
         if ($activeTerm && $coordinatedOfferingIds->isNotEmpty()) {
             $studentsQuery = Student::with(['offerings' => function ($query) use ($coordinatedOfferingIds) {
                 $query->whereIn('offerings.id', $coordinatedOfferingIds);
-            }])->where('semester', $activeTerm->semester)
+            }])->forAcademicTerm($activeTerm)
                 ->whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
                     $query->whereIn('offerings.id', $coordinatedOfferingIds);
                 });
@@ -264,7 +264,7 @@ class CoordinatorController extends Controller
         $group = Group::with(['adviser', 'members', 'offering'])->findOrFail($id);
         $confirmedPanelistIds = $this->getConfirmedPanelistUserIdsForGroup($group->id);
         $availableFaculty = User::withAnyRole(['teacher', 'adviser', 'panelist', 'coordinator'])
-            ->where('semester', $group->academicTerm->semester)
+            ->where('academic_term_id', $group->academic_term_id)
             ->where(function($query) use ($group) {
                 $query->whereDoesntHave('offerings', function($q) use ($group) {
                     $q->where('id', $group->offering_id);
@@ -481,9 +481,11 @@ class CoordinatorController extends Controller
             ->when($activeTerm, fn($q) => $q->where('academic_term_id', $activeTerm->id))
             ->pluck('id');
 
-        $studentIds = Student::whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
-            $query->whereIn('offerings.id', $coordinatedOfferingIds);
-        })->pluck('student_id');
+        $studentIds = Student::query()
+            ->when($activeTerm, fn ($q) => $q->forAcademicTerm($activeTerm))
+            ->whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
+                $query->whereIn('offerings.id', $coordinatedOfferingIds);
+            })->pluck('student_id');
 
         $filterStudentId = $request->get('student_id');
 

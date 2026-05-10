@@ -18,6 +18,7 @@ use App\Http\Controllers\CoordinatorProposalController;
 use App\Http\Controllers\Coordinator\DefenseScheduleController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\StudentPasswordController;
+use App\Http\Controllers\StudentTemporaryPasswordController;
 use App\Http\Controllers\ProjectSubmissionController;
 use App\Http\Controllers\StudentGroupController;
 use App\Http\Controllers\StudentProposalController;
@@ -46,6 +47,10 @@ Route::get('/', fn () => view('welcome'))->name('welcome');
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/login/student-credentials', [StudentTemporaryPasswordController::class, 'create'])->name('login.student-credentials');
+Route::post('/login/student-credentials', [StudentTemporaryPasswordController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('login.student-credentials.store');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 

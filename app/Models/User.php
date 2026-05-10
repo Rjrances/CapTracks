@@ -3,6 +3,7 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
@@ -20,7 +21,7 @@ class User extends Authenticatable
         'department',
         'school_year',
         'role',
-        'semester',
+        'academic_term_id',
     ];
 
     protected $primaryKey = 'id';
@@ -44,6 +45,19 @@ class User extends Authenticatable
     {
         return 'id';
     }
+    public function academicTerm(): BelongsTo
+    {
+        return $this->belongsTo(AcademicTerm::class);
+    }
+
+    /**
+     * Display label for the faculty member's term (same composite text as academic_terms.semester).
+     */
+    public function getSemesterAttribute(): ?string
+    {
+        return $this->academicTerm?->semester;
+    }
+
     public function account()
     {
         return $this->hasOne(UserAccount::class, 'faculty_id', 'faculty_id');

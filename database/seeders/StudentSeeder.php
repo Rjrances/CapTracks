@@ -3,10 +3,10 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\AcademicTerm;
 use App\Models\Student;
+use App\Support\ImportAcademicFieldsResolver;
 use App\Models\StudentAccount;
-use Illuminate\Support\Facades\Hash;
-
 class StudentSeeder extends Seeder
 {
     /**
@@ -22,6 +22,8 @@ class StudentSeeder extends Seeder
      */
     private function createTestStudents()
     {
+        $termsByLabel = AcademicTerm::query()->get()->keyBy('semester');
+
         // Students for First Semester (2024-2025 First Semester)
         $firstSemesterStudents = [
             [
@@ -261,13 +263,16 @@ class StudentSeeder extends Seeder
         $allStudents = array_merge($firstSemesterStudents, $secondSemesterStudents, $summerStudents);
 
         foreach ($allStudents as $studentData) {
+            $term = $termsByLabel[$studentData['semester']] ?? null;
+
             // Create student (if not exists)
             $student = Student::firstOrCreate(
                 ['student_id' => $studentData['student_id']],
                 [
                     'name' => $studentData['name'],
                     'email' => $studentData['email'],
-                    'semester' => $studentData['semester'],
+                    'school_year' => $term?->school_year,
+                    'semester' => ImportAcademicFieldsResolver::termSlotFromCanonical($studentData['semester']),
                     'course' => $studentData['course'],
                     'offer_code' => $studentData['offer_code']
                 ]
@@ -278,9 +283,9 @@ class StudentSeeder extends Seeder
                 ['student_id' => $student->student_id],
                 [
                     'email' => $studentData['email'],
-                    'password' => Hash::make('password'),
+                    'password' => 'password',
                     'must_change_password' => false,
-            ]);
+                ]);
 
             // Enroll student in offering based on offer_code
             $student->enrollInOfferingByCode();

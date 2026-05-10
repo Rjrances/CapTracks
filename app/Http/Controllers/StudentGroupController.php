@@ -18,9 +18,11 @@ class StudentGroupController extends Controller
     
     private function getAvailableStudentsForInvitation($offering, $excludeStudentIds = [], $excludePendingInvitations = [])
     {
+        $term = $offering->academicTerm;
+
         $query = \App\Models\Student::whereNotIn('student_id', $excludeStudentIds)
             ->whereNotIn('student_id', $excludePendingInvitations)
-            ->where('semester', $offering->academicTerm->semester)
+            ->when($term, fn ($q) => $q->forAcademicTerm($term))
             ->whereHas('offerings', function($query) use ($offering) {
                 $query->where('offering_id', $offering->id);
             })
@@ -49,7 +51,7 @@ class StudentGroupController extends Controller
         
         $availableFaculty = User::withAnyRole(['adviser', 'panelist', 'teacher', 'coordinator'])
             ->when($group && $group->academicTerm, function($query) use ($group) {
-                return $query->where('semester', $group->academicTerm->semester);
+                return $query->where('academic_term_id', $group->academic_term_id);
             })
             ->whereDoesntHave('adviserInvitations', function($q) use ($group) {
                 if ($group) {
@@ -123,7 +125,7 @@ class StudentGroupController extends Controller
         
         $adviser = User::withAnyRole(['adviser', 'teacher', 'coordinator'])
                       ->where('id', $request->adviser_id)
-                      ->where('semester', $activeTerm ? $activeTerm->semester : null)
+                      ->where('academic_term_id', $activeTerm ? $activeTerm->id : null)
                       ->first();
         if (!$adviser) {
             return back()->with('error', 'Selected adviser is not available for the current semester. Please select an adviser from the current term.');
@@ -224,7 +226,7 @@ class StudentGroupController extends Controller
         }
         
         $availableFaculty = User::withAnyRole(['adviser', 'panelist', 'teacher', 'coordinator'])
-            ->where('semester', $group->academicTerm->semester)
+            ->where('academic_term_id', $group->academic_term_id)
             ->orderBy('name')
             ->get();
         
@@ -348,6 +350,9 @@ class StudentGroupController extends Controller
             return back()->with('error', 'Group does not have an offering assigned. Please contact your coordinator.');
         }
 
+        $group->offering->loadMissing('academicTerm');
+        $offeringTerm = $group->offering->academicTerm;
+
         foreach ($requestedStudentIds as $studentId) {
             if ($group->members()->where('group_members.student_id', $studentId)->exists()) {
                 return back()->with('error', 'One or more selected students are already members of this group.');
@@ -367,8 +372,10 @@ class StudentGroupController extends Controller
                 return back()->with('error', 'One or more selected students were not found.');
             }
 
-            if ($invitedStudent->semester !== $group->offering->academicTerm->semester) {
-                return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the same semester as your group. Only students from {$group->offering->academicTerm->semester} can be invited.");
+            if (! $invitedStudent->belongsToAcademicTerm($offeringTerm)) {
+                $termLabel = $offeringTerm?->semester ?? 'this term';
+
+                return back()->with('error', "Student {$invitedStudent->name} is not enrolled in the same semester as your group. Only students from {$termLabel} can be invited.");
             }
 
             $memberOffering = $invitedStudent->getCurrentOffering();

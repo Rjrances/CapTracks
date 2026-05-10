@@ -2,6 +2,7 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 class AcademicTerm extends Model
 {
     use HasFactory;
@@ -34,6 +35,16 @@ class AcademicTerm extends Model
     public function offerings()
     {
         return $this->hasMany(Offering::class);
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class, 'academic_term_id');
     }
     public function schedules()
     {

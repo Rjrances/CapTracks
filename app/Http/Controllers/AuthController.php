@@ -17,7 +17,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'school_id' => ['required'],
-            'password' => ['nullable'],
+            'password' => ['required'],
         ]);
 
         $facultyLoginResponse = $this->attemptFacultyLogin($request);
@@ -76,18 +76,25 @@ class AuthController extends Controller
         }
         
         if ($role === 'student') {
-            
+            $activeTerm = \App\Models\AcademicTerm::where('is_active', true)->first();
+
             $student = Student::create([
                 'student_id' => now()->timestamp,
                 'name' => $request->name,
                 'email' => $request->email,
+                'course' => 'Undeclared',
+                'school_year' => $activeTerm?->school_year,
+                'semester' => $activeTerm
+                    ? \App\Support\ImportAcademicFieldsResolver::termSlotFromCanonical($activeTerm->semester)
+                    : null,
             ]);
             
             
             StudentAccount::create([
                 'student_id' => $student->student_id,
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'password' => $request->password,
+                'must_change_password' => false,
             ]);
         } else {
 
@@ -110,14 +117,14 @@ class AuthController extends Controller
                 'department' => 'N/A',
                 'role' => $role,
                 'faculty_id' => '100' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
-                'semester' => $activeTerm ? $activeTerm->semester : 'Unknown',
+                'academic_term_id' => $activeTerm?->id,
             ]);
             $user->assignRoles([$role]);
             
             UserAccount::create([
                 'faculty_id' => $user->faculty_id,
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'password' => $request->password,
                 'must_change_password' => false,
             ]);
         }
@@ -139,7 +146,7 @@ class AuthController extends Controller
         if (Auth::guard('student')->check()) {
             $studentAccount = Auth::guard('student')->user();
             if ($studentAccount) {
-                $studentAccount->password = Hash::make($request->password);
+                $studentAccount->password = $request->password;
                 $studentAccount->save();
                 return redirect()->route('student.dashboard');
             }
@@ -151,7 +158,7 @@ class AuthController extends Controller
         $user = Auth::user();
         $account = UserAccount::where('faculty_id', $user->faculty_id)->first();
         if ($account) {
-            $account->password = Hash::make($request->password);
+            $account->password = $request->password;
             $account->save();
         }
         return $this->redirectBasedOnRole($user->primary_role);
@@ -186,7 +193,7 @@ class AuthController extends Controller
 
         if ($activeTerm) {
             $activeTermUser = User::where('faculty_id', $userAccount->faculty_id)
-                ->where('semester', $activeTerm->semester)
+                ->where('academic_term_id', $activeTerm->id)
                 ->first();
 
             if ($activeTermUser) {
@@ -218,14 +225,6 @@ class AuthController extends Controller
             }
         }
 
-        if ($studentAccount->must_change_password && is_null($studentAccount->password)) {
-            Auth::guard('student')->login($studentAccount);
-            $request->session()->regenerate();
-
-            return redirect()->route('student.change-password')
-                ->with('info', 'Welcome! Please set your password to continue.');
-        }
-
         $passwordError = $this->validatePasswordInput($request->password, $studentAccount->password);
         if ($passwordError) {
             return $passwordError;
@@ -233,6 +232,11 @@ class AuthController extends Controller
 
         Auth::guard('student')->login($studentAccount);
         $request->session()->regenerate();
+
+        if ($studentAccount->must_change_password) {
+            return redirect()->route('student.change-password')
+                ->with('info', 'Please choose your own password to continue.');
+        }
 
         return redirect()->route('student.dashboard');
     }

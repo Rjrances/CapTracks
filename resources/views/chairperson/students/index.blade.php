@@ -19,8 +19,14 @@
                      <a href="{{ route('chairperson.upload-form') }}" class="btn btn-success">
                          <i class="fas fa-upload me-2"></i>Import Students
                      </a>
-                 </div>
+                 </div> 
             </div>
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
             <div class="card mb-4">
                 <div class="card-body">
                     <form method="GET" action="{{ route('chairperson.students.index') }}" class="row g-3">
@@ -28,7 +34,7 @@
                             <label for="search" class="form-label">Search Students</label>
                             <input type="text" class="form-control" id="search" name="search" 
                                    value="{{ request('search') }}" 
-                                   placeholder="Search by name, ID, email, or course...">
+                                   placeholder="Search by name, ID, email, course, or year level...">
                         </div>
                         <div class="col-md-3">
                             <label for="course" class="form-label">Course</label>
@@ -150,6 +156,17 @@
                                             @endif
                                         </a>
                                     </th>
+                                    <th>
+                                        <a href="{{ route('chairperson.students.index', array_merge(request()->query(), ['sort_by' => 'year_level', 'sort_order' => $sortBy === 'year_level' && $sortOrder === 'asc' ? 'desc' : 'asc'])) }}" 
+                                           class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                            Year level
+                                            @if($sortBy === 'year_level')
+                                                <i class="fas fa-sort-{{ $sortOrder === 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                            @else
+                                                <i class="fas fa-sort ms-1 text-muted"></i>
+                                            @endif
+                                        </a>
+                                    </th>
                                     <th>Enrolled Offerings</th>
                                     <th>Group Status</th>
                                     <th>Actions</th>
@@ -162,20 +179,27 @@
                                             <div class="form-check">
                                                 <input class="form-check-input student-checkbox" type="checkbox" 
                                                        value="{{ $student->student_id }}" id="student_{{ $student->student_id }}"
-                                                       data-student-name="{{ $student->formatted_name }}">
+                                                       data-student-name="{{ $student->name }}">
                                             </div>
                                         </td>
                                         <td>
                                             <strong>{{ $student->student_id }}</strong>
                                         </td>
                                         <td>
-                                            <div class="fw-semibold">{{ $student->formatted_name }}</div>
+                                            <div class="fw-semibold">{{ $student->name }}</div>
                                         </td>
                                         <td>
                                             <small>{{ $student->email }}</small>
                                         </td>
                                         <td>
                                             <span class="badge bg-primary">{{ $student->course }}</span>
+                                        </td>
+                                        <td>
+                                            @if(filled($student->year_level))
+                                                <span class="badge bg-info text-dark">{{ $student->year_level }}</span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
                                         </td>
                                                                                  <td>
                                              @if($student->offerings->count() > 0)
@@ -205,7 +229,7 @@
                                                  </a>
                                                  <button type="button" class="btn btn-outline-danger" 
                                                          data-bs-toggle="tooltip" title="Delete Student"
-                                                        onclick="deleteStudent('{{ $student->student_id }}', '{{ $student->formatted_name }}')">
+                                                         onclick="deleteStudent('{{ $student->student_id }}', '{{ $student->name }}')">
                                                      <i class="fas fa-trash"></i>
                                                  </button>
                                              </div>
@@ -213,7 +237,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center py-4">
+                                        <td colspan="9" class="text-center py-4">
                                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
                                             <h6 class="text-muted">No students found</h6>
                                             <p class="text-muted small">
@@ -304,13 +328,13 @@
     cursor: pointer;
     user-select: none;
 }
-
+#deleteSelectedBtn {
     transition: all 0.2s ease;
 }
-
+#deleteSelectedBtn:hover {
     transform: scale(1.02);
 }
-
+#deleteSelectedBtn:active {
     transform: scale(0.98);
 }
 </style>
@@ -325,11 +349,11 @@
 </form>
 <script>
 function deleteStudent(studentId, studentName) {
-    const form = document.getElementById('deleteStudentForm');
-    form.action = `/chairperson/students/${studentId}`;
-    form.dataset.confirmType = 'delete';
-    form.dataset.confirmMessage = `Are you sure you want to delete student "${studentName}"? This action cannot be undone and will remove the student from all offerings and groups.`;
-    form.requestSubmit();
+    if (confirm(`Are you sure you want to delete student "${studentName}"?\n\nThis action cannot be undone and will remove the student from all offerings and groups.`)) {
+        const form = document.getElementById('deleteStudentForm');
+        form.action = `/chairperson/students/${studentId}`;
+        form.submit();
+    }
 }
 document.addEventListener('DOMContentLoaded', function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -382,19 +406,23 @@ function initializeBulkSelection() {
     deleteSelectedBtn.addEventListener('click', function() {
         const checkedCheckboxes = document.querySelectorAll('.student-checkbox:checked');
         const studentIds = Array.from(checkedCheckboxes).map(cb => cb.value);
+        const studentNames = Array.from(checkedCheckboxes).map(cb => cb.dataset.studentName);
         if (studentIds.length === 0) {
             alert('Please select at least one student to delete.');
             return;
         }
-        const form = document.getElementById('bulkDeleteForm');
-        const input = document.getElementById('bulkDeleteStudentIds');
-        if (form && input) {
-            input.value = JSON.stringify(studentIds);
-            form.dataset.confirmType = 'delete';
-            form.dataset.confirmMessage = `Are you sure you want to delete ${studentIds.length} selected student(s)? This action cannot be undone and will remove the students from all offerings and groups.`;
-            form.requestSubmit();
-        } else {
-            alert('Error: Form not found. Please refresh the page and try again.');
+        const confirmMessage = `Are you sure you want to delete ${studentIds.length} selected student(s)?\n\n` +
+                             `Students to be deleted:\n${studentNames.join('\n')}\n\n` +
+                             `This action cannot be undone and will remove the students from all offerings and groups.`;
+        if (confirm(confirmMessage)) {
+            const form = document.getElementById('bulkDeleteForm');
+            const input = document.getElementById('bulkDeleteStudentIds');
+            if (form && input) {
+                input.value = JSON.stringify(studentIds);
+                form.submit();
+            } else {
+                alert('Error: Form not found. Please refresh the page and try again.');
+            }
         }
     });
 }

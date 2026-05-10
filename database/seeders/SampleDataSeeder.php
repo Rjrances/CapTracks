@@ -6,8 +6,10 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Student;
 use App\Models\Account;
+use App\Models\StudentAccount;
 use App\Models\Offering;
 use App\Models\AcademicTerm;
+use App\Support\ImportAcademicFieldsResolver;
 
 class SampleDataSeeder extends Seeder
 {
@@ -34,11 +36,13 @@ class SampleDataSeeder extends Seeder
 
         foreach ($facultyUsers as $index => $facultyData) {
             $user = User::create([
+                'faculty_id' => '100' . str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT),
                 'name' => $facultyData['name'],
                 'email' => $facultyData['email'],
                 'birthday' => '1990-01-01',
                 'department' => 'Computer Science',
                 'role' => $facultyData['role'],
+                'academic_term_id' => $academicTerm->id,
             ]);
 
             $account = Account::create([
@@ -67,7 +71,8 @@ class SampleDataSeeder extends Seeder
                 'name' => $studentData['name'],
                 'email' => $studentData['email'],
                 'course' => 'Bachelor of Science in Computer Science',
-                'semester' => 1,
+                'school_year' => $academicTerm->school_year,
+                'semester' => ImportAcademicFieldsResolver::termSlotFromCanonical($academicTerm->semester),
             ]);
 
             $account = Account::create([
@@ -79,6 +84,15 @@ class SampleDataSeeder extends Seeder
             ]);
 
             $student->update(['account_id' => $account->student_account_id]);
+
+            StudentAccount::updateOrCreate(
+                ['student_id' => $studentData['student_id']],
+                [
+                    'email' => $studentData['email'],
+                    'password' => 'password123',
+                    'must_change_password' => false,
+                ]
+            );
         }
 
         // Create offerings

@@ -26,7 +26,7 @@ class ChairpersonDashboardController extends Controller
                 })->count(),
             'facultyCount' => User::withAnyRole(['adviser', 'panelist', 'teacher', 'coordinator', 'chairperson'])
                 ->when($activeTerm, function($query) use ($activeTerm) {
-                    return $query->where('semester', $activeTerm->semester);
+                    return $query->where('academic_term_id', $activeTerm->id);
                 })->count(),
             'pendingReviews' => DefenseSchedule::where('status', 'scheduled')->count(),
             'offeringsCount' => Offering::when($activeTerm, function($query) use ($activeTerm) {

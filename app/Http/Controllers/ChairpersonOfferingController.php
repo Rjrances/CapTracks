@@ -32,7 +32,7 @@ class ChairpersonOfferingController extends Controller
         $activeTerm = $this->getActiveTerm();
         $teachers = User::withAnyRole(['teacher', 'adviser', 'panelist', 'coordinator'])
             ->when($activeTerm, function($query) use ($activeTerm) {
-                return $query->where('semester', $activeTerm->semester);
+                return $query->where('academic_term_id', $activeTerm->id);
             })
             ->orderBy('name')
             ->get();
@@ -88,7 +88,7 @@ class ChairpersonOfferingController extends Controller
         $offering = Offering::with(['teacher', 'academicTerm', 'students'])->where('id', $id)->firstOrFail();
         $teachers = User::withAnyRole(['teacher', 'adviser', 'panelist', 'coordinator'])
             ->when($offering->academicTerm, function($query) use ($offering) {
-                return $query->where('semester', $offering->academicTerm->semester);
+                return $query->where('academic_term_id', $offering->academic_term_id);
             })
             ->orderBy('name')
             ->get();
@@ -177,10 +177,14 @@ class ChairpersonOfferingController extends Controller
 
     public function showUnenrolledStudents($offeringId)
     {
-        $offering = Offering::where('id', $offeringId)->firstOrFail();
-        $unenrolledStudents = Student::whereDoesntHave('offerings')
+        $offering = Offering::where('id', $offeringId)->with('academicTerm')->firstOrFail();
+        $term = $offering->academicTerm;
+        $unenrolledStudents = Student::query()
+            ->when($term, fn ($q) => $q->forAcademicTerm($term))
+            ->whereDoesntHave('offerings')
             ->orderBy('name')
             ->get();
+
         return view('chairperson.offerings.unenrolled-students', compact('offering', 'unenrolledStudents'));
     }
 
@@ -189,8 +193,12 @@ class ChairpersonOfferingController extends Controller
         $request->validate([
             'student_id' => 'required|exists:students,student_id',
         ]);
-        $offering = Offering::where('id', $offeringId)->firstOrFail();
+        $offering = Offering::where('id', $offeringId)->with('academicTerm')->firstOrFail();
         $student = Student::where('student_id', $request->student_id)->firstOrFail();
+        if ($offering->academicTerm && ! $student->belongsToAcademicTerm($offering->academicTerm)) {
+            return redirect()->route('chairperson.offerings.show', $offeringId)
+                ->with('error', 'This student is not in the same academic term as this offering.');
+        }
         $student->enrollInOffering($offering);
         return redirect()->route('chairperson.offerings.show', $offeringId)
             ->with('success', "Student '{$student->name}' has been enrolled in {$offering->subject_code}.");
@@ -207,13 +215,17 @@ class ChairpersonOfferingController extends Controller
                 return redirect()->route('chairperson.offerings.show', $offeringId)
                     ->with('error', 'No students selected for enrollment.');
             }
-            $offering = Offering::where('id', $offeringId)->firstOrFail();
+            $offering = Offering::where('id', $offeringId)->with('academicTerm')->firstOrFail();
             $enrolledCount = 0;
             $enrolledNames = [];
             $errors = [];
             foreach ($studentIds as $studentId) {
                 try {
                     $student = Student::where('student_id', $studentId)->firstOrFail();
+                    if ($offering->academicTerm && ! $student->belongsToAcademicTerm($offering->academicTerm)) {
+                        $errors[] = "Student ID {$studentId}: not in the same academic term as this offering.";
+                        continue;
+                    }
                     $student->enrollInOffering($offering);
                     $enrolledCount++;
                     $enrolledNames[] = $student->name;

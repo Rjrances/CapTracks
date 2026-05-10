@@ -1,6 +1,10 @@
 <?php
 namespace App\Models;
+use App\Support\ImportAcademicFieldsResolver;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class Student extends Model
 {
     protected $fillable = [
@@ -14,10 +18,43 @@ class Student extends Model
         'email',
         'course',
         'school_year',
-        'year_level',
         'semester',
+        'year_level',
         'offer_code',
     ];
+
+    /**
+     * Scope to students whose school year + term slot match this academic term row.
+     */
+    public function scopeForAcademicTerm(Builder $query, ?AcademicTerm $term): Builder
+    {
+        if (!$term) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        $slot = ImportAcademicFieldsResolver::termSlotFromCanonical($term->semester);
+
+        return $query->where('school_year', $term->school_year)
+            ->where('semester', $slot);
+    }
+
+    public function belongsToAcademicTerm(?AcademicTerm $term): bool
+    {
+        if (!$term || !$this->school_year || !$this->semester) {
+            return false;
+        }
+
+        $slot = ImportAcademicFieldsResolver::termSlotFromCanonical($term->semester);
+
+        return $this->school_year === $term->school_year
+            && strcasecmp((string) $this->semester, (string) $slot) === 0;
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class, 'student_id', 'student_id');
+    }
+
     public function account()
     {
         return $this->hasOne(StudentAccount::class, 'student_id', 'student_id');

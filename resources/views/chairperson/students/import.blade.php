@@ -100,11 +100,11 @@
                         <li><strong>middle_name</strong> - Optional</li>
                         <li><strong>last_name</strong> - Required</li>
                         <li><strong>suffix</strong> - Optional</li>
-                        <li><strong>email</strong> - Email address</li>
+                        <li><strong>email</strong> - Required for login setup: must match the inbox students use for &quot;Email me a temporary password&quot; on the login page</li>
                         <li><strong>course</strong> - Course/Program (BS Computer Science, BS Information Technology, BS Entertainment and Multimedia Computing)</li>
                         <li><strong>year_level</strong> - Optional (e.g., "4th Year"); legacy column name <code>year</code> still works</li>
-                        <li><strong>school_year</strong> - School year in the form <code>2025-2026</code> (required when semester is <code>1st</code>, <code>2nd</code>, or <code>summer</code>)</li>
-                        <li><strong>semester</strong> - Either <code>1st</code>, <code>2nd</code>, or <code>summer</code> (with <code>school_year</code>), <strong>or</strong> the full term text exactly as in Academic Terms (e.g., <code>2024-2025 First Semester</code>) for older spreadsheets</li>
+                        <li><strong>school_year</strong> - Academic year span only, e.g. <code>2024-2025</code>. Required together with a short <strong>semester</strong> slot below (not the full term label).</li>
+                        <li><strong>semester</strong> - Semester <em>slot</em> only: <code>1st</code>, <code>2nd</code>, or <code>summer</code>. Pair with <code>school_year</code>; do not put the school year again here.</li>
                         <li><strong>offer_code</strong> - Offering code for automatic enrollment (e.g., "11000", "11001", "11002")</li>
                     </ul>
                     <hr class="my-2">
@@ -120,6 +120,14 @@
                             <i class="fas fa-magic me-1"></i>
                             <strong>Automatic Enrollment:</strong> Students will be automatically enrolled in their specified offering based on the offer_code.
                         </small>
+                    </div>
+                    <div class="mt-3 p-3 rounded bg-light border">
+                        <strong class="d-block mb-2"><i class="fas fa-user-check me-1 text-primary"></i>New rows vs existing students</strong>
+                        <p class="small mb-2 text-muted">Imports can mix people who are already in CapTrack with people who are not.</p>
+                        <p class="small mb-0">
+                            Import creates or updates records but <strong>does not send emails</strong>. New students sign in by choosing <strong>Email me a temporary password</strong> on the login page (student ID + email on file).
+                            Existing rows matched by <code>student_id</code> or email are updated from the file; their passwords are not reset by import.
+                        </p>
                     </div>
                     <div class="mt-2">
                         <small class="text-muted">

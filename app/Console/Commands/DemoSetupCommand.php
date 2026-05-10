@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use App\Models\AcademicTerm;
 use App\Models\User;
 use App\Models\UserAccount;
 use Database\Seeders\RoleSeeder;
@@ -42,18 +43,20 @@ class DemoSetupCommand extends Command
         
         $this->info('Step 3/3 — Creating chairperson account...');
 
+        $firstTermId = AcademicTerm::where('semester', '2024-2025 First Semester')->value('id');
+
         $chairpersonData = [
             'faculty_id' => '10001',
             'name'       => 'Mr. John Leeroy Gadiane',
             'email'      => 'john.leeroy.gadiane@university.edu',
             'department' => 'SCS',
             'role'       => 'chairperson',
-            'semester'   => '2024-2025 First Semester',
+            'academic_term_id' => $firstTermId,
         ];
 
         
         $existing = User::where('faculty_id', $chairpersonData['faculty_id'])
-            ->where('semester', $chairpersonData['semester'])
+            ->when($firstTermId, fn ($q) => $q->where('academic_term_id', $firstTermId))
             ->first();
 
         if ($existing) {

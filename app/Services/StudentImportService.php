@@ -64,22 +64,6 @@ class StudentImportService
                 return back()->with('error', 'Import failed: no student rows could be processed. Check that your file has data rows and required columns.');
             }
 
-            if ($offeringId) {
-                try {
-                    $offering = Offering::find($offeringId);
-                    if ($offering) {
-                        $recentStudents = Student::where('created_at', '>=', now()->subMinutes(2))->get();
-                        if ($recentStudents->count() > 0) {
-                            foreach ($recentStudents as $student) {
-                                $student->enrollInOffering($offering);
-                            }
-                        }
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Fallback enrollment failed: ' . $e->getMessage());
-                }
-            }
-
             $summaryParts = [];
             if ($createdCount > 0) {
                 $summaryParts[] = $createdCount === 1 ? '1 new student added' : "{$createdCount} new students added";

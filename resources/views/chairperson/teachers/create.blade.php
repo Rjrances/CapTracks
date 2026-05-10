@@ -70,9 +70,9 @@
                                 <i class="fas fa-exclamation-triangle me-1"></i>Important Notes
                             </h6>
                             <ul class="mb-0">
-                                <li>All faculty members will have a default password: <strong>password123</strong></li>
-                                <li>They will be required to change their password on first login</li>
-                                <li>Re-importing the same file adds new rows and updates existing faculty when IDs or emails match</li>
+                                <li>New faculty accounts use the default password <strong>password123</strong> until they change it on first login</li>
+                                <li><strong>New vs existing:</strong> If you import <strong>10</strong> rows and <strong>9</strong> already exist (matched by <code>faculty_id</code> or email), those <strong>9</strong> are only <strong>updated</strong>—no duplicate accounts. Only the <strong>1</strong> new row creates a <strong>new</strong> faculty login.</li>
+                                <li>Re-importing updates existing faculty when IDs or emails match</li>
                                 <li>Faculty IDs must be provided in the CSV</li>
                             </ul>
                         </div>

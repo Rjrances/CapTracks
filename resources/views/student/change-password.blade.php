@@ -33,7 +33,6 @@
 <div class="card-wrapper">
     <div class="bg-white rounded-4 shadow p-5">
 
-        
         <div class="text-center mb-4">
             <div class="brand mb-2">
                 <i class="fas fa-graduation-cap me-1 text-primary"></i>CapTrack
@@ -41,17 +40,12 @@
             <div class="mb-3">
                 <i class="fas fa-key fa-3x text-warning"></i>
             </div>
-            <h5 class="fw-bold mb-1">Change Password</h5>
+            <h5 class="fw-bold mb-1">Set your password</h5>
             <p class="text-muted small mb-0">
-                @if($isFirstTime)
-                    Please set your password to continue using the system.
-                @else
-                    You must change your password before continuing.
-                @endif
+                Sign in used a temporary password from your email. Choose a new password you will use from now on.
             </p>
         </div>
 
-        
         @if(session('warning'))
             <div class="alert alert-warning alert-dismissible fade show py-2" role="alert">
                 <i class="fas fa-exclamation-triangle me-2"></i>{{ session('warning') }}
@@ -76,51 +70,36 @@
             </div>
         @endif
 
-        
         <form method="POST" action="{{ route('student.update-password') }}">
             @csrf
 
-            @if(!$isFirstTime)
-            <div class="mb-3">
-                <label for="current_password" class="form-label fw-semibold small">
-                    <i class="fas fa-lock me-1"></i>Current Password
-                </label>
-                <input type="password"
-                       class="form-control @error('current_password') is-invalid @enderror"
-                       id="current_password"
-                       name="current_password"
-                       required autofocus>
-                @error('current_password')
-                    <div class="invalid-feedback"><i class="fas fa-exclamation-circle me-1"></i>{{ $message }}</div>
-                @enderror
-            </div>
-            @endif
-
             <div class="mb-3">
                 <label for="new_password" class="form-label fw-semibold small">
-                    <i class="fas fa-key me-1"></i>New Password
+                    <i class="fas fa-key me-1"></i>New password
                 </label>
                 <input type="password"
                        class="form-control @error('new_password') is-invalid @enderror"
                        id="new_password"
                        name="new_password"
-                       required minlength="8"
-                       @if($isFirstTime) autofocus @endif>
+                       required
+                       minlength="8"
+                       autofocus>
                 @error('new_password')
                     <div class="invalid-feedback"><i class="fas fa-exclamation-circle me-1"></i>{{ $message }}</div>
                 @enderror
-                <div class="form-text small"><i class="fas fa-shield-alt me-1"></i>Password must be at least 8 characters long</div>
+                <div class="form-text small"><i class="fas fa-shield-alt me-1"></i>At least 8 characters</div>
             </div>
 
             <div class="mb-4">
                 <label for="new_password_confirmation" class="form-label fw-semibold small">
-                    <i class="fas fa-check-circle me-1"></i>Confirm New Password
+                    <i class="fas fa-check-circle me-1"></i>Confirm new password
                 </label>
                 <input type="password"
                        class="form-control @error('new_password_confirmation') is-invalid @enderror"
                        id="new_password_confirmation"
                        name="new_password_confirmation"
-                       required minlength="8">
+                       required
+                       minlength="8">
                 @error('new_password_confirmation')
                     <div class="invalid-feedback"><i class="fas fa-exclamation-circle me-1"></i>{{ $message }}</div>
                 @enderror
@@ -128,16 +107,14 @@
 
             <div class="d-grid">
                 <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-save me-2"></i>
-                    @if($isFirstTime) Set Password @else Change Password @endif
+                    <i class="fas fa-save me-2"></i>Save password
                 </button>
             </div>
         </form>
 
-        
         <div class="alert alert-light border mt-4 mb-0 py-2 small">
             <i class="fas fa-lightbulb me-1 text-warning"></i>
-            <strong>Security Tip:</strong> Choose a strong password that you haven't used before and keep it secure.
+            <strong>Security:</strong> Use a unique password and do not reuse your temporary password.
         </div>
     </div>
 </div>
