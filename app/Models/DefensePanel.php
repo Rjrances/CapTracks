@@ -9,6 +9,9 @@ class DefensePanel extends Model
 {
     use HasFactory;
 
+    /** Chair, primary Member, and additional panelists (excludes auto-added adviser/coordinator). */
+    public const INVITED_ROLES = ['chair', 'member', 'panelist'];
+
     protected $fillable = [
         'defense_schedule_id',
         'faculty_id',
@@ -64,22 +67,23 @@ class DefensePanel extends Model
 
     public function getRoleLabelAttribute(): string
     {
-        return match($this->role) {
-            'adviser'     => 'Adviser',
+        return match ($this->role) {
+            'adviser' => 'Adviser',
             'coordinator' => 'Coordinator',
-            'chair'       => 'Chair',
-            'member'      => 'Member',
-            default       => 'Unknown Role',
+            'chair' => 'Chair',
+            'member' => 'Member',
+            'panelist' => 'Panelist',
+            default => 'Unknown Role',
         };
     }
 
     public function getStatusLabelAttribute(): string
     {
-        return match($this->status) {
-            'pending'  => 'Pending',
+        return match ($this->status) {
+            'pending' => 'Pending',
             'accepted' => 'Accepted',
             'declined' => 'Declined',
-            default    => 'Unknown',
+            default => 'Unknown',
         };
     }
 }

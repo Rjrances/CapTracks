@@ -204,31 +204,50 @@
                                         <span class="badge bg-success">Assigned</span>
                                     </div>
                                 @else
+                                    @php
+                                        $pendingAdviserInvitationsCount = $group->adviserInvitations->where('status', 'pending')->count();
+                                    @endphp
                                     <div class="text-center">
                                         <i class="fas fa-user-tie fa-2x text-muted mb-2"></i>
                                         <p class="text-muted">No adviser assigned</p>
-                                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#inviteAdviserModal">
-                                            <i class="fas fa-envelope"></i> Invite Adviser
-                                        </button>
+                                        @if($pendingAdviserInvitationsCount === 0)
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#inviteAdviserModal">
+                                                <i class="fas fa-envelope"></i> Invite Adviser
+                                            </button>
+                                        @else
+                                            <p class="text-muted small mb-0">
+                                                You have a pending adviser invitation. Cancel it below if you want to invite a different faculty member.
+                                            </p>
+                                        @endif
                                     </div>
                                 @endif
                             </div>
                         </div>
                         @if($group->adviserInvitations->where('status', 'pending')->count() > 0)
-                            <div class="card bg-warning mt-3">
-                                <div class="card-header">
-                                    <h6 class="card-title mb-0">
+                            <div class="card border-0 bg-warning mt-3 shadow-sm">
+                                <div class="card-header bg-warning border-bottom py-3" style="border-color: rgba(0, 0, 0, 0.08) !important;">
+                                    <h6 class="card-title mb-0 fw-bold">
                                         <i class="fas fa-clock me-1"></i>Pending Invitations
                                     </h6>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body bg-warning px-3 py-0">
                                     @foreach($group->adviserInvitations->where('status', 'pending') as $invitation)
-                                        <div class="border-bottom pb-2 mb-2">
-                                            <h6 class="mb-1">{{ $invitation->faculty->name }}</h6>
-                                            <small class="text-muted">
-                                                <i class="fas fa-clock me-1"></i>
-                                                {{ $invitation->created_at->diffForHumans() }}
-                                            </small>
+                                        <div class="d-flex align-items-start justify-content-between gap-2 py-3 {{ !$loop->last ? 'border-bottom' : '' }}" style="{{ !$loop->last ? 'border-color: rgba(0,0,0,0.08) !important;' : '' }}">
+                                            <div class="min-w-0">
+                                                <h6 class="mb-1 fw-bold">{{ $invitation->faculty->name }}</h6>
+                                                <small class="text-dark">
+                                                    <i class="fas fa-clock me-1"></i>{{ $invitation->created_at->diffForHumans() }}
+                                                </small>
+                                            </div>
+                                            <div class="flex-shrink-0 pt-0">
+                                                <form action="{{ route('student.group.cancel-adviser-invitation', $invitation) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Cancel this adviser invitation?')">
+                                                        <i class="fas fa-times"></i> Cancel
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
                                     @endforeach
                                 </div>
@@ -404,7 +423,7 @@
         </div>
     @endif
 </div>
-@if($group && !$group->adviser)
+@if($group && !$group->adviser && $group->adviserInvitations->where('status', 'pending')->count() === 0)
 <div class="modal fade" id="inviteAdviserModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">

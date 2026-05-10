@@ -423,7 +423,7 @@
                 @csrf
                 <div class="modal-body">
                     <p class="mb-0">Are you sure you want to approve this defense request?</p>
-                    <small class="text-muted">You will be redirected to create the defense schedule after approval.</small>
+                    <small class="text-muted">You will go to Create Schedule with this group and defense type already selected—add date, time, and room to finish.</small>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

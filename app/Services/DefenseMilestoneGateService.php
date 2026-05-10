@@ -23,7 +23,7 @@ class DefenseMilestoneGateService
                 return (int) ($groupMilestone->milestoneTemplate->sequence_order ?? 0) === $requiredOrder;
             });
 
-        if (!$milestone) {
+        if (! $milestone) {
             return [
                 'eligible' => false,
                 'message' => "No assigned milestone template found for {$label}.",
@@ -95,4 +95,3 @@ class DefenseMilestoneGateService
         };
     }
 }
-

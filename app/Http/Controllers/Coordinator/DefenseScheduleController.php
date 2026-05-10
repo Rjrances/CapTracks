@@ -25,6 +25,49 @@ class DefenseScheduleController extends Controller
         private readonly DefenseEvaluationService $defenseEvaluationService
     ) {}
 
+    private function panelSlotCount(): int
+    {
+        return max(2, min(10, (int) config('defense.panel_slots', 4)));
+    }
+
+    /** @return list<string> */
+    private function invitedRolesOrdered(int $slotCount): array
+    {
+        $roles = ['chair', 'member'];
+        for ($i = 2; $i < $slotCount; $i++) {
+            $roles[] = 'panelist';
+        }
+
+        return $roles;
+    }
+
+    /**
+     * Ordered slots for edit form: chair, member, then panelists (by panel id).
+     *
+     * @return list<array{role: string, selected_id: string}>
+     */
+    private function invitedPanelsForEditSlots(DefenseSchedule $schedule, int $slotCount): array
+    {
+        $panels = $schedule->defensePanels;
+        $chair = $panels->first(fn ($p) => $p->role === 'chair' && $p->status !== 'declined');
+        $member = $panels->first(fn ($p) => $p->role === 'member' && $p->status !== 'declined');
+        $panelists = $panels
+            ->filter(fn ($p) => $p->role === 'panelist' && $p->status !== 'declined')
+            ->sortBy('id')
+            ->values();
+
+        $slots = [
+            ['role' => 'chair', 'selected_id' => $chair ? (string) $chair->faculty_id : ''],
+            ['role' => 'member', 'selected_id' => $member ? (string) $member->faculty_id : ''],
+        ];
+        for ($i = 2; $i < $slotCount; $i++) {
+            $p = $panelists->get($i - 2);
+            $slots[] = ['role' => 'panelist', 'selected_id' => $p ? (string) $p->faculty_id : ''];
+        }
+
+        return $slots;
+    }
+
     public function defenseRequestsIndex()
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
@@ -215,7 +258,7 @@ class DefenseScheduleController extends Controller
             ->get();
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
         $coordinatorOfferings = auth()->user()->offerings()
@@ -249,20 +292,53 @@ class DefenseScheduleController extends Controller
         ];
         $groupAvailability['scheduled_groups'] = max(0, $groupAvailability['total_scoped_groups'] - $groupAvailability['available_groups']);
 
-        $panelFacultyByGroupId = $groups->mapWithKeys(function (Group $group) {
-            return [
-                $group->id => $this->panelChairMemberCandidates($group)
-                    ->map(fn (User $u) => [
-                        'id' => $u->id,
-                        'name' => $u->name,
-                        'faculty_id' => $u->faculty_id,
-                    ])
-                    ->values()
-                    ->all(),
-            ];
-        });
+        $panelFacultyByGroupId = $this->panelFacultyJsonByGroupIds($groups);
 
-        return view('coordinator.defense.create', compact('groups', 'activeTerm', 'panelFacultyByGroupId', 'groupAvailability'));
+        $panelSlotCount = $this->panelSlotCount();
+
+        $prefillGroupId = null;
+        $prefillStage = null;
+        $prefillGroupUnavailable = false;
+
+        $fromRequestId = $request->query('from_request');
+        if ($fromRequestId !== null && $fromRequestId !== '' && ctype_digit((string) $fromRequestId)) {
+            $approvedRequest = DefenseRequest::query()
+                ->with('group')
+                ->where('id', (int) $fromRequestId)
+                ->where('status', 'approved')
+                ->first();
+
+            if ($approvedRequest && $approvedRequest->group) {
+                $group = $approvedRequest->group;
+                $inScope = in_array((int) $group->offering_id, array_map('intval', $coordinatorOfferings), true)
+                    && (! $activeTerm || (int) $group->academic_term_id === (int) $activeTerm->id);
+
+                if ($inScope) {
+                    $prefillStage = match ($approvedRequest->defense_type) {
+                        'proposal' => 'proposal',
+                        '60_percent' => '60',
+                        '100_percent' => '100',
+                        default => null,
+                    };
+                    if ($groups->contains(fn (Group $g) => (int) $g->id === (int) $group->id)) {
+                        $prefillGroupId = (int) $group->id;
+                    } else {
+                        $prefillGroupUnavailable = true;
+                    }
+                }
+            }
+        }
+
+        return view('coordinator.defense.create', compact(
+            'groups',
+            'activeTerm',
+            'panelFacultyByGroupId',
+            'groupAvailability',
+            'panelSlotCount',
+            'prefillGroupId',
+            'prefillStage',
+            'prefillGroupUnavailable'
+        ));
     }
 
     public function store(Request $request)
@@ -324,10 +400,11 @@ class DefenseScheduleController extends Controller
             return back()->withErrors(['room' => 'This room is already booked for the selected time slot.'])->withInput();
         }
 
+        $slotCount = $this->panelSlotCount();
         $autoPanelMembers = $this->resolveAutoPanelMembers($group, $startAt, $endAt);
-        if ($autoPanelMembers->count() < 2) {
+        if ($autoPanelMembers->count() < $slotCount) {
             return back()->withErrors([
-                'panel_members' => 'Unable to auto-assign Chair and Member for this schedule. Please choose another date/time/room.',
+                'panel_members' => 'Unable to auto-assign the full defense panel for this schedule. Please choose another date/time/room.',
             ])->withInput();
         }
 
@@ -433,27 +510,34 @@ class DefenseScheduleController extends Controller
         $groups = Group::with(['members', 'adviser', 'offering'])
             ->whereIn('offering_id', $coordinatorOfferings)
             ->get();
-        $existingPanelistIds = $defenseSchedule->defensePanels
-            ->whereIn('role', ['chair', 'member'])
-            ->where('status', '!=', 'declined')
-            ->pluck('faculty_id')
-            ->toArray();
+        $panelSlotCount = $this->panelSlotCount();
+        $invitedEditSlots = $this->invitedPanelsForEditSlots($defenseSchedule, $panelSlotCount);
 
-        $faculty = User::where(function ($query) use ($defenseSchedule, $existingPanelistIds) {
-            $query->whereIn('id', $existingPanelistIds)
-                ->orWhere(function ($subQuery) use ($defenseSchedule) {
-                    $subQuery->whereIn('role', ['teacher', 'coordinator', 'chairperson'])
-                        ->where('id', '!=', $defenseSchedule->group->faculty_id)
-                        ->where('id', '!=', $defenseSchedule->group->offering->faculty_id ?? 0);
-                });
-        })->get();
+        $panelFacultyByGroupId = $this->panelFacultyJsonByGroupIds($groups);
+        if (isset($panelFacultyByGroupId[$defenseSchedule->group_id])) {
+            $panelFacultyByGroupId[$defenseSchedule->group_id] = $this->mergeLegacyUsersIntoPanelFacultyJson(
+                $panelFacultyByGroupId[$defenseSchedule->group_id],
+                $defenseSchedule->defensePanels->whereIn('role', DefensePanel::INVITED_ROLES)->pluck('faculty_id')
+            );
+        }
+        $currentPanelFacultyOptions = $panelFacultyByGroupId[$defenseSchedule->group_id] ?? [];
+
         $academicTerms = AcademicTerm::orderBy('school_year', 'desc')->orderBy('semester', 'desc')->get();
 
-        return view('coordinator.defense.edit', compact('defenseSchedule', 'groups', 'faculty', 'academicTerms'));
+        return view('coordinator.defense.edit', compact(
+            'defenseSchedule',
+            'groups',
+            'academicTerms',
+            'panelSlotCount',
+            'invitedEditSlots',
+            'panelFacultyByGroupId',
+            'currentPanelFacultyOptions'
+        ));
     }
 
     public function update(Request $request, $id)
     {
+        $slotCount = $this->panelSlotCount();
         $validated = $request->validate([
             'group_id' => 'required|exists:groups,id',
             'stage' => 'required|in:proposal,60,100',
@@ -463,9 +547,9 @@ class DefenseScheduleController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i',
             'milestone_override_reason' => 'nullable|string|max:1000',
-            'panel_members' => 'required|array|size:2',
+            'panel_members' => 'required|array|size:'.$slotCount,
             'panel_members.*.faculty_id' => 'required|exists:users,id',
-            'panel_members.*.role' => 'required|in:chair,member',
+            'panel_members.*.role' => 'required|in:chair,member,panelist',
         ]);
         $schedule = DefenseSchedule::findOrFail($id);
         $coordinatorOfferings = auth()->user()->offerings()->pluck('id')->toArray();
@@ -521,13 +605,22 @@ class DefenseScheduleController extends Controller
         }
 
         $pickedFacultyIds = collect($requestedPanelMembers)->pluck('faculty_id')->filter()->values()->all();
-        if (count(array_unique($pickedFacultyIds)) !== 2) {
-            return back()->withErrors(['panel_members' => 'Chair and Member must be different faculty members.'])->withInput();
+        if (count(array_unique($pickedFacultyIds)) !== $slotCount) {
+            return back()->withErrors(['panel_members' => 'Each panel slot must be a different faculty member.'])->withInput();
         }
 
         $blockedSelectionError = $this->panelMembersMustNotIncludeAdviserOrCoordinator($group, $requestedPanelMembers);
         if ($blockedSelectionError) {
             return back()->withErrors(['panel_members' => $blockedSelectionError])->withInput();
+        }
+
+        $candidateUserIds = $this->panelChairMemberCandidates($group)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        foreach ($pickedFacultyIds as $fid) {
+            if (! in_array((int) $fid, $candidateUserIds, true)) {
+                return back()->withErrors([
+                    'panel_members' => 'Each invited panel member must be eligible for the selected group (same faculty pool as create defense).',
+                ])->withInput();
+            }
         }
 
         if ($this->checkPanelMemberConflicts($pickedFacultyIds, $startAt, $endAt, $id)) {
@@ -538,14 +631,8 @@ class DefenseScheduleController extends Controller
 
         $schedule->loadMissing('defensePanels');
         $declinedPanelistIds = $schedule->defensePanels
-            ->whereIn('role', ['chair', 'member'])
+            ->whereIn('role', DefensePanel::INVITED_ROLES)
             ->where('status', 'declined')
-            ->pluck('faculty_id')
-            ->unique()
-            ->values()
-            ->all();
-        $currentChairMemberIds = $schedule->defensePanels
-            ->whereIn('role', ['chair', 'member'])
             ->pluck('faculty_id')
             ->unique()
             ->values()
@@ -557,13 +644,12 @@ class DefenseScheduleController extends Controller
             ])->withInput();
         }
 
-        $existingInvitedPanelsByRole = $schedule->defensePanels
-            ->whereIn('role', ['chair', 'member'])
-            ->keyBy('role');
-
-        $manualPanelMembers = collect($requestedPanelMembers)
-            ->sortBy(fn ($row) => $row['role'] === 'chair' ? 0 : 1)
+        $existingInvitedPanelsOrdered = $schedule->defensePanels
+            ->filter(fn ($p) => in_array($p->role, DefensePanel::INVITED_ROLES, true))
+            ->sortBy(fn ($p) => [$p->role === 'chair' ? 0 : ($p->role === 'member' ? 1 : 2), $p->id])
             ->values();
+
+        $manualPanelMembers = collect($requestedPanelMembers)->values();
 
         try {
             DB::beginTransaction();
@@ -578,18 +664,19 @@ class DefenseScheduleController extends Controller
                 'milestone_override_reason' => $gateOverridden ? $validated['milestone_override_reason'] : null,
             ]);
             DefensePanel::where('defense_schedule_id', $schedule->id)->delete();
-            foreach ($manualPanelMembers as $member) {
-                $existingPanelForRole = $existingInvitedPanelsByRole->get($member['role']);
-                $preserveAccepted = $existingPanelForRole
-                    && (int) $existingPanelForRole->faculty_id === (int) $member['faculty_id']
-                    && $existingPanelForRole->status === 'accepted';
+            foreach ($manualPanelMembers as $index => $member) {
+                $existingPanelForSlot = $existingInvitedPanelsOrdered->get($index);
+                $preserveAccepted = $existingPanelForSlot
+                    && (int) $existingPanelForSlot->faculty_id === (int) $member['faculty_id']
+                    && $existingPanelForSlot->status === 'accepted'
+                    && ($existingPanelForSlot->role === $member['role']);
 
                 DefensePanel::create([
                     'defense_schedule_id' => $schedule->id,
                     'faculty_id' => $member['faculty_id'],
                     'role' => $member['role'],
                     'status' => $preserveAccepted ? 'accepted' : 'pending',
-                    'responded_at' => $preserveAccepted ? ($existingPanelForRole->responded_at ?? now()) : null,
+                    'responded_at' => $preserveAccepted ? ($existingPanelForSlot->responded_at ?? now()) : null,
                 ]);
             }
             if ($schedule->group->faculty_id) {
@@ -739,8 +826,9 @@ class DefenseScheduleController extends Controller
             ])
             ->values();
 
+        $slotCount = $this->panelSlotCount();
         $autoAssignedFacultyIds = $availableFaculty
-            ->take(2)
+            ->take($slotCount)
             ->pluck('id')
             ->map(fn ($id) => (string) $id)
             ->values();
@@ -780,6 +868,8 @@ class DefenseScheduleController extends Controller
             ->groupBy('faculty_id')
             ->pluck('assignment_count', 'faculty_id');
 
+        $slotCount = $this->panelSlotCount();
+
         $selectedFaculty = $availableFaculty
             ->map(function ($facultyMember) use ($assignmentCounts) {
                 $facultyMember->assignment_count = (int) ($assignmentCounts[$facultyMember->id] ?? 0);
@@ -790,22 +880,18 @@ class DefenseScheduleController extends Controller
                 ['assignment_count', 'asc'],
                 ['name', 'asc'],
             ])
-            ->take(2)
+            ->take($slotCount)
             ->values();
 
-        if ($selectedFaculty->count() < 2) {
+        if ($selectedFaculty->count() < $slotCount) {
             return collect();
         }
 
-        return collect([
-            [
-                'faculty_id' => $selectedFaculty[0]->id,
-                'role' => 'chair',
-            ],
-            [
-                'faculty_id' => $selectedFaculty[1]->id,
-                'role' => 'member',
-            ],
+        $roles = $this->invitedRolesOrdered($slotCount);
+
+        return collect(range(0, $slotCount - 1))->map(fn (int $i) => [
+            'faculty_id' => $selectedFaculty[$i]->id,
+            'role' => $roles[$i],
         ]);
     }
 
@@ -879,22 +965,22 @@ class DefenseScheduleController extends Controller
 
     private function validatePanelComposition(array $panelMembers): ?string
     {
-        $roles = collect($panelMembers)
-            ->pluck('role')
-            ->filter()
-            ->values();
+        $slotCount = $this->panelSlotCount();
+        $roles = collect($panelMembers)->pluck('role')->filter()->values();
 
-        if ($roles->count() !== 2) {
-            return 'Panel must contain exactly two selectable slots: one Chair and one Member.';
+        if ($roles->count() !== $slotCount) {
+            return "Panel must contain exactly {$slotCount} selectable faculty slots (Chair, Member, and additional Panelists).";
         }
 
-        $chairCount = $roles->filter(function ($role) {
-            return $role === 'chair';
-        })->count();
-        $memberCount = $roles->filter(function ($role) {
-            return $role === 'member';
-        })->count();
+        $expected = $this->invitedRolesOrdered($slotCount);
+        foreach ($panelMembers as $index => $row) {
+            if (($row['role'] ?? '') !== ($expected[$index] ?? null)) {
+                return 'Panel roles must be Chair, then Member, then additional Panelists in order.';
+            }
+        }
 
+        $chairCount = $roles->filter(fn ($role) => $role === 'chair')->count();
+        $memberCount = $roles->filter(fn ($role) => $role === 'member')->count();
         if ($chairCount !== 1 || $memberCount !== 1) {
             return 'Panel must contain exactly one Chair and one Member.';
         }
@@ -918,6 +1004,53 @@ class DefenseScheduleController extends Controller
             ->values();
     }
 
+    /**
+     * Faculty eligible for invited panel slots per group (same rules everywhere).
+     *
+     * @return array<int, list<array{id: int, name: string, faculty_id: mixed}>>
+     */
+    private function panelFacultyJsonByGroupIds(Collection $groups): array
+    {
+        return $groups->mapWithKeys(function (Group $group) {
+            return [
+                $group->id => $this->panelChairMemberCandidates($group)
+                    ->map(fn (User $u) => [
+                        'id' => $u->id,
+                        'name' => $u->name,
+                        'faculty_id' => $u->faculty_id,
+                    ])
+                    ->values()
+                    ->all(),
+            ];
+        })->all();
+    }
+
+    /**
+     * Keep current panel members visible if they are no longer in the candidate pool (legacy rows).
+     *
+     * @param  list<array{id: int, name: string, faculty_id: mixed}>  $rows
+     * @return list<array{id: int, name: string, faculty_id: mixed}>
+     */
+    private function mergeLegacyUsersIntoPanelFacultyJson(array $rows, Collection $extraUserIds): array
+    {
+        $byId = collect($rows)->keyBy('id');
+        foreach ($extraUserIds as $uid) {
+            $uid = (int) $uid;
+            if ($uid && ! $byId->has($uid)) {
+                $u = User::find($uid);
+                if ($u) {
+                    $byId->put($uid, [
+                        'id' => $u->id,
+                        'name' => $u->name,
+                        'faculty_id' => $u->faculty_id,
+                    ]);
+                }
+            }
+        }
+
+        return $byId->sortBy('name')->values()->all();
+    }
+
     private function panelMembersMustNotIncludeAdviserOrCoordinator(Group $group, array $panelMembers): ?string
     {
         $group->loadMissing('offering');
@@ -937,7 +1070,7 @@ class DefenseScheduleController extends Controller
         foreach ($panelMembers as $row) {
             $pickId = (int) ($row['faculty_id'] ?? 0);
             if ($pickId !== 0 && in_array($pickId, $blockedIds, true)) {
-                return 'The group adviser and subject coordinator cannot be Chair or Member — they are added to the panel automatically.';
+                return 'The group adviser and subject coordinator cannot fill invited panel slots — they are added to the panel automatically.';
             }
         }
 
@@ -962,7 +1095,7 @@ class DefenseScheduleController extends Controller
             $panelMember = User::find($panel->faculty_id);
             if ($panelMember) {
                 $roleLabel = ucfirst($panel->role);
-                $isInvitedPanelRole = in_array($panel->role, ['chair', 'member'], true);
+                $isInvitedPanelRole = in_array($panel->role, DefensePanel::INVITED_ROLES, true);
                 NotificationService::createSimpleNotification(
                     $isInvitedPanelRole ? 'Defense Panel Invitation' : 'Defense Panel Assignment',
                     $isInvitedPanelRole
@@ -1000,17 +1133,17 @@ class DefenseScheduleController extends Controller
             return back()->with('error', 'This group already has an active defense schedule.');
         }
 
-        $defenseRequest->load(['group.adviser', 'group.members']);
+        $defenseRequest->loadMissing(['group.offering', 'group.adviser', 'group.members']);
 
-        $availableFaculty = User::withAnyRole(['teacher'])
-            ->where('id', '!=', $defenseRequest->group->adviser->id)
-            ->whereDoesntHave('roles', function ($query) {
-                $query->where('name', 'chairperson');
-            })
-            ->where('id', '!=', auth()->user()->id)
-            ->get();
+        if (! $defenseRequest->group) {
+            return back()->with('error', 'This defense request has no group.');
+        }
 
-        return view('coordinator.defense-requests.create-schedule', compact('defenseRequest', 'availableFaculty'));
+        $availableFaculty = $this->panelChairMemberCandidates($defenseRequest->group);
+
+        $panelSlotCount = $this->panelSlotCount();
+
+        return view('coordinator.defense-requests.create-schedule', compact('defenseRequest', 'availableFaculty', 'panelSlotCount'));
     }
 
     public function storeSchedule(Request $request, DefenseRequest $defenseRequest)
@@ -1019,7 +1152,8 @@ class DefenseScheduleController extends Controller
             return back()->withErrors(['error' => 'This group already has an active defense schedule.'])->withInput();
         }
 
-        $request->validate([
+        $slotCount = $this->panelSlotCount();
+        $validatedSchedule = $request->validate([
             'scheduled_date' => 'required|date',
             'scheduled_time' => 'required',
             'room' => 'required|string|max:255',
@@ -1027,10 +1161,30 @@ class DefenseScheduleController extends Controller
             'milestone_override_reason' => 'nullable|string|max:1000',
             'adviser_id' => 'required|exists:users,id',
             'subject_coordinator_id' => 'required|exists:users,id',
-            'panelist_1_id' => 'required|exists:users,id|different:panelist_2_id',
-            'panelist_2_id' => 'required|exists:users,id|different:panelist_1_id',
+            'panel_invited_ids' => ['required', 'array', 'size:'.$slotCount],
+            'panel_invited_ids.*' => ['required', 'exists:users,id'],
         ]);
-        $defenseRequest->loadMissing('group.groupMilestones.milestoneTemplate');
+        $invitedIds = array_map('intval', $validatedSchedule['panel_invited_ids']);
+        if (count(array_unique($invitedIds)) !== $slotCount) {
+            return back()->withErrors(['panel_invited_ids' => 'Each panel slot must be a different faculty member.'])->withInput();
+        }
+        $blocked = array_unique([(int) $request->adviser_id, (int) $request->subject_coordinator_id]);
+        foreach ($invitedIds as $uid) {
+            if (in_array($uid, $blocked, true)) {
+                return back()->withErrors(['panel_invited_ids' => 'Invited panel slots cannot use the adviser or subject coordinator accounts.'])->withInput();
+            }
+        }
+
+        $defenseRequest->loadMissing(['group.offering', 'group.groupMilestones.milestoneTemplate']);
+        $candidateIds = $this->panelChairMemberCandidates($defenseRequest->group)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        foreach ($invitedIds as $uid) {
+            if (! in_array((int) $uid, $candidateIds, true)) {
+                return back()->withErrors([
+                    'panel_invited_ids' => 'Each selected faculty must be eligible panel candidates for this group (excludes the adviser and subject coordinator).',
+                ])->withInput();
+            }
+        }
+
         $gate = $this->defenseMilestoneGateService->evaluate($defenseRequest->group, $defenseRequest->defense_type);
         $gateOverridden = false;
         if (! $gate['eligible']) {
@@ -1078,14 +1232,33 @@ class DefenseScheduleController extends Controller
         if (! $defenseRequest->isPending()) {
             return back()->with('error', 'This defense request cannot be approved.');
         }
+
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+        $coordinatorOfferings = auth()->user()->offerings()
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $defenseRequest->loadMissing('group');
+        if (! $defenseRequest->group || ! in_array((int) $defenseRequest->group->offering_id, $coordinatorOfferings, true)) {
+            abort(403, 'You can only approve defense requests for groups in your coordinated offerings.');
+        }
+
+        if ($activeTerm && (int) $defenseRequest->group->academic_term_id !== (int) $activeTerm->id) {
+            abort(403, 'You can only approve defense requests for groups in the active academic term.');
+        }
+
         $defenseRequest->update([
             'status' => 'approved',
             'responded_at' => now(),
         ]);
 
         return redirect()
-            ->route('coordinator.defense.create')
-            ->with('success', 'Defense request approved. You can now create the defense schedule.');
+            ->route('coordinator.defense.create', ['from_request' => $defenseRequest->id])
+            ->with('success', 'Defense request approved. Group and defense stage are pre-filled—set date, time, and room to complete the schedule.');
     }
 
     public function reject(Request $request, DefenseRequest $defenseRequest)
@@ -1151,22 +1324,20 @@ class DefenseScheduleController extends Controller
             'role' => 'coordinator',
         ]);
 
-        DefensePanel::create([
-            'defense_schedule_id' => $defenseSchedule->id,
-            'faculty_id' => $request->panelist_1_id,
-            'role' => 'chair',
-        ]);
-
-        DefensePanel::create([
-            'defense_schedule_id' => $defenseSchedule->id,
-            'faculty_id' => $request->panelist_2_id,
-            'role' => 'member',
-        ]);
+        $roles = $this->invitedRolesOrdered(count($request->panel_invited_ids));
+        foreach ($request->panel_invited_ids as $index => $userId) {
+            DefensePanel::create([
+                'defense_schedule_id' => $defenseSchedule->id,
+                'faculty_id' => $userId,
+                'role' => $roles[$index],
+                'status' => 'pending',
+            ]);
+        }
     }
 
     private function sendPanelNotifications(DefenseSchedule $defenseSchedule)
     {
-        $panelists = $defenseSchedule->defensePanels()->whereIn('role', ['chair', 'member'])->get();
+        $panelists = $defenseSchedule->defensePanels()->whereIn('role', DefensePanel::INVITED_ROLES)->get();
 
         foreach ($panelists as $panelist) {
             $panelUser = User::find($panelist->faculty_id);

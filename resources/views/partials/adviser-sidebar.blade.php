@@ -8,7 +8,7 @@
     
     $pendingPanelInvitations = $user
         ? \App\Models\DefensePanel::where('faculty_id', $user->id)
-            ->whereIn('role', ['chair', 'member'])
+            ->whereIn('role', \App\Models\DefensePanel::INVITED_ROLES)
             ->where('status', 'pending')
             ->count()
         : 0;

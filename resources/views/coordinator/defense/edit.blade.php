@@ -142,7 +142,8 @@
                                 <label>Panel Members <span class="text-danger">*</span></label>
                                 <div class="alert alert-info mb-3">
                                     <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
-                                    Chair and Member are auto-selected by the system on save based on availability and workload balancing.
+                                    Select faculty for each invited slot (Chair, Member, and {{ max(0, $panelSlotCount - 2) }} additional Panelist{{ max(0, $panelSlotCount - 2) === 1 ? '' : 's' }}). Each slot must be a different faculty member.
+                                    Changing <strong>Group</strong> reloads each dropdown to that group’s eligible faculty (same rules as creating a defense).
                                 </div>
                                 @if($defenseSchedule->group->adviser || ($defenseSchedule->group->offering && $defenseSchedule->group->offering->faculty_id))
                                     <div class="alert alert-success mb-3">
@@ -158,70 +159,47 @@
                                     </div>
                                 @endif
                                 @php
-                                    $chairPanel = $defenseSchedule->defensePanels
-                                        ->first(fn ($panel) => $panel->role === 'chair' && $panel->status !== 'declined');
-                                    $memberPanel = $defenseSchedule->defensePanels
-                                        ->first(fn ($panel) => $panel->role === 'member' && $panel->status !== 'declined');
-                                    $selectedChairId = (string) old('panel_members.0.faculty_id', $chairPanel->faculty_id ?? '');
-                                    $selectedMemberId = (string) old('panel_members.1.faculty_id', $memberPanel->faculty_id ?? '');
                                     $autoIncludedPanelIds = collect([
                                         optional($defenseSchedule->group->adviser)->id,
                                         optional(optional($defenseSchedule->group->offering)->faculty)->id,
                                     ])->filter()->map(fn ($id) => (string) $id)->all();
                                 @endphp
                                 <div id="panel-members-container">
-                                    <div class="panel-member-row mb-2">
-                                        <div class="row">
-                                            <div class="col-md-5">
-                                                <select name="panel_members[0][faculty_id]" class="form-control faculty-select" required>
-                                                    <option value="">Select Faculty</option>
-                                                    @foreach($faculty as $facultyMember)
-                                                        @continue(in_array((string) $facultyMember->id, $autoIncludedPanelIds, true))
-                                                        @continue($selectedMemberId !== '' && (string) $facultyMember->id === $selectedMemberId)
-                                                        <option
-                                                            value="{{ $facultyMember->id }}"
-                                                            {{ $selectedChairId === (string) $facultyMember->id ? 'selected' : '' }}
-                                                        >
-                                                            {{ $facultyMember->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="col-md-5">
-                                                <input type="text" class="form-control" value="Chair" readonly>
-                                                <input type="hidden" name="panel_members[0][role]" value="chair">
-                                            </div>
-                                            <div class="col-md-2">
-                                                <span class="badge bg-secondary">Required</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="panel-member-row mb-2">
-                                        <div class="row">
-                                            <div class="col-md-5">
-                                                <select name="panel_members[1][faculty_id]" class="form-control faculty-select" required>
-                                                    <option value="">Select Faculty</option>
-                                                    @foreach($faculty as $facultyMember)
-                                                        @continue(in_array((string) $facultyMember->id, $autoIncludedPanelIds, true))
-                                                        @continue($selectedChairId !== '' && (string) $facultyMember->id === $selectedChairId)
-                                                        <option
-                                                            value="{{ $facultyMember->id }}"
-                                                            {{ $selectedMemberId === (string) $facultyMember->id ? 'selected' : '' }}
-                                                        >
-                                                            {{ $facultyMember->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="col-md-5">
-                                                <input type="text" class="form-control" value="Member" readonly>
-                                                <input type="hidden" name="panel_members[1][role]" value="member">
-                                            </div>
-                                            <div class="col-md-2">
-                                                <span class="badge bg-secondary">Required</span>
+                                    @foreach($invitedEditSlots as $idx => $slot)
+                                        @php
+                                            $roleLabel = match ($slot['role']) {
+                                                'chair' => 'Chair',
+                                                'member' => 'Member',
+                                                default => 'Panelist',
+                                            };
+                                            $selectedId = (string) old('panel_members.'.$idx.'.faculty_id', $slot['selected_id']);
+                                        @endphp
+                                        <div class="panel-member-row mb-2">
+                                            <div class="row">
+                                                <div class="col-md-5">
+                                                    <select name="panel_members[{{ $idx }}][faculty_id]" class="form-control faculty-select" required>
+                                                        <option value="">Select Faculty</option>
+                                                        @foreach($currentPanelFacultyOptions as $facultyMember)
+                                                            @continue(in_array((string) $facultyMember['id'], $autoIncludedPanelIds, true))
+                                                            <option
+                                                                value="{{ $facultyMember['id'] }}"
+                                                                {{ $selectedId === (string) $facultyMember['id'] ? 'selected' : '' }}
+                                                            >
+                                                                {{ $facultyMember['name'] }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <input type="text" class="form-control" value="{{ $roleLabel }}" readonly>
+                                                    <input type="hidden" name="panel_members[{{ $idx }}][role]" value="{{ $slot['role'] }}">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <span class="badge bg-secondary">Required</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    @endforeach
                                 </div>
                                 @error('panel_members')
                                     <span class="text-danger">{{ $message }}</span>
@@ -269,36 +247,54 @@ function defenseUpdateTimeOrderWarning() {
     }
 }
 document.addEventListener('DOMContentLoaded', function() {
-    const chairSelect = document.querySelector('select[name="panel_members[0][faculty_id]"]');
-    const memberSelect = document.querySelector('select[name="panel_members[1][faculty_id]"]');
+    const panelFacultyByGroupId = @json($panelFacultyByGroupId);
 
     function syncPanelDropdowns() {
-        if (!chairSelect || !memberSelect) {
+        const selects = Array.from(document.querySelectorAll('.faculty-select'));
+        if (!selects.length) {
             return;
         }
-
-        const chairValue = chairSelect.value;
-        const memberValue = memberSelect.value;
-
-        Array.from(chairSelect.options).forEach(option => {
-            if (!option.value) return;
-            option.hidden = memberValue !== '' && option.value === memberValue;
-            option.disabled = memberValue !== '' && option.value === memberValue;
+        const values = selects.map(s => s.value).filter(Boolean);
+        selects.forEach(select => {
+            const myVal = select.value;
+            Array.from(select.options).forEach(option => {
+                if (!option.value) {
+                    return;
+                }
+                const takenElsewhere = values.some(v => v === option.value && v !== myVal);
+                option.hidden = takenElsewhere;
+                option.disabled = takenElsewhere;
+            });
         });
-
-        Array.from(memberSelect.options).forEach(option => {
-            if (!option.value) return;
-            option.hidden = chairValue !== '' && option.value === chairValue;
-            option.disabled = chairValue !== '' && option.value === chairValue;
-        });
-
-        if (chairValue !== '' && memberValue !== '' && chairValue === memberValue) {
-            memberSelect.value = '';
-        }
     }
 
-    chairSelect?.addEventListener('change', syncPanelDropdowns);
-    memberSelect?.addEventListener('change', syncPanelDropdowns);
+    function refillPanelSelectsForGroup(groupId) {
+        const list = panelFacultyByGroupId[groupId] || [];
+        document.querySelectorAll('.faculty-select').forEach(select => {
+            const prev = select.value;
+            select.innerHTML = '<option value="">Select Faculty</option>';
+            list.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = f.name;
+                select.appendChild(opt);
+            });
+            if (prev && list.some(item => String(item.id) === prev)) {
+                select.value = prev;
+            }
+        });
+        syncPanelDropdowns();
+    }
+
+    document.querySelectorAll('.faculty-select').forEach(el => {
+        el.addEventListener('change', syncPanelDropdowns);
+    });
+    const groupSelectEl = document.getElementById('group_id');
+    if (groupSelectEl) {
+        groupSelectEl.addEventListener('change', function () {
+            refillPanelSelectsForGroup(this.value);
+        });
+    }
     syncPanelDropdowns();
 
     function checkDoubleBooking() {

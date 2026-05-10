@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\AcademicTerm;
+use App\Models\ActivityLog;
 use App\Models\AdviserInvitation;
 use App\Models\DefensePanel;
 use App\Models\Group;
-use App\Models\ProjectSubmission;
-use App\Models\AcademicTerm;
-use App\Models\ActivityLog;
-use App\Models\GroupMilestoneTask;
 use App\Models\GroupMilestone;
+use App\Models\GroupMilestoneTask;
 use App\Models\Notification;
+use App\Models\ProjectSubmission;
 use App\Models\TaskComment;
 use App\Services\ActivityLogService;
 use App\Services\NotificationService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AdviserController extends Controller
@@ -28,44 +28,51 @@ class AdviserController extends Controller
             ->pending()
             ->get();
         $adviserGroups = Group::with([
-            'members', 
-            'adviserInvitations', 
+            'members',
+            'adviserInvitations',
             'groupMilestones.milestoneTemplate',
             'groupMilestoneTasks.milestoneTask',
-            'academicTerm'
+            'academicTerm',
         ])
-        ->where('faculty_id', $user->faculty_id)
-        ->get()
-        ->map(function ($group) {
-            $group->progress_percentage = $this->calculateGroupProgress($group);
-            $group->submissions_count = $this->getSubmissionsCount($group);
-            $group->milestone_progress = $this->getMilestoneProgress($group);
-            $group->next_milestone = $this->getNextMilestone($group);
-            return $group;
-        });
+            ->where('faculty_id', $user->faculty_id)
+            ->get()
+            ->map(function ($group) {
+                $group->progress_percentage = $this->calculateGroupProgress($group);
+                $group->submissions_count = $this->getSubmissionsCount($group);
+                $group->milestone_progress = $this->getMilestoneProgress($group);
+                $group->next_milestone = $this->getNextMilestone($group);
+
+                return $group;
+            });
         $panelGroups = Group::with(['academicTerm', 'defenseSchedules.defensePanels'])
-            ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-                
+            ->whereHas('defenseSchedules.defensePanels', function ($query) use ($user) {
+
                 $query->where('faculty_id', $user->id)
-                    ->whereIn('role', ['chair', 'member'])
+                    ->whereIn('role', DefensePanel::INVITED_ROLES)
                     ->where('status', 'accepted');
             })
             ->get();
         $summaryStats = [
             'total_groups' => $adviserGroups->count(),
             'panel_groups' => $panelGroups->count(),
-            'groups_ready_for_defense' => $adviserGroups->filter(function($group) { return $group->progress_percentage >= 60; })->count(),
-            'groups_needing_attention' => $adviserGroups->filter(function($group) { return $group->progress_percentage < 40; })->count(),
+            'groups_ready_for_defense' => $adviserGroups->filter(function ($group) {
+                return $group->progress_percentage >= 60;
+            })->count(),
+            'groups_needing_attention' => $adviserGroups->filter(function ($group) {
+                return $group->progress_percentage < 40;
+            })->count(),
             'overdue_tasks_total' => $adviserGroups->sum('overdue_tasks'),
-            'pending_invitations' => $pendingInvitations->count()
+            'pending_invitations' => $pendingInvitations->count(),
         ];
+
         return view('dashboards.adviser', compact(
-            'activeTerm', 
-            'pendingInvitations', 
-            'adviserGroups', 
+            'activeTerm',
+            'pendingInvitations',
+            'adviserGroups',
             'summaryStats'
         ));
     }
+
     private function calculateGroupProgress($group)
     {
         $groupMilestones = $group->groupMilestones;
@@ -73,13 +80,17 @@ class AdviserController extends Controller
             return 0;
         }
         $totalProgress = $groupMilestones->sum('progress_percentage');
+
         return round($totalProgress / $groupMilestones->count());
     }
+
     private function getSubmissionsCount($group)
     {
         $studentIds = $group->members->pluck('student_id')->toArray();
+
         return ProjectSubmission::whereIn('student_id', $studentIds)->count();
     }
+
     private function getMilestoneProgress($group)
     {
         $milestones = $group->groupMilestones;
@@ -90,11 +101,13 @@ class AdviserController extends Controller
                 'progress' => $milestone->progress_percentage,
                 'status' => $milestone->status,
                 'target_date' => $milestone->target_date,
-                'is_overdue' => $milestone->target_date && now()->isAfter($milestone->target_date)
+                'is_overdue' => $milestone->target_date && now()->isAfter($milestone->target_date),
             ];
         }
+
         return $progress;
     }
+
     private function getNextMilestone($group)
     {
         $milestones = $group->groupMilestones->sortBy('order');
@@ -103,12 +116,14 @@ class AdviserController extends Controller
                 return [
                     'name' => $milestone->milestoneTemplate->name,
                     'progress' => $milestone->progress_percentage,
-                    'target_date' => $milestone->target_date
+                    'target_date' => $milestone->target_date,
                 ];
             }
         }
+
         return null;
     }
+
     private function getOverdueTasks($group)
     {
         $overdueCount = 0;
@@ -119,8 +134,10 @@ class AdviserController extends Controller
                 $overdueCount++;
             }
         }
+
         return $overdueCount;
     }
+
     private function getGroupRecentActivities($group)
     {
         $activities = collect();
@@ -128,12 +145,12 @@ class AdviserController extends Controller
         $recentSubmissions = ProjectSubmission::whereIn('student_id', $studentIds)->latest()->take(3)->get();
         foreach ($recentSubmissions as $submission) {
             $student = $submission->getStudentData();
-            $activities->push((object)[
-                'title' => 'New submission from ' . ($student ? $student->name : 'Unknown'),
+            $activities->push((object) [
+                'title' => 'New submission from '.($student ? $student->name : 'Unknown'),
                 'description' => $submission->title,
                 'icon' => 'file-alt',
                 'created_at' => $submission->created_at,
-                'type' => 'submission'
+                'type' => 'submission',
             ]);
         }
         $recentMilestones = $group->groupMilestones()
@@ -142,39 +159,42 @@ class AdviserController extends Controller
             ->take(2)
             ->get();
         foreach ($recentMilestones as $milestone) {
-            $activities->push((object)[
-                'title' => 'Milestone completed: ' . $milestone->milestoneTemplate->name,
-                'description' => 'Progress: ' . $milestone->progress_percentage . '%',
+            $activities->push((object) [
+                'title' => 'Milestone completed: '.$milestone->milestoneTemplate->name,
+                'description' => 'Progress: '.$milestone->progress_percentage.'%',
                 'icon' => 'check-circle',
                 'created_at' => $milestone->updated_at,
-                'type' => 'milestone'
+                'type' => 'milestone',
             ]);
         }
+
         return $activities->sortByDesc('created_at')->take(5);
     }
+
     public function invitations()
     {
         $user = Auth::user();
-        
+
         $invitations = AdviserInvitation::with(['group', 'group.members'])
             ->where('faculty_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
-        
+
         return view('adviser.invitations', compact('invitations'));
     }
+
     public function respondToInvitation(Request $request, AdviserInvitation $invitation)
     {
         $request->validate([
             'status' => 'required|in:accepted,declined',
             'response_message' => 'nullable|string|max:500',
         ]);
-        
+
         $user = Auth::user();
         if ($invitation->faculty_id !== $user->id) {
             abort(403, 'Unauthorized');
         }
-        if (!$invitation->isPending()) {
+        if (! $invitation->isPending()) {
             return back()->with('error', 'This invitation has already been responded to.');
         }
         $invitation->update([
@@ -184,38 +204,44 @@ class AdviserController extends Controller
         ]);
         if ($request->status === 'accepted') {
             $invitation->group->update(['faculty_id' => Auth::user()->faculty_id]);
+            AdviserInvitation::where('group_id', $invitation->group_id)
+                ->where('id', '!=', $invitation->id)
+                ->where('status', 'pending')
+                ->delete();
             $user = Auth::user();
-            if (!$user->hasRole('adviser') && $user->hasRole('teacher')) {
+            if (! $user->hasRole('adviser') && $user->hasRole('teacher')) {
                 $user->assignRole('adviser');
             }
             Notification::create([
                 'title' => 'Adviser Invitation Accepted',
-                'description' => 'Your adviser invitation has been accepted by ' . Auth::user()->name,
+                'description' => 'Your adviser invitation has been accepted by '.Auth::user()->name,
                 'role' => 'student',
             ]);
         } else {
             Notification::create([
                 'title' => 'Adviser Invitation Declined',
-                'description' => 'Your adviser invitation has been declined by ' . Auth::user()->name,
+                'description' => 'Your adviser invitation has been declined by '.Auth::user()->name,
                 'role' => 'student',
             ]);
         }
+
         return back()->with('success', 'Invitation response submitted successfully.');
     }
+
     public function myGroups()
     {
         $user = Auth::user();
         $groupsQuery = Group::with([
             'members',
             'members.submissions',
-            'adviserInvitations', 
+            'adviserInvitations',
             'groupMilestones.milestoneTemplate',
             'groupMilestoneTasks.milestoneTask',
             'academicTerm',
             'offering',
-            'defenseSchedules'
+            'defenseSchedules',
         ])
-        ->where('faculty_id', $user->faculty_id);
+            ->where('faculty_id', $user->faculty_id);
         $allGroups = $groupsQuery->get()->map(function ($group) {
             $group->progress_percentage = $this->calculateGroupProgress($group);
             $group->submissions_count = $this->getSubmissionsCount($group);
@@ -223,11 +249,12 @@ class AdviserController extends Controller
             $group->next_milestone = $this->getNextMilestone($group);
             $group->overdue_tasks = $this->getOverdueTasks($group);
             $group->recent_activities = $this->getGroupRecentActivities($group);
+
             return $group;
         });
-        $panelGroupsCount = Group::whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
+        $panelGroupsCount = Group::whereHas('defenseSchedules.defensePanels', function ($query) use ($user) {
             $query->where('faculty_id', $user->id)
-                ->whereIn('role', ['chair', 'member'])
+                ->whereIn('role', DefensePanel::INVITED_ROLES)
                 ->where('status', 'accepted');
         })->count();
         $workspaceStats = [
@@ -243,17 +270,20 @@ class AdviserController extends Controller
             $group->next_milestone = $this->getNextMilestone($group);
             $group->overdue_tasks = $this->getOverdueTasks($group);
             $group->recent_activities = $this->getGroupRecentActivities($group);
+
             return $group;
         });
+
         return view('adviser.groups', compact('groups', 'workspaceStats'));
     }
+
     public function groupDetails(Group $group)
     {
         $user = Auth::user();
         $isAdviserOwner = $group->faculty_id === $user->faculty_id;
         $isAcceptedPanelist = $group->defenseSchedules()
             ->whereHas('defensePanels', function ($query) use ($user) {
-                $query->whereIn('role', ['chair', 'member'])
+                $query->whereIn('role', DefensePanel::INVITED_ROLES)
                     ->where('status', 'accepted')
                     ->whereHas('faculty', function ($facultyQuery) use ($user) {
                         $facultyQuery->where('faculty_id', $user->faculty_id);
@@ -261,7 +291,7 @@ class AdviserController extends Controller
             })
             ->exists();
 
-        if (!$isAdviserOwner && !$isAcceptedPanelist) {
+        if (! $isAdviserOwner && ! $isAcceptedPanelist) {
             abort(403, 'Unauthorized');
         }
 
@@ -320,7 +350,7 @@ class AdviserController extends Controller
         ]);
         if ($request->filled('parent_id')) {
             $parentComment = TaskComment::find($request->parent_id);
-            if (!$parentComment || (int) $parentComment->group_milestone_task_id !== (int) $groupMilestoneTask->id) {
+            if (! $parentComment || (int) $parentComment->group_milestone_task_id !== (int) $groupMilestoneTask->id) {
                 return back()->withErrors(['body' => 'Invalid reply target.'])->withInput();
             }
         }
@@ -336,85 +366,88 @@ class AdviserController extends Controller
 
         return back()->with('success', 'Comment posted successfully.');
     }
+
     public function allGroups()
     {
         $user = Auth::user();
         $adviserGroups = Group::with([
-            'members', 
-            'adviserInvitations', 
+            'members',
+            'adviserInvitations',
             'groupMilestones.milestoneTemplate',
             'groupMilestoneTasks.milestoneTask',
             'academicTerm',
             'offering',
-            'defenseSchedules'
+            'defenseSchedules',
         ])
-        ->where('faculty_id', $user->faculty_id)
-        ->get()
-        ->map(function ($group) {
-            $group->role_type = 'adviser';
-            $group->progress_percentage = $this->calculateGroupProgress($group);
-            $group->submissions_count = $this->getSubmissionsCount($group);
-            $group->milestone_progress = $this->getMilestoneProgress($group);
-            $group->next_milestone = $this->getNextMilestone($group);
-            $group->overdue_tasks = $this->getOverdueTasks($group);
-            $group->recent_activities = $this->getGroupRecentActivities($group);
-            return $group;
-        });
+            ->where('faculty_id', $user->faculty_id)
+            ->get()
+            ->map(function ($group) {
+                $group->role_type = 'adviser';
+                $group->progress_percentage = $this->calculateGroupProgress($group);
+                $group->submissions_count = $this->getSubmissionsCount($group);
+                $group->milestone_progress = $this->getMilestoneProgress($group);
+                $group->next_milestone = $this->getNextMilestone($group);
+                $group->overdue_tasks = $this->getOverdueTasks($group);
+                $group->recent_activities = $this->getGroupRecentActivities($group);
+
+                return $group;
+            });
         $panelGroups = Group::with([
-            'members', 
-            'academicTerm', 
-            'defenseSchedules.defensePanels'
+            'members',
+            'academicTerm',
+            'defenseSchedules.defensePanels',
         ])
-        ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->where('faculty_id', $user->id)
-                ->whereIn('role', ['chair', 'member'])
-                ->where('status', 'accepted');
-        })
-        ->get()
-        ->map(function ($group) use ($user) {
-            $group->role_type = 'panel';
-            $matchedSchedule = $group->defenseSchedules
-                ->first(function ($schedule) use ($user) {
-                    return $schedule->defensePanels
-                        ->where('faculty_id', $user->id)
-                        ->whereIn('role', ['chair', 'member'])
-                        ->where('status', 'accepted')
-                        ->isNotEmpty();
-                });
-            if ($matchedSchedule) {
+            ->whereHas('defenseSchedules.defensePanels', function ($query) use ($user) {
+                $query->where('faculty_id', $user->id)
+                    ->whereIn('role', DefensePanel::INVITED_ROLES)
+                    ->where('status', 'accepted');
+            })
+            ->get()
+            ->map(function ($group) use ($user) {
+                $group->role_type = 'panel';
                 $matchedSchedule = $group->defenseSchedules
-                    ->filter(function ($schedule) use ($user) {
+                    ->first(function ($schedule) use ($user) {
                         return $schedule->defensePanels
                             ->where('faculty_id', $user->id)
-                            ->whereIn('role', ['chair', 'member'])
+                            ->whereIn('role', DefensePanel::INVITED_ROLES)
                             ->where('status', 'accepted')
                             ->isNotEmpty();
-                    })
-                    ->sortByDesc(function ($schedule) {
-                        $statusWeight = match ((string) $schedule->status) {
-                            'in_progress' => 3,
-                            'scheduled' => 2,
-                            'completed' => 1,
-                            default => 0,
-                        };
-                        $timeWeight = optional($schedule->start_at)->timestamp ?? 0;
+                    });
+                if ($matchedSchedule) {
+                    $matchedSchedule = $group->defenseSchedules
+                        ->filter(function ($schedule) use ($user) {
+                            return $schedule->defensePanels
+                                ->where('faculty_id', $user->id)
+                                ->whereIn('role', DefensePanel::INVITED_ROLES)
+                                ->where('status', 'accepted')
+                                ->isNotEmpty();
+                        })
+                        ->sortByDesc(function ($schedule) {
+                            $statusWeight = match ((string) $schedule->status) {
+                                'in_progress' => 3,
+                                'scheduled' => 2,
+                                'completed' => 1,
+                                default => 0,
+                            };
+                            $timeWeight = optional($schedule->start_at)->timestamp ?? 0;
 
-                        return ($statusWeight * 10_000_000_000) + $timeWeight;
-                    })
+                            return ($statusWeight * 10_000_000_000) + $timeWeight;
+                        })
+                        ->first();
+                }
+                $matchedSchedule = $matchedSchedule ?? $group->defenseSchedules->sortByDesc('id')->first();
+
+                $panelAssignment = collect($matchedSchedule?->defensePanels ?? [])
+                    ->where('faculty_id', $user->id)
+                    ->whereIn('role', DefensePanel::INVITED_ROLES)
+                    ->where('status', 'accepted')
                     ->first();
-            }
-            $matchedSchedule = $matchedSchedule ?? $group->defenseSchedules->sortByDesc('id')->first();
+                $group->panel_role = $panelAssignment->role ?? 'member';
+                $group->defense_schedule = $matchedSchedule;
+                $group->recent_activities = $this->getGroupRecentActivities($group);
 
-            $panelAssignment = collect($matchedSchedule?->defensePanels ?? [])
-                ->where('faculty_id', $user->id)
-                ->whereIn('role', ['chair', 'member'])
-                ->where('status', 'accepted')
-                ->first();
-            $group->panel_role = $panelAssignment->role ?? 'member';
-            $group->defense_schedule = $matchedSchedule;
-            $group->recent_activities = $this->getGroupRecentActivities($group);
-            return $group;
-        });
+                return $group;
+            });
         $allGroups = $adviserGroups->concat($panelGroups)->sortByDesc('created_at');
         $memberIds = collect();
         foreach ($allGroups as $group) {
@@ -427,10 +460,11 @@ class AdviserController extends Controller
             $groupSubmissions = $group->members->flatMap(function ($member) {
                 return $member->submissions ?? collect();
             });
+
             return [$group->id => [
                 'group' => $group,
-                'submissions' => $groupSubmissions->sortByDesc('submitted_at')->take(5), 
-                'user_role' => $group->role_type
+                'submissions' => $groupSubmissions->sortByDesc('submitted_at')->take(5),
+                'user_role' => $group->role_type,
             ]];
         });
         $summaryStats = [
@@ -440,73 +474,76 @@ class AdviserController extends Controller
             'total_submissions' => $submissions->count(),
             'pending_submissions' => $submissions->where('status', 'pending')->count(),
         ];
+
         return view('adviser.all-groups', compact('allGroups', 'adviserGroups', 'panelGroups', 'submissions', 'submissionsByGroup', 'summaryStats'));
     }
+
     public function panelSubmissions()
     {
         $user = Auth::user();
         $panelGroups = Group::with([
-            'members', 
-            'academicTerm', 
-            'defenseSchedules.defensePanels.faculty'
+            'members',
+            'academicTerm',
+            'defenseSchedules.defensePanels.faculty',
         ])
-        ->whereHas('defenseSchedules.defensePanels', function($query) use ($user) {
-            $query->whereIn('role', ['chair', 'member'])
-                ->where('status', 'accepted')
-                ->whereHas('faculty', function ($facultyQuery) use ($user) {
-                    $facultyQuery->where('faculty_id', $user->faculty_id);
-                });
-        })
-        ->get()
-        ->map(function ($group) use ($user) {
-            $group->role_type = 'panel';
-            $matchedSchedule = $group->defenseSchedules
-                ->first(function ($schedule) use ($user) {
-                    return $schedule->defensePanels
-                        ->whereIn('role', ['chair', 'member'])
-                        ->where('status', 'accepted')
-                        ->filter(function ($panel) use ($user) {
-                            return ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
-                        })
-                        ->isNotEmpty();
-                });
-            if ($matchedSchedule) {
+            ->whereHas('defenseSchedules.defensePanels', function ($query) use ($user) {
+                $query->whereIn('role', DefensePanel::INVITED_ROLES)
+                    ->where('status', 'accepted')
+                    ->whereHas('faculty', function ($facultyQuery) use ($user) {
+                        $facultyQuery->where('faculty_id', $user->faculty_id);
+                    });
+            })
+            ->get()
+            ->map(function ($group) use ($user) {
+                $group->role_type = 'panel';
                 $matchedSchedule = $group->defenseSchedules
-                    ->filter(function ($schedule) use ($user) {
+                    ->first(function ($schedule) use ($user) {
                         return $schedule->defensePanels
-                            ->whereIn('role', ['chair', 'member'])
+                            ->whereIn('role', DefensePanel::INVITED_ROLES)
                             ->where('status', 'accepted')
                             ->filter(function ($panel) use ($user) {
                                 return ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
                             })
                             ->isNotEmpty();
-                    })
-                    ->sortByDesc(function ($schedule) {
-                        $statusWeight = match ((string) $schedule->status) {
-                            'in_progress' => 3,
-                            'scheduled' => 2,
-                            'completed' => 1,
-                            default => 0,
-                        };
-                        $timeWeight = optional($schedule->start_at)->timestamp ?? 0;
+                    });
+                if ($matchedSchedule) {
+                    $matchedSchedule = $group->defenseSchedules
+                        ->filter(function ($schedule) use ($user) {
+                            return $schedule->defensePanels
+                                ->whereIn('role', DefensePanel::INVITED_ROLES)
+                                ->where('status', 'accepted')
+                                ->filter(function ($panel) use ($user) {
+                                    return ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
+                                })
+                                ->isNotEmpty();
+                        })
+                        ->sortByDesc(function ($schedule) {
+                            $statusWeight = match ((string) $schedule->status) {
+                                'in_progress' => 3,
+                                'scheduled' => 2,
+                                'completed' => 1,
+                                default => 0,
+                            };
+                            $timeWeight = optional($schedule->start_at)->timestamp ?? 0;
 
-                        return ($statusWeight * 10_000_000_000) + $timeWeight;
+                            return ($statusWeight * 10_000_000_000) + $timeWeight;
+                        })
+                        ->first();
+                }
+                $matchedSchedule = $matchedSchedule ?? $group->defenseSchedules->sortByDesc('id')->first();
+
+                $panelAssignment = collect($matchedSchedule?->defensePanels ?? [])
+                    ->filter(function ($panel) use ($user) {
+                        return ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
                     })
+                    ->whereIn('role', DefensePanel::INVITED_ROLES)
+                    ->where('status', 'accepted')
                     ->first();
-            }
-            $matchedSchedule = $matchedSchedule ?? $group->defenseSchedules->sortByDesc('id')->first();
+                $group->panel_role = $panelAssignment->role ?? 'member';
+                $group->defense_schedule = $matchedSchedule;
 
-            $panelAssignment = collect($matchedSchedule?->defensePanels ?? [])
-                ->filter(function ($panel) use ($user) {
-                    return ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
-                })
-                ->whereIn('role', ['chair', 'member'])
-                ->where('status', 'accepted')
-                ->first();
-            $group->panel_role = $panelAssignment->role ?? 'member';
-            $group->defense_schedule = $matchedSchedule;
-            return $group;
-        });
+                return $group;
+            });
         $memberIds = collect();
         foreach ($panelGroups as $group) {
             $memberIds = $memberIds->merge($group->members->pluck('student_id'));
@@ -518,10 +555,11 @@ class AdviserController extends Controller
             $groupSubmissions = $group->members->flatMap(function ($member) {
                 return $member->submissions ?? collect();
             });
+
             return [$group->id => [
                 'group' => $group,
                 'submissions' => $groupSubmissions->sortByDesc('submitted_at'),
-                'user_role' => 'panel'
+                'user_role' => 'panel',
             ]];
         });
         $summaryStats = [
@@ -529,6 +567,7 @@ class AdviserController extends Controller
             'total_submissions' => $submissions->count(),
             'pending_submissions' => $submissions->where('status', 'pending')->count(),
         ];
+
         return view('adviser.project.panel-submissions', compact('panelGroups', 'submissions', 'submissionsByGroup', 'summaryStats'));
     }
 
@@ -540,7 +579,7 @@ class AdviserController extends Controller
             ->whereHas('faculty', function ($query) use ($user) {
                 $query->where('faculty_id', $user->faculty_id);
             })
-            ->whereIn('role', ['chair', 'member'])
+            ->whereIn('role', DefensePanel::INVITED_ROLES)
             ->where('status', 'pending')
             ->get();
 
@@ -548,7 +587,7 @@ class AdviserController extends Controller
             ->whereHas('faculty', function ($query) use ($user) {
                 $query->where('faculty_id', $user->faculty_id);
             })
-            ->whereIn('role', ['chair', 'member'])
+            ->whereIn('role', DefensePanel::INVITED_ROLES)
             ->whereIn('status', ['accepted', 'declined'])
             ->orderBy('responded_at', 'desc')
             ->limit(20)
@@ -564,11 +603,11 @@ class AdviserController extends Controller
         $panel->loadMissing('faculty');
         $sameFacultyCode = ($panel->faculty->faculty_id ?? null) === $user->faculty_id;
 
-        if (!$sameFacultyCode) {
+        if (! $sameFacultyCode) {
             return back()->with('error', 'You are not authorized to respond to this panel invitation.');
         }
 
-        if (!$panel->isPending()) {
+        if (! $panel->isPending()) {
             return back()->with('error', 'This panel invitation has already been responded to.');
         }
 
@@ -606,11 +645,13 @@ class AdviserController extends Controller
                 ->visibleToWebUser($user)
                 ->where('is_read', false)
                 ->update(['is_read' => true]);
-            return response()->json(['success' => true, 'message' => $updatedCount . ' notifications marked as read']);
+
+            return response()->json(['success' => true, 'message' => $updatedCount.' notifications marked as read']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error updating notifications'], 500);
         }
     }
+
     public function markNotificationAsRead(Notification $notification)
     {
         try {
@@ -619,10 +660,11 @@ class AdviserController extends Controller
                 ->visibleToWebUser($user)
                 ->whereKey($notification->id)
                 ->exists();
-            if (!$hasAccess) {
+            if (! $hasAccess) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
             $notification->update(['is_read' => true]);
+
             return response()->json(['success' => true, 'message' => 'Notification marked as read']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error updating notification'], 500);
@@ -654,7 +696,7 @@ class AdviserController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $updated . ' notifications marked as read',
+            'message' => $updated.' notifications marked as read',
         ]);
     }
 
@@ -666,7 +708,7 @@ class AdviserController extends Controller
             ->whereKey($notification->id)
             ->exists();
 
-        if (!$hasAccess) {
+        if (! $hasAccess) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -689,7 +731,7 @@ class AdviserController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $deleted . ' notifications deleted',
+            'message' => $deleted.' notifications deleted',
         ]);
     }
 
@@ -713,16 +755,15 @@ class AdviserController extends Controller
 
         return view('adviser.activity-log', compact('logs'));
     }
+
     public function showGroupMilestoneKanban(Group $group, GroupMilestone $groupMilestone)
     {
         $user = Auth::user();
 
-        
         if ((int) $group->faculty_id !== (int) $user->faculty_id) {
             abort(403, 'You are not the adviser of this group.');
         }
 
-        
         if ((int) $groupMilestone->group_id !== (int) $group->id) {
             abort(404);
         }
@@ -736,8 +777,8 @@ class AdviserController extends Controller
 
         $tasksByStatus = [
             'pending' => $tasks->where('status', 'pending'),
-            'doing'   => $tasks->where('status', 'doing'),
-            'done'    => $tasks->where('status', 'done'),
+            'doing' => $tasks->where('status', 'doing'),
+            'done' => $tasks->where('status', 'done'),
         ];
 
         $progress = $groupMilestone->progress_percentage;
@@ -749,4 +790,4 @@ class AdviserController extends Controller
             'progress'
         ));
     }
-} 
+}

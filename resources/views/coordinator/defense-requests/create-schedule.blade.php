@@ -100,7 +100,7 @@
                             <i class="fas fa-users me-2"></i>Defense Panel Assignment
                         </h6>
                         <p class="text-muted small mb-3">
-                            The panel has exactly 4 members: Adviser, Coordinator, 1 Chair, and 1 Member.
+                            The panel includes the Adviser and Coordinator plus {{ $panelSlotCount }} invited faculty (Chair, Member, and additional Panelists).
                             The same panel will serve for all defense phases.
                         </p>
                         <div class="row mb-3">
@@ -121,48 +121,43 @@
                                 <small class="text-muted">Subject coordinator is pre-assigned (you) and cannot be changed.</small>
                             </div>
                         </div>
+                        @php
+                            $panelLabels = [];
+                            for ($i = 0; $i < $panelSlotCount; $i++) {
+                                $panelLabels[] = $i === 0 ? 'Chair' : ($i === 1 ? 'Member' : 'Panelist');
+                            }
+                            $oldInvited = old('panel_invited_ids', []);
+                        @endphp
                         <div class="row mb-4">
-                            <div class="col-md-6">
-                                <label for="panelist_1_id" class="form-label">Chair Panel Slot *</label>
-                                <select name="panelist_1_id" id="panelist_1_id" 
-                                        class="form-select @error('panelist_1_id') is-invalid @enderror" required>
-                                    <option value="">Select Chair</option>
-                                    @foreach($availableFaculty as $faculty)
-                                        <option value="{{ $faculty->id }}" 
-                                                {{ old('panelist_1_id') == $faculty->id ? 'selected' : '' }}>
-                                            {{ $faculty->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('panelist_1_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <small class="text-muted">Adviser and coordinator are pre-assigned and excluded from this list.</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="panelist_2_id" class="form-label">Member Panel Slot *</label>
-                                <select name="panelist_2_id" id="panelist_2_id" 
-                                        class="form-select @error('panelist_2_id') is-invalid @enderror" required>
-                                    <option value="">Select Member</option>
-                                    @foreach($availableFaculty as $faculty)
-                                        <option value="{{ $faculty->id }}" 
-                                                {{ old('panelist_2_id') == $faculty->id ? 'selected' : '' }}>
-                                            {{ $faculty->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('panelist_2_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                                <small class="text-muted">Adviser and coordinator are pre-assigned and excluded from this list.</small>
-                            </div>
+                            @for($i = 0; $i < $panelSlotCount; $i++)
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label" for="panel_invited_ids_{{ $i }}">{{ $panelLabels[$i] }} *</label>
+                                    <select name="panel_invited_ids[]" id="panel_invited_ids_{{ $i }}"
+                                            class="form-select panel-invited-select @error('panel_invited_ids') is-invalid @enderror @error('panel_invited_ids.'.$i) is-invalid @enderror" required>
+                                        <option value="">Select {{ $panelLabels[$i] }}</option>
+                                        @foreach($availableFaculty as $faculty)
+                                            <option value="{{ $faculty->id }}"
+                                                {{ isset($oldInvited[$i]) && (string) $oldInvited[$i] === (string) $faculty->id ? 'selected' : '' }}>
+                                                {{ $faculty->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('panel_invited_ids.'.$i)
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                    <small class="text-muted">Adviser and coordinator are pre-assigned and excluded from this list.</small>
+                                </div>
+                            @endfor
+                            @error('panel_invited_ids')
+                                <div class="col-12"><div class="invalid-feedback d-block">{{ $message }}</div></div>
+                            @enderror
                         </div>
                         <div class="alert alert-warning">
                             <h6 class="alert-heading">
                                 <i class="fas fa-exclamation-triangle me-2"></i>Important Notes
                             </h6>
                             <ul class="mb-0 small">
-                                <li>Both selectable panel slots (Chair and Member) will receive notifications</li>
+                                <li>All invited faculty slots (Chair, Member, and Panelists) will receive notifications</li>
                                 <li>The same panel will serve for all defense phases (Proposal, 60%, 100%)</li>
                                 <li>Faculty can accept or decline panel invitations</li>
                                 <li>Schedule changes can be made later if needed</li>
@@ -184,10 +179,30 @@
 </div>
 @push('scripts')
 <script>
-function autoSelectPanelMembers() {
+function syncPanelInvitedDropdowns() {
+    const selects = Array.from(document.querySelectorAll('.panel-invited-select'));
+    if (!selects.length) {
+        return;
+    }
+    const values = selects.map(s => s.value).filter(Boolean);
+    selects.forEach(select => {
+        const myVal = select.value;
+        Array.from(select.options).forEach(option => {
+            if (!option.value) {
+                return;
+            }
+            const takenElsewhere = values.some(v => v === option.value && v !== myVal);
+            option.hidden = takenElsewhere;
+            option.disabled = takenElsewhere;
+        });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.panel-invited-select').forEach(el => {
+        el.addEventListener('change', syncPanelInvitedDropdowns);
+    });
+    syncPanelInvitedDropdowns();
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     document.getElementById('scheduled_date').min = tomorrow.toISOString().split('T')[0];
@@ -206,10 +221,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     document.getElementById('room').placeholder = 'e.g., Room 101, Computer Lab, Conference Room A';
-    
-    autoSelectPanelMembers();
-    setTimeout(autoSelectPanelMembers, 100);
-    setTimeout(autoSelectPanelMembers, 500);
 });
 </script>
 @endpush

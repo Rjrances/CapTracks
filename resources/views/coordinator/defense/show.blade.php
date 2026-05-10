@@ -165,7 +165,7 @@ Defense — {{ $defenseSchedule->group->name }}
                                 
                                 
                                 $manualMembers = $defenseSchedule->defensePanels
-                                    ->whereIn('role', ['chair', 'member'])
+                                    ->whereIn('role', \App\Models\DefensePanel::INVITED_ROLES)
                                     ->values();
                             @endphp
                             @if($manualMembers->count() > 0)

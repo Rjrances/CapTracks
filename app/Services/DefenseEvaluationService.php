@@ -12,14 +12,20 @@ use Illuminate\Support\Facades\DB;
 
 class DefenseEvaluationService
 {
-    private const REQUIRED_PANEL_ROLES = ['coordinator', 'chair', 'member'];
+    /**
+     * @return list<string>
+     */
+    private function requiredRatingRoles(): array
+    {
+        return array_merge(['coordinator'], DefensePanel::INVITED_ROLES);
+    }
 
     public function requiredPanels(DefenseSchedule $schedule): Collection
     {
         return DefensePanel::query()
             ->where('defense_schedule_id', $schedule->id)
             ->where('status', 'accepted')
-            ->whereIn('role', self::REQUIRED_PANEL_ROLES)
+            ->whereIn('role', $this->requiredRatingRoles())
             ->get(['id', 'defense_schedule_id', 'faculty_id', 'role', 'status']);
     }
 
@@ -44,11 +50,11 @@ class DefenseEvaluationService
 
         $submittedByFacultyId = $submitted->pluck('faculty_id')->map(fn ($id) => (int) $id)->unique()->values();
         $missingPanels = $required->filter(function ($panel) use ($submittedByFacultyId) {
-            return !$submittedByFacultyId->contains((int) $panel->faculty_id);
+            return ! $submittedByFacultyId->contains((int) $panel->faculty_id);
         })->values();
         $missingIndividualPanels = $required->filter(function ($panel) use ($submitted, $schedule) {
             $sheet = $submitted->firstWhere('faculty_id', $panel->faculty_id);
-            if (!$sheet) {
+            if (! $sheet) {
                 return false;
             }
 
@@ -72,7 +78,7 @@ class DefenseEvaluationService
     public function finalize(DefenseSchedule $schedule, User $finalizedBy, ?string $finalNotes = null): DefenseEvaluationSummary
     {
         $readiness = $this->readiness($schedule);
-        if (!$readiness['is_ready']) {
+        if (! $readiness['is_ready']) {
             throw new \RuntimeException('Cannot finalize yet. Some required panelists have not submitted ratings.');
         }
 
@@ -115,7 +121,7 @@ class DefenseEvaluationService
     public function reopen(DefenseSchedule $schedule, User $reopenedBy, string $reason): void
     {
         $summary = $schedule->evaluationSummary;
-        if (!$summary) {
+        if (! $summary) {
             throw new \RuntimeException('No finalized summary exists for this defense yet.');
         }
 
@@ -130,4 +136,3 @@ class DefenseEvaluationService
         });
     }
 }
-

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Models\DefensePanel;
 use App\Models\DefenseSchedule;
 use App\Models\RatingSheet;
 use App\Services\DefenseEvaluationService;
@@ -18,8 +19,7 @@ class RatingSheetController extends Controller
     public function __construct(
         private readonly DefenseRubricService $defenseRubricService,
         private readonly DefenseEvaluationService $defenseEvaluationService
-    ) {
-    }
+    ) {}
 
     public function showAdviserForm(DefenseSchedule $schedule)
     {
@@ -28,19 +28,19 @@ class RatingSheetController extends Controller
             return $redirect;
         }
         $schedule->loadMissing('group.members');
-        if (!$this->isRatingWindowOpen($schedule)) {
+        if (! $this->isRatingWindowOpen($schedule)) {
             return $this->redirectBlockedRatingAccess($schedule, $this->ratingWindowBlockReason($schedule));
         }
 
         $isAssignedPanel = $schedule->defensePanels()
-            ->whereIn('role', ['coordinator', 'chair', 'member'])
+            ->whereIn('role', array_merge(['coordinator'], DefensePanel::INVITED_ROLES))
             ->where('status', 'accepted')
             ->whereHas('faculty', function ($query) use ($user) {
                 $query->where('faculty_id', $user->faculty_id);
             })
             ->exists();
 
-        if (!$isAssignedPanel) {
+        if (! $isAssignedPanel) {
             abort(403, 'You are not assigned to this defense panel.');
         }
 
@@ -52,7 +52,6 @@ class RatingSheetController extends Controller
             ->where('faculty_id', $panelFacultyUserId)
             ->first();
 
-        
         if (
             $existingRating &&
             (float) $existingRating->total_score <= 0 &&
@@ -90,19 +89,19 @@ class RatingSheetController extends Controller
     public function submitAdviserRating(Request $request, DefenseSchedule $schedule)
     {
         $user = Auth::user();
-        if (!$this->isRatingWindowOpen($schedule)) {
+        if (! $this->isRatingWindowOpen($schedule)) {
             return back()->withErrors(['rating' => $this->ratingWindowBlockReason($schedule)]);
         }
 
         $isAssignedPanel = $schedule->defensePanels()
-            ->whereIn('role', ['coordinator', 'chair', 'member'])
+            ->whereIn('role', array_merge(['coordinator'], DefensePanel::INVITED_ROLES))
             ->where('status', 'accepted')
             ->whereHas('faculty', function ($query) use ($user) {
                 $query->where('faculty_id', $user->faculty_id);
             })
             ->exists();
 
-        if (!$isAssignedPanel) {
+        if (! $isAssignedPanel) {
             abort(403, 'You are not assigned to this defense panel.');
         }
 
@@ -208,14 +207,14 @@ class RatingSheetController extends Controller
         ActivityLog::create([
             'user_id' => $user->id,
             'action' => 'defense_rating_submitted',
-            'description' => $user->name . ' submitted rating sheet for group ' . ($schedule->group->name ?? 'Unknown Group') . ' (' . $schedule->stage_label . ')',
+            'description' => $user->name.' submitted rating sheet for group '.($schedule->group->name ?? 'Unknown Group').' ('.$schedule->stage_label.')',
             'loggable_type' => DefenseSchedule::class,
             'loggable_id' => $schedule->id,
         ]);
 
         $nextSchedule = DefenseSchedule::query()
             ->whereHas('defensePanels', function ($query) use ($user) {
-                $query->whereIn('role', ['coordinator', 'chair', 'member'])
+                $query->whereIn('role', array_merge(['coordinator'], DefensePanel::INVITED_ROLES))
                     ->where('status', 'accepted')
                     ->whereHas('faculty', function ($facultyQuery) use ($user) {
                         $facultyQuery->where('faculty_id', $user->faculty_id);
@@ -230,14 +229,11 @@ class RatingSheetController extends Controller
             ->orderBy('start_at')
             ->first();
 
-        
-        
         $isCoordinatorRoute = request()->routeIs('coordinator.*');
         $redirectRoute = $isCoordinatorRoute
             ? 'coordinator.rating-sheets.show'
             : 'adviser.rating-sheets.show';
 
-        
         $nextRatingRoute = $isCoordinatorRoute
             ? 'coordinator.rating-sheets.rate.show'
             : 'adviser.rating-sheets.show';
@@ -262,10 +258,10 @@ class RatingSheetController extends Controller
         }
 
         $coordinatorOfferings = Auth::user()->offerings()->pluck('id')->toArray();
-        if (!in_array($schedule->group->offering_id, $coordinatorOfferings)) {
+        if (! in_array($schedule->group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only view ratings for schedules in your offerings.');
         }
-        if (!$this->isRatingWindowOpen($schedule)) {
+        if (! $this->isRatingWindowOpen($schedule)) {
             return redirect()
                 ->route('coordinator.defense.index')
                 ->with('error', $this->ratingWindowBlockReason($schedule));
@@ -305,7 +301,7 @@ class RatingSheetController extends Controller
     public function finalizeCoordinatorRatings(Request $request, DefenseSchedule $schedule)
     {
         $coordinatorOfferings = Auth::user()->offerings()->pluck('id')->toArray();
-        if (!in_array($schedule->group->offering_id, $coordinatorOfferings)) {
+        if (! in_array($schedule->group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only finalize ratings for schedules in your offerings.');
         }
 
@@ -326,13 +322,13 @@ class RatingSheetController extends Controller
         ActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'defense_result_finalized',
-            'description' => Auth::user()->name . ' finalized defense result for group ' . ($schedule->group->name ?? 'Unknown Group') . ' (' . $schedule->stage_label . ')',
+            'description' => Auth::user()->name.' finalized defense result for group '.($schedule->group->name ?? 'Unknown Group').' ('.$schedule->stage_label.')',
             'loggable_type' => DefenseSchedule::class,
             'loggable_id' => $schedule->id,
         ]);
 
         $schedule->loadMissing('group.members.account', 'evaluationSummary');
-        $finalLabel = match($schedule->evaluationSummary->final_recommendation ?? null) {
+        $finalLabel = match ($schedule->evaluationSummary->final_recommendation ?? null) {
             'pass' => 'Pass',
             'conditional_pass' => 'Conditional Pass',
             'redefend' => 'Re-defend',
@@ -340,7 +336,7 @@ class RatingSheetController extends Controller
         };
         foreach (($schedule->group->members ?? collect()) as $member) {
             $studentAccountId = optional($member->account)->id;
-            if (!$studentAccountId) {
+            if (! $studentAccountId) {
                 continue;
             }
             NotificationService::createSimpleNotification(
@@ -360,7 +356,7 @@ class RatingSheetController extends Controller
     public function reopenCoordinatorRatings(Request $request, DefenseSchedule $schedule)
     {
         $coordinatorOfferings = Auth::user()->offerings()->pluck('id')->toArray();
-        if (!in_array($schedule->group->offering_id, $coordinatorOfferings)) {
+        if (! in_array($schedule->group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only reopen ratings for schedules in your offerings.');
         }
 
@@ -381,7 +377,7 @@ class RatingSheetController extends Controller
         ActivityLog::create([
             'user_id' => Auth::id(),
             'action' => 'defense_result_reopened',
-            'description' => Auth::user()->name . ' reopened defense result for group ' . ($schedule->group->name ?? 'Unknown Group') . '. Reason: ' . $validated['reopen_reason'],
+            'description' => Auth::user()->name.' reopened defense result for group '.($schedule->group->name ?? 'Unknown Group').'. Reason: '.$validated['reopen_reason'],
             'loggable_type' => DefenseSchedule::class,
             'loggable_id' => $schedule->id,
         ]);
@@ -394,7 +390,7 @@ class RatingSheetController extends Controller
     public function printCoordinatorRatings(DefenseSchedule $schedule)
     {
         $coordinatorOfferings = Auth::user()->offerings()->pluck('id')->toArray();
-        if (!in_array($schedule->group->offering_id, $coordinatorOfferings)) {
+        if (! in_array($schedule->group->offering_id, $coordinatorOfferings)) {
             abort(403, 'You can only print ratings for schedules in your offerings.');
         }
 
@@ -435,10 +431,10 @@ class RatingSheetController extends Controller
 
     private function resolvePanelFacultyUserId(DefenseSchedule $schedule, $user): int
     {
-        
+
         return (int) (
             $schedule->defensePanels()
-                ->whereIn('role', ['coordinator', 'chair', 'member'])
+                ->whereIn('role', array_merge(['coordinator'], DefensePanel::INVITED_ROLES))
                 ->where('status', 'accepted')
                 ->whereHas('faculty', function ($query) use ($user) {
                     $query->where('faculty_id', $user->faculty_id);
@@ -458,7 +454,7 @@ class RatingSheetController extends Controller
                     $scope = strtolower((string) ($criterion['scope'] ?? 'group'));
                     $name = strtolower((string) ($criterion['name'] ?? ''));
 
-                    return $scope !== 'individual' && !str_contains($name, 'individual contribution');
+                    return $scope !== 'individual' && ! str_contains($name, 'individual contribution');
                 })->sum(function ($criterion) {
                     return (float) ($criterion['score'] ?? 0);
                 });
@@ -518,32 +514,28 @@ class RatingSheetController extends Controller
     private function isRatingWindowOpen(DefenseSchedule $schedule): bool
     {
         $schedule->loadMissing('defensePanels');
-        $hasConfirmedChair = $schedule->defensePanels
-            ->where('role', 'chair')
-            ->where('status', 'accepted')
-            ->isNotEmpty();
-        $hasConfirmedMember = $schedule->defensePanels
-            ->where('role', 'member')
-            ->where('status', 'accepted')
-            ->isNotEmpty();
+        $invited = $schedule->defensePanels->whereIn('role', DefensePanel::INVITED_ROLES);
+        if ($invited->isEmpty()) {
+            return false;
+        }
 
-        return $hasConfirmedChair && $hasConfirmedMember;
+        return $invited->every(fn ($p) => $p->status === 'accepted');
     }
 
     private function ratingWindowBlockReason(DefenseSchedule $schedule): string
     {
         $schedule->loadMissing('defensePanels');
+        $invited = $schedule->defensePanels->whereIn('role', DefensePanel::INVITED_ROLES);
         $missing = [];
-        if ($schedule->defensePanels->where('role', 'chair')->where('status', 'accepted')->isEmpty()) {
-            $missing[] = 'Chair';
-        }
-        if ($schedule->defensePanels->where('role', 'member')->where('status', 'accepted')->isEmpty()) {
-            $missing[] = 'Member';
+        foreach ($invited as $panel) {
+            if ($panel->status !== 'accepted') {
+                $missing[] = $panel->role_label;
+            }
         }
 
         return empty($missing)
             ? 'Ratings are not available yet.'
-            : 'Ratings open only after confirmation from: ' . implode(' and ', $missing) . '.';
+            : 'Ratings open only after confirmation from: '.implode(' and ', $missing).'.';
     }
 
     private function redirectToPreferredScheduleIfNeeded(DefenseSchedule $schedule, $user)
@@ -551,7 +543,7 @@ class RatingSheetController extends Controller
         $preferredScheduleId = DefenseSchedule::query()
             ->where('group_id', $schedule->group_id)
             ->whereHas('defensePanels', function ($query) use ($user) {
-                $query->whereIn('role', ['coordinator', 'chair', 'member'])
+                $query->whereIn('role', array_merge(['coordinator'], DefensePanel::INVITED_ROLES))
                     ->where('status', 'accepted')
                     ->whereHas('faculty', function ($facultyQuery) use ($user) {
                         $facultyQuery->where('faculty_id', $user->faculty_id);
@@ -562,7 +554,7 @@ class RatingSheetController extends Controller
             ->orderByDesc('id')
             ->value('id');
 
-        if (!$preferredScheduleId || (int) $preferredScheduleId === (int) $schedule->id) {
+        if (! $preferredScheduleId || (int) $preferredScheduleId === (int) $schedule->id) {
             return null;
         }
 

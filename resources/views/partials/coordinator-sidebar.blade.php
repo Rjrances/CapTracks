@@ -102,6 +102,13 @@
                 </a>
             </li>
             <li class="nav-item mb-2">
+                <a class="nav-link text-white {{ request()->routeIs('coordinator.final-grades') ? 'active bg-primary' : '' }}"
+                   href="{{ route('coordinator.final-grades') }}">
+                    <i class="fas fa-table me-2"></i>
+                    Final grades
+                </a>
+            </li>
+            <li class="nav-item mb-2">
                 <a class="nav-link text-white {{ request()->routeIs('coordinator.activity-log') ? 'active bg-primary' : '' }}"
                    href="{{ route('coordinator.activity-log') }}">
                     <i class="fas fa-history me-2"></i>

@@ -11,8 +11,20 @@
                 <i class="fas fa-info-circle me-2"></i>
                 <strong>Note:</strong> You can only create defense schedules for groups that belong to your coordinated offerings (capstone offer codes). 
                 The academic term is automatically set to the current active term.
-                <br><small class="text-muted">Panel Chair/Member lists exclude the group adviser and subject coordinator (they are added automatically).</small>
+                <br><small class="text-muted">Invited faculty (Chair, Member, and additional Panelists—{{ $panelSlotCount }} slots by configuration) are assigned automatically (no manual selection). The adviser and subject coordinator are excluded from those slots and are added to the panel automatically.</small>
             </div>
+            @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+            @if(! empty($prefillGroupUnavailable))
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    This group cannot be selected for a new schedule right now (for example, it may already have a defense on record). Choose another group or open Defense management to review pending schedules.
+                </div>
+            @endif
             @if($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <ul class="mb-0">
@@ -32,6 +44,10 @@
                 <div class="card-body">
                     <form action="{{ route('coordinator.defense.store') }}" method="POST" id="defenseForm">
                         @csrf
+                        @php
+                            $selectedGroupId = old('group_id', $prefillGroupId ?? null);
+                            $selectedStage = old('stage', $prefillStage ?? null);
+                        @endphp
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="group_id" class="form-label">Group <span class="text-danger">*</span></label>
@@ -39,7 +55,7 @@
                                     <select name="group_id" id="group_id" class="form-select @error('group_id') is-invalid @enderror" required>
                                         <option value="">Select a group</option>
                                         @foreach($groups as $group)
-                                            <option value="{{ $group->id }}" {{ old('group_id') == $group->id ? 'selected' : '' }}>
+                                            <option value="{{ $group->id }}" {{ (string) $selectedGroupId === (string) $group->id ? 'selected' : '' }}>
                                                 {{ $group->name }} - {{ $group->offering->subject_code ?? 'No Offering' }}
                                                 @if($group->adviser)
                                                     (Adviser: {{ $group->adviser->name }})
@@ -67,9 +83,9 @@
                                 <label for="stage" class="form-label">Defense Stage <span class="text-danger">*</span></label>
                                 <select name="stage" id="stage" class="form-select @error('stage') is-invalid @enderror" required>
                                     <option value="">Select Defense Stage</option>
-                                    <option value="proposal" {{ old('stage') == 'proposal' ? 'selected' : '' }}>Proposal Defense</option>
-                                    <option value="60" {{ old('stage') == '60' ? 'selected' : '' }}>60% Defense</option>
-                                    <option value="100" {{ old('stage') == '100' ? 'selected' : '' }}>100% Defense</option>
+                                    <option value="proposal" {{ $selectedStage === 'proposal' ? 'selected' : '' }}>Proposal Defense</option>
+                                    <option value="60" {{ $selectedStage === '60' ? 'selected' : '' }}>60% Defense</option>
+                                    <option value="100" {{ $selectedStage === '100' ? 'selected' : '' }}>100% Defense</option>
                                 </select>
                                 @error('stage')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -158,47 +174,37 @@
                                 <i class="fas fa-users me-2"></i>Panel Members
                             </h6>
                             <div class="form-group">
-                                <label>Panel Members <span class="text-danger">*</span></label>
+                                <label>Panel (invited faculty)</label>
                                 <div class="alert alert-info mb-3">
                                     <strong>Note:</strong> The group's adviser and offering coordinator are automatically included in the panel.
-                                    Chair and Member are auto-selected based on availability and workload balancing.
+                                    Chair, Member, and additional Panelists are assigned by the system from available faculty (availability, no double-booking, workload balancing). You cannot change them on this screen—the same rules apply when you submit.
                                 </div>
                                 <div id="panel-auto-assignment-hint" class="alert alert-warning mb-3">
-                                    Fill in Group, Date, Start Time, End Time, and Room to auto-assign Chair and Member.
+                                    Fill in Group, Date, Start Time, End Time, and Room to preview the auto-assigned panel ({{ $panelSlotCount }} slots).
                                 </div>
+                                <div id="panel-insufficient-faculty" class="alert alert-danger d-none mb-3" role="alert">
+                                    <i class="fas fa-user-slash me-2"></i>
+                                    Fewer than {{ $panelSlotCount }} faculty are available for the invited panel slots. Adjust date, time, or room and check again.
+                                </div>
+                                @php
+                                    $slotLabels = [];
+                                    for ($i = 0; $i < $panelSlotCount; $i++) {
+                                        $slotLabels[] = $i === 0 ? 'Chair' : ($i === 1 ? 'Member' : 'Panelist');
+                                    }
+                                @endphp
                                 <div id="panel-members-container">
-                                    <div class="panel-member-row mb-2">
-                                        <div class="row">
-                                            <div class="col-md-5">
-                                                <select name="panel_members[0][faculty_id]" class="form-control faculty-select" required>
-                                                    <option value="">Select Faculty</option>
-                                                </select>
+                                    @for($i = 0; $i < $panelSlotCount; $i++)
+                                    <div class="panel-member-row mb-3">
+                                        <div class="row align-items-center g-2">
+                                            <div class="col-sm-3 col-md-2">
+                                                <span class="badge {{ $i === 0 ? 'bg-primary' : ($i === 1 ? 'bg-secondary' : 'bg-info text-dark') }}">{{ $slotLabels[$i] }}</span>
                                             </div>
-                                            <div class="col-md-5">
-                                                <input type="text" class="form-control" value="Chair" readonly>
-                                                <input type="hidden" name="panel_members[0][role]" value="chair">
-                                            </div>
-                                            <div class="col-md-2">
-                                                <span class="badge bg-secondary">Required</span>
+                                            <div class="col-sm-9 col-md-10">
+                                                <div id="panel-display-{{ $i }}" class="border rounded px-3 py-2 bg-light text-muted">—</div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="panel-member-row mb-2">
-                                        <div class="row">
-                                            <div class="col-md-5">
-                                                <select name="panel_members[1][faculty_id]" class="form-control faculty-select" required>
-                                                    <option value="">Select Faculty</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-5">
-                                                <input type="text" class="form-control" value="Member" readonly>
-                                                <input type="hidden" name="panel_members[1][role]" value="member">
-                                            </div>
-                                            <div class="col-md-2">
-                                                <span class="badge bg-secondary">Required</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    @endfor
                                 </div>
                                 @error('panel_members')
                                     <span class="text-danger">{{ $message }}</span>
@@ -219,6 +225,7 @@
 </div>
 <script>
 (function () {
+    const PANEL_SLOT_COUNT = {{ (int) $panelSlotCount }};
     const APP_TIMEZONE_OFFSET = @json(now()->timezone(config('app.timezone'))->format('P'));
 
     function defenseStartInstant(dateStr, timeStr) {
@@ -299,10 +306,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let latestDoubleBookingRequestId = 0;
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
     const panelFacultyByGroupId = @json($panelFacultyByGroupId);
-    const initialPanelPicks = @json([
-        old('panel_members.0.faculty_id'),
-        old('panel_members.1.faculty_id'),
-    ]);
     const groupSelectEl = document.getElementById('group_id');
     if (groupSelectEl) {
         groupSelectEl.addEventListener('change', function() {
@@ -310,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (groupId && hasCompleteSchedulingInputs()) {
                 loadFacultyForGroup(groupId);
             } else {
-                clearFacultyOptions();
+                clearPanelDisplay();
             }
             togglePanelAssignmentState();
         });
@@ -351,12 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function togglePanelAssignmentState() {
         const enabled = hasCompleteSchedulingInputs();
-        const facultySelects = document.querySelectorAll('.faculty-select');
         const hint = document.getElementById('panel-auto-assignment-hint');
-
-        facultySelects.forEach(select => {
-            select.disabled = !enabled;
-        });
 
         if (hint) {
             hint.classList.toggle('d-none', enabled);
@@ -368,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadFacultyForGroup(groupId);
             }
         } else {
-            clearFacultyOptions();
+            clearPanelDisplay();
         }
     }
 
@@ -378,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (gid && hasCompleteSchedulingInputs()) {
             loadFacultyForGroup(gid);
         } else {
-            clearFacultyOptions();
+            clearPanelDisplay();
         }
     }
     function loadFacultyForGroup(groupId) {
@@ -391,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!date || !startTime || !endTime || !room) {
             currentAvailableFaculty = base;
             currentAutoAssignedFacultyIds = [];
-            clearFacultyOptions();
+            clearPanelDisplay();
             return Promise.resolve(base);
         }
 
@@ -400,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('doubleBookingWarning')?.classList.add('d-none');
             currentAvailableFaculty = base;
             currentAutoAssignedFacultyIds = [];
-            clearFacultyOptions();
+            clearPanelDisplay();
             return Promise.resolve(base);
         }
 
@@ -437,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 currentAvailableFaculty = base;
                 currentAutoAssignedFacultyIds = [];
-                clearFacultyOptions();
+                clearPanelDisplay();
                 return base;
             }
             if (pastBox) {
@@ -450,45 +448,61 @@ document.addEventListener('DOMContentLoaded', function() {
             updatePastStartWarning();
             const list = data.availableFaculty || base;
             currentAvailableFaculty = list;
-            currentAutoAssignedFacultyIds = (data.autoAssignedFacultyIds || list.slice(0, 2).map(member => String(member.id))).map(String);
-            updateFacultyOptions(list);
+            currentAutoAssignedFacultyIds = (data.autoAssignedFacultyIds || list.slice(0, PANEL_SLOT_COUNT).map(member => String(member.id))).map(String);
+            renderAutoAssignedPanel(list, currentAutoAssignedFacultyIds);
             return list;
         })
         .catch(error => {
             console.error('Error loading faculty:', error);
             currentAvailableFaculty = base;
-            currentAutoAssignedFacultyIds = base.slice(0, 2).map(member => String(member.id));
-            updateFacultyOptions(base);
+            currentAutoAssignedFacultyIds = base.slice(0, PANEL_SLOT_COUNT).map(member => String(member.id));
+            renderAutoAssignedPanel(base, currentAutoAssignedFacultyIds);
             return base;
         });
     }
-    function updateFacultyOptions(faculty) {
-        const facultySelects = document.querySelectorAll('.faculty-select');
-        facultySelects.forEach((select, index) => {
-            let currentValue = select.value;
-            if (!currentValue && initialPanelPicks[index] != null && initialPanelPicks[index] !== '') {
-                currentValue = String(initialPanelPicks[index]);
+    function renderAutoAssignedPanel(faculty, autoIds) {
+        const insufficientEl = document.getElementById('panel-insufficient-faculty');
+        const list = faculty || [];
+        const ids = (autoIds && autoIds.length) ? autoIds.map(String) : list.slice(0, PANEL_SLOT_COUNT).map(m => String(m.id));
+
+        function labelForUserId(id) {
+            if (id == null || id === '') {
+                return null;
             }
-            if (!currentValue && currentAutoAssignedFacultyIds[index] != null) {
-                currentValue = String(currentAutoAssignedFacultyIds[index]);
+            const m = list.find(f => String(f.id) === String(id));
+            if (!m) {
+                return null;
             }
-            select.innerHTML = '<option value="">Select Faculty</option>';
-            faculty.forEach(member => {
-                const option = document.createElement('option');
-                option.value = member.id;
-                option.textContent = `${member.name} (${member.faculty_id != null ? member.faculty_id : 'N/A'})`;
-                select.appendChild(option);
-            });
-            if (currentValue && faculty.some(f => String(f.id) === String(currentValue))) {
-                select.value = currentValue;
+            return `${m.name} (${m.faculty_id != null ? m.faculty_id : 'N/A'})`;
+        }
+
+        for (let i = 0; i < PANEL_SLOT_COUNT; i++) {
+            const el = document.getElementById('panel-display-' + i);
+            if (!el) {
+                continue;
             }
-        });
+            const label = ids[i] ? labelForUserId(ids[i]) : null;
+            el.textContent = label || '—';
+            el.classList.toggle('text-muted', !label);
+        }
+
+        if (insufficientEl) {
+            const insufficient = list.length < PANEL_SLOT_COUNT;
+            insufficientEl.classList.toggle('d-none', !insufficient);
+        }
     }
-    function clearFacultyOptions() {
-        const facultySelects = document.querySelectorAll('.faculty-select');
-        facultySelects.forEach(select => {
-            select.innerHTML = '<option value="">Select Faculty</option>';
-        });
+    function clearPanelDisplay() {
+        const insufficientEl = document.getElementById('panel-insufficient-faculty');
+        for (let i = 0; i < PANEL_SLOT_COUNT; i++) {
+            const el = document.getElementById('panel-display-' + i);
+            if (el) {
+                el.textContent = '—';
+                el.classList.add('text-muted');
+            }
+        }
+        if (insufficientEl) {
+            insufficientEl.classList.add('d-none');
+        }
     }
     function checkDoubleBooking() {
         const groupId = document.getElementById('group_id').value;
@@ -557,6 +571,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         pastMsg.textContent = data.message;
                         pastBox.classList.remove('d-none');
                     }
+                    currentAvailableFaculty = [];
+                    currentAutoAssignedFacultyIds = [];
+                    clearPanelDisplay();
                     return;
                 }
                 if (pastBox) {
@@ -569,7 +586,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 updatePastStartWarning();
 
                 currentAvailableFaculty = data.availableFaculty || [];
-                updateFacultyOptions(currentAvailableFaculty);
+                currentAutoAssignedFacultyIds = (data.autoAssignedFacultyIds || []).map(String);
+                renderAutoAssignedPanel(currentAvailableFaculty, currentAutoAssignedFacultyIds);
                 if (data.conflict) {
                     document.getElementById('warningMessage').textContent = data.message;
                     document.getElementById('doubleBookingWarning').classList.remove('d-none');

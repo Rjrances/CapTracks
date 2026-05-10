@@ -39,14 +39,14 @@ class CalendarController extends Controller
         $calendarEvents = $defenses->map(function ($defense) use ($myGroupIds) {
             $startDate = \Carbon\Carbon::parse($defense->start_at);
             $endDate = \Carbon\Carbon::parse($defense->end_at);
-            $invitedPanels = $defense->panelists->whereIn('role', ['chair', 'member']);
-            $hasConfirmedChair = $invitedPanels->where('role', 'chair')->where('status', 'accepted')->isNotEmpty();
-            $hasConfirmedMember = $invitedPanels->where('role', 'member')->where('status', 'accepted')->isNotEmpty();
+            $invitedPanels = $defense->panelists->whereIn('role', DefensePanel::INVITED_ROLES);
             $hasDeclinedInvite = $invitedPanels->where('status', 'declined')->isNotEmpty();
+            $allInvitedAccepted = $invitedPanels->isNotEmpty()
+                && $invitedPanels->every(fn (DefensePanel $p) => $p->status === 'accepted');
 
             $panelState = $hasDeclinedInvite
                 ? 'replacement_needed'
-                : (($hasConfirmedChair && $hasConfirmedMember) ? 'confirmed' : 'awaiting_confirmation');
+                : ($allInvitedAccepted ? 'confirmed' : 'awaiting_confirmation');
 
             $displayStatus = match ($defense->status) {
                 'completed' => 'Completed',
@@ -121,8 +121,15 @@ class CalendarController extends Controller
     private static function panelistsPayloadForCalendar($panels): array
     {
         return $panels
-            ->whereIn('role', ['chair', 'member'])
-            ->sortBy(fn (DefensePanel $p) => $p->role === 'chair' ? 0 : 1)
+            ->whereIn('role', DefensePanel::INVITED_ROLES)
+            ->sortBy([
+                fn (DefensePanel $p) => match ($p->role) {
+                    'chair' => 0,
+                    'member' => 1,
+                    default => 2,
+                },
+                fn (DefensePanel $p) => $p->id,
+            ])
             ->values()
             ->map(fn (DefensePanel $p) => [
                 'role' => $p->role,

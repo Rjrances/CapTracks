@@ -119,26 +119,34 @@
                     </div>
                     <div class="card-body">
                         @if($milestone->tasks->count() > 0)
-                            <ul class="list-group list-group-flush mb-3">
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Drag tasks by the grip icon to reorder.
+                            </p>
+                            <ul id="milestone-tasks-sortable" class="list-group list-group-flush mb-3">
                                 @foreach($milestone->tasks as $task)
-                                    <li class="list-group-item px-0">
-                                        <form action="{{ route('coordinator.milestones.tasks.update', [$milestone->id, $task->id]) }}"
-                                              method="POST"
-                                              class="d-flex align-items-center gap-2">
-                                            @csrf
-                                            @method('PATCH')
-                                            <i class="fas fa-grip-vertical text-muted"></i>
-                                            <input type="text"
-                                                   name="name"
-                                                   value="{{ $task->name }}"
-                                                   class="form-control form-control-sm"
-                                                   required>
-                                            <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">
-                                                <i class="fas fa-save me-1"></i>Save
-                                            </button>
+                                    <li class="list-group-item px-0 milestone-task-row" data-task-id="{{ $task->id }}">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <span class="milestone-task-drag-handle text-muted flex-shrink-0 px-1" title="Drag to reorder" role="button" aria-label="Drag to reorder">
+                                                <i class="fas fa-grip-vertical"></i>
+                                            </span>
+                                            <form action="{{ route('coordinator.milestones.tasks.update', [$milestone->id, $task->id]) }}"
+                                                  method="POST"
+                                                  class="d-flex flex-grow-1 align-items-center gap-2 min-w-0">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="text"
+                                                       name="name"
+                                                       value="{{ $task->name }}"
+                                                       class="form-control form-control-sm"
+                                                       required>
+                                                <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap flex-shrink-0">
+                                                    <i class="fas fa-save me-1"></i>Save
+                                                </button>
+                                            </form>
                                             <form action="{{ route('coordinator.milestones.tasks.destroy', [$milestone->id, $task->id]) }}"
                                                   method="POST"
-                                                  class="d-inline m-0"
+                                                  class="d-inline m-0 flex-shrink-0"
                                                   onsubmit="return confirm('Delete this task?')">
                                                 @csrf
                                                 @method('DELETE')
@@ -146,7 +154,7 @@
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
-                                        </form>
+                                        </div>
                                     </li>
                                 @endforeach
                             </ul>
@@ -176,12 +184,57 @@
 </div>
 @endsection
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#description').on('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
+document.addEventListener('DOMContentLoaded', function () {
+    var desc = document.getElementById('description');
+    if (desc) {
+        function resizeDesc() {
+            desc.style.height = 'auto';
+            desc.style.height = desc.scrollHeight + 'px';
+        }
+        desc.addEventListener('input', resizeDesc);
+        resizeDesc();
+    }
+
+    var listEl = document.getElementById('milestone-tasks-sortable');
+    if (!listEl || typeof Sortable === 'undefined') {
+        return;
+    }
+
+    var reorderUrl = @json(route('coordinator.milestones.tasks.order', $milestone));
+    var csrf = document.querySelector('meta[name="csrf-token"]');
+    var token = csrf ? csrf.getAttribute('content') : '';
+
+    Sortable.create(listEl, {
+        animation: 150,
+        handle: '.milestone-task-drag-handle',
+        draggable: '.milestone-task-row',
+        onEnd: function () {
+            var ids = Array.prototype.map.call(listEl.querySelectorAll('.milestone-task-row'), function (row) {
+                return parseInt(row.getAttribute('data-task-id'), 10);
+            });
+            fetch(reorderUrl, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ task_ids: ids })
+            }).then(function (res) {
+                if (!res.ok) {
+                    return res.json().then(function (body) {
+                        throw new Error(body.message || 'Could not save order');
+                    });
+                }
+            }).catch(function (err) {
+                alert(err.message || 'Could not save task order.');
+                window.location.reload();
+            });
+        }
     });
+});
 </script>
 @endpush

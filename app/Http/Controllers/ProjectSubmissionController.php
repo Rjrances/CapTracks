@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Models\DefensePanel;
 use App\Models\Group;
 use App\Models\ProjectSubmission;
 use App\Models\Student;
@@ -9,6 +11,7 @@ use App\Services\DocumentPreviewService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+
 class ProjectSubmissionController extends Controller
 {
     public function index(Request $request)
@@ -16,7 +19,7 @@ class ProjectSubmissionController extends Controller
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->isTeacher()) {
-                
+
                 return redirect()->route('adviser.groups');
             } else {
                 return $this->studentIndex($user);
@@ -25,12 +28,14 @@ class ProjectSubmissionController extends Controller
             if (Auth::guard('student')->check()) {
                 $studentAccount = Auth::guard('student')->user();
                 $student = $studentAccount->student;
+
                 return $this->studentIndexFromSession($student);
             } else {
                 return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
             }
         }
     }
+
     private function adviserIndex($user, Request $request)
     {
         $selectedGroupId = $request->query('group');
@@ -60,14 +65,17 @@ class ProjectSubmissionController extends Controller
             if ($group->faculty_id !== $user->faculty_id) {
                 $userRole = 'panel';
             }
+
             return [$group->id => [
                 'group' => $group,
                 'submissions' => $groupSubmissions->sortByDesc('submitted_at'),
-                'user_role' => $userRole
+                'user_role' => $userRole,
             ]];
         });
+
         return view('adviser.project.index', compact('allGroups', 'adviserGroups', 'panelGroups', 'submissions', 'submissionsByGroup', 'selectedGroupId'));
     }
+
     private function studentIndex($user)
     {
         $student = $user->student ?? null;
@@ -79,8 +87,10 @@ class ProjectSubmissionController extends Controller
                 ->orderBy('submitted_at', 'desc')
                 ->get();
         }
+
         return view('student.project.index', compact('submissions', 'currentStudentId'));
     }
+
     private function studentIndexFromSession($student)
     {
         $submissions = [];
@@ -91,12 +101,15 @@ class ProjectSubmissionController extends Controller
                 ->orderBy('submitted_at', 'desc')
                 ->get();
         }
+
         return view('student.project.index', compact('submissions', 'currentStudentId'));
     }
+
     public function create()
     {
         return view('student.project.create');
     }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -115,7 +128,7 @@ class ProjectSubmissionController extends Controller
         $selectedType = (string) $request->input('type');
         $allowedForType = $allowedExtensionsByType[$selectedType] ?? [];
 
-        if (!in_array($fileExtension, $allowedForType, true)) {
+        if (! in_array($fileExtension, $allowedForType, true)) {
             $typeLabel = match ($selectedType) {
                 'final' => 'Final Report',
                 'other' => 'Additional Files',
@@ -124,21 +137,22 @@ class ProjectSubmissionController extends Controller
             };
 
             $allowedText = strtoupper(implode(', ', $allowedForType));
+
             return back()
                 ->withInput()
                 ->withErrors([
                     'file' => "Invalid file type for {$typeLabel}. Allowed formats: {$allowedText}.",
                 ]);
         }
-        
+
         if (Auth::guard('student')->check()) {
             $studentAccount = Auth::guard('student')->user();
             $student = $studentAccount->student;
         } else {
             $student = null;
         }
-        
-        if (!$student) {
+
+        if (! $student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         $path = $request->file('file')->store('submissions', 'public');
@@ -158,22 +172,24 @@ class ProjectSubmissionController extends Controller
         ActivityLog::create([
             'student_id' => $student->student_id,
             'action' => 'submission_uploaded',
-            'description' => 'Uploaded ' . ($submission->title ?? 'project submission') . ' (v' . ($submission->version ?? 1) . ')',
+            'description' => 'Uploaded '.($submission->title ?? 'project submission').' (v'.($submission->version ?? 1).')',
             'loggable_type' => ProjectSubmission::class,
             'loggable_id' => $submission->id,
         ]);
 
         return redirect()->route('student.project')->with('success', 'Submission uploaded successfully!');
     }
+
     private function getSubmissionTitle($type)
     {
-        return match($type) {
+        return match ($type) {
             'proposal' => 'Project Proposal',
             'final' => 'Final Project Report',
             'other' => 'Additional Project File',
             default => 'Project Submission'
         };
     }
+
     public function show($id)
     {
         $submission = ProjectSubmission::findOrFail($id);
@@ -182,15 +198,15 @@ class ProjectSubmissionController extends Controller
             $user = Auth::user();
             if ($user->isTeacher()) {
                 $hasAdviserAccess = Group::where('faculty_id', $user->faculty_id)
-                    ->whereHas('members', function($query) use ($submission) {
+                    ->whereHas('members', function ($query) use ($submission) {
                         $query->where('students.student_id', $submission->student_id);
                     })->exists();
 
                 $hasAcceptedPanelAccess = Group::whereHas('members', function ($query) use ($submission) {
-                        $query->where('students.student_id', $submission->student_id);
-                    })
+                    $query->where('students.student_id', $submission->student_id);
+                })
                     ->whereHas('defenseSchedules.defensePanels', function ($query) use ($user) {
-                        $query->whereIn('role', ['chair', 'member'])
+                        $query->whereIn('role', DefensePanel::INVITED_ROLES)
                             ->where('status', 'accepted')
                             ->whereHas('faculty', function ($facultyQuery) use ($user) {
                                 $facultyQuery->where('faculty_id', $user->faculty_id);
@@ -198,11 +214,11 @@ class ProjectSubmissionController extends Controller
                     })
                     ->exists();
 
-                if (!$hasAdviserAccess && !$hasAcceptedPanelAccess) {
+                if (! $hasAdviserAccess && ! $hasAcceptedPanelAccess) {
                     abort(403, 'Unauthorized access to this submission.');
                 }
 
-                if ($hasAcceptedPanelAccess && !$hasAdviserAccess) {
+                if ($hasAcceptedPanelAccess && ! $hasAdviserAccess) {
                     $viewMode = 'panel';
                 }
             } else {
@@ -221,35 +237,39 @@ class ProjectSubmissionController extends Controller
                 return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
             }
         }
+
         return view('adviser.project.show', compact('submission', 'viewMode'));
     }
+
     public function edit($id)
     {
         $submission = ProjectSubmission::findOrFail($id);
         $user = Auth::user();
         if ($user->isTeacher()) {
             $hasAccess = Group::where('faculty_id', $user->faculty_id)
-                ->whereHas('members', function($query) use ($submission) {
+                ->whereHas('members', function ($query) use ($submission) {
                     $query->where('students.student_id', $submission->student_id);
                 })->exists();
-            if (!$hasAccess) {
+            if (! $hasAccess) {
                 abort(403, 'Unauthorized access to this submission.');
             }
+
             return view('adviser.project.edit', compact('submission'));
         } else {
             abort(403, 'Students cannot edit submissions.');
         }
     }
+
     public function update(Request $request, $id)
     {
         $submission = ProjectSubmission::findOrFail($id);
         $user = Auth::user();
         if ($user->isTeacher()) {
             $hasAccess = Group::where('faculty_id', $user->faculty_id)
-                ->whereHas('members', function($query) use ($submission) {
+                ->whereHas('members', function ($query) use ($submission) {
                     $query->where('students.student_id', $submission->student_id);
                 })->exists();
-            if (!$hasAccess) {
+            if (! $hasAccess) {
                 abort(403, 'Unauthorized access to this submission.');
             }
             $request->validate([
@@ -260,42 +280,45 @@ class ProjectSubmissionController extends Controller
                 'status' => $request->status,
                 'teacher_comment' => $request->teacher_comment,
             ]);
+
             return redirect()->route('adviser.project.index')->with('success', 'Submission updated successfully.');
         } else {
             abort(403, 'Students cannot update submissions.');
         }
     }
+
     public function destroy($id)
     {
         $submission = ProjectSubmission::findOrFail($id);
-        
+
         if (Auth::guard('student')->check()) {
             $studentAccount = Auth::guard('student')->user();
             $student = $studentAccount->student;
         } else {
             $student = null;
         }
-        
-        if (!$student) {
+
+        if (! $student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         if ($submission->student_id !== $student->student_id) {
             abort(403, 'Unauthorized to delete this submission.');
         }
         $submission->delete();
+
         return redirect()->route('student.project')->with('success', 'Submission deleted successfully.');
     }
 
     public function studentPreviewSubmission(ProjectSubmission $projectSubmission)
     {
         $student = $this->getAuthenticatedStudent();
-        if (!$student) {
+        if (! $student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
-        if (!$this->studentCanAccessSubmission($student, $projectSubmission)) {
+        if (! $this->studentCanAccessSubmission($student, $projectSubmission)) {
             abort(403);
         }
-        if (!$projectSubmission->file_path || !Storage::disk('public')->exists($projectSubmission->file_path)) {
+        if (! $projectSubmission->file_path || ! Storage::disk('public')->exists($projectSubmission->file_path)) {
             return redirect()->route('student.project')->with('error', 'File not found.');
         }
         $typeLabel = match ($projectSubmission->type) {
@@ -309,9 +332,8 @@ class ProjectSubmissionController extends Controller
         $secureFileUrl = route('student.project.submission.file', $projectSubmission);
         $panel['downloadUrl'] = $secureFileUrl;
 
-        
         if (($panel['kind'] ?? null) === 'pdf') {
-            $panel['iframeSrc'] = $secureFileUrl . '#toolbar=1';
+            $panel['iframeSrc'] = $secureFileUrl.'#toolbar=1';
         }
 
         return view('student.project.preview', [
@@ -324,15 +346,15 @@ class ProjectSubmissionController extends Controller
     public function studentSubmissionFile(ProjectSubmission $projectSubmission)
     {
         $student = $this->getAuthenticatedStudent();
-        if (!$student) {
+        if (! $student) {
             abort(403, 'Unauthorized');
         }
 
-        if (!$this->studentCanAccessSubmission($student, $projectSubmission)) {
+        if (! $this->studentCanAccessSubmission($student, $projectSubmission)) {
             abort(403, 'Unauthorized access to this file.');
         }
 
-        if (!$projectSubmission->file_path || !Storage::disk('public')->exists($projectSubmission->file_path)) {
+        if (! $projectSubmission->file_path || ! Storage::disk('public')->exists($projectSubmission->file_path)) {
             abort(404, 'File not found.');
         }
 
@@ -341,14 +363,14 @@ class ProjectSubmissionController extends Controller
 
         return response()->file($absolutePath, [
             'Content-Type' => $mimeType,
-            'Content-Disposition' => 'inline; filename="' . basename($projectSubmission->file_path) . '"',
+            'Content-Disposition' => 'inline; filename="'.basename($projectSubmission->file_path).'"',
         ]);
     }
 
     public function studentCompareSubmissions($left, $right)
     {
         $student = $this->getAuthenticatedStudent();
-        if (!$student) {
+        if (! $student) {
             return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
         }
         $accessibleStudentIds = $this->getAccessibleStudentIdsForStudent($student);
@@ -361,7 +383,7 @@ class ProjectSubmissionController extends Controller
             return redirect()->route('student.project')->with('error', 'Compare two submissions of the same type.');
         }
         foreach ([$a, $b] as $submission) {
-            if (!$submission->file_path || !Storage::disk('public')->exists($submission->file_path)) {
+            if (! $submission->file_path || ! Storage::disk('public')->exists($submission->file_path)) {
                 return redirect()->route('student.project')->with('error', 'A file is missing for comparison.');
             }
         }
@@ -395,7 +417,7 @@ class ProjectSubmissionController extends Controller
             $q->where('group_members.student_id', $student->student_id);
         })->with('members:student_id')->first();
 
-        if (!$group) {
+        if (! $group) {
             return [$student->student_id];
         }
 

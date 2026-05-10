@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Group;
 use App\Models\GroupMilestone;
 use App\Models\GroupMilestoneTask;
+use App\Models\MilestoneTask;
 use App\Models\MilestoneTemplate;
 use App\Services\MilestoneAssignmentService;
 use App\Services\NotificationService;
@@ -191,7 +192,11 @@ class MilestoneTemplateController extends Controller
         $request->validate(['name' => 'required|string|max:255']);
 
         DB::transaction(function () use ($request, $milestone) {
-            $task = $milestone->tasks()->create(['name' => $request->name]);
+            $nextOrder = ((int) $milestone->tasks()->max('order')) + 1;
+            $task = $milestone->tasks()->create([
+                'name' => $request->name,
+                'order' => $nextOrder,
+            ]);
 
             $groupMilestones = GroupMilestone::where('milestone_template_id', $milestone->id)->get();
 
@@ -215,7 +220,43 @@ class MilestoneTemplateController extends Controller
             ->with('success', 'Task added successfully.');
     }
 
-    public function updateTask(Request $request, MilestoneTemplate $milestone, \App\Models\MilestoneTask $task)
+    public function updateTasksOrder(Request $request, MilestoneTemplate $milestone)
+    {
+        $request->validate([
+            'task_ids' => 'required|array',
+            'task_ids.*' => 'integer|exists:milestone_tasks,id',
+        ]);
+
+        $taskIds = collect($request->input('task_ids'))->map(fn ($id) => (int) $id)->values();
+        if ($taskIds->unique()->count() !== $taskIds->count()) {
+            return response()->json(['message' => 'Duplicate task ids are not allowed.'], 422);
+        }
+
+        $existingIds = $milestone->tasks()->pluck('id')->map(fn ($id) => (int) $id)->values();
+
+        if ($taskIds->count() !== $existingIds->count()) {
+            return response()->json(['message' => 'Task list must include every task for this template.'], 422);
+        }
+
+        $incomingSorted = $taskIds->sort()->values()->all();
+        $existingSorted = $existingIds->sort()->values()->all();
+        if ($incomingSorted !== $existingSorted) {
+            return response()->json(['message' => 'Invalid or incomplete task list for this template.'], 422);
+        }
+
+        DB::transaction(function () use ($taskIds, $milestone) {
+            foreach ($taskIds->all() as $position => $taskId) {
+                MilestoneTask::query()
+                    ->where('id', $taskId)
+                    ->where('milestone_template_id', $milestone->id)
+                    ->update(['order' => $position]);
+            }
+        });
+
+        return response()->json(['success' => true]);
+    }
+
+    public function updateTask(Request $request, MilestoneTemplate $milestone, MilestoneTask $task)
     {
         abort_if($task->milestone_template_id !== $milestone->id, 403);
         $request->validate(['name' => 'required|string|max:255']);
@@ -226,7 +267,7 @@ class MilestoneTemplateController extends Controller
             ->with('success', 'Task updated successfully.');
     }
 
-    public function destroyTask(MilestoneTemplate $milestone, \App\Models\MilestoneTask $task)
+    public function destroyTask(MilestoneTemplate $milestone, MilestoneTask $task)
     {
         abort_if($task->milestone_template_id !== $milestone->id, 403);
         $task->delete();

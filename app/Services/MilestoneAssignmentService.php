@@ -11,7 +11,6 @@ class MilestoneAssignmentService
 {
     private const PROPOSAL_SEQUENCE_ORDER = 1;
 
-    
     public static function assignmentMeta(Group $group): array
     {
         $group->loadMissing(['groupMilestones.milestoneTemplate']);
@@ -90,7 +89,6 @@ class MilestoneAssignmentService
         ];
     }
 
-    
     public static function validateAssignment(Group $group, MilestoneTemplate $template): ?string
     {
         $meta = self::assignmentMeta($group);
@@ -150,8 +148,6 @@ class MilestoneAssignmentService
             })
             ->map(fn ($gm) => (int) $gm->milestoneTemplate->sequence_order);
 
-        
-        
         if (self::groupHasApprovedProposal($group)) {
             $completedOrders->push(1);
         }

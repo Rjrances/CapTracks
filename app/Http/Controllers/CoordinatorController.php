@@ -1,20 +1,21 @@
 <?php
+
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
-use App\Models\ActivityLog;
-use App\Models\Notification;
+
 use App\Models\AcademicTerm;
-use App\Models\Student;
-use App\Models\Group;
-use App\Models\Offering;
-use App\Models\User;
-use App\Models\ProjectSubmission;
+use App\Models\ActivityLog;
 use App\Models\AdviserInvitation;
-use App\Models\GroupMilestone;
-use App\Models\GroupMilestoneTask;
+use App\Models\DefensePanel;
+use App\Models\DefenseSchedule;
+use App\Models\Group;
+use App\Models\Notification;
+use App\Models\Offering;
+use App\Models\ProjectSubmission;
+use App\Models\Student;
+use App\Models\User;
 use App\Services\NotificationService;
 use App\Services\StudentImportService;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class CoordinatorController extends Controller
 {
@@ -37,9 +38,9 @@ class CoordinatorController extends Controller
         $stats = [
             'studentCount' => Student::count(),
             'groupCount' => Group::count(),
-            'facultyCount' => User::whereHas('roles', function($query) {
+            'facultyCount' => User::whereHas('roles', function ($query) {
                 $query->whereIn('name', ['adviser', 'panelist']);
-            })->when($activeTerm, function($query) use ($activeTerm) {
+            })->when($activeTerm, function ($query) use ($activeTerm) {
                 return $query->where('academic_term_id', $activeTerm->id);
             })->count(),
             'submissionCount' => ProjectSubmission::count(),
@@ -61,6 +62,7 @@ class CoordinatorController extends Controller
             ->take(5)
             ->get();
         $upcomingDeadlines = collect();
+
         return view('dashboards.coordinator', compact(
             'activeTerm',
             'notifications',
@@ -73,6 +75,7 @@ class CoordinatorController extends Controller
             'isTeacherCoordinator'
         ));
     }
+
     public function classlist(Request $request)
     {
         $user = auth()->user();
@@ -118,8 +121,8 @@ class CoordinatorController extends Controller
                 ->sort()
                 ->values();
         }
-        
-        $students = collect(); 
+
+        $students = collect();
         if ($activeTerm && $coordinatedOfferingIds->isNotEmpty()) {
             $studentsQuery = Student::with(['offerings' => function ($query) use ($coordinatedOfferingIds) {
                 $query->whereIn('offerings.id', $coordinatedOfferingIds);
@@ -127,14 +130,12 @@ class CoordinatorController extends Controller
                 ->whereHas('offerings', function ($query) use ($coordinatedOfferingIds) {
                     $query->whereIn('offerings.id', $coordinatedOfferingIds);
                 });
-                
-            
+
             if ($request->filled('name')) {
                 $name = $request->input('name');
                 $studentsQuery->where('name', 'like', "%$name%");
             }
-            
-            
+
             if ($request->filled('course')) {
                 $course = $request->input('course');
                 $studentsQuery->where('course', $course);
@@ -146,21 +147,20 @@ class CoordinatorController extends Controller
                     $query->where('offerings.id', $selectedOfferingId);
                 });
             }
-            
-            
-            if ($request->filled('search') && !$request->filled('name') && !$request->filled('course')) {
+
+            if ($request->filled('search') && ! $request->filled('name') && ! $request->filled('course')) {
                 $search = $request->input('search');
-                $studentsQuery->where(function($q) use ($search) {
+                $studentsQuery->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
-                      ->orWhere('student_id', 'like', "%$search%")
-                      ->orWhere('email', 'like', "%$search%" );
+                        ->orWhere('student_id', 'like', "%$search%")
+                        ->orWhere('email', 'like', "%$search%");
                 });
             }
-            
+
             $students = $studentsQuery->orderBy($sortBy, $sortDirection)
                 ->paginate(10)->appends($request->only(['name', 'course', 'offering', 'search', 'sort', 'direction']));
         }
-        
+
         return view('coordinator.classlist.index', compact(
             'students',
             'activeTerm',
@@ -224,22 +224,25 @@ class CoordinatorController extends Controller
         if ($request->filled('offering') && $coordinatedOfferingIds->contains((int) $request->input('offering'))) {
             $query->where('offering_id', (int) $request->input('offering'));
         }
-        
+
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
-                  ->orWhere('description', 'like', "%$search%" );
+                    ->orWhere('description', 'like', "%$search%");
             });
         }
-        
+
         $groups = $query->paginate(10)->appends($request->only(['search', 'offering']));
+
         return view('coordinator.groups.index', compact('groups', 'activeTerm'));
     }
+
     public function create()
     {
         return view('coordinator.groups.create');
     }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -247,40 +250,47 @@ class CoordinatorController extends Controller
             'description' => 'nullable|string',
         ]);
         Group::create($validated);
+
         return redirect()->route('coordinator.groups.index')->with('success', 'Group created successfully!');
     }
+
     public function show($id)
     {
         $group = Group::with(['adviser', 'members'])->findOrFail($id);
+
         return view('coordinator.groups.show', compact('group'));
     }
+
     public function edit($id)
     {
         $group = Group::findOrFail($id);
+
         return view('coordinator.groups.edit', compact('group'));
     }
+
     public function assignAdviser($id)
     {
         $group = Group::with(['adviser', 'members', 'offering'])->findOrFail($id);
         $confirmedPanelistIds = $this->getConfirmedPanelistUserIdsForGroup($group->id);
         $availableFaculty = User::withAnyRole(['teacher', 'adviser', 'panelist', 'coordinator'])
             ->where('academic_term_id', $group->academic_term_id)
-            ->where(function($query) use ($group) {
-                $query->whereDoesntHave('offerings', function($q) use ($group) {
+            ->where(function ($query) use ($group) {
+                $query->whereDoesntHave('offerings', function ($q) use ($group) {
                     $q->where('id', $group->offering_id);
                 });
             })
             ->whereNotIn('id', $confirmedPanelistIds)
             ->orderBy('name')
             ->get();
+
         return view('coordinator.groups.assign_adviser', compact('group', 'availableFaculty'));
     }
+
     public function update(Request $request, $id)
     {
         $group = Group::with('offering')->findOrFail($id);
 
-        
-        if (!$request->has('name')) {
+        if (! $request->has('name')) {
             $request->merge([
                 'name' => $group->name,
                 'description' => $group->description,
@@ -325,19 +335,23 @@ class CoordinatorController extends Controller
                 $adviser = User::where('faculty_id', $validated['faculty_id'])->first();
                 $message = "Adviser assigned successfully to {$adviser->name}!";
             } else {
-                $message = "Adviser removed successfully!";
+                $message = 'Adviser removed successfully!';
             }
         }
+
         return redirect()->route('coordinator.groups.show', $group->id)->with('success', $message);
     }
+
     public function destroy($id)
     {
         $group = Group::findOrFail($id);
-        $group->members()->detach(); 
+        $group->members()->detach();
         $group->adviserInvitations()->delete();
         $group->delete();
+
         return redirect()->route('coordinator.groups.index')->with('success', 'Group deleted successfully!');
     }
+
     public function groupMilestones($id)
     {
         $group = Group::with([
@@ -349,11 +363,13 @@ class CoordinatorController extends Controller
 
         return view('coordinator.groups.milestones', compact('group'));
     }
+
     public function notifications()
     {
         $user = auth()->user();
         $query = Notification::query()->visibleToCoordinatorWorkspace($user);
         $notifications = $query->orderBy('created_at', 'desc')->get();
+
         return view('coordinator.notifications', compact('notifications'));
     }
 
@@ -361,13 +377,13 @@ class CoordinatorController extends Controller
     {
         $user = auth()->user();
         $notification = Notification::findOrFail($notificationId);
-        
+
         $hasAccess = Notification::query()
             ->visibleToCoordinatorWorkspace($user)
             ->whereKey($notification->id)
             ->exists();
 
-        if (!$hasAccess) {
+        if (! $hasAccess) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -376,12 +392,11 @@ class CoordinatorController extends Controller
         return response()->json(['success' => true, 'message' => 'Notification marked as read']);
     }
 
-    
     private function getConfirmedPanelistUserIdsForGroup(int $groupId)
     {
         return \App\Models\DefensePanel::query()
             ->where('status', 'accepted')
-            ->whereIn('role', ['chair', 'member'])
+            ->whereIn('role', DefensePanel::INVITED_ROLES)
             ->whereHas('defenseSchedule', function ($query) use ($groupId) {
                 $query->where('group_id', $groupId)
                     ->where(function ($q) {
@@ -413,20 +428,20 @@ class CoordinatorController extends Controller
         Notification::whereIn('id', $notificationIds)
             ->update(['is_read' => true]);
 
-        return response()->json(['success' => true, 'message' => count($notificationIds) . ' notifications marked as read']);
+        return response()->json(['success' => true, 'message' => count($notificationIds).' notifications marked as read']);
     }
 
     public function deleteNotification($notificationId)
     {
         $user = auth()->user();
         $notification = Notification::findOrFail($notificationId);
-        
+
         $hasAccess = Notification::query()
             ->visibleToCoordinatorWorkspace($user)
             ->whereKey($notification->id)
             ->exists();
 
-        if (!$hasAccess) {
+        if (! $hasAccess) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -440,7 +455,7 @@ class CoordinatorController extends Controller
         $user = auth()->user();
         $request->validate([
             'notification_ids' => 'required|array',
-            'notification_ids.*' => 'integer|exists:notifications,id'
+            'notification_ids.*' => 'integer|exists:notifications,id',
         ]);
 
         $updated = Notification::whereIn('id', $request->notification_ids)
@@ -449,7 +464,7 @@ class CoordinatorController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $updated . ' notifications marked as read'
+            'message' => $updated.' notifications marked as read',
         ]);
     }
 
@@ -458,7 +473,7 @@ class CoordinatorController extends Controller
         $user = auth()->user();
         $request->validate([
             'notification_ids' => 'required|array',
-            'notification_ids.*' => 'integer|exists:notifications,id'
+            'notification_ids.*' => 'integer|exists:notifications,id',
         ]);
 
         $deleted = Notification::whereIn('id', $request->notification_ids)
@@ -467,7 +482,7 @@ class CoordinatorController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => $deleted . ' notifications deleted'
+            'message' => $deleted.' notifications deleted',
         ]);
     }
 
@@ -478,7 +493,7 @@ class CoordinatorController extends Controller
         $activeTerm = AcademicTerm::where('is_active', true)->first();
 
         $coordinatedOfferingIds = Offering::where('faculty_id', $user->faculty_id)
-            ->when($activeTerm, fn($q) => $q->where('academic_term_id', $activeTerm->id))
+            ->when($activeTerm, fn ($q) => $q->where('academic_term_id', $activeTerm->id))
             ->pluck('id');
 
         $studentIds = Student::query()
@@ -500,7 +515,6 @@ class CoordinatorController extends Controller
             ->paginate(20)
             ->appends($request->only('student_id'));
 
-        
         $studentsWithActivity = ActivityLog::whereIn('student_id', $studentIds)
             ->pluck('student_id')
             ->unique();
@@ -562,7 +576,7 @@ class CoordinatorController extends Controller
             return [
                 'group_name' => $group->name,
                 'offering_label' => $group->offering
-                    ? ($group->offering->subject_code . ' - ' . $group->offering->subject_title)
+                    ? ($group->offering->subject_code.' - '.$group->offering->subject_title)
                     : 'No offering assigned',
                 'coordinator_name' => $group->offering->teacher->name ?? 'Unassigned',
                 'adviser_name' => $group->adviser->name ?? 'Unassigned',
@@ -585,5 +599,51 @@ class CoordinatorController extends Controller
         ];
 
         return view('coordinator.faculty-matrix', compact('matrixRows', 'summary'));
+    }
+
+    /**
+     * Latest finalized defense outcome per stage (proposal / 60% / 100%) for coordinator-scoped groups.
+     */
+    public function finalGrades()
+    {
+        $user = auth()->user();
+        $activeTerm = AcademicTerm::where('is_active', true)->first();
+
+        $coordinatorOfferings = $user->offerings()
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->pluck('id')
+            ->toArray();
+
+        $groups = Group::with(['adviser', 'offering'])
+            ->whereIn('offering_id', $coordinatorOfferings)
+            ->when($activeTerm, function ($query) use ($activeTerm) {
+                return $query->where('academic_term_id', $activeTerm->id);
+            })
+            ->orderBy('name')
+            ->get();
+
+        $stageKeys = ['proposal' => 'proposal', '60' => '60', '100' => '100'];
+
+        $rows = $groups->map(function (Group $group) use ($stageKeys) {
+            $cells = [];
+            foreach ($stageKeys as $stage) {
+                $cells[$stage] = DefenseSchedule::query()
+                    ->where('group_id', $group->id)
+                    ->where('stage', $stage)
+                    ->where('status', 'completed')
+                    ->with('evaluationSummary')
+                    ->orderByDesc('start_at')
+                    ->first();
+            }
+
+            return [
+                'group' => $group,
+                'schedules' => $cells,
+            ];
+        });
+
+        return view('coordinator.final-grades.index', compact('rows', 'activeTerm'));
     }
 }
