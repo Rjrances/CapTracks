@@ -6,12 +6,16 @@ This document explains **what each major student-facing piece of code is for** i
 
 **Auth:** Student pages use the **`student`** guard (`StudentAuthMiddleware`), plus **`CheckStudentPasswordChange`** so first-time users change their password before the rest of the app (except the password-change routes, which skip that middleware).
 
+**First-time login:** Imported or newly provisioned students usually have **`StudentAccount.must_change_password`** set and obtain a **temporary plain password by email** from the public **“Email me a temporary password”** flow (`login.student-credentials`). That is **not** the same as faculty self-registration; see **section 2** below.
+
 ---
 
 ## 1. Route map (student prefix)
 
 | Area | HTTP | Route name | Controller |
 |------|------|------------|------------|
+| Request temp password (guest) | GET | `login.student-credentials` | `StudentTemporaryPasswordController@create` |
+| Submit student ID for email | POST | `login.student-credentials.store` | `StudentTemporaryPasswordController@store` |
 | Dashboard | GET | `student.dashboard` | `StudentDashboardController@index` |
 | Change password | GET | `student.change-password` | `StudentPasswordController@showChangePasswordForm` |
 | Update password | POST | `student.update-password` | `StudentPasswordController@updatePassword` |
@@ -36,7 +40,58 @@ This document explains **what each major student-facing piece of code is for** i
 
 ---
 
-## 2. Controllers — what each one does
+## 2. First-time login — temporary password via email (how the API works)
+
+Students who have not finished first-time setup use **student ID + email on file**. Coordinators/chairperson imports **create or update** `Student` + **`StudentAccount`** rows but **do not send mail** at import time; the student triggers delivery from the login screen.
+
+### 2.1 Public routes (no authentication)
+
+| HTTP | Path | Name | Behavior |
+|------|------|------|----------|
+| GET | `/login/student-credentials` | `login.student-credentials` | Shows `resources/views/auth/request-student-temporary-password.blade.php` (form: student ID only). |
+| POST | `/login/student-credentials` | `login.student-credentials.store` | Validates ID, syncs email from `Student` → `StudentAccount`, generates password, emails it. **Rate limit:** `throttle:6,1` (six attempts per minute per IP). |
+
+Link from the main login: **`resources/views/auth/login.blade.php`** → route `login.student-credentials` (“Email me a temporary password”).
+
+### 2.2 Validation (`RequestStudentTemporaryPasswordRequest` + `StudentTemporaryPasswordEligible`)
+
+POST accepts **`student_id`** (trimmed). The custom rule **`StudentTemporaryPasswordEligible`** rejects the request unless all of the following hold:
+
+- The ID is **not** a faculty `faculty_id` (prevents staff mistaking this flow for faculty login).
+- Both **`Student`** and **`StudentAccount`** exist for that **`student_id`**.
+- **`Student.email`** is non-empty, passes **`filter_var(..., FILTER_VALIDATE_EMAIL)`**, and is **not** a placeholder ending in **`@student.placeholder.local`**.
+- The account is still eligible: **`password` is unset in the DB** *or* **`must_change_password` is true**. If the student has already completed first-time login (`must_change_password` false and password set), the rule fails with a message to use normal login / coordinator reset.
+
+Validation errors redirect back to **`login.student-credentials`** with errors (not JSON).
+
+### 2.3 Controller and email sync (`StudentTemporaryPasswordController`)
+
+**`store`** loads **`Student`** and **`StudentAccount`** by **`student_id`**, then **`syncAccountEmailFromStudent`**: if the **`Student`** row has a non-empty email that differs from **`StudentAccount.email`**, the account email is updated so mail goes to the current roster address.
+
+### 2.4 Provisioning service (`StudentCredentialProvisioner`)
+
+**`assignTemporaryPasswordAndNotify($student, $account, $sendEmail)`**:
+
+1. Generates a **16-character** random password (`Str::password(16)`).
+2. If **`$sendEmail`** is true (normal web flow):
+   - Runs a **database transaction**: set **`StudentAccount.password`** (hashed automatically via the model’s **`'password' => 'hashed'`** cast), set **`must_change_password`** to **true**, **`save()`**, then **`Mail::to($account->email)->send(new StudentTemporaryPasswordMail(...))`**.
+   - If **anything** in that transaction throws (including SMTP failure), the transaction **rolls back** — the password is **not** left changed without a successful send. The controller then redirects to **`login`** with a **`mail`** error and hints to configure **`.env`** / **`php artisan mail:test`**.
+3. If email sends successfully, redirects to **`login`** with a success **`status`** flash.
+
+The mailable is **`App\Mail\StudentTemporaryPasswordMail`**; view **`resources/views/emails/student-temporary-password.blade.php`**. Subject uses **`config('app.name')`** plus “Your login credentials”.
+
+### 2.5 After the student receives the email — login and forced password change
+
+1. On **`POST /login`**, **`AuthController::attemptStudentLogin`** verifies the password against **`StudentAccount`** (same field used for the temporary password).
+2. If **`must_change_password`** is still **true**, redirect **`student.change-password`** with an info message — **not** straight to the dashboard.
+3. **`CheckStudentPasswordChange`** middleware blocks all other **`student.*`** routes until **`student.change-password`** / **`student.update-password`** complete.
+4. **`StudentPasswordController@updatePassword`** saves the new hash and sets **`must_change_password`** to **false**.
+
+So the “API” for first-time access is: **GET/POST credential routes (guest) → SMTP delivers secret → standard login POST → password change routes → rest of `student.*`.**
+
+---
+
+## 3. Controllers — what each one does
 
 ### `StudentDashboardController`
 
@@ -97,13 +152,13 @@ Private helpers: **`getAuthenticatedStudent`**, **`getMilestoneTasksByStatus`** 
 - **`index` / `create` / `store` / `show` / `cancel`** — Group-scoped defense requests.
 - Injects **`DefenseMilestoneGateService`**: before allowing a request, **`evaluate()`** checks proposal approval or milestone completion rules so students cannot skip required stages.
 
-### `StudentTemporaryPasswordController` (if used in your deployment)
+### `StudentTemporaryPasswordController`
 
-- Uses **`StudentCredentialProvisioner`** for admin-style provisioning flows (see that service for behavior).
+- Guest-only **temporary password email** flow (**section 2**): GET form, POST **`store`** → **`StudentCredentialProvisioner::assignTemporaryPasswordAndNotify`**.
 
 ---
 
-## 3. Services touched by student flows
+## 4. Services touched by student flows
 
 | Service | Used where | Purpose |
 |---------|------------|---------|
@@ -111,21 +166,22 @@ Private helpers: **`getAuthenticatedStudent`**, **`getMilestoneTasksByStatus`** 
 | **`DocumentPreviewService`** | `StudentProposalController`, `ProjectSubmissionController` | Normalize preview/compare for uploaded documents. |
 | **`DefenseMilestoneGateService`** | `StudentDefenseRequestController` | Block/allow defense requests until milestones or proposal approval rules pass. |
 | **`ActivityLogService`** | `StudentMilestoneController` (task comments) | Writes an audit log entry when a student comments on a task. |
+| **`StudentCredentialProvisioner`** | `StudentTemporaryPasswordController` | Generate temporary password, set **`must_change_password`**, send **`StudentTemporaryPasswordMail`** inside a DB transaction when SMTP is used (**section 2**). |
 
 Other services (**`StudentEnrollmentService`**, **`StudentImportService`**, etc.) are used by **imports and chairperson/coordinator** tooling, not by day-to-day student browser pages.
 
 ---
 
-## 4. Front-end JavaScript for students
+## 5. Front-end JavaScript for students
 
 - **Bundled assets:** `resources/js/app.js` only imports **`bootstrap.js`** — there is **no** large student SPA bundle; most behavior lives in **Blade `@push('scripts')` sections**.
 - **Kanban board:** Implemented in **`resources/views/student/milestones/show.blade.php`** (inline `<script>`). It loads **SortableJS** from a CDN for drag-and-drop.
 
 ---
 
-## 5. Kanban — how drag-and-drop maps to Pending / In Progress / Done
+## 6. Kanban — how drag-and-drop maps to Pending / In Progress / Done
 
-### 5.1 Database and model meaning
+### 6.1 Database and model meaning
 
 - Each card is a **`GroupMilestoneTask`** row. The canonical workflow field is **`status`**, with allowed values: **`pending`**, **`doing`**, **`done`**.
 - The **UI labels** do not always match the raw string: **`doing`** is shown as **“In Progress”** on badges (see **`updateTaskCardStatusUI`** in the same Blade file).
@@ -141,12 +197,12 @@ So when you drag a card:
 3. The server persists that code on the row and recomputes progress.
 4. On success, JavaScript updates the **badge text/colors**, **progress bar**, and **column counts** so the screen matches the database without a full reload.
 
-### 5.2 HTML hooks
+### 6.2 HTML hooks
 
 - Each column wrapper has **`data-status="pending|doing|done"`** on **`.kanban-column`**.
 - Each task card should expose **`data-task-id="<id>"`** (used in **`evt.item.dataset.taskId`**).
 
-### 5.3 SortableJS setup (browser)
+### 6.3 SortableJS setup (browser)
 
 From **`show.blade.php`** (simplified):
 
@@ -156,7 +212,7 @@ From **`show.blade.php`** (simplified):
    - **`evt.item.dataset.taskId`** → which **`GroupMilestoneTask`** moved.
    - **`evt.to.closest('.kanban-column').dataset.status`** → the **new** status string taken from the column’s **`data-status`**.
 
-### 5.4 AJAX request (`fetch`)
+### 6.4 AJAX request (`fetch`)
 
 Function **`moveTask(taskId, newStatus)`** sends:
 
@@ -169,7 +225,7 @@ Function **`moveTask(taskId, newStatus)`** sends:
 
 This is **not** jQuery — it is the browser **`fetch` API** (Promise-based).
 
-### 5.5 Server handler
+### 6.5 Server handler
 
 **`StudentMilestoneController::moveTask`**:
 
@@ -179,7 +235,7 @@ This is **not** jQuery — it is the browser **`fetch` API** (Promise-based).
 4. **`$task->updateStatus($request->status)`** — persists + recalculates milestone progress.
 5. Returns JSON: **`success`**, **`task`** (fresh model), **`milestone_progress`** (number).
 
-### 5.6 After the response (same page)
+### 6.6 After the response (same page)
 
 On **`data.success`**:
 
@@ -189,16 +245,17 @@ On **`data.success`**:
 
 On failure or network error, the code shows an alert and **`location.reload()`** after a short delay so the UI re-syncs with the database.
 
-### 5.7 Related: task file upload bumps status
+### 6.7 Related: task file upload bumps status
 
 When a student submits files via **`TaskSubmissionController@store`**, if the task was **`pending`**, the controller calls **`$task->updateStatus('doing')`**. That is **separate** from drag-and-drop but produces the same **`doing`** state you see in the **In Progress** column after you reload or revisit the Kanban.
 
 ---
 
-## 6. File reference cheat sheet
+## 7. File reference cheat sheet
 
 | Students see… | Primary files |
 |----------------|---------------|
+| First-time temp password email | `routes/web.php` (`login.student-credentials*`), `StudentTemporaryPasswordController.php`, `RequestStudentTemporaryPasswordRequest.php`, `StudentTemporaryPasswordEligible.php`, `StudentCredentialProvisioner.php`, `StudentTemporaryPasswordMail.php`, `resources/views/auth/request-student-temporary-password.blade.php`, `resources/views/emails/student-temporary-password.blade.php`, `AuthController.php` (student login + redirect), `CheckStudentPasswordChange.php`, `StudentPasswordController.php` |
 | Dashboard | `resources/views/dashboards/student.blade.php`, `StudentDashboardController.php` |
 | Kanban | `resources/views/student/milestones/show.blade.php`, `resources/views/student/milestones/partials/task-card.blade.php`, `StudentMilestoneController.php`, `GroupMilestoneTask.php` |
 | Groups | `StudentGroupController.php`, views under `resources/views/student/group*` |
