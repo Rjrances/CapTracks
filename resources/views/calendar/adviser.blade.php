@@ -345,22 +345,67 @@ function goToToday() {
     urlParams.set('year', today.getFullYear());
     window.location.search = urlParams.toString();
 }
+function escapeHtmlCalendar(text) {
+    const div = document.createElement('div');
+    div.textContent = text == null ? '' : String(text);
+    return div.innerHTML;
+}
+function panelStatusBadgeClass(status) {
+    if (status === 'accepted') return 'success';
+    if (status === 'declined') return 'danger';
+    return 'secondary';
+}
+function defenseStatusBadgeClass(status) {
+    if (status === 'scheduled') return 'warning text-dark';
+    if (status === 'in_progress') return 'info';
+    if (status === 'completed') return 'success';
+    return 'secondary';
+}
+function formatPanelistsSection(panelists) {
+    if (!panelists || !panelists.length) {
+        return '<p class="text-muted small mb-0">No chair, member, or panelist assigned yet.</p>';
+    }
+    const items = panelists.map(function (p) {
+        const badge = panelStatusBadgeClass(p.status);
+        return '<li class="mb-2 d-flex flex-wrap align-items-center gap-2">'
+            + '<span><strong>' + escapeHtmlCalendar(p.role_label) + ':</strong> '
+            + escapeHtmlCalendar(p.name) + '</span>'
+            + '<span class="badge bg-' + badge + '">' + escapeHtmlCalendar(p.status_label) + '</span>'
+            + '</li>';
+    }).join('');
+    return '<ul class="list-unstyled mb-0">' + items + '</ul>';
+}
 function showEventDetails(event) {
     const modal = new bootstrap.Modal(document.getElementById('defenseModal'));
+    const props = event.extendedProps || {};
+    const panelHtml = formatPanelistsSection(props.panelists);
+    const st = (props.status || '');
+    const statusLabel = st ? st.charAt(0).toUpperCase() + st.slice(1).replace(/_/g, ' ') : 'Unknown';
+    const statusBadge = defenseStatusBadgeClass(st);
+    const studentsLine = props.students
+        ? '<p><strong>Students:</strong> ' + escapeHtmlCalendar(props.students) + '</p>'
+        : '';
     const eventDetails = `
         <div class="row">
             <div class="col-md-6">
                 <h6>Defense Details</h6>
-                                 <p><strong>Defense Type:</strong> ${event.extendedProps.defenseType || 'N/A'}</p>
-                <p><strong>Group:</strong> ${event.extendedProps.group || 'N/A'}</p>
-                <p><strong>Adviser:</strong> ${event.extendedProps.adviser || 'N/A'}</p>
-                <p><strong>Status:</strong> <span class="badge bg-${event.extendedProps.status === 'approved' ? 'success' : event.extendedProps.status === 'scheduled' ? 'success' : 'secondary'}">${event.extendedProps.status.charAt(0).toUpperCase() + event.extendedProps.status.slice(1)}</span></p>
+                <p><strong>Defense Type:</strong> ${escapeHtmlCalendar(props.defenseType) || 'N/A'}</p>
+                <p><strong>Group:</strong> ${escapeHtmlCalendar(props.group) || 'N/A'}</p>
+                <p><strong>Adviser:</strong> ${escapeHtmlCalendar(props.adviser) || 'N/A'}</p>
+                ${studentsLine}
+                <p><strong>Status:</strong> <span class="badge bg-${statusBadge}">${escapeHtmlCalendar(statusLabel)}</span></p>
             </div>
             <div class="col-md-6">
                 <h6>Schedule</h6>
                 <p><strong>Date:</strong> ${new Date(event.start).toLocaleDateString()}</p>
-                <p><strong>Time:</strong> ${event.extendedProps.time || new Date(event.start).toLocaleTimeString()}</p>
-                <p><strong>Location:</strong> ${event.extendedProps.room || 'TBA'}</p>
+                <p><strong>Time:</strong> ${escapeHtmlCalendar(props.time) || new Date(event.start).toLocaleTimeString()}</p>
+                <p><strong>Location:</strong> ${escapeHtmlCalendar(props.room) || 'TBA'}</p>
+            </div>
+        </div>
+        <div class="row mt-3 pt-3 border-top">
+            <div class="col-12">
+                <h6 class="text-secondary text-uppercase small mb-2">Panel</h6>
+                ${panelHtml}
             </div>
         </div>
     `;

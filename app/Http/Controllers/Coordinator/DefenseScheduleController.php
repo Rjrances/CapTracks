@@ -294,8 +294,6 @@ class DefenseScheduleController extends Controller
         ];
         $groupAvailability['scheduled_groups'] = max(0, $groupAvailability['total_scoped_groups'] - $groupAvailability['available_groups']);
 
-        $panelFacultyByGroupId = $this->panelFacultyJsonByGroupIds($groups);
-
         $panelSlotCount = $this->panelSlotCount();
 
         $prefillGroupId = null;
@@ -322,14 +320,27 @@ class DefenseScheduleController extends Controller
                         '100_percent' => '100',
                         default => null,
                     };
-                    if ($groups->contains(fn (Group $g) => (int) $g->id === (int) $group->id)) {
+                    if ($prefillStage !== null) {
                         $prefillGroupId = (int) $group->id;
-                    } else {
-                        $prefillGroupUnavailable = true;
+                        // Groups that already have a defense in this term are excluded from $groups above.
+                        // 60% / 100% requests always hit that case; merge the group so the dropdown + JS prefill match proposal.
+                        if (! $groups->contains(fn (Group $g) => (int) $g->id === (int) $group->id)) {
+                            $loaded = Group::with(['members', 'adviser', 'offering'])
+                                ->whereKey((int) $group->id)
+                                ->first();
+                            if ($loaded) {
+                                $groups->push($loaded);
+                            }
+                        }
                     }
                 }
             }
         }
+
+        $panelFacultyByGroupId = $this->panelFacultyJsonByGroupIds($groups);
+
+        $groupAvailability['available_groups'] = $groups->count();
+        $groupAvailability['scheduled_groups'] = max(0, $groupAvailability['total_scoped_groups'] - $groupAvailability['available_groups']);
 
         $optionalPanelistCapacity = max(0, $this->panelSlotCount() - 2);
 

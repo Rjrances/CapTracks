@@ -113,7 +113,7 @@ class CalendarController extends Controller
     }
 
     /**
-     * Chair and member panelists for coordinator calendar modal (ordered: chair, then member).
+     * Chair, members, and panelists for calendar modals (ordered: chair, members, panelists).
      *
      * @param  \Illuminate\Support\Collection<int, DefensePanel>  $panels
      * @return list<array{role: string, role_label: string, name: string, status: string, status_label: string}>
@@ -144,10 +144,18 @@ class CalendarController extends Controller
     public function adviserCalendar()
     {
         $user = Auth::user();
-        $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
+        $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists.faculty'])
             ->whereIn('status', ['scheduled', 'in_progress', 'completed'])
-            ->whereHas('group', function ($query) use ($user) {
-                $query->where('faculty_id', $user->faculty_id);
+            ->where(function ($query) use ($user) {
+                $query
+                    ->whereHas('group', function ($q) use ($user) {
+                        $q->where('faculty_id', $user->faculty_id);
+                    })
+                    ->orWhereHas('defensePanels', function ($q) use ($user) {
+                        $q->where('faculty_id', $user->id)
+                            ->whereIn('role', DefensePanel::INVITED_ROLES)
+                            ->whereIn('status', ['pending', 'accepted']);
+                    });
             })
             ->orderBy('start_at')
             ->get();
@@ -166,11 +174,13 @@ class CalendarController extends Controller
                 'extendedProps' => [
                     'group' => $defense->group->name ?? 'N/A',
                     'defenseType' => $defense->stage_label ?? 'Defense',
+                    'adviser' => $defense->group->adviser->name ?? 'N/A',
                     'groupId' => $defense->group_id,
                     'status' => $defense->status,
                     'room' => $defense->room ?? 'TBD',
                     'time' => $startDate->format('g:i A'),
                     'students' => $defense->group->members->pluck('name')->join(', '),
+                    'panelists' => self::panelistsPayloadForCalendar($defense->panelists),
                 ],
             ];
         })->toArray();
@@ -199,7 +209,7 @@ class CalendarController extends Controller
         $defenses = collect();
         $calendarEvents = collect();
         if ($group) {
-            $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists'])
+            $defenses = DefenseSchedule::with(['group', 'group.members', 'group.adviser', 'panelists.faculty'])
                 ->whereIn('status', ['scheduled', 'in_progress', 'completed'])
                 ->where('group_id', $group->id)
                 ->orderBy('start_at')
@@ -223,6 +233,8 @@ class CalendarController extends Controller
                         'room' => $defense->room ?? 'TBD',
                         'time' => $startDate->format('g:i A'),
                         'adviser' => $defense->group->adviser->name ?? 'N/A',
+                        'students' => $defense->group->members->pluck('name')->join(', '),
+                        'panelists' => self::panelistsPayloadForCalendar($defense->panelists),
                     ],
                 ];
             })->toArray();
