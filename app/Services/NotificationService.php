@@ -251,7 +251,7 @@ class NotificationService
             return;
         }
 
-        $taskLabel = $task->milestoneTask->name ?? 'Milestone task';
+        $taskLabel = $task->task_label;
         $milestoneId = $task->groupMilestone->getKey();
         $fragment = '#taskCommentsModal' . $task->getKey();
         $redirectUrl = route('student.milestones.show', $milestoneId) . $fragment;

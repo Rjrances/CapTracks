@@ -26,7 +26,7 @@ class StudentMilestoneChecklistController extends Controller
 
         $groupTaskStatus = GroupMilestoneTask::whereHas('groupMilestone', function ($query) use ($group) {
             $query->where('group_id', $group->id);
-        })->get()->keyBy('milestone_task_id');
+        })->get()->whereNotNull('milestone_task_id')->keyBy('milestone_task_id');
 
         return view('student.milestones.checklist', compact('group', 'templates', 'groupTaskStatus'));
     }

@@ -67,10 +67,10 @@ class TaskSubmissionController extends Controller
                 'type' => 'other',
                 'status' => 'pending',
                 'submitted_at' => now(),
-                'title' => $task->milestoneTask->name ?? 'Task Submission',
+                'title' => $task->task_label.' — submission',
                 'objectives' => $request->description,
                 'methodology' => $request->notes,
-                'timeline' => 'Milestone: ' . ($task->groupMilestone->milestoneTemplate->name ?? 'Unknown'),
+                'timeline' => 'Milestone: '.($task->groupMilestone->milestoneTemplate->name ?? $task->groupMilestone->title ?? 'Unknown'),
                 'expected_outcomes' => 'Progress: ' . ($request->progress_percentage ?? 0) . '%',
             ]);
         }

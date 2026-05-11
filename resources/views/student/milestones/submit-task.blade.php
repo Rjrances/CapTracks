@@ -1,5 +1,5 @@
 @extends('layouts.student')
-@section('title', 'Submit Task - ' . $task->milestoneTask->name)
+@section('title', 'Submit Task - ' . $task->task_label)
 @section('content')
 <div class="container mt-5">
     <nav aria-label="breadcrumb">
@@ -14,13 +14,13 @@
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-upload me-2"></i>Submit Task: {{ $task->milestoneTask->name }}
+                        <i class="fas fa-upload me-2"></i>Submit Task: {{ $task->task_label }}
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-4">
                         <h6 class="fw-bold">Task Description:</h6>
-                        <p class="text-muted">{{ $task->milestoneTask->description }}</p>
+                        <p class="text-muted">{{ $task->task_body ?? 'No description provided.' }}</p>
                         @if($task->notes)
                             <h6 class="fw-bold mt-3">Additional Notes:</h6>
                             <p class="text-muted">{{ $task->notes }}</p>

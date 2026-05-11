@@ -170,18 +170,7 @@
                                             <small class="text-muted">{{ $groupMilestone->progress_percentage }}% complete</small>
                                         </div>
                                         <div class="ms-3">
-                                            @php
-                                                $statusClass = match($groupMilestone->status) {
-                                                    'completed' => 'success',
-                                                    'almost_done' => 'warning',
-                                                    'in_progress' => 'info',
-                                                    default => 'secondary'
-                                                };
-                                                $statusText = ucfirst(str_replace('_', ' ', $groupMilestone->status));
-                                            @endphp
-                                            <span class="badge bg-{{ $statusClass }}">{{ $statusText }}</span>
-                                            <br>
-                                            <div class="btn-group mt-2" role="group">
+                                            <div class="btn-group" role="group">
                                                 <a href="{{ route('student.milestones.show', $groupMilestone->id) }}" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-columns me-1"></i>Kanban
                                                 </a>
@@ -250,10 +239,10 @@
                                 @foreach($studentTasks->take(3) as $task)
                                 <div class="list-group-item px-0">
                                     <div class="d-flex align-items-center">
-                                        <span class="badge bg-{{ $task->status_badge_class }} me-2">{{ ucfirst($task->status) }}</span>
+                                        <span class="badge bg-{{ $task->status_badge_class }} me-2">{{ $task->status === 'doing' ? 'In Progress' : ucfirst($task->status) }}</span>
                                         <div class="flex-grow-1">
-                                            <h6 class="mb-1">{{ Str::limit($task->milestoneTask->name ?? 'Task', 30) }}</h6>
-                                            <small class="text-muted">{{ Str::limit($task->milestoneTask->description ?? '', 40) }}</small>
+                                            <h6 class="mb-1">{{ Str::limit($task->task_label, 30) }}</h6>
+                                            <small class="text-muted">{{ Str::limit($task->task_body ?? '', 40) }}</small>
                                         </div>
                                     </div>
                                 </div>
