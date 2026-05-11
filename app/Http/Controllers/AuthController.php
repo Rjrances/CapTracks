@@ -226,6 +226,14 @@ class AuthController extends Controller
             }
         }
 
+        if (blank($studentAccount->getRawOriginal('password'))) {
+            return back()
+                ->withErrors([
+                    'password' => 'No password is set for this student ID yet. Click “Email me a temporary password” below, check your school email, then sign in with the password we send.',
+                ])
+                ->withInput($request->only('school_id'));
+        }
+
         $passwordError = $this->validatePasswordInput($request->password, $studentAccount->password);
         if ($passwordError) {
             return $passwordError;
