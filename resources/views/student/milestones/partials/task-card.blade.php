@@ -3,10 +3,10 @@
         <div class="task-card-header">
             <div class="task-card-content">
                 <h6 class="mb-2 {{ $task->status === 'done' ? 'text-decoration-line-through text-muted' : '' }}">
-                    {{ $task->milestoneTask->name ?? 'Task' }}
+                    {{ $task->task_label }}
                 </h6>
                 <p class="text-muted mb-2 small">
-                    {{ Str::limit($task->milestoneTask->description ?? 'No description', 100) }}
+                    {{ Str::limit($task->task_body ?? 'No description', 100) }}
                 </p>
                 <div class="mb-2">
                     @if($task->is_assigned_to_me)

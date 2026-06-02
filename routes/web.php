@@ -223,6 +223,7 @@ Route::prefix('student')->name('student.')->middleware([\App\Http\Middleware\Stu
     Route::get('/milestones', [StudentMilestoneController::class, 'index'])->name('milestones');
     Route::get('/milestones/checklist', [StudentMilestoneChecklistController::class, 'checklist'])->name('milestones.checklist');
     Route::get('/milestones/{milestone}', [StudentMilestoneController::class, 'show'])->name('milestones.show');
+    Route::post('/milestones/{milestone}/tasks', [StudentMilestoneController::class, 'storeTask'])->name('milestones.store-task');
     Route::get('/milestones/{milestone}/edit', [StudentMilestoneController::class, 'edit'])->name('milestones.edit');
     Route::put('/milestones/{milestone}', [StudentMilestoneController::class, 'update'])->name('milestones.update');
     Route::delete('/milestones/{milestone}', [StudentMilestoneController::class, 'destroy'])->name('milestones.destroy');

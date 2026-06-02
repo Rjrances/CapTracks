@@ -150,7 +150,7 @@
                                 <tbody>
                                     @foreach($group->groupMilestoneTasks as $gmt)
                                         <tr>
-                                            <td>{{ $gmt->milestoneTask->name ?? 'Task' }}</td>
+                                            <td>{{ $gmt->task_label }}</td>
                                             <td><span class="text-muted small">{{ $gmt->groupMilestone->milestoneTemplate->name ?? '—' }}</span></td>
                                             <td><span class="badge bg-secondary">{{ $gmt->status ?? 'pending' }}</span></td>
                                             <td class="text-end">

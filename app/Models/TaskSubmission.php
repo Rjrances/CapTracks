@@ -75,7 +75,7 @@ class TaskSubmission extends Model
     }
     public function isForPhase($phase)
     {
-        $taskName = strtolower($this->groupMilestoneTask->milestoneTask->name ?? '');
+        $taskName = strtolower($this->groupMilestoneTask->task_label ?? '');
         return match($phase) {
             'must_haves' => str_contains($taskName, 'must') || str_contains($taskName, 'have'),
             'chapter_1_2' => str_contains($taskName, 'chapter') && (str_contains($taskName, '1') || str_contains($taskName, '2')),

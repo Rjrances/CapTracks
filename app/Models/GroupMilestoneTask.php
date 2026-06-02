@@ -8,6 +8,8 @@ class GroupMilestoneTask extends Model
     protected $fillable = [
         'group_milestone_id',
         'milestone_task_id',
+        'custom_title',
+        'custom_description',
         'assigned_to',
         'is_completed',
         'status',
@@ -28,6 +30,18 @@ class GroupMilestoneTask extends Model
     public function milestoneTask()
     {
         return $this->belongsTo(MilestoneTask::class);
+    }
+
+    /** Display name: template task or leader-created custom task. */
+    public function getTaskLabelAttribute(): string
+    {
+        return $this->milestoneTask?->name ?? $this->custom_title ?? 'Task';
+    }
+
+    /** Display description for Kanban and submission pages. */
+    public function getTaskBodyAttribute(): ?string
+    {
+        return $this->milestoneTask?->description ?? $this->custom_description;
     }
     public function assignedStudent()
     {

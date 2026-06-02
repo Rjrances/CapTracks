@@ -61,6 +61,7 @@ class StudentMilestoneController extends Controller
         $tasks = $this->getMilestoneTasksByStatus($groupMilestone, $student);
         $progress = $this->calculateMilestoneProgress($groupMilestone);
         $isGroupLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
+        $group->loadMissing('members');
         return view('student.milestones.show', compact(
             'student',
             'group',
@@ -70,6 +71,47 @@ class StudentMilestoneController extends Controller
             'isGroupLeader'
         ));
     }
+
+    public function storeTask(Request $request, $milestoneId)
+    {
+        $student = $this->getAuthenticatedStudent();
+        if (! $student) {
+            return redirect('/login')->withErrors(['auth' => 'Please log in to access this page.']);
+        }
+        $group = $student->groups()->first();
+        if (! $group) {
+            return redirect()->route('student.milestones')->withErrors(['group' => 'You are not part of any group.']);
+        }
+        $isLeader = $group->members()
+            ->where('group_members.student_id', $student->student_id)
+            ->where('group_members.role', 'leader')
+            ->exists();
+        if (! $isLeader) {
+            return redirect()->back()->withErrors(['auth' => 'Only group leaders can add tasks.']);
+        }
+        $groupMilestone = $group->groupMilestones()->find($milestoneId);
+        if (! $groupMilestone) {
+            return redirect()->route('student.milestones')->withErrors(['milestone' => 'Milestone not found.']);
+        }
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
+        ]);
+        GroupMilestoneTask::create([
+            'group_milestone_id' => $groupMilestone->id,
+            'milestone_task_id' => null,
+            'custom_title' => $validated['title'],
+            'custom_description' => $validated['description'] ?? null,
+            'status' => 'pending',
+            'is_completed' => false,
+        ]);
+        $groupMilestone->calculateProgressPercentage();
+
+        return redirect()
+            ->route('student.milestones.show', $milestoneId)
+            ->with('success', 'Task added to the board.');
+    }
+
     public function edit($milestoneId)
     {
         $student = $this->getAuthenticatedStudent();
@@ -321,15 +363,14 @@ class StudentMilestoneController extends Controller
     }
     private function getStudentTasks($student, $group)
     {
-        $assignedTasks = GroupMilestoneTask::whereHas('groupMilestone', function($query) use ($group) {
-            $query->where('group_id', $group->id);
-        })->where('assigned_to', $student->student_id)->get();
-        if ($assignedTasks->isEmpty()) {
-            $assignedTasks = GroupMilestoneTask::whereHas('groupMilestone', function($query) use ($group) {
+        return GroupMilestoneTask::query()
+            ->whereHas('groupMilestone', function ($query) use ($group) {
                 $query->where('group_id', $group->id);
-            })->get();
-        }
-        return $assignedTasks;
+            })
+            ->where('assigned_to', $student->student_id)
+            ->with(['milestoneTask', 'groupMilestone.milestoneTemplate'])
+            ->orderByDesc('updated_at')
+            ->get();
     }
     private function getRecentSubmissions($student)
     {
@@ -426,6 +467,10 @@ class StudentMilestoneController extends Controller
         if (!$isLeader) {
             return redirect()->back()->withErrors(['auth' => 'Only group leaders can assign tasks.']);
         }
+        $groupMilestoneTask->loadMissing('groupMilestone');
+        if (! $groupMilestoneTask->groupMilestone || (int) $groupMilestoneTask->groupMilestone->group_id !== (int) $group->id) {
+            return redirect()->back()->withErrors(['auth' => 'This task does not belong to your group.']);
+        }
         $request->validate([
             'assigned_to' => 'required|exists:students,student_id',
         ]);
@@ -451,6 +496,10 @@ class StudentMilestoneController extends Controller
         $isLeader = $group->members()->where('group_members.student_id', $student->student_id)->where('group_members.role', 'leader')->exists();
         if (!$isLeader) {
             return redirect()->back()->withErrors(['auth' => 'Only group leaders can unassign tasks.']);
+        }
+        $groupMilestoneTask->loadMissing('groupMilestone');
+        if (! $groupMilestoneTask->groupMilestone || (int) $groupMilestoneTask->groupMilestone->group_id !== (int) $group->id) {
+            return redirect()->back()->withErrors(['auth' => 'This task does not belong to your group.']);
         }
         $groupMilestoneTask->update([
             'assigned_to' => null,

@@ -11,7 +11,7 @@
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-comments me-2"></i>
-                Task discussion — {{ $groupMilestoneTask->milestoneTask->name ?? 'Task' }}
+                Task discussion — {{ $groupMilestoneTask->task_label }}
             </h5>
             <small class="text-muted">{{ $group->name }} · {{ $groupMilestoneTask->groupMilestone->milestoneTemplate->name ?? 'Milestone' }}</small>
         </div>

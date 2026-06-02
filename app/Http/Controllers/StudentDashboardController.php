@@ -84,7 +84,8 @@ class StudentDashboardController extends Controller
             ];
         }
         if ($group) {
-            $tasks = $group->groupMilestones->flatMap->groupTasks;
+            $tasks = $group->groupMilestones->flatMap->groupTasks
+                ->where('assigned_to', $student->student_id);
             $totalTasks = $tasks->count();
             $completedTasks = $tasks->where('status', 'done')->count();
             $doingTasks = $tasks->where('status', 'doing')->count();
@@ -168,11 +169,14 @@ class StudentDashboardController extends Controller
     {
         if (!$student) return collect();
         if ($group) {
-            $tasks = $group->groupMilestones->flatMap->groupTasks->take(5);
-            return $tasks->map(function($task) {
+            $tasks = $group->groupMilestones->flatMap->groupTasks
+                ->where('assigned_to', $student->student_id)
+                ->sortByDesc('updated_at')
+                ->take(5);
+            return $tasks->map(function ($task) {
                 return (object)[
-                    'name' => $task->milestoneTask->name,
-                    'description' => $task->milestoneTask->description,
+                    'name' => $task->task_label,
+                    'description' => $task->task_body,
                     'status' => $task->status,
                     'is_completed' => $task->status === 'done',
                     'assigned_to' => $task->assignedStudent ? $task->assignedStudent->name : null
@@ -223,13 +227,14 @@ class StudentDashboardController extends Controller
         $group = $student->groups()->first();
         if ($group) {
             $recentCompletedTasks = $group->groupMilestones->flatMap->groupTasks
+                ->where('assigned_to', $student->student_id)
                 ->where('status', 'done')
                 ->where('completed_at', '>=', now()->subDays(7))
                 ->take(2);
             foreach ($recentCompletedTasks as $task) {
                 $activities->push((object)[
                     'title' => 'Task completed',
-                    'description' => $task->milestoneTask->name . ' completed',
+                    'description' => $task->task_label.' completed',
                     'icon' => 'check-circle',
                     'created_at' => $task->completed_at,
                     'type' => 'task'
@@ -259,10 +264,11 @@ class StudentDashboardController extends Controller
         }
         if ($group) {
             $taskDeadlines = $group->groupMilestones->flatMap->groupTasks
+                ->where('assigned_to', $student->student_id)
                 ->where('deadline', '!=', null)
                 ->map(function($task) {
                     return (object)[
-                        'title' => $task->milestoneTask->name,
+                        'title' => $task->task_label,
                         'description' => 'Task deadline',
                         'due_date' => $task->deadline,
                         'is_overdue' => $task->deadline && $task->deadline->isPast(),

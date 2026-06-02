@@ -3,11 +3,11 @@
         <div class="d-flex justify-content-between align-items-start">
             <div class="flex-grow-1">
                 <h6 class="mb-1 {{ $task->status === 'done' ? 'text-decoration-line-through text-muted' : '' }}">
-                    {{ $task->milestoneTask->name ?? 'Task' }}
+                    {{ $task->task_label }}
                 </h6>
-                @if($task->milestoneTask->description ?? null)
+                @if($task->task_body)
                     <p class="text-muted mb-2 small">
-                        {{ Str::limit($task->milestoneTask->description, 90) }}
+                        {{ Str::limit($task->task_body, 90) }}
                     </p>
                 @endif
 

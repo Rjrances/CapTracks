@@ -16,7 +16,7 @@ class ActivityLogService
         }
 
         $group = $task->groupMilestone->group;
-        $description = 'Completed task "' . ($task->milestoneTask->name ?? 'Milestone Task') . '" for group ' . $group->name;
+        $description = 'Completed task "'.$task->task_label.'" for group '.$group->name;
 
         ActivityLog::create([
             'student_id' => $task->completed_by ?? $task->assigned_to,
@@ -49,7 +49,7 @@ class ActivityLogService
         }
 
         $commenterName = $user ? $user->name : ($studentId ? 'Student ' . $studentId : 'Unknown');
-        $taskLabel = $task->milestoneTask->name ?? 'Milestone task';
+        $taskLabel = $task->task_label;
         $groupName = $task->groupMilestone->group->name;
 
         ActivityLog::create([
