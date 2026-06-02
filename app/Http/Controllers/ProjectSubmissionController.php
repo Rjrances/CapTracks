@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
-use App\Models\DefensePanel;
 use App\Models\Group;
 use App\Models\ProjectSubmission;
 use App\Models\Student;
 use App\Services\DocumentPreviewService;
+use App\Support\PanelDefenseAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -213,29 +213,26 @@ class ProjectSubmissionController extends Controller
                         $query->where('students.student_id', $submission->student_id);
                     })->exists();
 
-                $hasAcceptedPanelAccess = Group::whereHas('members', function ($query) use ($submission) {
-                    $query->where('students.student_id', $submission->student_id);
-                })
-                    ->whereHas('defenseSchedules.defensePanels', function ($query) use ($user) {
-                        $query->whereIn('role', DefensePanel::INVITED_ROLES)
-                            ->where('status', 'accepted')
-                            ->whereHas('faculty', function ($facultyQuery) use ($user) {
-                                $facultyQuery->where('faculty_id', $user->faculty_id);
-                            });
-                    })
-                    ->exists();
+                $hasAcceptedPanelAccess = PanelDefenseAccess::userHasAcceptedPanelAccessToSubmission($user, $submission);
+                $hasPendingSubmissionPreview = PanelDefenseAccess::userHasPendingSubmissionPreviewForSubmission($user, $submission);
 
-                if (! $hasAdviserAccess && ! $hasAcceptedPanelAccess) {
+                if (! $hasAdviserAccess && ! $hasAcceptedPanelAccess && ! $hasPendingSubmissionPreview) {
                     abort(403, 'Unauthorized access to this submission.');
                 }
 
-                if ($hasAcceptedPanelAccess && ! $hasAdviserAccess) {
+                if (($hasAcceptedPanelAccess || $hasPendingSubmissionPreview) && ! $hasAdviserAccess) {
                     $viewMode = 'panel';
                 }
-            } else {
-                if ($submission->student_id !== $user->student->student_id) {
-                    abort(403, 'Unauthorized access to this submission.');
-                }
+
+                $panelBackToInvitations = $hasPendingSubmissionPreview
+                    && ! $hasAdviserAccess
+                    && ! $hasAcceptedPanelAccess;
+
+                return view('adviser.project.show', compact('submission', 'viewMode', 'panelBackToInvitations'));
+            }
+
+            if ($submission->student_id !== $user->student->student_id) {
+                abort(403, 'Unauthorized access to this submission.');
             }
 
             return view('adviser.project.show', compact('submission', 'viewMode'));

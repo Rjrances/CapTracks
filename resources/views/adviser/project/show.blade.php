@@ -5,7 +5,13 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <p class="text-muted mb-0">
-                {{ ($viewMode ?? 'adviser') === 'panel' ? 'Panel view of student submission details' : 'Review and provide feedback on student submission' }}
+                @if($panelBackToInvitations ?? false)
+                    Preview only — accept your panel invitation to use rating sheets and the full panel workspace.
+                @elseif(($viewMode ?? 'adviser') === 'panel')
+                    Panel view of student submission details
+                @else
+                    Review and provide feedback on student submission
+                @endif
             </p>
         </div>
         <div class="d-flex gap-2">
@@ -14,8 +20,18 @@
                     <i class="fas fa-edit me-2"></i>Edit Review
                 </a>
             @endif
-            <a href="{{ ($viewMode ?? 'adviser') === 'panel' ? route('adviser.panel-groups') : route('adviser.groups') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>{{ ($viewMode ?? 'adviser') === 'panel' ? 'Back to Panel Groups' : 'Back to Adviser Groups' }}
+            @php
+                $panelInvitesFromCoordinatorWorkspace = request()->routeIs('coordinator.*')
+                    || request()->query('from') === 'coordinator';
+                $panelBackUrl = ($panelBackToInvitations ?? false)
+                    ? ($panelInvitesFromCoordinatorWorkspace ? route('coordinator.panel-invitations') : route('adviser.panel-invitations'))
+                    : ((($viewMode ?? 'adviser') === 'panel') ? route('adviser.panel-groups') : route('adviser.groups'));
+                $panelBackLabel = ($panelBackToInvitations ?? false)
+                    ? 'Back to panel invitations'
+                    : ((($viewMode ?? 'adviser') === 'panel') ? 'Back to Panel Groups' : 'Back to Adviser Groups');
+            @endphp
+            <a href="{{ $panelBackUrl }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>{{ $panelBackLabel }}
             </a>
         </div>
     </div>

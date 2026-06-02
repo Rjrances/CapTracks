@@ -602,7 +602,7 @@ class RatingSheetController extends Controller
 
         return back()->withErrors(['rating' => $message]);
     }
-
+    
     private function isRatingStage(DefenseSchedule $schedule): bool
     {
         return in_array((string) $schedule->stage, ['60', '100'], true);

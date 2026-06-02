@@ -14,10 +14,12 @@ use App\Models\ProjectSubmission;
 use App\Models\RatingSheet;
 use App\Models\Student;
 use App\Models\User;
+use App\Exports\CoordinatorFinalGradesExport;
 use App\Services\NotificationService;
 use App\Services\StudentImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CoordinatorController extends Controller
 {
@@ -686,6 +688,47 @@ class CoordinatorController extends Controller
     public function finalGrades()
     {
         $user = auth()->user();
+        ['rows' => $rows, 'activeTerm' => $activeTerm] = $this->buildCoordinatorFinalGradesData($user);
+
+        return view('coordinator.final-grades.index', compact('rows', 'activeTerm'));
+    }
+
+    public function exportFinalGrades(Request $request)
+    {
+        $request->validate([
+            'stage' => 'nullable|in:60,100,all',
+        ]);
+
+        $user = auth()->user();
+        ['rows' => $rows] = $this->buildCoordinatorFinalGradesData($user);  
+        $stageFilter = $request->input('stage', 'all');
+
+        $stageKeys = match ($stageFilter) {
+            '60' => ['60'],
+            '100' => ['100'],
+            default => ['60', '100'],
+        };
+
+        $lines = $rows->flatMap(function (array $row) use ($stageKeys) {
+            return collect($stageKeys)->map(fn (string $stageKey) => $this->finalGradeRowToExportLine($row, $stageKey));
+        });
+
+        $suffix = match ($stageFilter) {
+            '60' => '60pct',
+            '100' => '100pct',
+            default => 'all-stages',
+        };
+
+        $filename = 'final-grades_'.$suffix.'_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+
+        return Excel::download(new CoordinatorFinalGradesExport($lines), $filename);
+    }
+
+    /**
+     * @return array{rows: \Illuminate\Support\Collection<int, array<string, mixed>>, activeTerm: ?AcademicTerm}
+     */
+    private function buildCoordinatorFinalGradesData($user): array
+    {
         $activeTerm = AcademicTerm::where('is_active', true)->first();
 
         $coordinatorOfferings = $user->offerings()
@@ -782,7 +825,58 @@ class CoordinatorController extends Controller
             });
         })->sortBy(fn ($row) => strtolower((string) ($row['student']->name ?? '')))->values();
 
-        return view('coordinator.final-grades.index', compact('rows', 'activeTerm'));
+        return compact('rows', 'activeTerm');
+    }
+
+    /**
+     * @param  array{student: \App\Models\Student, group: Group, stages: array<string, mixed>}  $row
+     * @return array<int, string|float|int|null>
+     */
+    private function finalGradeRowToExportLine(array $row, string $stageKey): array
+    {
+        $student = $row['student'];
+        $group = $row['group'];
+        $stage = $row['stages'][$stageKey] ?? [
+            'schedule' => null,
+            'is_finalized' => false,
+            'scores' => ['chair' => null, 'member' => null, 'coordinator' => null],
+            'average' => null,
+            'status' => 'Pending',
+        ];
+        $schedule = $stage['schedule'] ?? null;
+
+        $stageLabel = $stageKey === '60' ? '60%' : '100%';
+
+        $fmtScore = function (?float $value) use ($stage, $schedule): string|float {
+            if ($stage['is_finalized']) {
+                return is_null($value) ? '—' : round((float) $value, 2);
+            }
+            if ($schedule) {
+                return 'Pending';
+            }
+
+            return '—';
+        };
+
+        $averageCell = $fmtScore($stage['average'] ?? null);
+
+        $statusCell = $stage['is_finalized']
+            ? (string) ($stage['status'] ?? 'Pending')
+            : ($schedule ? 'Pending finalization' : 'Not scheduled');
+
+        return [
+            $stageLabel,
+            (string) ($student->name ?? ''),
+            (string) ($student->student_id ?? ''),
+            (string) ($group->name ?? ''),
+            (string) ($group->offering->subject_code ?? '—'),
+            $fmtScore($stage['scores']['chair'] ?? null),
+            $fmtScore($stage['scores']['member'] ?? null),
+            $fmtScore($stage['scores']['coordinator'] ?? null),
+            $averageCell,
+            $statusCell,
+            $stage['is_finalized'] ? 'Yes' : 'No',
+        ];
     }
 
     private function scoreStudentFromRatingSheet(RatingSheet $sheet, string $studentId): ?float

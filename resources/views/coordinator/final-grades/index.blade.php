@@ -3,9 +3,34 @@
 @section('content')
 <div class="container-fluid">
     <x-coordinator.intro description="Class list of per-student defense grades by panel role. Scores appear only after each defense is finalized.">
-        <a href="{{ route('coordinator.dashboard') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-arrow-left me-1"></i>Dashboard
-        </a>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="btn-group" role="group" aria-label="Export final grades">
+                <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-file-excel me-1"></i>Export Excel
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="{{ route('coordinator.final-grades.export', ['stage' => '60']) }}">
+                            60% defense
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ route('coordinator.final-grades.export', ['stage' => '100']) }}">
+                            100% defense
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" href="{{ route('coordinator.final-grades.export', ['stage' => 'all']) }}">
+                            Both stages
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <a href="{{ route('coordinator.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Dashboard
+            </a>
+        </div>
     </x-coordinator.intro>
 
     @if(!$activeTerm)

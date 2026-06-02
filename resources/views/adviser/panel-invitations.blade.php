@@ -54,13 +54,30 @@
                 <div class="card-body">
                     <p class="mb-2"><strong>Schedule:</strong> {{ $panel->defenseSchedule->start_at ? $panel->defenseSchedule->start_at->format('M d, Y h:i A') : 'TBD' }}</p>
                     <p class="mb-3"><strong>Room:</strong> {{ $panel->defenseSchedule->room ?? 'TBD' }}</p>
-                    <div class="d-flex gap-2">
-                        <form action="{{ route('adviser.panel-invitations.respond', $panel) }}" method="POST">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @if($panel->defenseSchedule?->group)
+                            <a href="{{ route('adviser.groups.details', $panel->defenseSchedule->group) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-users me-1"></i>View group
+                            </a>
+                        @endif
+                        @if(!empty($previewSubmissionIdByPanel[$panel->id] ?? null))
+                            @php
+                                $previewFromCoordinator = ($panelInvitationRespondRouteName ?? '') === 'coordinator.panel-invitations.respond';
+                            @endphp
+                            <a href="{{ route('adviser.project.show', $previewSubmissionIdByPanel[$panel->id]).($previewFromCoordinator ? '?from=coordinator' : '') }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">
+                                <i class="fas fa-file-pdf me-1"></i>View proposal / report
+                            </a>
+                        @else
+                            <span class="btn btn-outline-secondary btn-sm disabled" role="button" aria-disabled="true">No proposal or final file yet</span>
+                        @endif
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <form action="{{ route($panelInvitationRespondRouteName, $panel) }}" method="POST">
                             @csrf
                             <input type="hidden" name="response" value="accept">
                             <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check me-1"></i>Accept</button>
                         </form>
-                        <form action="{{ route('adviser.panel-invitations.respond', $panel) }}" method="POST">
+                        <form action="{{ route($panelInvitationRespondRouteName, $panel) }}" method="POST">
                             @csrf
                             <input type="hidden" name="response" value="decline">
                             <button type="submit" class="btn btn-outline-danger btn-sm"><i class="fas fa-times me-1"></i>Decline</button>

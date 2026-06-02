@@ -101,6 +101,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/calendar', [CalendarController::class, 'coordinatorCalendar'])->name('calendar');
         Route::get('/final-grades', [CoordinatorController::class, 'finalGrades'])->name('final-grades');
+        Route::get('/final-grades/export', [CoordinatorController::class, 'exportFinalGrades'])->name('final-grades.export');
         Route::get('/activity-log', [CoordinatorController::class, 'activityLog'])->name('activity-log');
 
         Route::get('/proposals', [CoordinatorProposalController::class, 'index'])->name('proposals.index');

@@ -14,6 +14,7 @@ use App\Models\ProjectSubmission;
 use App\Models\TaskComment;
 use App\Services\ActivityLogService;
 use App\Services\NotificationService;
+use App\Support\PanelDefenseAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -281,17 +282,10 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
         $isAdviserOwner = $group->faculty_id === $user->faculty_id;
-        $isAcceptedPanelist = $group->defenseSchedules()
-            ->whereHas('defensePanels', function ($query) use ($user) {
-                $query->whereIn('role', DefensePanel::INVITED_ROLES)
-                    ->where('status', 'accepted')
-                    ->whereHas('faculty', function ($facultyQuery) use ($user) {
-                        $facultyQuery->where('faculty_id', $user->faculty_id);
-                    });
-            })
-            ->exists();
+        $isAcceptedPanelist = PanelDefenseAccess::userIsInvitedPanelOnGroup($user, $group, ['accepted']);
+        $isPendingPanelist = PanelDefenseAccess::userIsInvitedPanelOnGroup($user, $group, ['pending']);
 
-        if (! $isAdviserOwner && ! $isAcceptedPanelist) {
+        if (! $isAdviserOwner && ! $isAcceptedPanelist && ! $isPendingPanelist) {
             abort(403, 'Unauthorized');
         }
 
@@ -575,13 +569,35 @@ class AdviserController extends Controller
     {
         $user = Auth::user();
 
-        $pendingPanels = DefensePanel::with(['defenseSchedule.group', 'defenseSchedule.academicTerm'])
+        $pendingPanels = DefensePanel::with(['defenseSchedule.group.members', 'defenseSchedule.academicTerm'])
             ->whereHas('faculty', function ($query) use ($user) {
                 $query->where('faculty_id', $user->faculty_id);
             })
             ->whereIn('role', DefensePanel::INVITED_ROLES)
             ->where('status', 'pending')
             ->get();
+
+        $previewSubmissionIdByPanel = [];
+        foreach ($pendingPanels as $panel) {
+            $group = $panel->defenseSchedule?->group;
+            if (! $group || $group->members->isEmpty()) {
+                continue;
+            }
+            $memberIds = $group->members->pluck('student_id');
+            $latestProposalId = ProjectSubmission::query()
+                ->where('type', 'proposal')
+                ->whereIn('student_id', $memberIds)
+                ->orderByDesc('version')
+                ->orderByDesc('submitted_at')
+                ->value('id');
+            $latestFinalId = ProjectSubmission::query()
+                ->where('type', 'final')
+                ->whereIn('student_id', $memberIds)
+                ->orderByDesc('version')
+                ->orderByDesc('submitted_at')
+                ->value('id');
+            $previewSubmissionIdByPanel[$panel->id] = $latestProposalId ?? $latestFinalId;
+        }
 
         $respondedPanels = DefensePanel::with(['defenseSchedule.group', 'defenseSchedule.academicTerm'])
             ->whereHas('faculty', function ($query) use ($user) {
@@ -593,7 +609,16 @@ class AdviserController extends Controller
             ->limit(20)
             ->get();
 
-        return view('adviser.panel-invitations', compact('pendingPanels', 'respondedPanels'));
+        $panelInvitationRespondRouteName = request()->routeIs('coordinator.*')
+            ? 'coordinator.panel-invitations.respond'
+            : 'adviser.panel-invitations.respond';
+
+        return view('adviser.panel-invitations', compact(
+            'pendingPanels',
+            'respondedPanels',
+            'previewSubmissionIdByPanel',
+            'panelInvitationRespondRouteName'
+        ));
     }
 
     public function respondToPanelInvitation(Request $request, DefensePanel $panel)
